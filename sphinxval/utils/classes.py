@@ -936,10 +936,26 @@ class SPHINX:
         #Observations with observations windows that overlap with
         #the prediction windows - first rough cut at matching
         self.windows_overlap = [] #array of Observation objs
-        self.threshold_crossed_in_pred_win = [] #multiple if multiple thresholds
+        self.thresholds = [] #all of the thresholds in the observations
+        self.threshold_crossed_in_pred_win = [] #filenames of the
+            #observations that satisfy the criteria (obj.source)
         self.last_trigger_time = None
         self.last_input_time = None
+        self.triggers_before_peak_intensity = []
+        self.time_difference_triggers_peak_intensity = []
+        self.inputs_before_peak_intensity = []
+        self.time_difference_inputs_peak_intensity = []
+        self.triggers_before_peak_intensity_max = []
+        self.time_difference_triggers_peak_intensity_max = []
+        self.inputs_before_peak_intensity = []
+        self.time_difference_inputs_peak_intensity_max = []
+        self.observed_threshold_crossing_times = []
+        self.triggers_before_threshold_crossing = []
+        self.time_difference_triggers_threshold_crossing = []
+        self.inputs_before_threshold_crossing = []
+        self.time_difference_inputs_before_threshold_crossing = []
         
+        #PREDICTED AND FORECAST VALUES
         self.predicted_all_clear = None
         self.observed_all_clear = None
         self.all_clear_threshold = None

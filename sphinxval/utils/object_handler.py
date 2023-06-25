@@ -419,3 +419,35 @@ def initialize_sphinx(fcast):
     sphinx.location = fcast.location
 
     return sphinx
+
+def get_threshold_crossing_time(obj, threshold):
+    """ Report the threshold crossing time for a Forecast or
+        Observation object for a specific threshold.
+        
+    Input:
+        
+        :obj: (Forecast or Observation object)
+        :threshold: (dict) {'threshold': 10, 'threshold_units:' Unit("MeV")
+        
+    Output:
+    
+        :threshold_crossing_time: (datetime)
+        
+    """
+
+    if obj.threshold_crossings == []:
+        return None
+    
+    threshold_crossing_time = None
+    for i in range(len(obj.threshold_crossings)):
+        if obj.threshold_crossings[i].threshold == None:
+            continue
+        
+        if obj.threshold_crossings[i].threshold == \
+            threshold['threshold'] and \
+            obj.threshold_crossings[i].threshold_units == \
+            threshold['threshold_units']:
+            threshold_crossing_time =\
+                obj.threshold_crossings[i].crossing_time
+    
+    return threshold_crossing_time
