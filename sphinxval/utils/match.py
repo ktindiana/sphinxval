@@ -50,6 +50,7 @@ def create_obs_match_array(objs):
     thresholds = objh.identify_all_thresholds(objs)
     
     dict.update({'thresholds' : thresholds})
+    dict.update({'dataframes': []})
     idx = [ix for ix in range(len(thresholds))]
     
     #Extract information into arrays to make a pandas dataframe
@@ -142,7 +143,7 @@ def create_obs_match_array(objs):
         df = pd.DataFrame(data=pd_dict)
         #print(df)
         
-        dict.update({'Threshold ' + str(idx[i]): df})
+        dict['dataframes'].append(df)
             
     return dict
 
@@ -246,7 +247,6 @@ def pred_and_obs_overlap(fcast, obs):
         pd.Timestamp(pred_win_end))
     
     overlaps_bool = []
-    
     for i in range(len(obs['observation_window_start'])):
         obs_interval =\
             pd.Interval(pd.Timestamp(obs['observation_window_start'][i]), pd.Timestamp(obs['observation_window_end'][i]))
@@ -260,45 +260,170 @@ def pred_and_obs_overlap(fcast, obs):
 
 
 
-def match_one_forecast(fcast, obs_values):
-    """ Find the observations that match to a single forecast.
+def does_win_overlap(fcast, obs_values):
+    """ Find which observation windows overlap with
+        the forecast prediction window.
+        This is an initial rough cut of which observation
+        files match with a forecast.
+        
+    Input:
+    
+        :fcast: (Forecast object) forecast for a single energy bin
+        :obs_values: (dict of pandas DataFrames) for a single
+            energy channel and all observed threshold.
+    
+    Output:
+    
+        :is_win_overlap: (array of bool) array indices match the order
+            of the Observation objects in obs_objs[energy_key]
+            where energy_key is the key made from the fcast
+            energy_channel
+    
     """
     
     #Extract the forecast information needed for matching
     energy_channel = fcast.energy_channel
-    
+    energy_key = vjson.energy_channel_to_key(energy_channel)
+
     #Return if no prediction
     if fcast.prediction_window_start == None:
-        return None
+        return [None]*len(obs_values[energy_key]['dataframes'][0])
         
-    last_trigger_time = objh.last_trigger_time(fcast)
-    print(fcast.short_name)
-    print(fcast.source)
-    print("Last trigger time: " + str(last_trigger_time))
-    
-    last_input_time = objh.last_input_time(fcast)
-    print("Last input time: " + str(last_input_time))
 
     #Pull out the observations needed for matching
     #We will have a table with needed information about each
     #observation
-    #Extract correct energy channel
-    energy_key = vjson.energy_channel_to_key(energy_channel)
-    obs = obs_values[energy_key]['Threshold 0']
+    #Extract correct energy channel and any threshold
+    obs = obs_values[energy_key]['dataframes'][0]
     
     #1. Does the Prediction Window overlap with the Observation Window?
-    overlaps_bool = pred_and_obs_overlap(fcast, obs)
+    is_win_overlap = pred_and_obs_overlap(fcast, obs)
     
-    idx = overlaps_bool.index(True)
-    print(obs_values[energy_key]['Threshold 0']['observation_window_start'][idx])
-    print(obs_values[energy_key]['Threshold 0']['observation_window_end'][idx])
+    return is_win_overlap
+
+
+def thresh_cross_in_pred_win(fcast, obs_values, threshold):
+    """ Find whether an SEP event occurred inside of the prediction
+        window across all of the observations
+        
+        Returns boolean indicating whether the threshold was
+        actively crossed inside of th eprediction window.
+    
+    Input:
+    
+        :fcast: (Forecast object) single forecast
+        :obs_values: (dict of pandas DataFrames) for a single
+            energy channel and all observed threshold.
+        :threshold: (dict) {'threshold':10, 'units': Unit("MeV")}
+            
+    Output:
+        
+        :contains_thresh_cross: (array of bool) array indices match the order
+            of the Observation objects in obs_objs[energy_key]
+            where energy_key is the key made from the fcast
+            energy_channel
+    
+    """
+    energy_channel = fcast.energy_channel
+    energy_key = vjson.energy_channel_to_key(energy_channel)
+    
+    pred_win_st = fcast.prediction_window_start
+    pred_win_end = fcast.prediction_window_end
+
+    #Return if no prediction
+    if fcast.prediction_window_start == None:
+        return [None]*len(obs_values[energy_key]['dataframes'][0])
+       
+    #Extract desired threshold
+    obs_thresholds = obs_values[energy_key]['thresholds']
+    try:
+        ix = obs_thresholds.index(threshold)
+    except:
+        return [None]*len(obs_values[energy_key]['dataframes'][0])
+    
+    #Extract pandas dataframe for correct energy and threshold
+    energy_key = vjson.energy_channel_to_key(energy_channel)
+    obs = obs_values[energy_key]['dataframes'][ix] #all obs for threshold
+    
+    #Check if a threshold crossing is contained inside of the
+    #prediction window
+    pred_interval = pd.Interval(pd.Timestamp(pred_win_st),
+    pd.Timestamp(pred_win_end))
+    
+    contains_thresh_cross = []
+    for i in range(len(obs['start_time'])):
+        if pd.isnull(obs['start_time'][i]):
+            if pd.isnull(obs['threshold_crossing_time'][i]):
+                contains_thresh_cross.append(None)
+                continue
+            else:
+                obs_start_time = pd.Timestamp(obs['threshold_crossing_time'][i])
+        else:
+            obs_start_time = pd.Timestamp(obs['start_time'][i])
+
+        #Is the threshold crossed inside of the prediction window?
+        obs_st_int = pd.Interval(obs_start_time,obs_start_time)
+        if pred_interval.overlaps(obs_st_int):
+            contains_thresh_cross.append(True)
+        else:
+            contains_thresh_cross.append(False)
+ 
+    return contains_thresh_cross
     
     
 
+def is_time_before(time, obs_values, obs_key, energy_channel, threshold):
+    """ Find whether a time is before a specific time in the
+        observations.
+        
+        Returns boolean indicating whether time was before
+        the specified observed time.
+    
+    Input:
+    
+        :fcast: (Forecast object) single forecast
+        :obs_values: (dict of pandas DataFrames) for a single
+            energy channel and all observed threshold.
+        :obs_key: (string) "start_time", "end_time" ,etc
+        :threshold: (dict) {'threshold':10, 'units': Unit("MeV")}
+            
+    Output:
+        
+        :is_before: (array of bool) array indices match the order
+            of the Observation objects in obs_objs[energy_key]
+            where energy_key is the key made from the fcast
+            energy_channel
+    
+    """
+    if pd.isnull(time):
+        return [None]*len(obs_values[energy_key]['dataframes'][0])
+
+    #Extract desired threshold
+    energy_key = vjson.energy_channel_to_key(energy_channel)
+    obs_thresholds = obs_values[energy_key]['thresholds']
+    try:
+        ix = obs_thresholds.index(threshold)
+    except:
+        return [None]*len(obs_values[energy_key]['dataframes'][0])
+
+    #Check if time is before
+    obs = obs_values[energy_key]['dataframes']
+    is_before = []
+    for i in range(len(obs[obs_key])):
+        if pd.isnull(obs[obs_key][i]):
+            is_before.append(None)
+            continue
+
+        if time < obs[obs_key][i]:
+            is_before.append(True)
+        else:
+            is_before.append(False)
+            
+    return is_before
 
 
 
-def match_all_forecasts(all_energy_channels, obs_objs, model_objs):
+def match_criteria_all_forecasts(all_energy_channels, obs_objs, model_objs):
     """ Match all forecasts to observations.
     """
 
@@ -306,11 +431,61 @@ def match_all_forecasts(all_energy_channels, obs_objs, model_objs):
     #energy channel and threshold
     obs_values = compile_all_obs(all_energy_channels, obs_objs)
 
-    match = {}
+    match = {} #array of sphinx objects organized by energy channel
     
     for channel in all_energy_channels:
-        matched_obs = []
+        print("Identifying Match Criteria for " + str(channel))
         key = vjson.energy_channel_to_key(channel)
+        match.update({key:[]})
+        observation_objs = obs_objs[key] #Observation objects
+
         forecasts = model_objs[key] #all forecasts for channel
         for fcast in forecasts:
-            match_one_forecast(fcast, obs_values)
+            #One SPHINX object contains all matching information and
+            #predicted and observed values (and all thresholds)
+            sphinx = objh.initialize_sphinx(fcast)
+
+            #Get Trigger and Input information
+            last_trigger_time = objh.last_trigger_time(fcast)
+            print(fcast.short_name)
+            print(fcast.source)
+            print("Last trigger time: " + str(last_trigger_time))
+            
+            last_input_time = objh.last_input_time(fcast)
+            print("Last input time: " + str(last_input_time))
+
+            sphinx.last_trigger_time = last_trigger_time
+            sphinx.last_input_time = last_input_time
+
+            #1. Do prediction and observation windows overlap?
+            #Save the overlapping observations to the SPHINX object
+            is_win_overlap = does_win_overlap(fcast, obs_values)
+            overlap_idx = [ix for ix in range(len(is_win_overlap)) if is_win_overlap[ix] == True]
+            if overlap_idx != []:
+                print("Overlapping observations: ")
+                for ix in range(len(overlap_idx)):
+                    sphinx.windows_overlap.append(observation_objs[overlap_idx[ix]])
+                    #logging
+                    print(sphinx.windows_overlap[ix].source)
+
+            #2. Is a threshold crossed inside the prediction window?
+            #Save forecasted and observed all clear to SPHINX object
+            all_fcast_thresholds =\
+                objh.identify_all_thresholds_one(fcast)
+            for fcast_thresh in all_fcast_thresholds:
+                print(fcast_thresh)
+                contains_thresh_cross = \
+                    thresh_cross_in_pred_win(fcast, obs_values,
+                    fcast_thresh)
+                cross_idx = [ix for ix in range(len(contains_thresh_cross)) if contains_thresh_cross[ix] == True]
+                if cross_idx != []:
+                    print("Threshold crossed in prediction window: ")
+                    for ix in range(len(cross_idx)):
+                        if observation_objs[cross_idx[ix]] not in \
+                            sphinx.threshold_crossed_in_pred_win:
+                            sphinx.threshold_crossed_in_pred_win.append(observation_objs[cross_idx[ix]])
+                        #logging
+                        print(sphinx.threshold_crossed_in_pred_win[ix].source)
+
+            #3. Is the last trigger before the SEP event start time?
+#            is_time_before(time, obs_values, obs_key, energy_channel, threshold)

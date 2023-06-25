@@ -910,3 +910,39 @@ class Observation():
                     uncertainty, threshold, threshold_units))
                     
         return
+
+
+
+class SPHINX:
+    def __init__(self, energy_channel):
+        """ A SPHINX object contains the forecasted values and
+            matching observed values for validation.
+            
+            All information used for matching is saved so that the
+            logic is completely traceable and readily understood to
+            ensure that the correct observed values were matched to the
+            forecasted values.
+        """
+        
+        self.label = 'sphinx'
+        self.energy_channel = energy_channel #dict
+        self.prediction_source = None
+        self.prediction_window_start = None
+        self.prediction_window_end = None
+        self.species = None
+        self.location = None
+
+        #MATCHING INFORMATION
+        #Observations with observations windows that overlap with
+        #the prediction windows - first rough cut at matching
+        self.windows_overlap = [] #array of Observation objs
+        self.threshold_crossed_in_pred_win = [] #multiple if multiple thresholds
+        self.last_trigger_time = None
+        self.last_input_time = None
+        
+        self.predicted_all_clear = None
+        self.observed_all_clear = None
+        self.all_clear_threshold = None
+        self.all_clear_threshold_units = None
+        
+        return

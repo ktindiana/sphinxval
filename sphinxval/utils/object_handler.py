@@ -1,3 +1,4 @@
+from . import classes as cl
 import sys
 import datetime
 
@@ -108,6 +109,77 @@ def identify_all_thresholds(all_obj):
                         all_thresholds.append(dict)
 
     return all_thresholds
+
+
+def identify_all_thresholds_one(obj):
+    """ Find all the thresholds applied to a given energy channel.
+        Thresholds are applied in:
+        All clear
+        Event lengths
+        Fluence spectra
+        Threshold crossings
+        Probabilities
+    
+    Inputs:
+    
+        :obj: (single Forecast or Observation object)
+        
+    Outputs:
+    
+        :all_thresholds: (array of dict)
+            [{'threshold': 10, 'threshold_units': Unit('pfu')}]
+    
+    """
+    all_thresholds = []
+    
+    thresh = obj.all_clear.threshold
+    units = obj.all_clear.threshold_units
+    if thresh != None and units != None:
+        dict = {'threshold':thresh, 'threshold_units': units}
+        if dict not in all_thresholds:
+            all_thresholds.append(dict)
+    
+    if obj.event_lengths != []:
+        for entry in obj.event_lengths:
+            thresh = entry.threshold
+            units = entry.threshold_units
+            if thresh != None and units != None:
+                dict = {'threshold':thresh, 'threshold_units': units}
+                if dict not in all_thresholds:
+                    all_thresholds.append(dict)
+    
+    if obj.fluence_spectra != []:
+        for entry in obj.fluence_spectra:
+            thresh = entry.threshold_start
+            units = entry.threshold_units
+            if thresh != None and units != None:
+                dict = {'threshold':thresh, 'threshold_units': units}
+                if dict not in all_thresholds:
+                    all_thresholds.append(dict)
+   
+    if obj.threshold_crossings != []:
+        for entry in obj.threshold_crossings:
+            thresh = entry.threshold
+            units = entry.threshold_units
+            if thresh != None and units != None:
+                dict = {'threshold':thresh, 'threshold_units': units}
+                if dict not in all_thresholds:
+                    all_thresholds.append(dict)
+
+
+    if obj.probabilities != []:
+        for entry in obj.probabilities:
+            thresh = entry.threshold
+            units = entry.threshold_units
+            if thresh != None and units != None:
+                dict = {'threshold':thresh, 'threshold_units': units}
+                if dict not in all_thresholds:
+                    all_thresholds.append(dict)
+
+    return all_thresholds
+
+
+
 
 
 def print_observed_values(obj):
@@ -329,3 +401,21 @@ def last_input_time(obj):
             last_time = max(last_time,last_corona_time)
     
     return last_time
+    
+    
+def initialize_sphinx(fcast):
+    """ Set up new sphinx object for a single Forecast object.
+        One SPHINX object contains all matching information and
+        predicted and observed values (possibly for multiple thresholds)
+
+    """
+    sphinx = cl.SPHINX(fcast.energy_channel)
+    sphinx.prediction_source = fcast.source
+    sphinx.prediction_window_start =\
+        fcast.prediction_window_start
+    sphinx.prediction_window_end =\
+        fcast.prediction_window_end
+    sphinx.species = fcast.species
+    sphinx.location = fcast.location
+
+    return sphinx
