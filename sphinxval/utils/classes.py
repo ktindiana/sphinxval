@@ -926,6 +926,7 @@ class SPHINX:
         
         self.label = 'sphinx'
         self.energy_channel = energy_channel #dict
+        self.issue_time = None
         self.prediction_source = None
         self.prediction_window_start = None
         self.prediction_window_end = None
@@ -942,18 +943,18 @@ class SPHINX:
         self.last_trigger_time = None
         self.last_input_time = None
         self.triggers_before_peak_intensity = []
-        self.time_difference_triggers_peak_intensity = []
+        self.time_difference_triggers_peak_intensity = [] #hours
         self.inputs_before_peak_intensity = []
-        self.time_difference_inputs_peak_intensity = []
+        self.time_difference_inputs_peak_intensity = [] #hours
         self.triggers_before_peak_intensity_max = []
-        self.time_difference_triggers_peak_intensity_max = []
+        self.time_difference_triggers_peak_intensity_max = [] #hours
         self.inputs_before_peak_intensity = []
-        self.time_difference_inputs_peak_intensity_max = []
+        self.time_difference_inputs_peak_intensity_max = [] #hours
         self.observed_threshold_crossing_times = []
         self.triggers_before_threshold_crossing = []
-        self.time_difference_triggers_threshold_crossing = []
+        self.time_difference_triggers_threshold_crossing = [] #hours
         self.inputs_before_threshold_crossing = []
-        self.time_difference_inputs_before_threshold_crossing = []
+        self.time_difference_inputs_before_threshold_crossing = [] #hours
         
         #PREDICTED AND FORECAST VALUES
         self.predicted_all_clear = None

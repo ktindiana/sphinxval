@@ -506,8 +506,8 @@ def time_diff(time, obs_values, obs_key, energy_channel):
         if pd.isnull(obs[obs_key][i]):
             time_diff.append(None)
             continue
-            
-        time_diff.append(time - obs[obs_key][i])
+
+        time_diff.append((time - obs[obs_key][i]).total_seconds()/(60*60))
 
     return time_diff
     
@@ -556,7 +556,7 @@ def time_diff_thresh(time, obs_values, obs_key, energy_channel, threshold):
             time_diff.append(None)
             continue
 
-        time_diff.append(time - obs[obs_key][i])
+        time_diff.append((time - obs[obs_key][i]).total_seconds()/(60*60))
 
     return time_diff
 
