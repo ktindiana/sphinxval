@@ -302,23 +302,87 @@ def does_win_overlap(fcast, obs_values):
     return is_win_overlap
 
 
-def thresh_cross_in_pred_win(fcast, obs_values, threshold):
-    """ Find whether an SEP event occurred inside of the prediction
+def observed_time_in_pred_win(fcast, obs_values, obs_key):
+    """ Find whether an observed time occurred inside of the prediction
         window across all of the observations
         
         Returns boolean indicating whether the threshold was
-        actively crossed inside of th eprediction window.
+        actively crossed inside of the prediction window.
     
     Input:
     
         :fcast: (Forecast object) single forecast
         :obs_values: (dict of pandas DataFrames) for a single
             energy channel and all observed threshold.
+        :obs_key: (string) identifies which time in the pandas
+            Dataframe should be compared, 'threshold_crossing_time'
+            
+    Output:
+        
+        :contains_obs_time: (array of bool) array indices match the order
+            of the Observation objects in obs_objs[energy_key]
+            where energy_key is the key made from the fcast
+            energy_channel
+    
+    """
+    energy_channel = fcast.energy_channel
+    energy_key = vjson.energy_channel_to_key(energy_channel)
+    
+    pred_win_st = fcast.prediction_window_start
+    pred_win_end = fcast.prediction_window_end
+
+    #Return if no prediction
+    if fcast.prediction_window_start == None:
+        return [None]*len(obs_values[energy_key]['dataframes'][0])
+           
+    #Extract pandas dataframe for correct energy and threshold
+    energy_key = vjson.energy_channel_to_key(energy_channel)
+    obs = obs_values[energy_key]['dataframes'][0] #all obs for threshold
+    
+    #Check if a threshold crossing is contained inside of the
+    #prediction window
+    pred_interval = pd.Interval(pd.Timestamp(pred_win_st),
+    pd.Timestamp(pred_win_end))
+    
+    contains_obs_time = []
+    for i in range(len(obs[obs_key])):
+        if pd.isnull(obs[obs_key][i]):
+            contains_obs_time.append(None)
+            continue
+        else:
+            obs_time = pd.Timestamp(obs[obs_key][i])
+
+        #Is the threshold crossed inside of the prediction window?
+        obs_int = pd.Interval(obs_time,obs_time)
+        if pred_interval.overlaps(obs_int):
+            contains_obs_time.append(True)
+        else:
+            contains_obs_time.append(False)
+ 
+    return contains_obs_time
+
+
+
+def observed_time_in_pred_win_thresh(fcast, obs_values, obs_key,
+        threshold):
+    """ Find whether an observed time occurred inside of the prediction
+        window across all of the observations
+        
+        Returns boolean indicating whether the threshold was
+        actively crossed inside of the prediction window.
+    
+    Input:
+    
+        :fcast: (Forecast object) single forecast
+        :obs_values: (dict of pandas DataFrames) for a single
+            energy channel and all observed threshold.
+        :obs_key: (string) identifies which time in the pandas
+            Dataframe should be compared, 'threshold_crossing_time'
         :threshold: (dict) {'threshold':10, 'units': Unit("MeV")}
             
     Output:
         
-        :contains_thresh_cross: (array of bool) array indices match the order
+        :contains_obs_time: (array of bool) array indices match the order
             of the Observation objects in obs_objs[energy_key]
             where energy_key is the key made from the fcast
             energy_channel
@@ -350,25 +414,22 @@ def thresh_cross_in_pred_win(fcast, obs_values, threshold):
     pred_interval = pd.Interval(pd.Timestamp(pred_win_st),
     pd.Timestamp(pred_win_end))
     
-    contains_thresh_cross = []
-    for i in range(len(obs['start_time'])):
-        if pd.isnull(obs['start_time'][i]):
-            if pd.isnull(obs['threshold_crossing_time'][i]):
-                contains_thresh_cross.append(None)
-                continue
-            else:
-                obs_start_time = pd.Timestamp(obs['threshold_crossing_time'][i])
+    contains_obs_time = []
+    for i in range(len(obs[obs_key])):
+        if pd.isnull(obs[obs_key][i]):
+            contains_obs_time.append(None)
+            continue
         else:
-            obs_start_time = pd.Timestamp(obs['start_time'][i])
+            obs_time = pd.Timestamp(obs[obs_key][i])
 
         #Is the threshold crossed inside of the prediction window?
-        obs_st_int = pd.Interval(obs_start_time,obs_start_time)
-        if pred_interval.overlaps(obs_st_int):
-            contains_thresh_cross.append(True)
+        obs_int = pd.Interval(obs_time,obs_time)
+        if pred_interval.overlaps(obs_int):
+            contains_obs_time.append(True)
         else:
-            contains_thresh_cross.append(False)
+            contains_obs_time.append(False)
  
-    return contains_thresh_cross
+    return contains_obs_time
 
 
 def is_time_before(time, obs_values, obs_key, energy_channel):
@@ -561,7 +622,373 @@ def time_diff_thresh(time, obs_values, obs_key, energy_channel, threshold):
     return time_diff
 
 
+############### MATCHING CRITERIA FOR SPECIFIC QUANTITIES #####
+def onset_peak_criteria(sphinx, fcast, obs_values, observation_objs):
+    """ Calculate the boolean arrays that are needed to perform
+        matching of onset peak (peak_intensity)
+        
+        Load information into sphinx object.
+        
+    Input:
+    
+        :sphinx: (SPHINX Object) initialized and contains observation
+            forecast information
+        :fcast: (Forecast Object) a specific forecast
+        :obs_values: (pandas Dataframe) for one energy channel and
+            all thresholds
+        :observation_objs: (array of Observation objects) all
+            observations for a specific energy channel
+            
+    Ouput:
+        
+        For all output, indices of arrays match with indices of
+        obs_values and observation_objs
+        
+        :is_onset_peak_in_pred_win: (boolean array) indicates if
+            onset peak is inside of the prediction window.
+        :td_trigger_onset_peak: (float array) time difference in hours
+            between last trigger time and peak_intensity time
+        :is_trigger_before_onset_peak: (boolean array) indcates if
+            the last trigger time is before the onset peak
+        :td_input_onset_peak: (float array) time difference in hours
+            between last input time and peak_intensity time
+         :is_input_before_onset_peak: (boolean array) indcates if
+            the last input time is before the onset peak
 
+        
+    """
+    last_trigger_time = sphinx.last_trigger_time
+    last_input_time = sphinx.last_input_time
+    channel = fcast.energy_channel
+    
+    ###### MATCHING: ONSET PEAK IN PREDICTION WINDOW #####
+    #Is the onset peak inside of the prediction window?
+    #Get the time difference - negative means trigger is before
+    is_onset_peak_in_pred_win = observed_time_in_pred_win(fcast,
+                                    obs_values, 'peak_time')
+    idx = [ix for ix in range(len(is_onset_peak_in_pred_win)) if is_onset_peak_in_pred_win[ix] == True]
+    print("Onset Peak is inside prediction window (if any): ")
+    if idx != []:
+        for ix in range(len(idx)):
+            #Only save in sphinx obj if thresh crossed in
+            #prediction window
+            if observation_objs[idx[ix]] in sphinx.windows_overlap:
+                sphinx.peak_intensity_time_in_prediction_window.append(observation_objs[idx[ix]].source)
+                #logging
+                print("  " +
+                str(sphinx.peak_intensity_time_in_prediction_window[ix]))
+                print("  Observed peak_intensity time: "
+                + str(observation_objs[idx[ix]].peak_intensity.time))
+
+
+    ###### MATCHING: TRIGGERS BEFORE ONSET PEAK #####
+    #Is the last trigger time before the onset peak time?
+    #Get the time difference - negative means trigger is before
+    td_trigger_onset_peak = time_diff(last_trigger_time, obs_values,
+                                'peak_time', channel)
+    is_trigger_before_onset_peak = is_time_before(last_trigger_time,
+                                obs_values, 'peak_time', channel)
+    idx = [ix for ix in range(len(is_trigger_before_onset_peak)) if is_trigger_before_onset_peak[ix] == True]
+    print("Time Difference of Triggers before Onset Peak (if any): ")
+    if idx != []:
+        for ix in range(len(idx)):
+            #Only save in sphinx obj if thresh crossed in
+            #prediction window
+            if observation_objs[idx[ix]] in sphinx.windows_overlap:
+                sphinx.triggers_before_peak_intensity.append(observation_objs[idx[ix]].source)
+                sphinx.time_difference_triggers_peak_intensity.append(td_trigger_onset_peak[idx[ix]])
+                #logging
+                print("  " +
+                str(sphinx.triggers_before_peak_intensity[ix]))
+                print("  " +
+                str(sphinx.time_difference_triggers_peak_intensity[ix]))
+                print("  Observed peak_intensity time: "
+                + str(observation_objs[idx[ix]].peak_intensity.time))
+
+
+    ###### MATCHING: INPUTS BEFORE ONSET PEAK #####
+    #Is the last trigger time before the onset peak time?
+    td_input_onset_peak = time_diff(last_input_time, obs_values,
+                            'peak_time', channel)
+    is_input_before_onset_peak = is_time_before(last_input_time,
+                            obs_values, 'peak_time', channel)
+    idx = [ix for ix in range(len(is_input_before_onset_peak)) if is_input_before_onset_peak[ix] == True]
+    print("Time difference of Inputs before Onset Peak (if any): ")
+    if idx != []:
+        for ix in range(len(idx)):
+            #Only save in sphinx obj if thresh crossed in
+            #prediction window
+            if observation_objs[idx[ix]] in sphinx.windows_overlap:
+                sphinx.inputs_before_peak_intensity.append(observation_objs[idx[ix]].source)
+                sphinx.time_difference_inputs_peak_intensity.append(td_input_onset_peak[idx[ix]])
+                #logging
+                print("  " +
+                str(sphinx.inputs_before_peak_intensity[ix]))
+                print("  " +
+                str(sphinx.time_difference_inputs_peak_intensity[ix]))
+                print("  Observed peak_intensity time: "
+                + str(observation_objs[idx[ix]].peak_intensity.time))
+
+
+    return is_onset_peak_in_pred_win, td_trigger_onset_peak, \
+        is_trigger_before_onset_peak, td_input_onset_peak,\
+        is_input_before_onset_peak
+
+
+
+def max_flux_criteria(sphinx, fcast, obs_values, observation_objs):
+    """ Calculate the boolean arrays that are needed to perform
+        matching of max flux (peak_intensity_max)
+        
+        Load information into sphinx object.
+        
+    Input:
+    
+        :sphinx: (SPHINX Object) initialized and contains observation
+            forecast information
+        :fcast: (Forecast Object) a specific forecast
+        :obs_values: (pandas Dataframe) for one energy channel and
+            all thresholds
+        :observation_objs: (array of Observation objects) all
+            observations for a specific energy channel
+            
+    Ouput:
+        
+        For all output, indices of arrays match with indices of
+        obs_values and observation_objs
+        
+        :is_max_flux_in_pred_win: (boolean array) indicates if
+            peak_intensity_max is inside of the prediction window.
+        :td_trigger_max_flux: (float array) time difference in hours
+            between last trigger time and peak_intensity_max time
+        :is_trigger_before_max_flux: (boolean array) indcates if
+            the last trigger time is before the max flux
+        :td_input_max_flux: (float array) time difference in hours
+            between last input time and peak_intensity_max time
+         :is_input_before_max_flux: (boolean array) indcates if
+            the last input time is before the peak_intensity_max
+
+        
+    """
+    last_trigger_time = sphinx.last_trigger_time
+    last_input_time = sphinx.last_input_time
+    channel = fcast.energy_channel
+    
+    ###### MATCHING: MAX FLUX IN PREDICTION WINDOW #####
+    #Is the max flux inside of the prediction window?
+    #Get the time difference - negative means trigger is before
+    is_max_flux_in_pred_win = observed_time_in_pred_win(fcast,
+                            obs_values, 'max_time')
+    idx = [ix for ix in range(len(is_max_flux_in_pred_win)) if is_max_flux_in_pred_win[ix] == True]
+    print("Max Flux is inside prediction window (if any): ")
+    if idx != []:
+        for ix in range(len(idx)):
+            #Only save in sphinx obj if thresh crossed in
+            #prediction window
+            if observation_objs[idx[ix]] in sphinx.windows_overlap:
+                sphinx.peak_intensity_max_time_in_prediction_window.append(observation_objs[idx[ix]].source)
+                #logging
+                print("  " +
+                str(sphinx.peak_intensity_max_time_in_prediction_window[ix]))
+                print("  Observed peak_intensity_max time: " +
+                str(observation_objs[idx[ix]].peak_intensity_max.time))
+
+
+    ###### MATCHING: TRIGGERS BEFORE MAX FLUX #####
+    #Is the last trigger time before the max flux time?
+    #Get the time difference - negative means trigger is before
+    td_trigger_max_time = time_diff(last_trigger_time, obs_values,
+                            'max_time', channel)
+    is_trigger_before_max_time = is_time_before(last_trigger_time,
+                            obs_values, 'max_time', channel)
+    idx = [ix for ix in range(len(is_trigger_before_max_time)) if is_trigger_before_max_time[ix] == True]
+    print("Time Difference of Triggers before Max Flux time (if any): ")
+    if idx != []:
+        for ix in range(len(idx)):
+            #Only save in sphinx obj if thresh crossed in
+            #prediction window
+            if observation_objs[idx[ix]] in sphinx.windows_overlap:
+                sphinx.triggers_before_peak_intensity_max.append(observation_objs[idx[ix]].source)
+                sphinx.time_difference_triggers_peak_intensity_max.append(td_trigger_max_time[idx[ix]])
+                #logging
+                print("  " +
+                str(sphinx.triggers_before_peak_intensity_max[ix]))
+                print("  " +
+                str(sphinx.time_difference_triggers_peak_intensity_max[ix]))
+                print("  Observed peak_intensity_max time: "
+                + str(observation_objs[idx[ix]].peak_intensity.time))
+
+
+    ###### MATCHING: INPUTS BEFORE MAX FLUX TIME #####
+    #Is the last trigger time before the max flux time?
+    td_input_max_time = time_diff(last_input_time, obs_values,
+                        'max_time', channel)
+    is_input_before_max_time = is_time_before(last_input_time,
+                        obs_values, 'max_time', channel)
+    idx = [ix for ix in range(len(is_input_before_max_time)) if is_input_before_max_time[ix] == True]
+    print("Time difference of Inputs before Max Time (if any): ")
+    if idx != []:
+        for ix in range(len(idx)):
+            #Only save in sphinx obj if thresh crossed in
+            #prediction window
+            if observation_objs[idx[ix]] in sphinx.windows_overlap:
+                sphinx.inputs_before_peak_intensity_max.append(observation_objs[idx[ix]].source)
+                sphinx.time_difference_inputs_peak_intensity_max.append(td_input_max_time[idx[ix]])
+                #logging
+                print("  " +
+                str(sphinx.inputs_before_peak_intensity_max[ix]))
+                print("  " +
+                str(sphinx.time_difference_inputs_peak_intensity_max[ix]))
+                print("  Observed peak_intensity time: "
+                + str(observation_objs[idx[ix]].peak_intensity_max.time))
+
+    return is_max_flux_in_pred_win, td_trigger_max_time,\
+        is_trigger_before_max_time, td_input_max_time, \
+        is_input_before_max_time
+
+
+
+
+def threshold_cross_criteria(sphinx, fcast, obs_values, observation_objs,
+        thresh):
+    """ Calculate the boolean arrays to indicate if a threshold is
+        crossed inside the prediction window.
+        
+        Load information into sphinx object.
+        
+    Input:
+    
+        :sphinx: (SPHINX Object) initialized and contains observation
+            forecast information
+        :fcast: (Forecast Object) a specific forecast
+        :obs_values: (pandas Dataframe) for one energy channel and
+            all thresholds
+        :observation_objs: (array of Observation objects) all
+            observations for a specific energy channel
+        :thresh: (dict) specific threshold for threshold crossing
+            
+    Ouput:
+        
+        For all output, indices of arrays match with indices of
+        obs_values and observation_objs
+        
+        :contains_thresh_cross: (boolean array) indicates if a threshold
+            was crossed inside the prediction window
+        
+    """
+    
+    contains_thresh_cross = observed_time_in_pred_win_thresh(fcast,
+        obs_values, 'threshold_crossing_time', thresh)
+    cross_idx = [ix for ix in range(len(contains_thresh_cross)) if contains_thresh_cross[ix] == True]
+    print("Threshold crossed in prediction window (if any): ")
+    if cross_idx != []:
+        for ix in range(len(cross_idx)):
+            sphinx.threshold_crossed_in_pred_win.append(observation_objs[cross_idx[ix]].source)
+            #logging
+            print("  " + str(sphinx.threshold_crossed_in_pred_win[ix]))
+    else:
+        sphinx.threshold_crossed_in_pred_win.append(None)
+
+    return contains_thresh_cross
+
+
+
+def before_threshold_crossing(sphinx, fcast, obs_values, observation_objs,
+        thresh):
+    """ Calculate the boolean arrays to indicate if a threshold is
+        crossed inside the prediction window.
+        
+        Load information into sphinx object.
+        
+    Input:
+    
+        :sphinx: (SPHINX Object) initialized and contains observation
+            forecast information
+        :fcast: (Forecast Object) a specific forecast
+        :obs_values: (pandas Dataframe) for one energy channel and
+            all thresholds
+        :observation_objs: (array of Observation objects) all
+            observations for a specific energy channel
+        :thresh: (dict) specific threshold for threshold crossing
+            
+    Ouput:
+        
+        For all output, indices of arrays match with indices of
+        obs_values and observation_objs
+        
+        :td_trigger_thresh_cross: (float array) hours between last trigger time
+            and threshold crossing time
+        :is_trigger_before_start: (boolean array) indicates if trigger is
+            before the threshold was crossed
+        :td_input_thresh_cross: (float array) hours between last input time
+            and threshold crossing time
+        :is_input_before_start: (boolean array) indicates if input is
+            before the threshold was crossed
+
+ 
+    """
+    last_trigger_time = sphinx.last_trigger_time
+    last_input_time = sphinx.last_input_time
+    channel = fcast.energy_channel
+
+    ###### MATCHING: TRIGGERS/INPUTS BEFORE SEP #####
+    td_trigger_thresh_cross = time_diff_thresh(last_trigger_time, obs_values,
+        'threshold_crossing_time', channel, thresh)
+    is_trigger_before_start = is_time_before_thresh(last_trigger_time,
+        obs_values, 'threshold_crossing_time', channel, thresh)
+    idx = [ix for ix in range(len(is_trigger_before_start)) if is_trigger_before_start[ix] == True]
+    print("Triggers before Threshold Crossing (if any): ")
+    if idx != []:
+        for ix in range(len(idx)):
+            #Only save in sphinx obj if thresh crossed in
+            #prediction window
+            if observation_objs[idx[ix]].source in sphinx.threshold_crossed_in_pred_win:
+                sphinx.triggers_before_threshold_crossing.append(observation_objs[idx[ix]].source)
+                sphinx.time_difference_triggers_threshold_crossing.append(td_trigger_thresh_cross[idx[ix]])
+                #logging
+                print("  " +
+                str(sphinx.triggers_before_threshold_crossing[ix]))
+                print("  " +
+                str(sphinx.time_difference_triggers_threshold_crossing[ix]))
+                threshold_crossing_time = \
+                objh.get_threshold_crossing_time(observation_objs[idx[ix]],
+                thresh)
+                print("  Observed threshold crossing time: "
+                + str(threshold_crossing_time))
+
+
+    ###### MATCHING: INPUTS BEFORE SEP #####
+    #Is the last input before the SEP event start time?
+    td_input_thresh_cross = time_diff_thresh(last_input_time, obs_values,
+        'threshold_crossing_time', channel, thresh)
+    is_input_before_start = is_time_before_thresh(last_input_time, obs_values,
+        'threshold_crossing_time', channel, thresh)
+    idx = [ix for ix in range(len(is_input_before_start)) if is_input_before_start[ix] == True]
+    print("Inputs before Threshold Crossing (if any): ")
+    if idx != []:
+        for ix in range(len(idx)):
+            #Only save in sphinx obj if thresh crossed in
+            #prediction window
+            if observation_objs[idx[ix]].source in sphinx.threshold_crossed_in_pred_win:
+                sphinx.inputs_before_threshold_crossing.append(observation_objs[idx[ix]].source)
+                sphinx.time_difference_inputs_threshold_crossing.append(td_input_thresh_cross[idx[ix]])
+                #logging
+                print("  " + str(sphinx.inputs_before_threshold_crossing[ix]))
+                print("  " +
+                str(sphinx.time_difference_inputs_threshold_crossing[ix]))
+                threshold_crossing_time =\
+                objh.get_threshold_crossing_time(observation_objs[idx[ix]],
+                thresh)
+                print("  Observed threshold crossing time: "
+                + str(threshold_crossing_time))
+
+    return td_trigger_thresh_cross, is_trigger_before_start, \
+        td_input_thresh_cross, is_input_before_start
+    
+    
+    
+
+####ALL MATCHING CRITERIA #######
 def match_criteria_all_forecasts(all_energy_channels, obs_objs, model_objs):
     """ Match all forecasts to observations.
     """
@@ -597,149 +1024,62 @@ def match_criteria_all_forecasts(all_energy_channels, obs_objs, model_objs):
             sphinx.last_trigger_time = last_trigger_time
             sphinx.last_input_time = last_input_time
 
-
             ###### MATCHING: WINDOWS OVERLAP? #####
             #Do prediction and observation windows overlap?
             #Save the overlapping observations to the SPHINX object
             is_win_overlap = does_win_overlap(fcast, obs_values)
             overlap_idx = [ix for ix in range(len(is_win_overlap)) if is_win_overlap[ix] == True]
+            print("Overlapping observations (if any): ")
             if overlap_idx != []:
-                print("Overlapping observations (if any): ")
                 for ix in range(len(overlap_idx)):
                     sphinx.windows_overlap.append(observation_objs[overlap_idx[ix]])
                     #logging
-                    print(sphinx.windows_overlap[ix].source)
+                    print("  " + str(sphinx.windows_overlap[ix].source))
 
 
-
-            ###### MATCHING: TRIGGERS BEFORE ONSET PEAK #####
-            #Is the last trigger time before the onset peak time?
-            #Get the time difference - negative means trigger is before
-            td_trigger_onset_peak =\
-                time_diff(last_trigger_time, obs_values,
-                'peak_time', channel)
-            is_trigger_before_onset_peak =\
-                is_time_before(last_trigger_time, obs_values,
-                'peak_time', channel)
-            idx = [ix for ix in range(len(is_trigger_before_onset_peak)) if is_trigger_before_onset_peak[ix] == True]
-            if idx != []:
-                print("Time Difference of Triggers before Onset Peak (if any): ")
-                for ix in range(len(idx)):
-                    #Only save in sphinx obj if thresh crossed in
-                    #prediction window
-                    if observation_objs[idx[ix]] in sphinx.windows_overlap:
-                        sphinx.triggers_before_peak_intensity.append(observation_objs[idx[ix]].source)
-                        sphinx.time_difference_triggers_peak_intensity.append(td_trigger_onset_peak[idx[ix]])
-                        #logging
-                        print(sphinx.triggers_before_peak_intensity[ix])
-                        print(sphinx.time_difference_triggers_peak_intensity[ix])
-                        print("Observed peak_intensity time: "
-                            + str(observation_objs[idx[ix]].peak_intensity.time))
+            ###### MATCHING: ONSET PEAK CRITERIA #####
+            is_onset_peak_in_pred_win, td_trigger_onset_peak, \
+            is_trigger_before_onset_peak, td_input_onset_peak,\
+            is_input_before_onset_peak = onset_peak_criteria(sphinx,
+            fcast, obs_values, observation_objs)
 
 
-
-            ###### MATCHING: INPUTS BEFORE ONSET PEAK #####
-            #Is the last trigger time before the onset peak time?
-            td_input_onset_peak =\
-                time_diff(last_input_time, obs_values, 'peak_time',
-                    channel)
-            is_input_before_onset_peak =\
-                is_time_before(last_input_time, obs_values, 'peak_time',
-                    channel)
-            idx = [ix for ix in range(len(is_input_before_onset_peak)) if is_input_before_onset_peak[ix] == True]
-            if idx != []:
-                print("Time difference of Inputs before Onset Peak (if any): ")
-                for ix in range(len(idx)):
-                    #Only save in sphinx obj if thresh crossed in
-                    #prediction window
-                    if observation_objs[idx[ix]] in sphinx.windows_overlap:
-                        sphinx.inputs_before_peak_intensity.append(observation_objs[idx[ix]].source)
-                        sphinx.time_difference_inputs_peak_intensity.append(td_input_onset_peak[idx[ix]])
-                        #logging
-                        print(sphinx.inputs_before_peak_intensity[ix])
-                        print(sphinx.time_difference_inputs_peak_intensity[ix])
-                        print("Observed peak_intensity time: "
-                            + str(observation_objs[idx[ix]].peak_intensity.time))
+            ###### MATCHING: MAX FLUX CRITERIA #####
+            is_max_flux_in_pred_win, td_trigger_max_time,\
+            is_trigger_before_max_time, td_input_max_time, \
+            is_input_before_max_time = max_flux_criteria(sphinx, fcast,
+            obs_values, observation_objs)
 
 
-            ###### MATCHING: SEP IN PREDICTION WINDOW #####
+            ###### MATCHING: THRESHOLD QUANTITIES #####
             #Is a threshold crossed inside the prediction window?
             #Save forecasted and observed all clear to SPHINX object
-            all_fcast_thresholds =\
-                objh.identify_all_thresholds_one(fcast)
+            all_fcast_thresholds = objh.identify_all_thresholds_one(fcast)
             for fcast_thresh in all_fcast_thresholds:
                 print("Checking Threshold: " + str(fcast_thresh))
                 
                 #Check if this threshold is present in the observations
                 #Can only be compared if present in both
-                if fcast_thresh not in \
-                    obs_values[energy_key]['thresholds']:
+                if fcast_thresh not in obs_values[energy_key]['thresholds']:
                     continue
 
                 #Add threshold so that objects saved in SPHINX object
-                #in threshold_cross_in_pred_win and is_before* arrays
+                #in contains_thresh_cross and is_*_before* arrays
                 #will be in an array in the same order as the
                 #thresholds
                 sphinx.thresholds.append(fcast_thresh)
 
-                contains_thresh_cross = \
-                    thresh_cross_in_pred_win(fcast, obs_values,
-                    fcast_thresh)
-                cross_idx = [ix for ix in range(len(contains_thresh_cross)) if contains_thresh_cross[ix] == True]
-                if cross_idx != []:
-                    print("Threshold crossed in prediction window (if any): ")
-                    for ix in range(len(cross_idx)):
-                        sphinx.threshold_crossed_in_pred_win.append(observation_objs[cross_idx[ix]].source)
-                        #logging
-                        print(sphinx.threshold_crossed_in_pred_win[ix])
-                else:
-                    sphinx.threshold_crossed_in_pred_win.append(None)
+
+                ###### THRESHOLD CROSSED IN PREDICTION WINDOW #####
+                #Is a threshold crossed in the prediction window?
+                contains_thresh_cross = threshold_cross_criteria(sphinx,
+                    fcast, obs_values, observation_objs, fcast_thresh)
 
 
-                ###### MATCHING: TRIGGERS BEFORE SEP #####
-                #Is the last trigger before the SEP event start time?
-                td_trigger_thresh_cross = time_diff_thresh(last_trigger_time, obs_values,
-                    'threshold_crossing_time', channel, fcast_thresh)
-                is_trigger_before_start =\
-                    is_time_before_thresh(last_trigger_time, obs_values,
-                    'threshold_crossing_time', channel, fcast_thresh)
-                idx = [ix for ix in range(len(is_trigger_before_start)) if is_trigger_before_start[ix] == True]
-                if idx != []:
-                    print("Triggers before Threshold Crossing (if any): ")
-                    for ix in range(len(idx)):
-                        #Only save in sphinx obj if thresh crossed in
-                        #prediction window
-                        if observation_objs[idx[ix]].source in sphinx.threshold_crossed_in_pred_win:
-                            sphinx.triggers_before_threshold_crossing.append(observation_objs[idx[ix]].source)
-                            sphinx.time_difference_triggers_threshold_crossing.append(td_trigger_thresh_cross[idx[ix]])
-                            #logging
-                            print(sphinx.triggers_before_threshold_crossing[ix])
-                            print(sphinx.time_difference_triggers_threshold_crossing[ix])
-                            threshold_crossing_time = objh.get_threshold_crossing_time(observation_objs[idx[ix]], fcast_thresh)
-                            print("Observed threshold crossing time: "
-                                + str(threshold_crossing_time))
-
-
-                ###### MATCHING: INPUTS BEFORE SEP #####
-                #Is the last input before the SEP event start time?
-                td_input_thresh_cross = time_diff_thresh(last_input_time, obs_values,
-                    'threshold_crossing_time', channel, fcast_thresh)
-                is_input_before_start =\
-                    is_time_before_thresh(last_input_time, obs_values,
-                    'threshold_crossing_time', channel, fcast_thresh)
-                idx = [ix for ix in range(len(is_input_before_start)) if is_input_before_start[ix] == True]
-                if idx != []:
-                    print("Inputs before Threshold Crossing (if any): ")
-                    for ix in range(len(idx)):
-                        #Only save in sphinx obj if thresh crossed in
-                        #prediction window
-                        if observation_objs[idx[ix]].source in sphinx.threshold_crossed_in_pred_win:
-                            sphinx.inputs_before_threshold_crossing.append(observation_objs[idx[ix]].source)
-                            sphinx.time_difference_inputs_threshold_crossing.append(td_input_thresh_cross[idx[ix]])
-                            #logging
-                            print(sphinx.inputs_before_threshold_crossing[ix])
-                            print(sphinx.time_difference_inputs_threshold_crossing[ix])
-                            threshold_crossing_time = objh.get_threshold_crossing_time(observation_objs[idx[ix]], fcast_thresh)
-                            print("Observed threshold crossing time: "
-                                + str(threshold_crossing_time))
+                ###### MATCHING: TRIGGERS/INPUTS BEFORE SEP #####
+                #Is the last trigger/input before the threshold crossing time?
+                td_trigger_thresh_cross, is_trigger_before_start, \
+                td_input_thresh_cross, is_input_before_start =\
+                before_threshold_crossing(sphinx, fcast, obs_values,
+                observation_objs, fcast_thresh)
 
