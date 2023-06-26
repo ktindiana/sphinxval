@@ -411,6 +411,7 @@ def initialize_sphinx(fcast):
     """
     sphinx = cl.SPHINX(fcast.energy_channel)
     sphinx.prediction_source = fcast.source
+    sphinx.issue_time = fcast.issue_time
     sphinx.prediction_window_start =\
         fcast.prediction_window_start
     sphinx.prediction_window_end =\
