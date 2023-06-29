@@ -1272,6 +1272,7 @@ def match_observed_onset_peak(sphinx, observation_obj, is_win_overlap,
         sphinx.observed_peak_intensity_units = observation_obj.peak_intensity.units
         sphinx.observed_peak_intensity_time = observation_obj.peak_intensity.time
 
+    return peak_criteria
 
 
 def match_observed_max_flux(sphinx, observation_obj, is_win_overlap,
@@ -1327,11 +1328,86 @@ def match_observed_max_flux(sphinx, observation_obj, is_win_overlap,
         sphinx.observed_peak_intensity_max_units = observation_obj.peak_intensity_max.units
         sphinx.observed_peak_intensity_max_time = observation_obj.peak_intensity_max.time
 
+    return max_criteria
+
+
+def match_all_clear(sphinx, observation_obj, is_win_overlap,
+    is_eruption_in_range, trigger_input_start, contains_thresh_cross,
+    is_sep_ongoing):
+    """ Apply criteria to determine if a particular observation matches
+        with the maximum flux (peak_intensity_max) prediction.
+        If identified, save the observed peak_intensity_max to the SPHINX object.
+       
+        - Prediction window overlaps with observation
+        - There is no ongoing SEP event at the start of the prediction window
+        - Last eruption within 48 hrs - 15 mins before threshold crossing
+        - The last trigger/input time if before the threshold crossing
+        - Threshold crossed in prediction window = False All Clear
+        - No threshold crossed in prediction window = True All Clear
+
+    Input:
+        
+        The ith entry for the various boolean arrays created that are the length
+        of all of the observations read into the code.
+
+    Output:
+    
+        :all_clear_status: (bool) a single boolean (or None) indicating the
+            observed All Clear value
+        
+        The SPHINX object is updated with observed values if the value is
+        found to be True or False. Otherwise, values of None will be skipped
+        because it means that this particular observation doesn't match
+        
+    """
+    all_clear_status = None
+    
+    if not is_win_overlap:
+        all_clear_status = None
+        return all_clear_status
+        
+    #Prediction and observation windows overlap
+    #If ongoing SEP event at start of prediction window, no match
+    if is_sep_ongoing:
+        all_clear_status = None
+        return all_clear_status
+    
+    #If there is no threshold crossing in prediction window,
+    #then observed all clear is True
+    if not contains_thresh_cross:
+        all_clear_status = True
+    
+    #If there is a threshold crossing in the prediction window
+    if contains_thresh_cross:
+        #The eruption must occur in the right time range
+        if is_eruption_in_range != None:
+            if not is_eruption_in_range:
+                all_clear_status = None
+                return all_clear_status
+        #The triggers and inputs must all be before threshold crossing
+        if trigger_input_start:
+            #Observed all clear is False
+            all_clear_status = False
+    
+    
+    print("Prediction window: " + str(sphinx.prediction.prediction_window_start) + " to "
+        + str(sphinx.prediction.prediction_window_end))
+    #All clear status
+    print("Observed all_clear matched:")
+    print("  " + observation_obj.source)
+    print("  " + str(all_clear_status))
+    sphinx.observed_all_clear_boolean = all_clear_status
+    sphinx.observed_all_clear_threshold = observation_obj.all_clear.threshold
+    sphinx.observed_all_clear_threshold_units = observation_obj.all_clear.threshold_units
+
+    return all_clear_status
 
 
 
 
+#################################
 ####ALL MATCHING CRITERIA #######
+#################################
 def match_all_forecasts(all_energy_channels, obs_objs, model_objs):
     """ Match all forecasts to observations.
     """
@@ -1497,6 +1573,8 @@ def match_all_forecasts(all_energy_channels, obs_objs, model_objs):
                     #The last trigger/input time if before the observed peak
                     #intensity
                     #ONSET PEAK
+                    #peak_criteria is True, False, None indicating a match
+                    #with an observation or None if no SEP event observed
                     peak_criteria = match_observed_onset_peak(sphinx,
                         observation_objs[i], is_win_overlap[i],
                         is_eruption_in_range,
@@ -1505,12 +1583,21 @@ def match_all_forecasts(all_energy_channels, obs_objs, model_objs):
                     
                    
                     #MAX FLUX
+                    #max_criteria is True, False, None indicating a match
+                    #with an observation or None if no SEP event observed
                     max_criteria = match_observed_onset_peak(sphinx,
                         observation_objs[i], is_win_overlap[i],
                         is_eruption_in_range, is_trigger_before_max_time[i],
                         is_input_before_max_time[i], is_pred_sep_overlap[i])
                     
                     
-
+                    #ALL CLEAR
+                    #all_clear_status is True if no observed SEP event,
+                    #False if observed SEP event that meets criteria,
+                    #None - if ongoing event at start of prediction window
+                    all_clear_status = match_all_clear(sphinx,
+                        observation_objs[i], is_win_overlap[i],
+                        is_eruption_in_range, trigger_input_start,
+                        contains_thresh_cross[i], is_sep_ongoing[i])
 
 

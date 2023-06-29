@@ -982,7 +982,8 @@ class SPHINX:
         self.observed_peak_intensity_time = None
         self.observed_peak_intensity_max = None
         self.observed_peak_intensity_max_time = None
-        self.observed_all_clear = None
+        #Only one All Clear status allowed per energy channel
+        self.observed_all_clear_boolean = None
         self.observed_all_clear_threshold = None
         self.observed_all_clear_threshold_units = None
         #order in arrays matches self.thresholds
