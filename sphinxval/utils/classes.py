@@ -492,6 +492,8 @@ class Forecast():
         self.energy_channel = energy_channel #dict
         self.short_name = None
         self.issue_time = None
+        self.valid = None #indicates whether prediction window starts
+                          #at the same time or after triggers/inputs
 
         
         #General info
@@ -927,22 +929,25 @@ class SPHINX:
         self.label = 'sphinx'
         self.energy_channel = energy_channel #dict
         self.issue_time = None
-        self.prediction_source = None
-        self.prediction_window_start = None
-        self.prediction_window_end = None
-        self.species = None
-        self.location = None
+        self.prediction = None #Forecast object
+#        self.prediction_source = None
+#        self.prediction_window_start = None
+#        self.prediction_window_end = None
+#        self.species = None
+#        self.location = None
 
         #MATCHING INFORMATION
         #Observations with observations windows that overlap with
         #the prediction windows - first rough cut at matching
-        self.windows_overlap = [] #array of Observation objs
+        self.prediction_observation_windows_overlap = [] #array of Observation objs
         self.thresholds = [] #all of the thresholds in the observations
         self.threshold_crossed_in_pred_win = [] #filenames of the
             #observations that satisfy the criteria (obj.source)
+        self.last_eruption_time = None
         self.last_trigger_time = None
         self.last_input_time = None
 
+        #Criteria related to observed peak intensity fields
         self.peak_intensity_time_in_prediction_window = []
         self.triggers_before_peak_intensity = []
         self.time_difference_triggers_peak_intensity = [] #hours
@@ -955,18 +960,38 @@ class SPHINX:
         self.inputs_before_peak_intensity_max = []
         self.time_difference_inputs_peak_intensity_max = [] #hours
 
+        #Criteria related to observed threshold crossing times
         self.observed_threshold_crossing_times = []
+        self.eruptions_before_threshold_crossing = []
+        self.time_difference_eruptions_threshold_crossing = []
         self.triggers_before_threshold_crossing = []
         self.time_difference_triggers_threshold_crossing = [] #hours
         self.inputs_before_threshold_crossing = []
         self.time_difference_inputs_threshold_crossing = [] #hours
 
-
-
-        #PREDICTED AND FORECAST VALUES
-        self.predicted_all_clear = None
+        self.observed_ongoing_events = [] #multiple thresholds
+ 
+        #OBSERVED VALUES THAT HAVE BEEN MATCHED TO PREDICTIONS
+        #All matched observed values are saved regardless of whether a
+        #prediction was made for that value or not.
+        #Each observed value is selected using an individual set of criteria
+        #for that specific quantity.
+        #These criteria are specified in match.py/match_all_forecasts()
+        self.observed_peak_intensity = None
+        self.observed_peak_intensity_units = None
+        self.observed_peak_intensity_time = None
+        self.observed_peak_intensity_max = None
+        self.observed_peak_intensity_max_time = None
         self.observed_all_clear = None
-        self.all_clear_threshold = None
-        self.all_clear_threshold_units = None
+        self.observed_all_clear_threshold = None
+        self.observed_all_clear_threshold_units = None
+        #order in arrays matches self.thresholds
+        self.observed_threshold_crossing_times = []
+        self.observed_start_times = []
+        self.observed_end_times = []
+        self.observed_fluences = []
+        self.observed_fluence_spectra = []
+        self.observed_time_profile = None #filename
+        
         
         return
