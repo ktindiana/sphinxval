@@ -197,15 +197,20 @@ def print_observed_values(obj):
     print(vars(obj.peak_intensity))
     print(vars(obj.peak_intensity_max))
     if obj.event_lengths != []:
-        print(vars(obj.event_lengths[0]))
+        for ev in obj.event_lengths:
+            print(vars(ev))
     if obj.fluences != []:
-        print(vars(obj.fluences[0]))
+        for fl in obj.fluences:
+            print(vars(fl))
     if obj.fluence_spectra != []:
-        print(vars(obj.fluence_spectra[0]))
+        for fls in obj.fluence_spectra:
+            print(vars(fls))
     if obj.threshold_crossings != []:
-        print(vars(obj.threshold_crossings[0]))
+        for tc in obj.threshold_crossings:
+            print(vars(tc))
     if obj.probabilities != []:
-        print(vars(obj.probabilities[0]))
+        for prob in obj.probabilities:
+            print(vars(prob))
 
 
 def print_forecast_values(obj):
@@ -240,15 +245,20 @@ def print_forecast_values(obj):
     print(vars(obj.peak_intensity))
     print(vars(obj.peak_intensity_max))
     if obj.event_lengths != []:
-        print(vars(obj.event_lengths[0]))
+        for ev in obj.event_lengths:
+            print(vars(ev))
     if obj.fluences != []:
-        print(vars(obj.fluences[0]))
+        for fl in obj.fluences:
+            print(vars(fl))
     if obj.fluence_spectra != []:
-        print(vars(obj.fluence_spectra[0]))
+        for fls in obj.fluence_spectra:
+            print(vars(fls))
     if obj.threshold_crossings != []:
-        print(vars(obj.threshold_crossings[0]))
+        for tc in obj.threshold_crossings:
+            print(vars(tc))
     if obj.probabilities != []:
-        print(vars(obj.probabilities[0]))
+        for prob in obj.probabilities:
+            print(vars(prob))
 
 
 def last_trigger_time(obj):
@@ -265,6 +275,7 @@ def last_trigger_time(obj):
         
     """
     last_time = None
+    last_eruption_time = None #flares and CMEs
     
     #Find the time of the latest CME in the trigger list
     last_cme_time = None
@@ -339,12 +350,15 @@ def last_trigger_time(obj):
     #Take the latest of all the times
     if isinstance(last_cme_time,datetime.date):
         last_time = last_cme_time
+        last_eruption_time = last_cme_time
         
     if isinstance(last_flare_time,datetime.date):
         if last_time == None:
             last_time = last_flare_time
+            last_eruption_time = last_flare_time
         else:
             last_time = max(last_time,last_flare_time)
+            last_eruption_time = max(last_eruption_time,last_flare_time)
             
     if isinstance(last_pi_time,datetime.date):
         if last_time == None:
@@ -352,7 +366,7 @@ def last_trigger_time(obj):
         else:
             last_time = max(last_time,last_pi_time)
             
-    return last_time
+    return last_eruption_time, last_time
 
 
 def last_input_time(obj):
@@ -401,7 +415,41 @@ def last_input_time(obj):
             last_time = max(last_time,last_corona_time)
     
     return last_time
+
+
+def valid_forecast(obj, last_trigger_time, last_input_time):
+    """ Check that the triggers and inputs are at the same time of
+        or before the start of the prediction window. The prediction
+        window cannot start before the info required to make
+        the forecast.
+        
+    Input:
     
+        :obj: (Forecast object)
+        
+    Output:
+    
+        Updated obj.valid field
+    
+    """
+    if obj.issue_time == None:
+        return
+        
+    if last_trigger_time == None and last_input_time == None:
+        return
+    
+    obj.valid = True
+    if last_trigger_time != None:
+        if obj.issue_time < last_trigger_time:
+            obj.valid = False
+
+    if last_input_time != None:
+        if obj.issue_time < last_input_time:
+            obj.valid = False
+
+    return
+
+
     
 def initialize_sphinx(fcast):
     """ Set up new sphinx object for a single Forecast object.
@@ -410,16 +458,19 @@ def initialize_sphinx(fcast):
 
     """
     sphinx = cl.SPHINX(fcast.energy_channel)
-    sphinx.prediction_source = fcast.source
-    sphinx.issue_time = fcast.issue_time
-    sphinx.prediction_window_start =\
-        fcast.prediction_window_start
-    sphinx.prediction_window_end =\
-        fcast.prediction_window_end
-    sphinx.species = fcast.species
-    sphinx.location = fcast.location
+    sphinx.prediction = fcast
+#    sphinx.prediction_source = fcast.source
+#    sphinx.issue_time = fcast.issue_time
+#    sphinx.prediction_window_start =\
+#        fcast.prediction_window_start
+#    sphinx.prediction_window_end =\
+#        fcast.prediction_window_end
+#    sphinx.species = fcast.species
+#    sphinx.location = fcast.location
 
     return sphinx
+
+
 
 def get_threshold_crossing_time(obj, threshold):
     """ Report the threshold crossing time for a Forecast or
@@ -452,3 +503,5 @@ def get_threshold_crossing_time(obj, threshold):
                 obj.threshold_crossings[i].crossing_time
     
     return threshold_crossing_time
+
+
