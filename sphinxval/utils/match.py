@@ -242,6 +242,7 @@ def pred_and_obs_overlap(fcast, obs):
     pred_win_end = fcast.prediction_window_end
     print("Prediction window: " + str(pred_win_st) + " to "
         + str(pred_win_end))
+        
     pred_interval = pd.Interval(pd.Timestamp(pred_win_st),
         pd.Timestamp(pred_win_end))
     
@@ -338,28 +339,33 @@ def observed_time_in_pred_win(fcast, obs_values, obs_key):
     #Extract pandas dataframe for correct energy and threshold
     energy_key = vjson.energy_channel_to_key(energy_channel)
     obs = obs_values[energy_key]['dataframes'][0] #all obs for threshold
-    
-    #Check if a threshold crossing is contained inside of the
-    #prediction window
-    pred_interval = pd.Interval(pd.Timestamp(pred_win_st),
-    pd.Timestamp(pred_win_end))
-    
-    contains_obs_time = []
-    for i in range(len(obs[obs_key])):
-        if pd.isnull(obs[obs_key][i]):
-            contains_obs_time.append(None)
-            continue
-        else:
-            obs_time = pd.Timestamp(obs[obs_key][i])
 
-        #Is the threshold crossed inside of the prediction window?
-        obs_int = pd.Interval(obs_time,obs_time)
-        if pred_interval.overlaps(obs_int):
-            contains_obs_time.append(True)
-        else:
-            contains_obs_time.append(False)
+    #Check if a threshold crossing is contained inside of the
+    #prediction window; returns False if pd.NaT
+    contains_obs_time = (obs[obs_key] >= pd.Timestamp(pred_win_st)) \
+        & (obs[obs_key] < pd.Timestamp(pred_win_end))
+
+#    #Check if a threshold crossing is contained inside of the
+#    #prediction window
+#    pred_interval = pd.Interval(pd.Timestamp(pred_win_st),
+#    pd.Timestamp(pred_win_end))
+#
+#    contains_obs_time = []
+#    for i in range(len(obs[obs_key])):
+#        if pd.isnull(obs[obs_key][i]):
+#            contains_obs_time.append(None)
+#            continue
+#        else:
+#            obs_time = pd.Timestamp(obs[obs_key][i])
+#
+#        #Is the threshold crossed inside of the prediction window?
+#        obs_int = pd.Interval(obs_time,obs_time)
+#        if pred_interval.overlaps(obs_int):
+#            contains_obs_time.append(True)
+#        else:
+#            contains_obs_time.append(False)
  
-    return contains_obs_time
+    return list(contains_obs_time)
 
 
 
@@ -408,28 +414,34 @@ def observed_time_in_pred_win_thresh(fcast, obs_values, obs_key,
     #Extract pandas dataframe for correct energy and threshold
     energy_key = vjson.energy_channel_to_key(energy_channel)
     obs = obs_values[energy_key]['dataframes'][ix] #all obs for threshold
-    
-    #Check if a threshold crossing is contained inside of the
-    #prediction window
-    pred_interval = pd.Interval(pd.Timestamp(pred_win_st),
-    pd.Timestamp(pred_win_end))
-    
-    contains_obs_time = []
-    for i in range(len(obs[obs_key])):
-        if pd.isnull(obs[obs_key][i]):
-            contains_obs_time.append(None)
-            continue
-        else:
-            obs_time = pd.Timestamp(obs[obs_key][i])
 
-        #Is the threshold crossed inside of the prediction window?
-        obs_int = pd.Interval(obs_time,obs_time)
-        if pred_interval.overlaps(obs_int):
-            contains_obs_time.append(True)
-        else:
-            contains_obs_time.append(False)
+    #Check if a threshold crossing is contained inside of the
+    #prediction window; returns False if pd.NaT
+    contains_obs_time = (obs[obs_key] >= pd.Timestamp(pred_win_st)) \
+        & (obs[obs_key] < pd.Timestamp(pred_win_end))
+
+
+#    #Check if a threshold crossing is contained inside of the
+#    #prediction window
+#    pred_interval = pd.Interval(pd.Timestamp(pred_win_st),
+#    pd.Timestamp(pred_win_end))
+#
+#    contains_obs_time = []
+#    for i in range(len(obs[obs_key])):
+#        if pd.isnull(obs[obs_key][i]):
+#            contains_obs_time.append(None)
+#            continue
+#        else:
+#            obs_time = pd.Timestamp(obs[obs_key][i])
+#
+#        #Is the threshold crossed inside of the prediction window?
+#        obs_int = pd.Interval(obs_time,obs_time)
+#        if pred_interval.overlaps(obs_int):
+#            contains_obs_time.append(True)
+#        else:
+#            contains_obs_time.append(False)
  
-    return contains_obs_time
+    return list(contains_obs_time)
 
 
 def is_time_before(time, obs_values, obs_key, energy_channel):
@@ -465,18 +477,20 @@ def is_time_before(time, obs_values, obs_key, energy_channel):
 
     #Check if time is before
     obs = obs_values[energy_key]['dataframes'][0]
-    is_before = []
-    for i in range(len(obs[obs_key])):
-        if pd.isnull(obs[obs_key][i]):
-            is_before.append(None)
-            continue
+    time_diff = (time - obs[obs_key]).astype('timedelta64[h]')
+    is_before = (time_diff <= 0)
 
-        if time < obs[obs_key][i]:
-            is_before.append(True)
-        else:
-            is_before.append(False)
+#    for i in range(len(obs[obs_key])):
+#        if pd.isnull(obs[obs_key][i]):
+#            is_before.append(None)
+#            continue
+#
+#        if time < obs[obs_key][i]:
+#            is_before.append(True)
+#        else:
+#            is_before.append(False)
             
-    return is_before
+    return list(is_before)
     
 
 def is_time_before_thresh(time, obs_values, obs_key, energy_channel, threshold):
@@ -515,18 +529,21 @@ def is_time_before_thresh(time, obs_values, obs_key, energy_channel, threshold):
 
     #Check if time is before
     obs = obs_values[energy_key]['dataframes'][ix]
-    is_before = []
-    for i in range(len(obs[obs_key])):
-        if pd.isnull(obs[obs_key][i]):
-            is_before.append(None)
-            continue
 
-        if time < obs[obs_key][i]:
-            is_before.append(True)
-        else:
-            is_before.append(False)
+    time_diff = (time - obs[obs_key]).astype('timedelta64[h]')
+    is_before = (time_diff <= 0)
+
+#    for i in range(len(obs[obs_key])):
+#        if pd.isnull(obs[obs_key][i]):
+#            is_before.append(None)
+#            continue
+#
+#        if time < obs[obs_key][i]:
+#            is_before.append(True)
+#        else:
+#            is_before.append(False)
             
-    return is_before
+    return list(is_before)
 
 
 def time_diff(time, obs_values, obs_key, energy_channel):
@@ -562,15 +579,16 @@ def time_diff(time, obs_values, obs_key, energy_channel):
 
     #Check if time is before
     obs = obs_values[energy_key]['dataframes'][0]
-    time_diff = []
-    for i in range(len(obs[obs_key])):
-        if pd.isnull(obs[obs_key][i]):
-            time_diff.append(None)
-            continue
+    time_diff = (time - obs[obs_key]).astype('timedelta64[s]')
+    time_diff = time_diff/(60.*60.)
+#    for i in range(len(obs[obs_key])):
+#        if pd.isnull(obs[obs_key][i]):
+#            time_diff.append(None)
+#            continue
+#
+#        time_diff.append((time - obs[obs_key][i]).total_seconds()/(60*60))
 
-        time_diff.append((time - obs[obs_key][i]).total_seconds()/(60*60))
-
-    return time_diff
+    return list(time_diff)
     
 
 def time_diff_thresh(time, obs_values, obs_key, energy_channel, threshold):
@@ -611,15 +629,16 @@ def time_diff_thresh(time, obs_values, obs_key, energy_channel, threshold):
 
     #Check if time is before
     obs = obs_values[energy_key]['dataframes'][ix]
-    time_diff = []
-    for i in range(len(obs[obs_key])):
-        if pd.isnull(obs[obs_key][i]):
-            time_diff.append(None)
-            continue
+    time_diff = (time - obs[obs_key]).astype('timedelta64[s]')
+    time_diff = time_diff/(60.*60.)
+#    for i in range(len(obs[obs_key])):
+#        if pd.isnull(obs[obs_key][i]):
+#            time_diff.append(None)
+#            continue
+#
+#        time_diff.append((time - obs[obs_key][i]).total_seconds()/(60*60))
 
-        time_diff.append((time - obs[obs_key][i]).total_seconds()/(60*60))
-
-    return time_diff
+    return list(time_diff)
 
 
 ############### MATCHING CRITERIA FOR SPECIFIC QUANTITIES #####
@@ -1094,40 +1113,45 @@ def pred_win_sep_overlap(sphinx, fcast, obs_values, observation_objs,
     obs = obs_values[energy_key]['dataframes'][ix]
     
     #Check if prediction window starts inside of an observed SEP event
-    
-    
-    pred_win = pd.Interval(pd.Timestamp(pred_win_st),
-                        pd.Timestamp(pred_win_end))
-    
-    is_overlap = []
-    sep_start = None
-    sep_end = None
-    print("Prediction window and SEP event overlaps (if any): ")
-    for i in range(len(obs['start_time'])):
-        if pd.isnull(obs['start_time'][i]):
-            is_overlap.append(None)
-            continue
-        else:
-            sep_event = pd.Interval(pd.Timestamp(obs['start_time'][i]),
-                            pd.Timestamp(obs['end_time'][i]))
+    overlap_start = (obs['start_time'] >= pd.Timestamp(pred_win_st))\
+        & (obs['start_time'] < pd.Timestamp(pred_win_end))
+    overlap_end = (obs['end_time'] >= pd.Timestamp(pred_win_st))\
+        & (obs['start_time'] < pd.Timestamp(pred_win_end))
 
-        #Is the prediction window start inside of an SEP event?
-        if sep_event.overlaps(pred_win):
-            is_overlap.append(True)
-            sep_start = obs['start_time'][i]
-            sep_end = obs['end_time'][i]
-            
-            #Save event to SPHINX object
-            sphinx.observed_ongoing_events.append(observation_objs[i].source)
-            #logging
-            print("  " + str(observation_objs[i].source))
-            print("  Observed SEP event: "
-            + str(sep_start) + " to " + str(sep_end))
-            
-        else:
-            is_overlap.append(False)
+    is_overlap = overlap_start | overlap_end
 
-    return is_overlap
+#    pred_win = pd.Interval(pd.Timestamp(pred_win_st),
+#                        pd.Timestamp(pred_win_end))
+#
+#    is_overlap = []
+#    sep_start = None
+#    sep_end = None
+#    print("Prediction window and SEP event overlaps (if any): ")
+#    for i in range(len(obs['start_time'])):
+#        if pd.isnull(obs['start_time'][i]):
+#            is_overlap.append(None)
+#            continue
+#        else:
+#            sep_event = pd.Interval(pd.Timestamp(obs['start_time'][i]),
+#                            pd.Timestamp(obs['end_time'][i]))
+#
+#        #Is the prediction window start inside of an SEP event?
+#        if sep_event.overlaps(pred_win):
+#            is_overlap.append(True)
+#            sep_start = obs['start_time'][i]
+#            sep_end = obs['end_time'][i]
+#
+#            #Save event to SPHINX object
+#            sphinx.observed_ongoing_events.append(observation_objs[i].source)
+#            #logging
+#            print("  " + str(observation_objs[i].source))
+#            print("  Observed SEP event: "
+#            + str(sep_start) + " to " + str(sep_end))
+#
+#        else:
+#            is_overlap.append(False)
+
+    return list(is_overlap)
 
 
  
@@ -1360,6 +1384,13 @@ def match_all_clear(sphinx, observation_obj, is_win_overlap,
         because it means that this particular observation doesn't match
         
     """
+    #If it was already found that a threshold was crossed in a matched
+    #observation and the all clear status was set to False, don't overwrite
+    #with another observation later in the prediction window
+    #Mainly relevant for long prediction windows > 24 - 48 hours
+    if sphinx.observed_all_clear_boolean == False:
+        return None
+    
     all_clear_status = None
     
     if not is_win_overlap:
@@ -1436,6 +1467,7 @@ def match_all_forecasts(all_energy_channels, obs_objs, model_objs):
             print("\n")
             print(fcast.short_name)
             print(fcast.source)
+            print("Issue time: " + str(fcast.issue_time))
             print("Last trigger time: " + str(last_trigger_time))
             print("Last eruption time: " + str(last_eruption_time))
             
@@ -1546,9 +1578,12 @@ def match_all_forecasts(all_energy_channels, obs_objs, model_objs):
                     #None if no SEP event
                     is_eruption_in_range = None
                     if not pd.isnull(td_eruption_thresh_cross[i]):
-                        if td_eruption_thresh_cross[i] >= 0.25\
-                            and td_eruption_thresh_cross[i] < 48.:
+                        if td_eruption_thresh_cross[i] <= -0.25\
+                            and td_eruption_thresh_cross[i] > -24.:
                             is_eruption_in_range = True
+                        if td_eruption_thresh_cross[i] > -0.25\
+                            or td_eruption_thresh_cross[i] <= -24.:
+                            is_eruption_in_range = False
                 
                     #Is the last trigger or input before the threshold crossing
                     #None if no SEP event
