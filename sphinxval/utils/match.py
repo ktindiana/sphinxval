@@ -1358,9 +1358,8 @@ def match_observed_max_flux(sphinx, observation_obj, is_win_overlap,
 def match_all_clear(sphinx, observation_obj, is_win_overlap,
     is_eruption_in_range, trigger_input_start, contains_thresh_cross,
     is_sep_ongoing):
-    """ Apply criteria to determine if a particular observation matches
-        with the maximum flux (peak_intensity_max) prediction.
-        If identified, save the observed peak_intensity_max to the SPHINX object.
+    """ Apply criteria to determine the observed All Clear status for a
+        particular forecast.
        
         - Prediction window overlaps with observation
         - There is no ongoing SEP event at the start of the prediction window
@@ -1432,6 +1431,116 @@ def match_all_clear(sphinx, observation_obj, is_win_overlap,
     sphinx.observed_all_clear_threshold_units = observation_obj.all_clear.threshold_units
 
     return all_clear_status
+
+
+
+def match_sep_quantities(sphinx, observation_obj, thresh, is_win_overlap,
+    is_eruption_in_range, trigger_input_start, contains_thresh_cross,
+    is_sep_ongoing):
+    """ Apply criteria to determine if a forecast occurs prior to SEP
+        start time and extract all relevant SEP quantities.
+        
+        The SEP quantities returned are all related to the start time of
+        the SEP event. This requires that the forecast come in prior to the
+        threshold crossing.
+        - start time, threshold crossing time, fluence, fluence spectrum
+       
+       Matching:
+        - Prediction window overlaps with observation
+        - There is no ongoing SEP event at the start of the prediction window
+        - Last eruption within 48 hrs - 15 mins before threshold crossing
+        - The last trigger/input time if before the threshold crossing
+        - Threshold crossed in prediction window = False All Clear
+        - No threshold crossed in prediction window = True All Clear
+
+    Input:
+        
+        :sphinx: (SPHINX object) will be updated
+        :observation_obj: A single observation object
+        :thresh: (dict) threshold being tested
+        
+        The rest are the ith entry for the various boolean arrays
+        that are the length of all of the observations read into the code.
+
+    Output:
+    
+        :sep_status: (bool) a single boolean (or None) indicating the
+            whether SEP info was saved to the SPHINX object
+            True - SEP quantities added to SPHINX
+            False - no SEP event observed or an SEP is already ongoing
+            None - the observation isn't associated with the forecast
+        
+        The SPHINX object is updated with observed values if the value is
+        found to be True or False. Otherwise, values of None will be skipped
+        because it means that this particular observation doesn't match
+        
+    """
+    
+    sep_status = None
+    
+    if not is_win_overlap:
+        sep_status = None
+        return sep_status
+        
+    #Prediction and observation windows overlap
+    #If ongoing SEP event at start of prediction window, no match
+    if is_sep_ongoing:
+        sep_status = False
+        return sep_status
+    
+    #No threshold crossing in prediction window, no SEP event
+    if not contains_thresh_cross:
+        sep_status = False
+        return sep_status
+    
+    #If there is a threshold crossing in the prediction window
+    if contains_thresh_cross:
+        #The eruption must occur in the right time range
+        if is_eruption_in_range != None:
+            if not is_eruption_in_range:
+                sep_status = None
+                return sep_status
+        #The triggers and inputs must all be before threshold crossing
+        if trigger_input_start:
+            sep_status = True
+    
+    
+    print("Prediction window: " + str(sphinx.prediction.prediction_window_start) + " to "
+        + str(sphinx.prediction.prediction_window_end))
+    #All clear status
+    print("Observed SEP event matched:")
+    print("  " + observation_obj.source)
+    
+    #Threshold Crossing
+    threshold_crossing_time = None
+    for th in observation_obj.threshold_crossings:
+        if th.threshold != thresh['threshold']:
+            continue
+        sphinx.observed_threshold_crossing_times.append(th.crossing_time)
+ 
+    #Start time and channel fluence
+    start_time = None
+    fluence = None
+    for i in range(len(observation_obj.event_lengths)):
+        event = observation_obj.event_lengths[i]
+        if event.threshold != thresh['threshold']:
+            continue
+        sphinx.observed_start_times.append(event.start_time)
+        sphinx.observed_fluences.append(observation_obj.fluences[i].fluence)
+
+    #Fluence spectra
+    spectrum = None
+    for flsp in observation_obj.fluence_spectra:
+        if flsp.threshold_start != thresh['threshold']:
+            continue
+        sphinx.observed_fluence_spectra.append(flsp.fluence_spectrum)
+
+    print(sphinx.observed_threshold_crossing_times)
+    print(sphinx.observed_start_times)
+    print(sphinx.observed_fluences)
+    print(sphinx.observed_fluence_spectra)
+
+    return sep_status
 
 
 
@@ -1636,3 +1745,7 @@ def match_all_forecasts(all_energy_channels, obs_objs, model_objs):
                         contains_thresh_cross[i], is_sep_ongoing[i])
 
 
+                    #SEP QUANTITIES RELATED TO START TIME
+                    sep_status = match_sep_quantities(sphinx, observation_objs[i], fcast_thresh, is_win_overlap[i],
+                        is_eruption_in_range, trigger_input_start,
+                        contains_thresh_cross[i], is_sep_ongoing[i])
