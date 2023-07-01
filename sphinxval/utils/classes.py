@@ -961,13 +961,19 @@ class SPHINX:
         self.time_difference_inputs_peak_intensity_max = [] #hours
 
         #Criteria related to observed threshold crossing times
-        self.observed_threshold_crossing_times = []
         self.eruptions_before_threshold_crossing = []
         self.time_difference_eruptions_threshold_crossing = []
         self.triggers_before_threshold_crossing = []
         self.time_difference_triggers_threshold_crossing = [] #hours
         self.inputs_before_threshold_crossing = []
         self.time_difference_inputs_threshold_crossing = [] #hours
+
+        #Criteria related to SEP end times
+        self.triggers_before_sep_end = []
+        self.time_difference_triggers_sep_end = [] #hours
+        self.inputs_before_sep_end = []
+        self.time_difference_inputs_sep_end = [] #hours
+
 
         self.observed_ongoing_events = [] #multiple thresholds
  

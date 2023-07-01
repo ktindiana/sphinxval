@@ -1002,7 +1002,92 @@ def before_threshold_crossing(sphinx, fcast, obs_values, observation_objs,
 
     return td_trigger_thresh_cross, is_trigger_before_start, \
         td_input_thresh_cross, is_input_before_start
+ 
+ 
+ 
+def before_sep_end(sphinx, fcast, obs_values, observation_objs,
+        thresh):
+    """ Calculate the boolean arrays to indicate if the triggers and inputs
+        occurred prior to a threshold crossing.
+        
+        Load information into sphinx object.
+        
+    Input:
     
+        :sphinx: (SPHINX Object) initialized and contains observation
+            forecast information
+        :fcast: (Forecast Object) a specific forecast
+        :obs_values: (pandas Dataframe) for one energy channel and
+            all thresholds
+        :observation_objs: (array of Observation objects) all
+            observations for a specific energy channel
+        :thresh: (dict) specific threshold for threshold crossing
+            
+    Ouput:
+        
+        For all output, indices of arrays match with indices of
+        obs_values and observation_objs
+        
+        :td_trigger_thresh_cross: (float array) hours between last trigger time
+            and threshold crossing time
+        :is_trigger_before_start: (boolean array) indicates if trigger is
+            before the threshold was crossed
+        :td_input_thresh_cross: (float array) hours between last input time
+            and threshold crossing time
+        :is_input_before_start: (boolean array) indicates if input is
+            before the threshold was crossed
+
+ 
+    """
+    last_trigger_time = sphinx.last_trigger_time
+    last_input_time = sphinx.last_input_time
+    channel = fcast.energy_channel
+
+    ###### MATCHING: TRIGGERS/INPUTS BEFORE SEP #####
+    td_trigger_sep_end = time_diff_thresh(last_trigger_time, obs_values,
+        'end_time', channel, thresh)
+    is_trigger_before_end = is_time_before_thresh(last_trigger_time,
+        obs_values, 'end_time', channel, thresh)
+    idx = [ix for ix in range(len(is_trigger_before_end)) if is_trigger_before_end[ix] == True]
+    print("Triggers before SEP end time (if any): ")
+    if idx != []:
+        for ix in range(len(idx)):
+            #Only save in sphinx obj if thresh crossed in
+            #prediction window
+            if observation_objs[idx[ix]].source in sphinx.threshold_crossed_in_pred_win:
+                sphinx.triggers_before_sep_end.append(observation_objs[idx[ix]].source)
+                sphinx.time_difference_triggers_sep_end.append(td_trigger_sep_end[idx[ix]])
+                #logging
+                print("  " +
+                str(sphinx.triggers_before_sep_end[ix]))
+                print("  " +
+                str(sphinx.time_difference_triggers_sep_end[ix]))
+
+
+    ###### MATCHING: INPUTS BEFORE SEP #####
+    #Is the last input before the SEP event start time?
+    td_input_sep_end = time_diff_thresh(last_input_time, obs_values,
+        'end_time', channel, thresh)
+    is_input_before_end = is_time_before_thresh(last_input_time, obs_values,
+        'end_time', channel, thresh)
+    idx = [ix for ix in range(len(is_input_before_end)) if is_input_before_end[ix] == True]
+    print("Inputs before SEP end time (if any): ")
+    if idx != []:
+        for ix in range(len(idx)):
+            #Only save in sphinx obj if thresh crossed in
+            #prediction window
+            if observation_objs[idx[ix]].source in sphinx.threshold_crossed_in_pred_win:
+                sphinx.inputs_before_sep_end.append(observation_objs[idx[ix]].source)
+                sphinx.time_difference_inputs_sep_end.append(td_input_sep_end[idx[ix]])
+                #logging
+                print("  " + str(sphinx.inputs_before_sep_end[ix]))
+                print("  " +
+                str(sphinx.time_difference_inputs_sep_end[ix]))
+
+    return td_trigger_sep_end, is_trigger_before_end, \
+        td_input_sep_end, is_input_before_end
+ 
+ 
 
 
 def eruption_before_threshold_crossing(sphinx, fcast, obs_values,
@@ -1066,6 +1151,7 @@ def eruption_before_threshold_crossing(sphinx, fcast, obs_values,
     return td_eruption_thresh_cross, is_eruption_before_start
 
 
+
 def pred_win_sep_overlap(sphinx, fcast, obs_values, observation_objs,
         threshold):
     """ Calculate the boolean arrays that indicate if an
@@ -1119,37 +1205,6 @@ def pred_win_sep_overlap(sphinx, fcast, obs_values, observation_objs,
         & (obs['start_time'] < pd.Timestamp(pred_win_end))
 
     is_overlap = overlap_start | overlap_end
-
-#    pred_win = pd.Interval(pd.Timestamp(pred_win_st),
-#                        pd.Timestamp(pred_win_end))
-#
-#    is_overlap = []
-#    sep_start = None
-#    sep_end = None
-#    print("Prediction window and SEP event overlaps (if any): ")
-#    for i in range(len(obs['start_time'])):
-#        if pd.isnull(obs['start_time'][i]):
-#            is_overlap.append(None)
-#            continue
-#        else:
-#            sep_event = pd.Interval(pd.Timestamp(obs['start_time'][i]),
-#                            pd.Timestamp(obs['end_time'][i]))
-#
-#        #Is the prediction window start inside of an SEP event?
-#        if sep_event.overlaps(pred_win):
-#            is_overlap.append(True)
-#            sep_start = obs['start_time'][i]
-#            sep_end = obs['end_time'][i]
-#
-#            #Save event to SPHINX object
-#            sphinx.observed_ongoing_events.append(observation_objs[i].source)
-#            #logging
-#            print("  " + str(observation_objs[i].source))
-#            print("  Observed SEP event: "
-#            + str(sep_start) + " to " + str(sep_end))
-#
-#        else:
-#            is_overlap.append(False)
 
     return list(is_overlap)
 
@@ -1449,9 +1504,7 @@ def match_sep_quantities(sphinx, observation_obj, thresh, is_win_overlap,
         - Prediction window overlaps with observation
         - There is no ongoing SEP event at the start of the prediction window
         - Last eruption within 48 hrs - 15 mins before threshold crossing
-        - The last trigger/input time if before the threshold crossing
-        - Threshold crossed in prediction window = False All Clear
-        - No threshold crossed in prediction window = True All Clear
+        - The last trigger/input time is before the threshold crossing
 
     Input:
         
@@ -1503,6 +1556,9 @@ def match_sep_quantities(sphinx, observation_obj, thresh, is_win_overlap,
         #The triggers and inputs must all be before threshold crossing
         if trigger_input_start:
             sep_status = True
+        else:
+            sep_status = None
+            return sep_status
     
     
     print("Prediction window: " + str(sphinx.prediction.prediction_window_start) + " to "
@@ -1541,6 +1597,87 @@ def match_sep_quantities(sphinx, observation_obj, thresh, is_win_overlap,
     print(sphinx.observed_fluence_spectra)
 
     return sep_status
+
+
+
+def match_sep_end_time(sphinx, observation_obj, thresh, is_win_overlap,
+    is_eruption_in_range, trigger_input_end, is_pred_sep_overlap):
+    """ Apply criteria to determine if a forecast occurs prior to SEP
+        start time and extract all relevant SEP quantities.
+        
+        The SEP quantities returned are all related to the start time of
+        the SEP event. This requires that the forecast come in prior to the
+        threshold crossing.
+        - start time, threshold crossing time, fluence, fluence spectrum
+       
+       Matching:
+        - Prediction window overlaps with observation
+        - There is a threshold crossing in the prediction window OR
+            there is an ongoing SEP event at the start of the prediction window
+        - Last eruption within 48 hrs - 15 mins before threshold crossing
+        - The last trigger/input time if before the end time
+
+    Input:
+        
+        :sphinx: (SPHINX object) will be updated
+        :observation_obj: A single observation object
+        :thresh: (dict) threshold being tested
+        
+        The rest are the ith entry for the various boolean arrays
+        that are the length of all of the observations read into the code.
+
+    Output:
+    
+        :sep_status: (bool) a single boolean (or None) indicating the
+            whether SEP info was saved to the SPHINX object
+            True - SEP quantities added to SPHINX
+            False - no SEP event observed or an SEP is already ongoing
+            None - the observation isn't associated with the forecast
+        
+        The SPHINX object is updated with observed values if the value is
+        found to be True or False. Otherwise, values of None will be skipped
+        because it means that this particular observation doesn't match
+        
+    """
+    
+    end_status = None
+    
+    #Prediction and observation windows must overlap
+    if not is_win_overlap:
+        end_status = None
+        return end_status
+        
+    #The prediction window must overlap with an SEP event
+    if not is_pred_sep_overlap:
+        end_status = False #no SEP event, no values
+
+    #If there is an SEP event, the eruption must occur in the right time range
+    if is_eruption_in_range != None:
+        if not is_eruption_in_range:
+            sep_status = None
+            return sep_status
+    #The triggers and inputs must all be before threshold crossing
+    if trigger_input_end:
+        end_status = True
+    else:
+        end_status = None
+        return end_status
+    
+    #Matched End Time
+    print("Observed SEP event matched:")
+    print("  " + observation_obj.source)
+ 
+    #Start time and channel fluence
+    end_time = None
+    for i in range(len(observation_obj.event_lengths)):
+        event = observation_obj.event_lengths[i]
+        if event.threshold != thresh['threshold']:
+            continue
+        sphinx.observed_end_times.append(event.end_time)
+
+    print(sphinx.observed_end_times)
+
+    return end_status
 
 
 
@@ -1665,6 +1802,14 @@ def match_all_forecasts(all_energy_channels, obs_objs, model_objs):
                 td_input_thresh_cross, is_input_before_start =\
                 before_threshold_crossing(sphinx, fcast, obs_values,
                 observation_objs, fcast_thresh)
+                
+                
+                ########### TRIGGERS/INPUTS BEFORE END OF SEP #####
+                #Is the last trigger/input before the threshold crossing time?
+                td_trigger_end, is_trigger_before_end, \
+                td_input_end, is_input_before_end =\
+                before_sep_end(sphinx, fcast, obs_values,
+                observation_objs, fcast_thresh)
 
 
                 ######### FLARE/CME BEFORE SEP START ###############
@@ -1681,6 +1826,7 @@ def match_all_forecasts(all_energy_channels, obs_objs, model_objs):
 
 
                 ############ MATCHING AND EXTRACTING OBSERVED VALUES#######
+                #Loop over all observations
                 for i in range(len(is_win_overlap)): # No. of observations
                     #Bool for eruption 48 hours to 15 mins before
                     #threshold crossing.
@@ -1705,7 +1851,20 @@ def match_all_forecasts(all_energy_channels, obs_objs, model_objs):
                         else:
                             trigger_input_start = trigger_input_start and \
                                 is_trigger_before_start[i]
-                
+
+
+                    #Is the last trigger or input before the SEP end
+                    #None if no SEP event
+                    trigger_input_end = None
+                    if is_trigger_before_end[i] != None:
+                        trigger_input_end = is_trigger_before_end[i]
+                    if is_input_before_end[i] != None:
+                        if trigger_input_end == None:
+                            trigger_input_end = is_input_before_end[i]
+                        else:
+                            trigger_input_end = trigger_input_end and \
+                                is_trigger_before_end[i]
+
                 
                     ###ONSET PEAK & MAX FLUX
                     #Prediction window overlaps with observation
@@ -1749,3 +1908,9 @@ def match_all_forecasts(all_energy_channels, obs_objs, model_objs):
                     sep_status = match_sep_quantities(sphinx, observation_objs[i], fcast_thresh, is_win_overlap[i],
                         is_eruption_in_range, trigger_input_start,
                         contains_thresh_cross[i], is_sep_ongoing[i])
+
+
+                    #SEP QUANTITIES RELATED TO END TIME
+                    end_status = match_sep_end_time(sphinx, observation_objs[i], fcast_thresh, is_win_overlap[i],
+                        is_eruption_in_range, trigger_input_end,
+                        is_pred_sep_overlap[i])
