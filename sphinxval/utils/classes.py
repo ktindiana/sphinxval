@@ -518,7 +518,7 @@ class Forecast():
         #Forecasts
         self.source = None #source from which forcasts ingested
                         #JSON filename or perhaps database in future
-        self.all_clear_boolean = None #All_Clear object
+        self.all_clear = None #All_Clear object
         self.peak_intensity = None #Peak_Intensity object
         self.peak_intensity_max = None #Peak_Intensity object
         self.event_lengths = []
@@ -928,18 +928,15 @@ class SPHINX:
         
         self.label = 'sphinx'
         self.energy_channel = energy_channel #dict
-        self.issue_time = None
         self.prediction = None #Forecast object
-#        self.prediction_source = None
-#        self.prediction_window_start = None
-#        self.prediction_window_end = None
-#        self.species = None
-#        self.location = None
 
         #MATCHING INFORMATION
         #Observations with observations windows that overlap with
         #the prediction windows - first rough cut at matching
         self.prediction_observation_windows_overlap = [] #array of Observation objs
+        self.overlapping_indices = [] #indices of observations as they were read in
+        self.observed_sep_profiles = [] #Always fill for overlapping observations
+        
         self.thresholds = [] #all of the thresholds in the observations
         self.threshold_crossed_in_pred_win = [] #filenames of the
             #observations that satisfy the criteria (obj.source)
@@ -974,7 +971,7 @@ class SPHINX:
         self.inputs_before_sep_end = []
         self.time_difference_inputs_sep_end = [] #hours
 
-
+        self.prediction_window_sep_overlap = []
         self.observed_ongoing_events = [] #multiple thresholds
  
         #OBSERVED VALUES THAT HAVE BEEN MATCHED TO PREDICTIONS
@@ -987,6 +984,7 @@ class SPHINX:
         self.observed_peak_intensity_units = None
         self.observed_peak_intensity_time = None
         self.observed_peak_intensity_max = None
+        self.observed_peak_intensity_max_units = None
         self.observed_peak_intensity_max_time = None
         #Only one All Clear status allowed per energy channel
         self.observed_all_clear_boolean = None
@@ -998,7 +996,254 @@ class SPHINX:
         self.observed_end_times = []
         self.observed_fluences = []
         self.observed_fluence_spectra = []
-        self.observed_time_profile = None #filename
         
         
+        return
+
+
+    def Match_Criteria():
+        """ Print matching criteria to match up observations to
+            each predicted quantity.
+
+        """
+        print("\n")
+        print("====== Matching Criteria =======")
+        print("\n")
+        print("------ Criteria to match with an observed SEP event ----------")
+        print("- Prediction window overlaps with observation")
+        print("- Last eruption within 48 hrs - 15 mins before threshold "
+            "crossing")
+        print("- The prediction window overlaps with an SEP event in any " "threshold - only a comparison when there is an SEP event")
+        print("- The last trigger/input time if before the observed peak "
+            "intensity")
+
+        return
+
+
+
+    def Match_Report(self):
+        """ Generate a report describing all of the steps involved in the
+            matching and information about the prediction and observations.
+
+        """
+
+        print("\n")
+        print("=================== Matching Report =========================")
+        print("-------------------------------------------------------------")
+        print("Model and Prediction Information")
+        print("-------------------------------------------------------------")
+        print("Model: " + self.prediction.short_name)
+        print("Original prediction source: " + self.prediction.source)
+        print("Prediction Issue time: " + str(self.prediction.issue_time))
+        print("Energy Channel: " + str(self.energy_channel))
+
+        print("-------------------------------------------------------------")
+        print("All Observations overlapping with the Prediction Window")
+        print("-------------------------------------------------------------")
+        print("Prediction Window: "
+            + str(self.prediction.prediction_window_start) + " to "
+            + str(self.prediction.prediction_window_end))
+        print("Observations that overlapped with Prediction Window:")
+        if self.prediction_observation_windows_overlap == []:
+            print("No matching observations were found.")
+        else:
+            print("Observation Sources: ")
+            for obs in self.prediction_observation_windows_overlap:
+                print(obs.source)
+            print("Observed Time Profiles: ")
+            for prof in self.observed_sep_profiles:
+                print(prof)
+
+        print("-------------------------------------------------------------")
+        print("Prediction Eruption/Trigger/Input Timing")
+        print("-------------------------------------------------------------")
+        print("Prediction last eruption time: " + str(self.last_eruption_time))
+        print("Prediction last trigger time: " + str(self.last_trigger_time))
+        print("Prediction last input time: " + str(self.last_input_time))
+
+        print("-------------------------------------------------------------")
+        print("Thresholds Applied to the Energy Channel")
+        print("-------------------------------------------------------------")
+        print("All values below related to thresholds are in the order of "
+            "the matched observations and thresholds.")
+        if self.thresholds == []:
+            print("No thresholds were present in both predictions and "
+                "observations.")
+        else:
+            for thresh in self.thresholds:
+                print(thresh)
+
+        print("-------------------------------------------------------------")
+        print("Were thresholds crossed inside of the Prediction Window?")
+        print("(In order of matched observation and threshold.)")
+        print("-------------------------------------------------------------")
+        if self.threshold_crossed_in_pred_win == []:
+            print("No thresholds were present in both predictions and "
+                "observations.")
+        else:
+            print(self.threshold_crossed_in_pred_win)
+            print("Observed threshold crossing times: ")
+            for tm in self.observed_threshold_crossing_times:
+                print(tm)
+            
+
+        print("-------------------------------------------------------------")
+        print("Was the Eruption (flare/CME) before Threshold Crossing?")
+        print("-------------------------------------------------------------")
+        if self.eruptions_before_threshold_crossing == []:
+            print("No eruption information used by model.")
+        else:
+            print(self.eruptions_before_threshold_crossing)
+            print("Time difference, eruption time - threshold crossing time "
+                "(hrs):")
+            for diff in self.time_difference_eruptions_threshold_crossing:
+                print(diff)
+
+        print("-------------------------------------------------------------")
+        print("Were all Triggers before Threshold Crossing? ")
+        print("-------------------------------------------------------------")
+        if self.triggers_before_threshold_crossing == []:
+            print("No triggers used by model.")
+        else:
+            print(self.triggers_before_threshold_crossing)
+
+        print("-------------------------------------------------------------")
+        print("Were all Inputs before Threshold Crossing?")
+        print("-------------------------------------------------------------")
+        if self.inputs_before_threshold_crossing == []:
+            print("No inputs used by model.")
+        else:
+            print(self.inputs_before_threshold_crossing)
+        
+        print("-------------------------------------------------------------")
+        print("Is the last Trigger before the Onset Peak (peak_intensity)?")
+        print("-------------------------------------------------------------")
+        if self.triggers_before_peak_intensity == []:
+            print("No triggers used by model.")
+        else:
+            print(self.triggers_before_peak_intensity)
+            print("Time difference (hrs), last trigger - onset peak time:")
+            for tm in self.time_difference_triggers_peak_intensity:
+                print(tm)
+
+        print("-------------------------------------------------------------")
+        print("Is the last Input before the Onset Peak (peak_intensity)?")
+        print("-------------------------------------------------------------")
+        if self.inputs_before_peak_intensity == []:
+            print("No inputs used by model.")
+        else:
+            print(self.inputs_before_peak_intensity)
+            print("Time difference (hrs), last input - onset peak time:")
+            for tm in self.time_difference_inputs_peak_intensity:
+                print(tm)
+
+        print("-------------------------------------------------------------")
+        print("Is the last Trigger before the Max Flux (peak_intensity_max)?")
+        print("-------------------------------------------------------------")
+        if self.triggers_before_peak_intensity_max == []:
+            print("No triggers used by model.")
+        else:
+            print(self.triggers_before_peak_intensity_max)
+            print("Time difference (hrs), last trigger - max flux time:")
+            for tm in self.time_difference_triggers_peak_intensity_max:
+                print(tm)
+
+        print("-------------------------------------------------------------")
+        print("Is the last Input before the Max Flux (peak_intensity_max)?")
+        print("-------------------------------------------------------------")
+        if self.inputs_before_peak_intensity_max == []:
+            print("No inputs used by model.")
+        else:
+            print(self.inputs_before_peak_intensity_max)
+            print("Time difference (hrs), last input - max flux time:")
+            for tm in self.time_difference_inputs_peak_intensity_max:
+                print(tm)
+
+        print("-------------------------------------------------------------")
+        print("Is the last Trigger before the SEP End Time?")
+        print("-------------------------------------------------------------")
+        if self.triggers_before_sep_end == []:
+            print("No triggers used by model.")
+        else:
+            print(self.triggers_before_sep_end)
+            print("Time difference (hrs), last trigger - SEP end time:")
+            for tm in self.time_difference_triggers_sep_end:
+                print(tm)
+
+        print("-------------------------------------------------------------")
+        print("Is the last Input before the SEP End Time?")
+        print("-------------------------------------------------------------")
+        if self.inputs_before_sep_end == []:
+            print("No inputs used by model.")
+        else:
+            print(self.inputs_before_sep_end)
+            print("Time difference (hrs), last input - SEP end time:")
+            for tm in self.time_difference_inputs_sep_end:
+                print(tm)
+
+        print("-------------------------------------------------------------")
+        print("Does the Prediction Window overlap at all with an observed SEP event?")
+        print("-------------------------------------------------------------")
+        if self.prediction_window_sep_overlap == []:
+            print("No SEP events.")
+        else:
+            print(self.prediction_window_sep_overlap)
+
+        print("-------------------------------------------------------------")
+        print("Is there an ongoing observed SEP event at start of prediction window?")
+        print("-------------------------------------------------------------")
+        if self.observed_ongoing_events == []:
+            print("No SEP events.")
+        else:
+            print(self.observed_ongoing_events)
+
+        print("================= MATCHED OBSERVED VALUES ===================")
+
+        print("-------------------------------------------------------------")
+        print("Observed All Clear (True = No SEP, False = SEP)")
+        print("-------------------------------------------------------------")
+        print("Observed All Clear Status: "
+            + str(self.observed_all_clear_boolean))
+        print("All Clear Threshold: " + str(self.observed_all_clear_threshold))
+        print("All Clear Threshold Units: "
+            + str(self.observed_all_clear_threshold_units))
+
+        print("-------------------------------------------------------------")
+        print("Observed Onset Peak (peak_intensity)")
+        print("-------------------------------------------------------------")
+        print("Intensity: " + str(self.observed_peak_intensity))
+        print("Units: " + str(self.observed_peak_intensity_units))
+        print("Time: " + str(self.observed_peak_intensity_time))
+
+        print("-------------------------------------------------------------")
+        print("Observed Max Flux (peak_intensity_max)")
+        print("-------------------------------------------------------------")
+        print("Intensity: " + str(self.observed_peak_intensity_max))
+        print("Units: " + str(self.observed_peak_intensity_max_units))
+        print("Time: " + str(self.observed_peak_intensity_max_time))
+
+        print("-------------------------------------------------------------")
+        print("Observed SEP Event Characteristics: ")
+        print("-------------------------------------------------------------")
+        if self.observed_threshold_crossing_times == []:
+            print("No SEP events at specified thresholds observed.")
+        else:
+            for j in range(len(self.observed_threshold_crossing_times)):
+                print("Threshold crossing time: "
+                    + str(self.observed_threshold_crossing_times[j]))
+                print("Start time: " + str(self.observed_start_times[j]))
+                print("Channel fluence: " + str(self.observed_fluences[j]))
+                print("Fluence Spectrum: " + str(self.observed_fluence_spectra))
+
+        print("-------------------------------------------------------------")
+        print("Observed SEP Event End Times: ")
+        print("-------------------------------------------------------------")
+        if self.observed_end_times == []:
+            print("No SEP events at specified thresholds observed.")
+        else:
+            for j in range(len(self.observed_end_times)):
+                print("End time: " + str(self.observed_end_times[j]))
+                
+        print("================== END REPORT ===============================")
+
         return
