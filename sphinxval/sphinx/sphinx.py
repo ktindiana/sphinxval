@@ -22,4 +22,5 @@ def validate(data_list, model_list):
     #Dictionary of SPHINX objects containing all matching criteria
     #and matched observed values for each forecast
     matched_sphinx =\
-        match.match_all_forecasts(all_energy_channels, obs_objs, model_objs)
+        match.match_all_forecasts(all_energy_channels, model_names,
+            obs_objs, model_objs)

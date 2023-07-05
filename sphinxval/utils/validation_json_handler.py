@@ -1,4 +1,5 @@
 from . import classes as cl
+from . import object_handler as objh
 import json
 import calendar
 import datetime
@@ -239,35 +240,6 @@ def forecast_object_from_json(fcast_json, energy_channel):
     
     return fcast
 
-def energy_channel_to_key(energy_channel):
-    """ Want to organize observations and forecasts according
-        to energy channel to reduce uneccesary elements in loops.
-        
-        Turn the energy channel into a string key that can
-        be used to organize a dictionary.
-        
-    Inputs:
-    
-        :energy_channel: (dict)
-            {'min': 10, 'max': -1, 'units': Unit("MeV")}
-    
-    Output:
-    
-        :key: (string)
-    
-    """
-
-    units = energy_channel['units']
-    if isinstance(units,str):
-        units = vunits.convert_string_to_units(units)
-        
-    str_units = vunits.convert_units_to_string(units)
-
-    key = "min." +str(float(energy_channel['min'])) + ".max." \
-        + str(float(energy_channel['max'])) + ".units." \
-        + str_units
-    
-    return key
     
 
 def load_objects_from_json(data_list, model_list):
@@ -302,14 +274,14 @@ def load_objects_from_json(data_list, model_list):
     obs_objs = {}
     model_objs = {}
     for channel in all_energy_channels:
-        key = energy_channel_to_key(channel)
+        key = objh.energy_channel_to_key(channel)
         obs_objs.update({key: []})
         model_objs.update({key:[]})
     
 
     for json in obs_jsons:
         for channel in all_energy_channels:
-            key = energy_channel_to_key(channel)
+            key = objh.energy_channel_to_key(channel)
             obj = observation_object_from_json(json, channel)
             #skip if energy block wasn't present in json
             if obj.observation_window_start == None:
@@ -318,7 +290,7 @@ def load_objects_from_json(data_list, model_list):
             
     for json in model_jsons:
         for channel in all_energy_channels:
-            key = energy_channel_to_key(channel)
+            key = objh.energy_channel_to_key(channel)
             obj = forecast_object_from_json(json, channel)
             #skip if energy block wasn't present in json
             if obj.prediction_window_start == None:
