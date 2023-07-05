@@ -1,4 +1,5 @@
 from . import classes as cl
+from . import units_handler as vunits
 import sys
 import datetime
 
@@ -40,6 +41,69 @@ def build_model_list(all_model):
     print(model_names)
     
     return model_names
+
+
+def energy_channel_to_key(energy_channel):
+    """ Want to organize observations and forecasts according
+        to energy channel to reduce uneccesary elements in loops.
+        
+        Turn the energy channel into a string key that can
+        be used to organize a dictionary.
+        
+    Inputs:
+    
+        :energy_channel: (dict)
+            {'min': 10, 'max': -1, 'units': Unit("MeV")}
+    
+    Output:
+    
+        :key: (string)
+    
+    """
+
+    units = energy_channel['units']
+    if isinstance(units,str):
+        units = vunits.convert_string_to_units(units)
+        
+    str_units = vunits.convert_units_to_string(units)
+
+    key = "min." +str(float(energy_channel['min'])) + ".max." \
+        + str(float(energy_channel['max'])) + ".units." \
+        + str_units
+    
+    return key
+
+
+def threshold_to_key(threshold):
+    """ Want to organize observations and forecasts according
+        to energy channel and thresholds.
+        
+        Turn the threshold into a string key that can
+        be used to organize a dictionary.
+        
+    Inputs:
+    
+        :threshold: (dict)
+            {'threshold': 10, 'threshold_units': Unit("1 / (cm2 s sr)")}
+    
+    Output:
+    
+        :key: (string) e.g. "threshold.10.0.units.1 / (cm2 s sr)"
+    
+    """
+
+    units = threshold['threshold_units']
+    if isinstance(units,str):
+        units = vunits.convert_string_to_units(units)
+        
+    str_units = vunits.convert_units_to_string(units)
+
+    key = "threshold." +str(float(threshold['threshold'])) \
+        + ".units." + str_units
+    
+    return key
+
+
 
 
 def identify_all_thresholds(all_obj):
@@ -459,14 +523,6 @@ def initialize_sphinx(fcast):
     """
     sphinx = cl.SPHINX(fcast.energy_channel)
     sphinx.prediction = fcast
-#    sphinx.prediction_source = fcast.source
-#    sphinx.issue_time = fcast.issue_time
-#    sphinx.prediction_window_start =\
-#        fcast.prediction_window_start
-#    sphinx.prediction_window_end =\
-#        fcast.prediction_window_end
-#    sphinx.species = fcast.species
-#    sphinx.location = fcast.location
 
     return sphinx
 

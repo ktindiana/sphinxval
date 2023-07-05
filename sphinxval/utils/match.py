@@ -210,7 +210,7 @@ def compile_all_obs(all_energy_channels, obs_objs):
     for channel in all_energy_channels:
         print('validate: Extracting observation arrays for matching '
             'for threshold ' + str(channel))
-        key = vjson.energy_channel_to_key(channel)
+        key = objh.energy_channel_to_key(channel)
         dict = create_obs_match_array(obs_objs[key])
         
         obs_match.update({key: dict})
@@ -284,7 +284,7 @@ def does_win_overlap(fcast, obs_values):
     
     #Extract the forecast information needed for matching
     energy_channel = fcast.energy_channel
-    energy_key = vjson.energy_channel_to_key(energy_channel)
+    energy_key = objh.energy_channel_to_key(energy_channel)
 
     #Return if no prediction
     if fcast.prediction_window_start == None:
@@ -327,7 +327,7 @@ def observed_time_in_pred_win(fcast, obs_values, obs_key):
     
     """
     energy_channel = fcast.energy_channel
-    energy_key = vjson.energy_channel_to_key(energy_channel)
+    energy_key = objh.energy_channel_to_key(energy_channel)
     
     pred_win_st = fcast.prediction_window_start
     pred_win_end = fcast.prediction_window_end
@@ -337,33 +337,13 @@ def observed_time_in_pred_win(fcast, obs_values, obs_key):
         return [None]*len(obs_values[energy_key]['dataframes'][0])
            
     #Extract pandas dataframe for correct energy and threshold
-    energy_key = vjson.energy_channel_to_key(energy_channel)
+    energy_key = objh.energy_channel_to_key(energy_channel)
     obs = obs_values[energy_key]['dataframes'][0] #all obs for threshold
 
     #Check if a threshold crossing is contained inside of the
     #prediction window; returns False if pd.NaT
     contains_obs_time = (obs[obs_key] >= pd.Timestamp(pred_win_st)) \
         & (obs[obs_key] < pd.Timestamp(pred_win_end))
-
-#    #Check if a threshold crossing is contained inside of the
-#    #prediction window
-#    pred_interval = pd.Interval(pd.Timestamp(pred_win_st),
-#    pd.Timestamp(pred_win_end))
-#
-#    contains_obs_time = []
-#    for i in range(len(obs[obs_key])):
-#        if pd.isnull(obs[obs_key][i]):
-#            contains_obs_time.append(None)
-#            continue
-#        else:
-#            obs_time = pd.Timestamp(obs[obs_key][i])
-#
-#        #Is the threshold crossed inside of the prediction window?
-#        obs_int = pd.Interval(obs_time,obs_time)
-#        if pred_interval.overlaps(obs_int):
-#            contains_obs_time.append(True)
-#        else:
-#            contains_obs_time.append(False)
  
     return list(contains_obs_time)
 
@@ -395,7 +375,7 @@ def observed_time_in_pred_win_thresh(fcast, obs_values, obs_key,
     
     """
     energy_channel = fcast.energy_channel
-    energy_key = vjson.energy_channel_to_key(energy_channel)
+    energy_key = objh.energy_channel_to_key(energy_channel)
     
     pred_win_st = fcast.prediction_window_start
     pred_win_end = fcast.prediction_window_end
@@ -412,34 +392,13 @@ def observed_time_in_pred_win_thresh(fcast, obs_values, obs_key,
         return [None]*len(obs_values[energy_key]['dataframes'][0])
     
     #Extract pandas dataframe for correct energy and threshold
-    energy_key = vjson.energy_channel_to_key(energy_channel)
+    energy_key = objh.energy_channel_to_key(energy_channel)
     obs = obs_values[energy_key]['dataframes'][ix] #all obs for threshold
 
     #Check if a threshold crossing is contained inside of the
     #prediction window; returns False if pd.NaT
     contains_obs_time = (obs[obs_key] >= pd.Timestamp(pred_win_st)) \
         & (obs[obs_key] < pd.Timestamp(pred_win_end))
-
-
-#    #Check if a threshold crossing is contained inside of the
-#    #prediction window
-#    pred_interval = pd.Interval(pd.Timestamp(pred_win_st),
-#    pd.Timestamp(pred_win_end))
-#
-#    contains_obs_time = []
-#    for i in range(len(obs[obs_key])):
-#        if pd.isnull(obs[obs_key][i]):
-#            contains_obs_time.append(None)
-#            continue
-#        else:
-#            obs_time = pd.Timestamp(obs[obs_key][i])
-#
-#        #Is the threshold crossed inside of the prediction window?
-#        obs_int = pd.Interval(obs_time,obs_time)
-#        if pred_interval.overlaps(obs_int):
-#            contains_obs_time.append(True)
-#        else:
-#            contains_obs_time.append(False)
  
     return list(contains_obs_time)
 
@@ -471,7 +430,7 @@ def is_time_before(time, obs_values, obs_key, energy_channel):
             energy_channel
     
     """
-    energy_key = vjson.energy_channel_to_key(energy_channel)
+    energy_key = objh.energy_channel_to_key(energy_channel)
     if pd.isnull(time):
         return [None]*len(obs_values[energy_key]['dataframes'][0])
 
@@ -479,18 +438,13 @@ def is_time_before(time, obs_values, obs_key, energy_channel):
     obs = obs_values[energy_key]['dataframes'][0]
     time_diff = (time - obs[obs_key]).astype('timedelta64[h]')
     is_before = (time_diff <= 0)
+    is_before = list(is_before)
 
-#    for i in range(len(obs[obs_key])):
-#        if pd.isnull(obs[obs_key][i]):
-#            is_before.append(None)
-#            continue
-#
-#        if time < obs[obs_key][i]:
-#            is_before.append(True)
-#        else:
-#            is_before.append(False)
+    nat = [ix for ix in range(len(list(time_diff))) if pd.isnull(time_diff[ix])]
+    for ix in nat:
+        is_before[ix] = None
             
-    return list(is_before)
+    return is_before
     
 
 def is_time_before_thresh(time, obs_values, obs_key, energy_channel, threshold):
@@ -516,7 +470,7 @@ def is_time_before_thresh(time, obs_values, obs_key, energy_channel, threshold):
             energy_channel
     
     """
-    energy_key = vjson.energy_channel_to_key(energy_channel)
+    energy_key = objh.energy_channel_to_key(energy_channel)
     if pd.isnull(time):
         return [None]*len(obs_values[energy_key]['dataframes'][0])
 
@@ -532,18 +486,13 @@ def is_time_before_thresh(time, obs_values, obs_key, energy_channel, threshold):
 
     time_diff = (time - obs[obs_key]).astype('timedelta64[h]')
     is_before = (time_diff <= 0)
+    is_before = list(is_before)
 
-#    for i in range(len(obs[obs_key])):
-#        if pd.isnull(obs[obs_key][i]):
-#            is_before.append(None)
-#            continue
-#
-#        if time < obs[obs_key][i]:
-#            is_before.append(True)
-#        else:
-#            is_before.append(False)
+    nat = [ix for ix in range(len(list(time_diff))) if pd.isnull(time_diff[ix])]
+    for ix in nat:
+        is_before[ix] = None
             
-    return list(is_before)
+    return is_before
 
 
 def time_diff(time, obs_values, obs_key, energy_channel):
@@ -573,7 +522,7 @@ def time_diff(time, obs_values, obs_key, energy_channel):
             energy_channel
     
     """
-    energy_key = vjson.energy_channel_to_key(energy_channel)
+    energy_key = objh.energy_channel_to_key(energy_channel)
     if pd.isnull(time):
         return [None]*len(obs_values[energy_key]['dataframes'][0])
 
@@ -581,12 +530,6 @@ def time_diff(time, obs_values, obs_key, energy_channel):
     obs = obs_values[energy_key]['dataframes'][0]
     time_diff = (time - obs[obs_key]).astype('timedelta64[s]')
     time_diff = time_diff/(60.*60.)
-#    for i in range(len(obs[obs_key])):
-#        if pd.isnull(obs[obs_key][i]):
-#            time_diff.append(None)
-#            continue
-#
-#        time_diff.append((time - obs[obs_key][i]).total_seconds()/(60*60))
 
     return list(time_diff)
     
@@ -616,7 +559,7 @@ def time_diff_thresh(time, obs_values, obs_key, energy_channel, threshold):
             energy_channel
     
     """
-    energy_key = vjson.energy_channel_to_key(energy_channel)
+    energy_key = objh.energy_channel_to_key(energy_channel)
     if pd.isnull(time):
         return [None]*len(obs_values[energy_key]['dataframes'][0])
 
@@ -631,12 +574,6 @@ def time_diff_thresh(time, obs_values, obs_key, energy_channel, threshold):
     obs = obs_values[energy_key]['dataframes'][ix]
     time_diff = (time - obs[obs_key]).astype('timedelta64[s]')
     time_diff = time_diff/(60.*60.)
-#    for i in range(len(obs[obs_key])):
-#        if pd.isnull(obs[obs_key][i]):
-#            time_diff.append(None)
-#            continue
-#
-#        time_diff.append((time - obs[obs_key][i]).total_seconds()/(60*60))
 
     return list(time_diff)
 
@@ -876,6 +813,7 @@ def threshold_cross_criteria(sphinx, fcast, obs_values, observation_objs,
             was crossed inside the prediction window
         
     """
+    thresh_key = objh.threshold_to_key(thresh)
     
     contains_thresh_cross = observed_time_in_pred_win_thresh(fcast,
         obs_values, 'threshold_crossing_time', thresh)
@@ -883,11 +821,11 @@ def threshold_cross_criteria(sphinx, fcast, obs_values, observation_objs,
 #    print("Threshold crossed in prediction window (if any): ")
     if sphinx.overlapping_indices != []:
         for ix in sphinx.overlapping_indices:
-            sphinx.threshold_crossed_in_pred_win.append(contains_thresh_cross[ix])
+            sphinx.threshold_crossed_in_pred_win[thresh_key].append(contains_thresh_cross[ix])
             #logging
-#            print("  " + str(sphinx.threshold_crossed_in_pred_win[ix]))
-#    else:
-#        sphinx.threshold_crossed_in_pred_win.append(None)
+#            print("  " +
+#                str(sphinx.threshold_crossed_in_pred_win[thresh_key][ix]))
+
 
     return contains_thresh_cross
 
@@ -930,6 +868,8 @@ def before_threshold_crossing(sphinx, fcast, obs_values, observation_objs,
     last_trigger_time = sphinx.last_trigger_time
     last_input_time = sphinx.last_input_time
     channel = fcast.energy_channel
+    thresh_key = objh.threshold_to_key(thresh)
+
 
     ###### MATCHING: TRIGGERS/INPUTS BEFORE SEP #####
     td_trigger_thresh_cross = time_diff_thresh(last_trigger_time, obs_values,
@@ -940,8 +880,8 @@ def before_threshold_crossing(sphinx, fcast, obs_values, observation_objs,
 #    print("Triggers before Threshold Crossing (if any): ")
     if sphinx.overlapping_indices != []:
         for ix in sphinx.overlapping_indices:
-            sphinx.triggers_before_threshold_crossing.append(is_trigger_before_start[ix])
-            sphinx.time_difference_triggers_threshold_crossing.append(td_trigger_thresh_cross[ix])
+            sphinx.triggers_before_threshold_crossing[thresh_key].append(is_trigger_before_start[ix])
+            sphinx.time_difference_triggers_threshold_crossing[thresh_key].append(td_trigger_thresh_cross[ix])
                 #logging
 #                print("  " +
 #                str(sphinx.triggers_before_threshold_crossing[ix]))
@@ -964,8 +904,8 @@ def before_threshold_crossing(sphinx, fcast, obs_values, observation_objs,
 #    print("Inputs before Threshold Crossing (if any): ")
     if sphinx.overlapping_indices != []:
         for ix in sphinx.overlapping_indices:
-            sphinx.inputs_before_threshold_crossing.append(is_input_before_start[ix])
-            sphinx.time_difference_inputs_threshold_crossing.append(td_input_thresh_cross[ix])
+            sphinx.inputs_before_threshold_crossing[thresh_key].append(is_input_before_start[ix])
+            sphinx.time_difference_inputs_threshold_crossing[thresh_key].append(td_input_thresh_cross[ix])
                 #logging
 #                print("  " + str(sphinx.inputs_before_threshold_crossing[ix]))
 #                print("  " +
@@ -1018,6 +958,8 @@ def before_sep_end(sphinx, fcast, obs_values, observation_objs,
     last_trigger_time = sphinx.last_trigger_time
     last_input_time = sphinx.last_input_time
     channel = fcast.energy_channel
+    thresh_key = objh.threshold_to_key(thresh)
+
 
     ###### MATCHING: TRIGGERS/INPUTS BEFORE SEP #####
     td_trigger_sep_end = time_diff_thresh(last_trigger_time, obs_values,
@@ -1028,8 +970,8 @@ def before_sep_end(sphinx, fcast, obs_values, observation_objs,
  #   print("Triggers before SEP end time (if any): ")
     if sphinx.overlapping_indices != []:
         for ix in sphinx.overlapping_indices:
-            sphinx.triggers_before_sep_end.append(is_trigger_before_end[ix])
-            sphinx.time_difference_triggers_sep_end.append(td_trigger_sep_end[ix])
+            sphinx.triggers_before_sep_end[thresh_key].append(is_trigger_before_end[ix])
+            sphinx.time_difference_triggers_sep_end[thresh_key].append(td_trigger_sep_end[ix])
                 #logging
 #                print("  " +
 #                str(sphinx.triggers_before_sep_end[ix]))
@@ -1047,8 +989,8 @@ def before_sep_end(sphinx, fcast, obs_values, observation_objs,
 #    print("Inputs before SEP end time (if any): ")
     if sphinx.overlapping_indices != []:
         for ix in sphinx.overlapping_indices:
-            sphinx.inputs_before_sep_end.append(is_input_before_end[ix])
-            sphinx.time_difference_inputs_sep_end.append(td_input_sep_end[ix])
+            sphinx.inputs_before_sep_end[thresh_key].append(is_input_before_end[ix])
+            sphinx.time_difference_inputs_sep_end[thresh_key].append(td_input_sep_end[ix])
                 #logging
 #                print("  " + str(sphinx.inputs_before_sep_end[ix]))
 #                print("  " +
@@ -1092,6 +1034,8 @@ def eruption_before_threshold_crossing(sphinx, fcast, obs_values,
     """
     last_eruption_time = sphinx.last_eruption_time
     channel = fcast.energy_channel
+    thresh_key = objh.threshold_to_key(thresh)
+
 
     ###### MATCHING: ERUPTION BEFORE SEP #####
     td_eruption_thresh_cross = time_diff_thresh(last_eruption_time, obs_values,
@@ -1102,8 +1046,8 @@ def eruption_before_threshold_crossing(sphinx, fcast, obs_values,
 #    print("Eruption (flare/CME) before Threshold Crossing (if any): ")
     if sphinx.overlapping_indices != []:
         for ix in sphinx.overlapping_indices:
-            sphinx.eruptions_before_threshold_crossing.append(is_eruption_before_start[ix])
-            sphinx.time_difference_eruptions_threshold_crossing.append(td_eruption_thresh_cross[ix])
+            sphinx.eruptions_before_threshold_crossing[thresh_key].append(is_eruption_before_start[ix])
+            sphinx.time_difference_eruptions_threshold_crossing[thresh_key].append(td_eruption_thresh_cross[ix])
             #logging
 #                print("  " +
 #                str(sphinx.eruptions_before_threshold_crossing[ix]))
@@ -1148,9 +1092,10 @@ def pred_win_sep_overlap(sphinx, fcast, obs_values, observation_objs,
     """
     
     energy_channel = fcast.energy_channel
-    energy_key = vjson.energy_channel_to_key(energy_channel)
+    energy_key = objh.energy_channel_to_key(energy_channel)
     pred_win_st = fcast.prediction_window_start
     pred_win_end = fcast.prediction_window_end
+    thresh_key = objh.threshold_to_key(threshold)
 
     #Return if no prediction
     if fcast.prediction_window_start == None:
@@ -1176,7 +1121,7 @@ def pred_win_sep_overlap(sphinx, fcast, obs_values, observation_objs,
     
     if sphinx.overlapping_indices != []:
         for ix in sphinx.overlapping_indices:
-            sphinx.prediction_window_sep_overlap.append(is_overlap[ix])
+            sphinx.prediction_window_sep_overlap[thresh_key].append(is_overlap[ix])
 
 
     return is_overlap
@@ -1212,9 +1157,10 @@ def observed_ongoing_event(sphinx, fcast, obs_values, observation_objs,
     """
     
     energy_channel = fcast.energy_channel
-    energy_key = vjson.energy_channel_to_key(energy_channel)
+    energy_key = objh.energy_channel_to_key(energy_channel)
     pred_win_st = fcast.prediction_window_start
     pred_win_end = fcast.prediction_window_end
+    thresh_key = objh.threshold_to_key(threshold)
 
     #Return if no prediction
     if fcast.prediction_window_start == None:
@@ -1263,7 +1209,7 @@ def observed_ongoing_event(sphinx, fcast, obs_values, observation_objs,
 
     if sphinx.overlapping_indices != []:
         for ix in sphinx.overlapping_indices:
-            sphinx.observed_ongoing_events.append(is_ongoing[ix])
+            sphinx.observed_ongoing_events[thresh_key].append(is_ongoing[ix])
 
     return is_ongoing
 
@@ -1503,7 +1449,8 @@ def match_sep_quantities(sphinx, observation_obj, thresh, is_win_overlap,
         because it means that this particular observation doesn't match
         
     """
-    
+    thresh_key = objh.threshold_to_key(thresh)
+
     sep_status = None
     
     if not is_win_overlap:
@@ -1547,7 +1494,7 @@ def match_sep_quantities(sphinx, observation_obj, thresh, is_win_overlap,
     for th in observation_obj.threshold_crossings:
         if th.threshold != thresh['threshold']:
             continue
-        sphinx.observed_threshold_crossing_times.append(th.crossing_time)
+        sphinx.observed_threshold_crossing_times[thresh_key].append(th.crossing_time)
  
     #Start time and channel fluence
     start_time = None
@@ -1556,15 +1503,15 @@ def match_sep_quantities(sphinx, observation_obj, thresh, is_win_overlap,
         event = observation_obj.event_lengths[i]
         if event.threshold != thresh['threshold']:
             continue
-        sphinx.observed_start_times.append(event.start_time)
-        sphinx.observed_fluences.append(observation_obj.fluences[i].fluence)
+        sphinx.observed_start_times[thresh_key].append(event.start_time)
+        sphinx.observed_fluences[thresh_key].append(observation_obj.fluences[i].fluence)
 
     #Fluence spectra
     spectrum = None
     for flsp in observation_obj.fluence_spectra:
         if flsp.threshold_start != thresh['threshold']:
             continue
-        sphinx.observed_fluence_spectra.append(flsp.fluence_spectrum)
+        sphinx.observed_fluence_spectra[thresh_key].append(flsp.fluence_spectrum)
 
 #    print(sphinx.observed_threshold_crossing_times)
 #    print(sphinx.observed_start_times)
@@ -1609,7 +1556,8 @@ def match_sep_end_time(sphinx, observation_obj, thresh, is_win_overlap,
         because it means that this particular observation doesn't match
         
     """
-    
+    thresh_key = objh.threshold_to_key(thresh)
+
     end_status = None
     
     #Prediction and observation windows must overlap
@@ -1644,7 +1592,7 @@ def match_sep_end_time(sphinx, observation_obj, thresh, is_win_overlap,
         event = observation_obj.event_lengths[i]
         if event.threshold != thresh['threshold']:
             continue
-        sphinx.observed_end_times.append(event.end_time)
+        sphinx.observed_end_times[thresh_key].append(event.end_time)
 
  #   print(sphinx.observed_end_times)
 
@@ -1656,20 +1604,29 @@ def match_sep_end_time(sphinx, observation_obj, thresh, is_win_overlap,
 #################################
 ####ALL MATCHING CRITERIA #######
 #################################
-def match_all_forecasts(all_energy_channels, obs_objs, model_objs):
-    """ Match all forecasts to observations.
+def match_all_forecasts(all_energy_channels, model_names, obs_objs,
+    model_objs):
+    """ Match all forecasts to observations organized by model
+        short_name, energy channel, and threshold.
     """
 
     #All observed values needed for matching, organized by
     #energy channel and threshold
     obs_values = compile_all_obs(all_energy_channels, obs_objs)
 
-    matched_sphinx = {} #array of sphinx objects organized by energy channel
+    #array of sphinx objects organized by model name and energy channel
+    matched_sphinx = {}
+    for model in model_names:
+        matched_sphinx.update({model:{}})
+        for channel in all_energy_channels:
+            energy_key = objh.energy_channel_to_key(channel)
+            matched_sphinx[model].update({energy_key:[]})
+
+
     for channel in all_energy_channels:
         print("\n")
         print("Identifying Match Criteria for " + str(channel))
-        energy_key = vjson.energy_channel_to_key(channel)
-        matched_sphinx.update({energy_key:[]})
+        energy_key = objh.energy_channel_to_key(channel)
         observation_objs = obs_objs[energy_key] #Observation objects
 
         forecasts = model_objs[energy_key] #all forecasts for channel
@@ -1759,7 +1716,8 @@ def match_all_forecasts(all_energy_channels, obs_objs, model_objs):
                 #will be in an array in the same order as the
                 #thresholds
                 sphinx.thresholds.append(fcast_thresh)
-
+                sphinx.Add_Threshold(fcast_thresh)
+                thresh_key = objh.threshold_to_key(fcast_thresh)
 
                 ###### PREDICTION WINDOW OVERLAP WITH OBSERVED ####
                 ############### SEP EVENT #########################
@@ -1865,7 +1823,7 @@ def match_all_forecasts(all_energy_channels, obs_objs, model_objs):
                     #MAX FLUX
                     #max_criteria is True, False, None indicating a match
                     #with an observation or None if no SEP event observed
-                    max_criteria = match_observed_onset_peak(sphinx,
+                    max_criteria = match_observed_max_flux(sphinx,
                         observation_objs[i], is_win_overlap[i],
                         is_eruption_in_range, is_trigger_before_max_time[i],
                         is_input_before_max_time[i], is_pred_sep_overlap[i])
@@ -1886,10 +1844,10 @@ def match_all_forecasts(all_energy_channels, obs_objs, model_objs):
                         is_eruption_in_range, trigger_input_start,
                         contains_thresh_cross[i], is_sep_ongoing[i])
                     if (sep_status == None) or (sep_status == False):
-                        sphinx.observed_threshold_crossing_times.append(pd.NaT)
-                        sphinx.observed_start_times.append(pd.NaT)
-                        sphinx.observed_fluences.append(None)
-                        sphinx.observed_fluence_spectra.append(None)
+                        sphinx.observed_threshold_crossing_times[thresh_key].append(pd.NaT)
+                        sphinx.observed_start_times[thresh_key].append(pd.NaT)
+                        sphinx.observed_fluences[thresh_key].append(None)
+                        sphinx.observed_fluence_spectra[thresh_key].append(None)
 
 
                     #SEP END TIME
@@ -1897,12 +1855,12 @@ def match_all_forecasts(all_energy_channels, obs_objs, model_objs):
                         is_eruption_in_range, trigger_input_end,
                         is_pred_sep_overlap[i])
                     if (end_status == None) or (end_status == False):
-                        sphinx.observed_end_times.append(pd.NaT)
+                        sphinx.observed_end_times[thresh_key].append(pd.NaT)
 
 
             #Save the SPHINX object with all of the forecasted and matched
             #observation values to a dictionary organized by energy channel
             sphinx.Match_Report()
-            matched_sphinx[energy_key].append(sphinx)
+            matched_sphinx[fcast.short_name][energy_key].append(sphinx)
 
     return matched_sphinx
