@@ -114,7 +114,8 @@ class Flare:
             :lat: (int) latitude
             :lon: (int) longitude
             :intensity: (float) X-ray intensity of flare at last_data_time
-            :integrated_intensity: (float) X-ray intensity summed from start to last
+            :integrated_intensity: (float) X-ray intensity summed from start  
+                to last
             :noaa_region: (string) identifier of NOAA active region
        
         Ouput: a Flare object
@@ -944,6 +945,11 @@ class SPHINX:
         self.last_eruption_time = None
         self.last_trigger_time = None
         self.last_input_time = None
+        
+        #Indicate whether a forecast was originally matched to an SEP event
+        #and then unmatched in match.py/revise_eruption_matches()
+        #Will set to true if unmatched
+        self.unmatched = False
 
         #Criteria related to observed peak intensity fields
         #Dictionaries organized by threshold and number of overlapping
@@ -984,25 +990,26 @@ class SPHINX:
         #for that specific quantity.
         #These criteria are specified in match.py/match_all_forecasts()
         self.observed_match_peak_intensity_source = None
-        self.observed_peak_intensity = None
-        self.observed_peak_intensity_units = None
-        self.observed_peak_intensity_time = None
+        self.observed_peak_intensity = Peak_Intensity(None, None, None, None, None, None) #Peak Intensity Obj
+#        self.observed_peak_intensity_units = None
+#        self.observed_peak_intensity_time = None
         self.observed_match_peak_intensity_max_source = None
-        self.observed_peak_intensity_max = None
-        self.observed_peak_intensity_max_units = None
-        self.observed_peak_intensity_max_time = None
+        self.observed_peak_intensity_max = Peak_Intensity(None, None, None, None, None, None) #Peak Intensity Max Obj
+#        self.observed_peak_intensity_max_units = None
+#        self.observed_peak_intensity_max_time = None
         #Only one All Clear status allowed per energy channel
         self.observed_match_all_clear_source = None
-        self.observed_all_clear_boolean = None
-        self.observed_all_clear_threshold = None
-        self.observed_all_clear_threshold_units = None
-        #order in arrays matches self.thresholds
+        self.observed_all_clear = All_Clear(None, None, None, None)  #All Clear Object
+#        self.observed_all_clear_threshold = None
+#        self.observed_all_clear_threshold_units = None
+        #Uses thresholds from self.thresholds as keys
         self.observed_match_sep_source = {}
-        self.observed_threshold_crossing_time = {}
-        self.observed_start_time = {}
-        self.observed_end_time = {}
-        self.observed_fluence = {}
-        self.observed_fluence_spectrum = {}
+        self.observed_threshold_crossing = {} #Threshold Crossing objects
+        self.observed_event_length = {} #Event Length objects
+        self.observed_start_time = {} #datetime
+        self.observed_end_time = {} #datetime
+        self.observed_fluence = {} #Fluence objects
+        self.observed_fluence_spectrum = {} #Fluence spectrum objects
         
         
         return
@@ -1036,11 +1043,12 @@ class SPHINX:
         
         #Observed values
         self.observed_match_sep_source.update({key:None})
-        self.observed_threshold_crossing_time.update({key:None})
+        self.observed_threshold_crossing.update({key:Threshold_Crossing(None, None, None, None)})
+        self.observed_event_length.update({key: Event_Length(None, None, None, None)})
         self.observed_start_time.update({key:None})
         self.observed_end_time.update({key:None})
-        self.observed_fluence.update({key:None})
-        self.observed_fluence_spectrum.update({key:None})
+        self.observed_fluence.update({key:Fluence("id",None, None, None, None)})
+        self.observed_fluence_spectrum.update({key:Fluence_Spectrum(None, None, None, None, None, None, None)})
         
         return
 
@@ -1122,7 +1130,7 @@ class SPHINX:
 
         print("-------------------------------------------------------------")
         print("Were thresholds crossed inside of the Prediction Window?")
-        print("Entries are in order of observations and thresholds.\n")
+        print("Entries are in order of observations and thresholds.")
         print("-------------------------------------------------------------")
         if self.threshold_crossed_in_pred_win == []:
             print("  No thresholds were present in both predictions and "
@@ -1134,7 +1142,7 @@ class SPHINX:
                 print("  " + str(self.threshold_crossed_in_pred_win[thresh_key]))
                 print("  Observed threshold crossing times (NaT = no threshold crossing present \n"
                     "  that satisfied matching criteria): ")
-                print("  " + str(self.observed_threshold_crossing_time[thresh_key]))
+                print("  " + str(self.observed_threshold_crossing[thresh_key].crossing_time))
             
 
         print("-------------------------------------------------------------")
@@ -1297,10 +1305,10 @@ class SPHINX:
         print("-------------------------------------------------------------")
         print("  Matched observation: " + str(self.observed_match_all_clear_source))
         print("  Observed All Clear Status: "
-            + str(self.observed_all_clear_boolean))
-        print("  All Clear Threshold: " + str(self.observed_all_clear_threshold))
+            + str(self.observed_all_clear.all_clear_boolean))
+        print("  All Clear Threshold: " + str(self.observed_all_clear.threshold))
         print("  All Clear Threshold Units: "
-            + str(self.observed_all_clear_threshold_units))
+            + str(self.observed_all_clear.threshold_units))
 
         print("-------------------------------------------------------------")
         print("Observed Onset Peak (peak_intensity)")
@@ -1308,9 +1316,9 @@ class SPHINX:
         print("-------------------------------------------------------------")
         print("  Matched observation: " +
             str(self.observed_match_peak_intensity_source))
-        print("  Intensity: " + str(self.observed_peak_intensity))
-        print("  Units: " + str(self.observed_peak_intensity_units))
-        print("  Time: " + str(self.observed_peak_intensity_time))
+        print("  Intensity: " + str(self.observed_peak_intensity.intensity))
+        print("  Units: " + str(self.observed_peak_intensity.units))
+        print("  Time: " + str(self.observed_peak_intensity.time))
 
         print("-------------------------------------------------------------")
         print("Observed Max Flux (peak_intensity_max)")
@@ -1318,9 +1326,9 @@ class SPHINX:
         print("-------------------------------------------------------------")
         print("  Matched observation: " +
             str(self.observed_match_peak_intensity_max_source))
-        print("  Intensity: " + str(self.observed_peak_intensity_max))
-        print("  Units: " + str(self.observed_peak_intensity_max_units))
-        print("  Time: " + str(self.observed_peak_intensity_max_time))
+        print("  Intensity: " + str(self.observed_peak_intensity_max.intensity))
+        print("  Units: " + str(self.observed_peak_intensity_max.units))
+        print("  Time: " + str(self.observed_peak_intensity_max.time))
 
         print("-------------------------------------------------------------")
         print("Observed SEP Event Characteristics: ")
@@ -1332,10 +1340,10 @@ class SPHINX:
             print(" Threshold: " + str(thresh))
             print("  Matched observation: " + str(self.observed_match_sep_source[thresh_key]))
             print("  Threshold crossing time: "
-                + str(self.observed_threshold_crossing_time[thresh_key]))
+                + str(self.observed_threshold_crossing[thresh_key].crossing_time))
             print("  Start time: " + str(self.observed_start_time[thresh_key]))
-            print("  Channel fluence: " + str(self.observed_fluence[thresh_key]))
-            print("  Fluence Spectrum: " + str(self.observed_fluence_spectrum[thresh_key]))
+            print("  Channel fluence: " + str(self.observed_fluence[thresh_key].fluence))
+            print("  Fluence Spectrum: " + str(self.observed_fluence_spectrum[thresh_key].fluence_spectrum))
 
         print("-------------------------------------------------------------")
         print("Observed SEP Event End Times: ")
@@ -1349,4 +1357,115 @@ class SPHINX:
                 
         print("================== END REPORT ===============================")
 
+        return
+
+
+    def Matched_Observations_Report(self):
+        """ Print only the matched observed values.
+        """
+
+        print("================= MATCHED OBSERVED VALUES ===================")
+
+        print("-------------------------------------------------------------")
+        print("Observed All Clear (True = No SEP, False = SEP)")
+        print("If True, will list last matched observation.")
+        print("None = ongoing SEP event at start of the prediction window")
+        print("-------------------------------------------------------------")
+        print("  Matched observation: " + str(self.observed_match_all_clear_source))
+        print("  Observed All Clear Status: "
+            + str(self.observed_all_clear.all_clear_boolean))
+        print("  All Clear Threshold: " + str(self.observed_all_clear.threshold))
+        print("  All Clear Threshold Units: "
+            + str(self.observed_all_clear.threshold_units))
+
+        print("-------------------------------------------------------------")
+        print("Observed Onset Peak (peak_intensity)")
+        print("None = no SEP event or no match with an observation")
+        print("-------------------------------------------------------------")
+        print("  Matched observation: " +
+            str(self.observed_match_peak_intensity_source))
+        print("  Intensity: " + str(self.observed_peak_intensity.intensity))
+        print("  Units: " + str(self.observed_peak_intensity.units))
+        print("  Time: " + str(self.observed_peak_intensity.time))
+
+        print("-------------------------------------------------------------")
+        print("Observed Max Flux (peak_intensity_max)")
+        print("None = no SEP event or no match with an observation")
+        print("-------------------------------------------------------------")
+        print("  Matched observation: " +
+            str(self.observed_match_peak_intensity_max_source))
+        print("  Intensity: " + str(self.observed_peak_intensity_max.intensity))
+        print("  Units: " + str(self.observed_peak_intensity_max.units))
+        print("  Time: " + str(self.observed_peak_intensity_max.time))
+
+        print("-------------------------------------------------------------")
+        print("Observed SEP Event Characteristics: ")
+        print("None = no SEP event or no match with an observation")
+        print("NaT = no SEP event or no match with an observation")
+        print("-------------------------------------------------------------")
+        for thresh in self.thresholds:
+            thresh_key = objh.threshold_to_key(thresh)
+            print(" Threshold: " + str(thresh))
+            print("  Matched observation: " + str(self.observed_match_sep_source[thresh_key]))
+            print("  Threshold crossing time: "
+                + str(self.observed_threshold_crossing[thresh_key].crossing_time))
+            print("  Start time: " + str(self.observed_start_time[thresh_key]))
+            print("  Channel fluence: " + str(self.observed_fluence[thresh_key].fluence))
+            print("  Fluence Spectrum: " + str(self.observed_fluence_spectrum[thresh_key].fluence_spectrum))
+
+        print("-------------------------------------------------------------")
+        print("Observed SEP Event End Times: ")
+        print("NaT = no SEP event or no match with an observation")
+        print("-------------------------------------------------------------")
+        for thresh in self.thresholds:
+            thresh_key = objh.threshold_to_key(thresh)
+            print(" Threshold: " + str(thresh))
+            print("  Matched observation: " + str(self.observed_match_sep_source[thresh_key]))
+            print("  End time: " + str(self.observed_end_time[thresh_key]))
+                
+        print("================== END REPORT ===============================")
+
+        return
+
+
+    def Unmatch(self, threshold):
+        """ For forecasts that use eruptions, unamtch from a specific
+            SEP event if it has been determined that it is not the best
+            matching forecast.
+            
+            Sets all observed values to None or pd.NaT or whatever the
+            outcomes are whenever no SEP event was found.
+            
+            Switches All Clear to True.
+            
+        Input:
+        
+            :self: this SPHINX object
+            :threshold: (dict) threshold being unmatched
+            
+        Output:
+        
+            None, sphinx object updated
+            
+        """
+        self.unmatch = True
+        
+        thresh_key = objh.threshold_to_key(threshold)
+        
+        #These criteria are specified in match.py/match_all_forecasts()
+        self.observed_peak_intensity = Peak_Intensity(None, None, None, None, None, None)
+        self.observed_match_peak_intensity_max_source = None
+        self.observed_peak_intensity_max = Peak_Intensity_Max(None, None, None, None, None, None)
+        
+        #Only one All Clear status allowed per energy channel
+        self.observed_all_clear.all_clear_boolean = True
+        
+        #Uses thresholds from self.thresholds as keys
+        self.observed_threshold_crossing[thresh_key] = Threshold_Crossing(None, None, None, None)
+        self.observed_event_length[thresh_key] = Event_Length(None, None, None, None)
+        self.observed_start_time[thresh_key] = None
+        self.observed_end_time[thresh_key] = None
+        self.observed_fluence[thresh_key] = Fluence("id",None, None, None, None)
+        self.observed_fluence_spectrum[thresh_key] = Fluence_Spectrum(None, None, None, None, None, None, None)
+        
         return
