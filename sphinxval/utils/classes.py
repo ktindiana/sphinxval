@@ -776,7 +776,7 @@ class Observation():
         self.fluences = []
         self.fluence_spectra = []
         self.threshold_crossings = []
-        self.probabilities = []
+#        self.probabilities = []
         self.sep_profile = None
 
         return
@@ -905,13 +905,13 @@ class Observation():
                 crossing_time, uncertainty, threshold, threshold_units))
 
 
-        #Load Probabilities
-        if 'probabilities' in dataD:
-            for prob in dataD['probabilities']:
-                probability_value, uncertainty, threshold,\
-                threshold_units = vjson.dict_to_probability(prob)
-                self.probabilities.append(Probability(probability_value,
-                    uncertainty, threshold, threshold_units))
+#        #Load Probabilities
+#        if 'probabilities' in dataD:
+#            for prob in dataD['probabilities']:
+#                probability_value, uncertainty, threshold,\
+#                threshold_units = vjson.dict_to_probability(prob)
+#                self.probabilities.append(Probability(probability_value,
+#                    uncertainty, threshold, threshold_units))
                     
         return
 
@@ -991,17 +991,11 @@ class SPHINX:
         #These criteria are specified in match.py/match_all_forecasts()
         self.observed_match_peak_intensity_source = None
         self.observed_peak_intensity = Peak_Intensity(None, None, None, None, None, None) #Peak Intensity Obj
-#        self.observed_peak_intensity_units = None
-#        self.observed_peak_intensity_time = None
         self.observed_match_peak_intensity_max_source = None
         self.observed_peak_intensity_max = Peak_Intensity(None, None, None, None, None, None) #Peak Intensity Max Obj
-#        self.observed_peak_intensity_max_units = None
-#        self.observed_peak_intensity_max_time = None
         #Only one All Clear status allowed per energy channel
         self.observed_match_all_clear_source = None
         self.observed_all_clear = All_Clear(None, None, None, None)  #All Clear Object
-#        self.observed_all_clear_threshold = None
-#        self.observed_all_clear_threshold_units = None
         #Uses thresholds from self.thresholds as keys
         self.observed_match_sep_source = {}
         self.observed_threshold_crossing = {} #Threshold Crossing objects
@@ -1010,7 +1004,9 @@ class SPHINX:
         self.observed_end_time = {} #datetime
         self.observed_fluence = {} #Fluence objects
         self.observed_fluence_spectrum = {} #Fluence spectrum objects
-        
+
+        self.observed_probability_source = {}
+        self.observed_probability = {} #Probability object
         
         return
 
@@ -1049,6 +1045,9 @@ class SPHINX:
         self.observed_end_time.update({key:None})
         self.observed_fluence.update({key:Fluence("id",None, None, None, None)})
         self.observed_fluence_spectrum.update({key:Fluence_Spectrum(None, None, None, None, None, None, None)})
+
+        self.observed_probability_source.update({key: None})
+        self.observed_probability.update({key:Probability(None, None, None, None)})
         
         return
 
@@ -1331,6 +1330,21 @@ class SPHINX:
         print("  Time: " + str(self.observed_peak_intensity_max.time))
 
         print("-------------------------------------------------------------")
+        print("Observed SEP Event Probability: ")
+        print("None = no match with an observation, ongoing event, or "
+                "threshold crossed in prediction window but the last "
+                "trigger or input is after the threshold crossing.")
+        print("0.0 = no SEP event (threshold crossing) in prediction window")
+        print("1.0 = SEP event (threshold crossing) in prediction window")
+        print("-------------------------------------------------------------")
+        for thresh in self.thresholds:
+            thresh_key = objh.threshold_to_key(thresh)
+            print(" Threshold: " + str(thresh))
+            print("  Matched observation: " + str(self.observed_probability_source[thresh_key]))
+            print("  Probability: "
+            + str(self.observed_probability[thresh_key].probability_value))
+
+        print("-------------------------------------------------------------")
         print("Observed SEP Event Characteristics: ")
         print("None = no SEP event or no match with an observation")
         print("NaT = no SEP event or no match with an observation")
@@ -1399,6 +1413,21 @@ class SPHINX:
         print("  Time: " + str(self.observed_peak_intensity_max.time))
 
         print("-------------------------------------------------------------")
+        print("Observed SEP Event Probability: ")
+        print("None = no match with an observation, ongoing event, or "
+                "threshold crossed in prediction window but the last "
+                "trigger or input is after the threshold crossing.")
+        print("0.0 = no SEP event (threshold crossing) in prediction window")
+        print("1.0 = SEP event (threshold crossing) in prediction window")
+        print("-------------------------------------------------------------")
+        for thresh in self.thresholds:
+            thresh_key = objh.threshold_to_key(thresh)
+            print(" Threshold: " + str(thresh))
+            print("  Matched observation: " + str(self.observed_probability_source[thresh_key]))
+            print("  Probability: "
+            + str(self.observed_probability[thresh_key].probability_value))
+
+        print("-------------------------------------------------------------")
         print("Observed SEP Event Characteristics: ")
         print("None = no SEP event or no match with an observation")
         print("NaT = no SEP event or no match with an observation")
@@ -1461,6 +1490,7 @@ class SPHINX:
         self.observed_all_clear.all_clear_boolean = True
         
         #Uses thresholds from self.thresholds as keys
+        self.observed_probability[thresh_key].probability_value = 0.0
         self.observed_threshold_crossing[thresh_key] = Threshold_Crossing(None, None, None, None)
         self.observed_event_length[thresh_key] = Event_Length(None, None, None, None)
         self.observed_start_time[thresh_key] = None

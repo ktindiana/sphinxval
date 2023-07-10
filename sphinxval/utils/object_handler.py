@@ -163,14 +163,14 @@ def identify_all_thresholds(all_obj):
                         all_thresholds.append(dict)
 
 
-        if obj.probabilities != []:
-            for entry in obj.probabilities:
-                thresh = entry.threshold
-                units = entry.threshold_units
-                if thresh != None and units != None:
-                    dict = {'threshold':thresh, 'threshold_units': units}
-                    if dict not in all_thresholds:
-                        all_thresholds.append(dict)
+#        if obj.probabilities != []:
+#            for entry in obj.probabilities:
+#                thresh = entry.threshold
+#                units = entry.threshold_units
+#                if thresh != None and units != None:
+#                    dict = {'threshold':thresh, 'threshold_units': units}
+#                    if dict not in all_thresholds:
+#                        all_thresholds.append(dict)
 
     return all_thresholds
 

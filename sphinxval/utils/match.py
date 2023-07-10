@@ -1624,6 +1624,10 @@ def match_sep_quantities(sphinx, observation_obj, thresh, is_win_overlap,
 
     sep_status = None
     
+    #Appropriate observed probability for prediction window, etc
+    prob = cl.Probability(None, 0.0, thresh['threshold'],
+            thresh['threshold_units'])
+    
     if not is_win_overlap:
         sep_status = None
         return sep_status
@@ -1632,11 +1636,19 @@ def match_sep_quantities(sphinx, observation_obj, thresh, is_win_overlap,
     #If ongoing SEP event at start of prediction window, no match
     if is_sep_ongoing:
         sep_status = False
+        prob.probability_value = None #ongoing event
+        sphinx.observed_probability[thresh_key] = prob
+        sphinx.observed_probability_source[thresh_key] =\
+            observation_obj.source
         return sep_status
     
     #No threshold crossing in prediction window, no SEP event
     if not contains_thresh_cross:
         sep_status = False
+        prob.probability_value = 0.0
+        sphinx.observed_probability[thresh_key] = prob
+        sphinx.observed_probability_source[thresh_key] =\
+            observation_obj.source
         return sep_status
     
     #If there is a threshold crossing in the prediction window
@@ -1645,12 +1657,27 @@ def match_sep_quantities(sphinx, observation_obj, thresh, is_win_overlap,
         if is_eruption_in_range != None:
             if not is_eruption_in_range:
                 sep_status = None
+                prob.probability_value = 0.0
+                sphinx.observed_probability[thresh_key] = prob
+                sphinx.observed_probability_source[thresh_key] =\
+                    observation_obj.source
+
                 return sep_status
         #The triggers and inputs must all be before threshold crossing
         if trigger_input_start:
             sep_status = True
+            prob.probability_value = 1.0
+            sphinx.observed_probability[thresh_key] = prob
+            sphinx.observed_probability_source[thresh_key] =\
+                observation_obj.source
+
         else:
             sep_status = None
+            prob.probability_value = None
+            sphinx.observed_probability[thresh_key] = prob
+            sphinx.observed_probability_source[thresh_key] =\
+                observation_obj.source
+
             return sep_status
     
     
@@ -1667,6 +1694,7 @@ def match_sep_quantities(sphinx, observation_obj, thresh, is_win_overlap,
             continue
         sphinx.observed_match_sep_source[thresh_key] = observation_obj.source
         sphinx.observed_threshold_crossing[thresh_key] = th
+ 
  
     #Start time and channel fluence
     start_time = None
