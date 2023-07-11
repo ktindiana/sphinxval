@@ -682,32 +682,36 @@ class Forecast():
                     vjson.zulu_to_time(self.prediction_window_end)
 
         
-        
+        #Only add objects of the predicted values are present in the json
         #Load All Clear
         all_clear, threshold, threshold_units, probability_threshold = \
                 vjson.dict_to_all_clear(dataD)
-        self.all_clear = All_Clear(all_clear, threshold, threshold_units,
+        if all_clear != None:
+            self.all_clear = All_Clear(all_clear, threshold, threshold_units,
                 probability_threshold)
 
         #Load (Onset) Peak Intensity
         intensity, units, uncertainty, uncertainty_low, uncertainty_high,\
             time = vjson.dict_to_peak_intensity('peak_intensity', dataD)
-        self.peak_intensity = Peak_Intensity(intensity, units, uncertainty,
-            uncertainty_low, uncertainty_high, time)
+        if intensity != None:
+            self.peak_intensity = Peak_Intensity(intensity, units,
+                uncertainty, uncertainty_low, uncertainty_high, time)
             
         #Load Max Intensity
         intensity, units, uncertainty, uncertainty_low, uncertainty_high,\
             time = vjson.dict_to_peak_intensity('peak_intensity_max', dataD)
-        self.peak_intensity_max = Peak_Intensity_Max(intensity, units,
-            uncertainty, uncertainty_low, uncertainty_high, time)
+        if intensity != None:
+            self.peak_intensity_max = Peak_Intensity_Max(intensity, units,
+                uncertainty, uncertainty_low, uncertainty_high, time)
         
         #Load Event Lengths
         if 'event_lengths' in dataD:
             for event in dataD['event_lengths']:
                 start_time, end_time, threshold, threshold_units,=\
                     vjson.dict_to_event_length(event)
-                self.event_lengths.append(Event_Length(start_time,
-                    end_time, threshold, threshold_units))
+                if start_time != None:
+                    self.event_lengths.append(Event_Length(start_time,
+                        end_time, threshold, threshold_units))
         
 
         #Load Fluence
@@ -715,8 +719,9 @@ class Forecast():
             for event in dataD['fluences']:
                 fluence, units, uncertainty_low, uncertainty_high =\
                     vjson.dict_to_fluence(event)
-                self.fluences.append(Fluence("id", fluence, units,
-                    uncertainty_low, uncertainty_high))
+                if fluence != None:
+                    self.fluences.append(Fluence("id", fluence, units,
+                        uncertainty_low, uncertainty_high))
 
 
         #Load Fluence Spectra
@@ -725,9 +730,10 @@ class Forecast():
                 start_time, end_time, threshold_start, threshold_end,\
                 threshold_units, fluence_units, fluence_spectrum =\
                     vjson.dict_to_fluence_spectrum(spectrum)
-                self.fluence_spectra.append(Fluence_Spectrum(start_time,
-                    end_time, threshold_start, threshold_end,
-                    threshold_units, fluence_units, fluence_spectrum))
+                if fluence_spectrum != None:
+                    self.fluence_spectra.append(Fluence_Spectrum(start_time,
+                        end_time, threshold_start, threshold_end,
+                        threshold_units, fluence_units, fluence_spectrum))
 
 
         #Load Threshold Crossings
@@ -735,8 +741,9 @@ class Forecast():
             for cross in dataD['threshold_crossings']:
                 crossing_time, uncertainty, threshold, \
                 threshold_units = vjson.dict_to_threshold_crossing(cross)
-                self.threshold_crossings.append(Threshold_Crossing(
-                crossing_time, uncertainty, threshold, threshold_units))
+                if crossing_time != None:
+                    self.threshold_crossings.append(Threshold_Crossing(
+                    crossing_time, uncertainty, threshold, threshold_units))
 
 
         #Load Probabilities
@@ -744,8 +751,9 @@ class Forecast():
             for prob in dataD['probabilities']:
                 probability_value, uncertainty, threshold,\
                 threshold_units = vjson.dict_to_probability(prob)
-                self.probabilities.append(Probability(probability_value,
-                    uncertainty, threshold, threshold_units))
+                if probability_value != None:
+                    self.probabilities.append(Probability(probability_value,
+                        uncertainty, threshold, threshold_units))
                     
         return
         
@@ -776,7 +784,6 @@ class Observation():
         self.fluences = []
         self.fluence_spectra = []
         self.threshold_crossings = []
-#        self.probabilities = []
         self.sep_profile = None
 
         return
@@ -903,15 +910,6 @@ class Observation():
                 threshold_units = vjson.dict_to_threshold_crossing(cross)
                 self.threshold_crossings.append(Threshold_Crossing(
                 crossing_time, uncertainty, threshold, threshold_units))
-
-
-#        #Load Probabilities
-#        if 'probabilities' in dataD:
-#            for prob in dataD['probabilities']:
-#                probability_value, uncertainty, threshold,\
-#                threshold_units = vjson.dict_to_probability(prob)
-#                self.probabilities.append(Probability(probability_value,
-#                    uncertainty, threshold, threshold_units))
                     
         return
 
