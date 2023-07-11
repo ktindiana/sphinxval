@@ -25,7 +25,7 @@ def validate(data_list, model_list):
     #a dictionary organized by model, energy channel, and threshold with the
     #unique SEP events that were present inside of the forecast prediction
     #windows (observed_sep_events).
-    matched_sphinx, observed_sep_events =\
+    matched_sphinx, all_observed_thresholds, observed_sep_events =\
         match.match_all_forecasts(all_energy_channels, model_names,
             obs_objs, model_objs)
 

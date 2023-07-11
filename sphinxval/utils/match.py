@@ -2016,6 +2016,15 @@ def match_all_forecasts(all_energy_channels, model_names, obs_objs,
     #All observed values needed for matching, organized by
     #energy channel and threshold
     obs_values = compile_all_obs(all_energy_channels, obs_objs)
+    
+    #Gather all thresholds applied in the observations for each energy channel
+    all_obs_thresholds = {}
+    for channel in all_energy_channels:
+        energy_key = objh.energy_channel_to_key(channel)
+        all_obs_thresholds.update({energy_key: []})
+        for obs_thresh in obs_values[energy_key]['thresholds']:
+            all_obs_thresholds[energy_key].append(obs_thresh)
+
 
     #Set up dictionary of sphinx objects organized by model name and
     #energy channel.
@@ -2275,6 +2284,6 @@ def match_all_forecasts(all_energy_channels, model_names, obs_objs,
     revise_eruption_matches(matched_sphinx, all_energy_channels, obs_values,
         model_names, observed_sep_events)
 
-    return matched_sphinx, observed_sep_events
+    return matched_sphinx, all_obs_thresholds, observed_sep_events
 
 
