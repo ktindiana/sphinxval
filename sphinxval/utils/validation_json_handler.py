@@ -223,8 +223,8 @@ def observation_object_from_json(obs_json, energy_channel):
     """ Create an Observation object from json file.
     """
     obs = cl.Observation(energy_channel)
-    obs.AddObservationsFromDict(obs_json)
-    obs.CheckEnergyChannelValues()
+    obs.add_observations_from_dict(obs_json)
+    obs.check_energy_channel_format()
     
     return obs
 
@@ -233,10 +233,10 @@ def forecast_object_from_json(fcast_json, energy_channel):
     """ Create a Forecast object from json file.
     """
     fcast = cl.Forecast(energy_channel)
-    fcast.AddTriggersFromDict(fcast_json)
-    fcast.AddInputsFromDict(fcast_json)
-    fcast.AddForecastsFromDict(fcast_json)
-    fcast.CheckEnergyChannelValues()
+    fcast.add_triggers_from_dict(fcast_json)
+    fcast.add_inputs_from_dict(fcast_json)
+    fcast.add_forecasts_from_dict(fcast_json)
+    fcast.check_energy_channel_format()
     
     return fcast
 

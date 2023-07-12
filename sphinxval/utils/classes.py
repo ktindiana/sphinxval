@@ -5,6 +5,7 @@
 from . import validation_json_handler as vjson
 from . import units_handler as vunits
 from . import object_handler as objh
+import datetime
 
 __version__ = "0.1"
 __author__ = "Katie Whitman"
@@ -532,7 +533,7 @@ class Forecast():
 
         return
 
-    def CheckEnergyChannelValues(self):
+    def check_energy_channel_format(self):
         """ Check energy_channel entries in appropriate formats
             energy_channel = {'min': 10, 'max': -1, 'units': 'MeV'}
             
@@ -556,7 +557,7 @@ class Forecast():
 
 
     ## -------TRIGGERS
-    def AddTriggersFromDict(self, full_json):
+    def add_triggers_from_dict(self, full_json):
         """ Fills in trigger objects.
             
         """
@@ -603,7 +604,7 @@ class Forecast():
  
 
     ## -----INPUTS
-    def AddInputsFromDict(self,full_json):
+    def add_inputs_from_dict(self,full_json):
         """ Fills in input objects.
         
         """
@@ -641,7 +642,7 @@ class Forecast():
 
 
     ## -----FORECASTED QUANTITIES
-    def AddForecastsFromDict(self, full_json):
+    def add_forecasts_from_dict(self, full_json):
         """ Extracts appropriate energy channel block and extracts
                 forecasts and fills all possible forecasted values
  
@@ -756,7 +757,328 @@ class Forecast():
                         uncertainty, threshold, threshold_units))
                     
         return
+
+
+
+    def identify_all_thresholds(self):
+        """ Find all the thresholds applied to a given energy channel.
+            Thresholds are applied in:
+            All clear
+            Event lengths
+            Fluence spectra
+            Threshold crossings
+            Probabilities
         
+        Inputs:
+        
+            :obj: (single Forecast or Observation object)
+            
+        Outputs:
+        
+            :all_thresholds: (array of dict)
+                [{'threshold': 10, 'threshold_units': Unit('pfu')}]
+        
+        """
+        all_thresholds = []
+        
+        if self.all_clear != None:
+            thresh = self.all_clear.threshold
+            units = self.all_clear.threshold_units
+            if thresh != None and units != None:
+                dict = {'threshold':thresh, 'threshold_units': units}
+                if dict not in all_thresholds:
+                    all_thresholds.append(dict)
+        
+        if self.event_lengths != []:
+            for entry in self.event_lengths:
+                thresh = entry.threshold
+                units = entry.threshold_units
+                if thresh != None and units != None:
+                    dict = {'threshold':thresh, 'threshold_units': units}
+                    if dict not in all_thresholds:
+                        all_thresholds.append(dict)
+        
+        if self.fluence_spectra != []:
+            for entry in self.fluence_spectra:
+                thresh = entry.threshold_start
+                units = entry.threshold_units
+                if thresh != None and units != None:
+                    dict = {'threshold':thresh, 'threshold_units': units}
+                    if dict not in all_thresholds:
+                        all_thresholds.append(dict)
+       
+        if self.threshold_crossings != []:
+            for entry in self.threshold_crossings:
+                thresh = entry.threshold
+                units = entry.threshold_units
+                if thresh != None and units != None:
+                    dict = {'threshold':thresh, 'threshold_units': units}
+                    if dict not in all_thresholds:
+                        all_thresholds.append(dict)
+
+
+        if self.probabilities != []:
+            for entry in self.probabilities:
+                thresh = entry.threshold
+                units = entry.threshold_units
+                if thresh != None and units != None:
+                    dict = {'threshold':thresh, 'threshold_units': units}
+                    if dict not in all_thresholds:
+                        all_thresholds.append(dict)
+
+        return all_thresholds
+
+
+
+
+    def last_trigger_time(self):
+        """ Out of all the triggers, find the last data time
+            relevant for matching to observations.
+            
+            Matching is guided by the idea that that a forecast
+            is only valid for time periods after the triggers.
+            e.g. if there are multiple CMEs in a simulation,
+            the forecast is only relevant for what is observed
+            after the eruption of the last CME because observational
+            truth has been available to the forecaster/mode up until
+            that time.
+            
+        """
+        last_time = None
+        last_eruption_time = None #flares and CMEs
+        
+        #Find the time of the latest CME in the trigger list
+        last_cme_time = None
+        if self.cmes != []:
+            for cme in self.cmes:
+                #start time and liftoff time could be essentially
+                #the same time and both are indicators of when
+                #the CME first erupted. Take the earliest of the
+                #two times for matching.
+                check_time = None
+                start_time = cme.start_time
+                liftoff_time = cme.liftoff_time
+                
+                if start_time == None and liftoff_time == None:
+                    continue
+                
+                if isinstance(start_time,datetime.date):
+                    check_time = start_time
+                    
+                if isinstance(liftoff_time,datetime.date):
+                    check_time = liftoff_time
+                
+                if isinstance(start_time,datetime.date) and\
+                    isinstance(liftoff_time,datetime.date):
+                    check_time = min(start_time,liftoff_time)
+                
+                if last_cme_time == None:
+                    last_cme_time = check_time
+                elif isinstance(check_time,datetime.date):
+                    last_cme_time = max(last_cme_time,check_time)
+     
+
+        #Find the time of the latest flare in the trigger list
+        last_flare_time = None
+        if self.flares != []:
+            for flare in self.flares:
+                #The flare peak time is the most relevant for matching
+                #to SEP events as the CME (if any) is often launched
+                #around the time of the peak.
+                check_time = None
+                start_time = flare.start_time
+                peak_time = flare.peak_time
+                end_time = flare.end_time
+                last_data_time = flare.last_data_time
+                
+                if isinstance(peak_time,datetime.date):
+                    check_time = peak_time
+                elif isinstance(start_time,datetime.date):
+                    check_time = start_time
+                elif isinstance(end_time,datetime.date):
+                    check_time = end_time
+                elif isinstance(last_data_time,datetime.date):
+                    check_time = last_data_time
+                    
+                if last_flare_time == None:
+                    last_flare_time = check_time
+                elif insinstance(check_time, datetime.date):
+                    last_flare_time = max(last_flare_time,check_time)
+
+        #Find the latest particle intensity data used by the model
+        last_pi_time = None
+        if self.particle_intensities != []:
+            for pi in self.particle_intensities:
+                check_time = pi.last_data_time
+                if isinstance(check_time,datetime.date):
+                    if last_pi_time == None:
+                        last_pi_time = check_time
+                    else:
+                        last_pi_time = max(last_pi_time,check_time)
+
+
+        #Take the latest of all the times
+        if isinstance(last_cme_time,datetime.date):
+            last_time = last_cme_time
+            last_eruption_time = last_cme_time
+            
+        if isinstance(last_flare_time,datetime.date):
+            if last_time == None:
+                last_time = last_flare_time
+                last_eruption_time = last_flare_time
+            else:
+                last_time = max(last_time,last_flare_time)
+                last_eruption_time = max(last_eruption_time,last_flare_time)
+                
+        if isinstance(last_pi_time,datetime.date):
+            if last_time == None:
+                last_time = last_pi_time
+            else:
+                last_time = max(last_time,last_pi_time)
+                
+        return last_eruption_time, last_time
+
+
+
+    def last_input_time(self):
+        """ Out of all the inputs, find the last data time
+            relevant for matching to observations.
+            
+            Matching is guided by the idea that that a forecast
+            is only valid for time periods after the last input.
+
+        """
+        last_time = None
+        
+        #Find time of last magnetogram used as input
+        last_magneto_time = None
+        if self.magnetograms != []:
+            for magneto in self.magnetograms:
+                if magneto.products == []: continue
+                for prod in magneto.products:
+                    last_data_time = prod['last_data_time']
+                    if isinstance(last_data_time,datetime.date):
+                        if last_magneto_time == None:
+                            last_magneto_time = last_data_time
+                        else:
+                            last_magneto_time = max(last_magneto_time,last_data_time)
+                    
+        #Find time of last coronagraph used as input
+        last_corona_time = None
+        if self.coronagraphs != []:
+            for corona in self.coronagraphs:
+                if corona.products == []: continue
+                for prod in corona.products:
+                    last_data_time = prod['last_data_time']
+                    if isinstance(last_data_time,datetime.date):
+                        if last_corona_time == None:
+                            last_corona_time = last_data_time
+                        else:
+                            last_corona_time = max(last_corona_time,last_data_time)
+
+        if isinstance(last_magneto_time,datetime.date):
+            last_time = last_magneto_time
+            
+        if isinstance(last_corona_time,datetime.date):
+            if last_time == None:
+                last_time = last_corona_time
+            else:
+                last_time = max(last_time,last_corona_time)
+        
+        return last_time
+
+
+    def valid_forecast(self, last_trigger_time, last_input_time):
+        """ Check that the triggers and inputs are at the same time of
+            or before the start of the prediction window. The prediction
+            window cannot start before the info required to make
+            the forecast.
+            
+        Input:
+        
+            :obj: (Forecast object)
+            
+        Output:
+        
+            Updated self.valid field
+        
+        """
+        if self.issue_time == None:
+            return
+            
+        if last_trigger_time == None and last_input_time == None:
+            return
+        
+        self.valid = True
+        if last_trigger_time != None:
+            if self.issue_time < last_trigger_time:
+                    self.valid = False
+
+        if last_input_time != None:
+            if self.issue_time < last_input_time:
+                self.valid = False
+
+        return
+
+
+    def print_forecast_values(self):
+        print()
+        print("--- " + self.source + " -----")
+        print(self.energy_channel)
+        print(self.short_name)
+        print(self.issue_time)
+        print(self.location)
+        print(self.species)
+        print(self.prediction_window_start)
+        print(self.prediction_window_end)
+        print(self.sep_profile)
+        
+        if self.cmes != []:
+            for cme in self.cmes:
+                print(vars(cme))
+        if self.cme_simulations != []:
+            for sim in self.cme_simulations:
+                print(vars(sim))
+        if self.flares != []:
+            for flare in self.flares:
+                print(vars(flare))
+        if self.particle_intensities != []:
+            for pi in self.particle_intensities:
+                print(vars(pi))
+     
+        if self.magnetic_connectivity != []:
+            for mag in self.magnetic_connectivity:
+                print(vars(mag))
+        if self.magnetograms != []:
+            for magneto in self.magnetograms:
+                print(vars(magneto))
+        if self.coronagraphs != []:
+            for corona in self.coronagraphs:
+                print(vars(corona))
+     
+        print(vars(self.all_clear))
+        print(vars(self.peak_intensity))
+        print(vars(self.peak_intensity_max))
+        if self.event_lengths != []:
+            for ev in self.event_lengths:
+                print(vars(ev))
+        if self.fluences != []:
+            for fl in self.fluences:
+                print(vars(fl))
+        if self.fluence_spectra != []:
+            for fls in self.fluence_spectra:
+                print(vars(fls))
+        if self.threshold_crossings != []:
+            for tc in self.threshold_crossings:
+                print(vars(tc))
+        if self.probabilities != []:
+            for prob in self.probabilities:
+                print(vars(prob))
+
+
+
+
+
 
 
 ##-----OBSERVATION CLASS------
@@ -789,7 +1111,7 @@ class Observation():
         return
 
 
-    def CheckEnergyChannelValues(self):
+    def check_energy_channel_format(self):
         """ Check energy_channel entries in appropriate formats
             energy_channel = {'min': 10, 'max': -1, 'units': 'MeV'}
             
@@ -814,7 +1136,7 @@ class Observation():
 
 
     ## -----Observed QUANTITIES
-    def AddObservationsFromDict(self, full_json):
+    def add_observations_from_dict(self, full_json):
         """ Extracts appropriate energy channel block and extracts
                 forecasts and fills all possible observed values
  
@@ -915,6 +1237,100 @@ class Observation():
 
 
 
+    def identify_all_thresholds(self):
+        """ Find all the thresholds applied to a given energy channel.
+            Thresholds are applied in:
+            All clear
+            Event lengths
+            Fluence spectra
+            Threshold crossings
+            Probabilities
+        
+        Inputs:
+        
+            :obj: (single Forecast or Observation object)
+            
+        Outputs:
+        
+            :all_thresholds: (array of dict)
+                [{'threshold': 10, 'threshold_units': Unit('pfu')}]
+        
+        """
+        all_thresholds = []
+        
+        if self.all_clear != None:
+            thresh = self.all_clear.threshold
+            units = self.all_clear.threshold_units
+            if thresh != None and units != None:
+                dict = {'threshold':thresh, 'threshold_units': units}
+                if dict not in all_thresholds:
+                    all_thresholds.append(dict)
+        
+        if self.event_lengths != []:
+            for entry in self.event_lengths:
+                thresh = entry.threshold
+                units = entry.threshold_units
+                if thresh != None and units != None:
+                    dict = {'threshold':thresh, 'threshold_units': units}
+                    if dict not in all_thresholds:
+                        all_thresholds.append(dict)
+        
+        if self.fluence_spectra != []:
+            for entry in self.fluence_spectra:
+                thresh = entry.threshold_start
+                units = entry.threshold_units
+                if thresh != None and units != None:
+                    dict = {'threshold':thresh, 'threshold_units': units}
+                    if dict not in all_thresholds:
+                        all_thresholds.append(dict)
+       
+        if self.threshold_crossings != []:
+            for entry in self.threshold_crossings:
+                thresh = entry.threshold
+                units = entry.threshold_units
+                if thresh != None and units != None:
+                    dict = {'threshold':thresh, 'threshold_units': units}
+                    if dict not in all_thresholds:
+                        all_thresholds.append(dict)
+
+        return all_thresholds
+
+
+
+    def print_observed_values(self):
+        print()
+        print("--- " + self.source + " -----")
+        print(self.energy_channel)
+        print(self.short_name)
+        print(self.issue_time)
+        print(self.location)
+        print(self.species)
+        print(self.observation_window_start)
+        print(self.observation_window_end)
+        print(self.sep_profile)
+        print(vars(self.all_clear))
+        print(vars(self.peak_intensity))
+        print(vars(self.peak_intensity_max))
+        if self.event_lengths != []:
+            for ev in selfevent_lengths:
+                print(vars(ev))
+        if self.fluences != []:
+            for fl in self.fluences:
+                print(vars(fl))
+        if self.fluence_spectra != []:
+            for fls in self.fluence_spectra:
+                print(vars(fls))
+        if self.threshold_crossings != []:
+            for tc in self.threshold_crossings:
+                print(vars(tc))
+        if self.probabilities != []:
+            for prob in self.probabilities:
+                print(vars(prob))
+
+
+
+
+
 class SPHINX:
     def __init__(self, energy_channel):
         """ A SPHINX object contains the forecasted values and
@@ -939,7 +1355,7 @@ class SPHINX:
         
         self.thresholds = [] #all of the thresholds in the observations
         self.threshold_crossed_in_pred_win = {} #filenames of the
-            #observations that satisfy the criteria (obj.source)
+            #observations that satisfy the criteria (self.source)
         self.last_eruption_time = None
         self.last_trigger_time = None
         self.last_input_time = None
@@ -988,28 +1404,35 @@ class SPHINX:
         #for that specific quantity.
         #These criteria are specified in match.py/match_all_forecasts()
         self.observed_match_peak_intensity_source = None
+        self.peak_intensity_match_status = None
         self.observed_peak_intensity = Peak_Intensity(None, None, None, None, None, None) #Peak Intensity Obj
         self.observed_match_peak_intensity_max_source = None
+        self.peak_intensity_max_match_status = None
         self.observed_peak_intensity_max = Peak_Intensity(None, None, None, None, None, None) #Peak Intensity Max Obj
         #Only one All Clear status allowed per energy channel
         self.observed_match_all_clear_source = None
+        self.all_clear_match_status = None
         self.observed_all_clear = All_Clear(None, None, None, None)  #All Clear Object
         #Uses thresholds from self.thresholds as keys
         self.observed_match_sep_source = {}
+        self.sep_match_status = {}
         self.observed_threshold_crossing = {} #Threshold Crossing objects
         self.observed_event_length = {} #Event Length objects
         self.observed_start_time = {} #datetime
-        self.observed_end_time = {} #datetime
         self.observed_fluence = {} #Fluence objects
         self.observed_fluence_spectrum = {} #Fluence spectrum objects
 
+        self.end_time_match_status = {}
+        self.observed_end_time = {} #datetime
+
         self.observed_probability_source = {}
+        self.probability_match_status = {}
         self.observed_probability = {} #Probability object
         
         return
 
 
-    def Add_Threshold(self, threshold):
+    def add_threshold(self, threshold):
         """ Updated the dictionary values to contain an entry for
             a specific threshold.
             
@@ -1037,21 +1460,25 @@ class SPHINX:
         
         #Observed values
         self.observed_match_sep_source.update({key:None})
+        self.sep_match_status.update({key:None})
         self.observed_threshold_crossing.update({key:Threshold_Crossing(None, None, None, None)})
         self.observed_event_length.update({key: Event_Length(None, None, None, None)})
         self.observed_start_time.update({key:None})
-        self.observed_end_time.update({key:None})
         self.observed_fluence.update({key:Fluence("id",None, None, None, None)})
         self.observed_fluence_spectrum.update({key:Fluence_Spectrum(None, None, None, None, None, None, None)})
 
+        self.end_time_match_status.update({key:None})
+        self.observed_end_time.update({key:None})
+        
         self.observed_probability_source.update({key: None})
+        self.probability_match_status.update({key:None})
         self.observed_probability.update({key:Probability(None, None, None, None)})
         
         return
 
 
 
-    def Match_Criteria():
+    def match_criteria():
         """ Print matching criteria to match up observations to
             each predicted quantity.
 
@@ -1071,7 +1498,7 @@ class SPHINX:
 
 
 
-    def Match_Report(self):
+    def match_report(self):
         """ Generate a report describing all of the steps involved in the
             matching and information about the prediction and observations.
 
@@ -1372,90 +1799,9 @@ class SPHINX:
         return
 
 
-    def Matched_Observations_Report(self):
-        """ Print only the matched observed values.
-        """
-
-        print("================= MATCHED OBSERVED VALUES ===================")
-
-        print("-------------------------------------------------------------")
-        print("Observed All Clear (True = No SEP, False = SEP)")
-        print("If True, will list last matched observation.")
-        print("None = ongoing SEP event at start of the prediction window")
-        print("-------------------------------------------------------------")
-        print("  Matched observation: " + str(self.observed_match_all_clear_source))
-        print("  Observed All Clear Status: "
-            + str(self.observed_all_clear.all_clear_boolean))
-        print("  All Clear Threshold: " + str(self.observed_all_clear.threshold))
-        print("  All Clear Threshold Units: "
-            + str(self.observed_all_clear.threshold_units))
-
-        print("-------------------------------------------------------------")
-        print("Observed Onset Peak (peak_intensity)")
-        print("None = no SEP event or no match with an observation")
-        print("-------------------------------------------------------------")
-        print("  Matched observation: " +
-            str(self.observed_match_peak_intensity_source))
-        print("  Intensity: " + str(self.observed_peak_intensity.intensity))
-        print("  Units: " + str(self.observed_peak_intensity.units))
-        print("  Time: " + str(self.observed_peak_intensity.time))
-
-        print("-------------------------------------------------------------")
-        print("Observed Max Flux (peak_intensity_max)")
-        print("None = no SEP event or no match with an observation")
-        print("-------------------------------------------------------------")
-        print("  Matched observation: " +
-            str(self.observed_match_peak_intensity_max_source))
-        print("  Intensity: " + str(self.observed_peak_intensity_max.intensity))
-        print("  Units: " + str(self.observed_peak_intensity_max.units))
-        print("  Time: " + str(self.observed_peak_intensity_max.time))
-
-        print("-------------------------------------------------------------")
-        print("Observed SEP Event Probability: ")
-        print("None = no match with an observation, ongoing event, or "
-                "threshold crossed in prediction window but the last "
-                "trigger or input is after the threshold crossing.")
-        print("0.0 = no SEP event (threshold crossing) in prediction window")
-        print("1.0 = SEP event (threshold crossing) in prediction window")
-        print("-------------------------------------------------------------")
-        for thresh in self.thresholds:
-            thresh_key = objh.threshold_to_key(thresh)
-            print(" Threshold: " + str(thresh))
-            print("  Matched observation: " + str(self.observed_probability_source[thresh_key]))
-            print("  Probability: "
-            + str(self.observed_probability[thresh_key].probability_value))
-
-        print("-------------------------------------------------------------")
-        print("Observed SEP Event Characteristics: ")
-        print("None = no SEP event or no match with an observation")
-        print("NaT = no SEP event or no match with an observation")
-        print("-------------------------------------------------------------")
-        for thresh in self.thresholds:
-            thresh_key = objh.threshold_to_key(thresh)
-            print(" Threshold: " + str(thresh))
-            print("  Matched observation: " + str(self.observed_match_sep_source[thresh_key]))
-            print("  Threshold crossing time: "
-                + str(self.observed_threshold_crossing[thresh_key].crossing_time))
-            print("  Start time: " + str(self.observed_start_time[thresh_key]))
-            print("  Channel fluence: " + str(self.observed_fluence[thresh_key].fluence))
-            print("  Fluence Spectrum: " + str(self.observed_fluence_spectrum[thresh_key].fluence_spectrum))
-
-        print("-------------------------------------------------------------")
-        print("Observed SEP Event End Times: ")
-        print("NaT = no SEP event or no match with an observation")
-        print("-------------------------------------------------------------")
-        for thresh in self.thresholds:
-            thresh_key = objh.threshold_to_key(thresh)
-            print(" Threshold: " + str(thresh))
-            print("  Matched observation: " + str(self.observed_match_sep_source[thresh_key]))
-            print("  End time: " + str(self.observed_end_time[thresh_key]))
-                
-        print("================== END REPORT ===============================")
-
-        return
 
 
-    def Unmatch(self, threshold):
+    def unmatch(self, threshold):
         """ For forecasts that use eruptions, unamtch from a specific
             SEP event if it has been determined that it is not the best
             matching forecast.
@@ -1497,3 +1843,5 @@ class SPHINX:
         self.observed_fluence_spectrum[thresh_key] = Fluence_Spectrum(None, None, None, None, None, None, None)
         
         return
+
+
