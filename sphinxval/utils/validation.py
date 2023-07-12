@@ -50,7 +50,8 @@ def initialize_dict(model_names, all_energy_channels, all_obs_thresholds):
                     quantity_dict[model][quantity].update({energy_key:
                         {"Forecast Issue Time":[],
                         "Observed SEP Event Date":[],
-                        "Observed":[], "Predicted":[]}})
+                        "Observed":[], "Predicted":[],
+                        "Matching Status": []}})
                 else:
                     quantity_dict[model][quantity].update({energy_key: {}})
                     for threshold in all_obs_thresholds:
@@ -58,7 +59,8 @@ def initialize_dict(model_names, all_energy_channels, all_obs_thresholds):
                         quantity_dict[model][quantity][energy_key].update({thresh_key:
                             {"Forecast Issue Time":[],
                             "Observed SEP Event Date":[],
-                            "Observed":[], "Predicted":[]}})
+                            "Observed":[], "Predicted":[],
+                            "Matching Status": []}})
  
     return quantity_dict
 
@@ -73,6 +75,16 @@ def fill_all_clear(sphinx, model, quantity_dict):
 
     energy_channel = sphinx.energy_channel
     ek = objh.energy_channel_to_key(energy_channel)
+    
+    #Indicate whether a prediction was matched to an observation, discarded
+    #because of the timing or the inputs or after the observed phenomena,
+    #prediction reports ongoing event
+    #None - no status determined
+    #Matched - prediction was matched to an observation
+    #Discarded - prediction made after event started
+    #Ongoing - prediction reports that there is an ongoing event and isn't
+    #   really a forecast
+    match_status = "None"
     
     #Check if forecast for all clear
     pred_all_clear = sphinx.prediction.all_clear.all_clear_boolean

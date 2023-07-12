@@ -1,7 +1,7 @@
 from ..utils import validation_json_handler as vjson
 from ..utils import config as cfg
 from ..utils import object_handler as objh
-from ..utils import validation as valid
+#from ..utils import validation as valid
 from ..utils import tools
 from ..utils import match
 import logging

@@ -1381,6 +1381,13 @@ def observed_ongoing_event(sphinx, fcast, obs_values, observation_objs,
     return is_ongoing
 
 
+def ongoing_status(obj, energy_channel, fcast_thresh):
+    """ Check if the model itself is reporting a ongoing SEP event
+        in the particle_intensity triggers.
+        
+    """
+
+
 
 
 ###### MATCHING AND EXTRACTING OBSERVED VALUES ########
@@ -1969,7 +1976,7 @@ def revise_eruption_matches(matched_sphinx, all_energy_channels, obs_values,
                         print("Observation source: " + str(matched_sphinx[model][energy_key][sphx_idx].observed_match_sep_source[thresh_key]))
 
                         #Unmatch
-                        matched_sphinx[model][energy_key][sphx_idx].Unmatch(threshold)
+                        matched_sphinx[model][energy_key][sphx_idx].unmatch(threshold)
                         print("-------- UNMATCHED ----------\n")
  
 
@@ -2061,7 +2068,7 @@ def match_all_forecasts(all_energy_channels, model_names, obs_objs,
 
             #Get Trigger and Input information
             last_eruption_time, last_trigger_time =\
-                objh.last_trigger_time(fcast)
+                fcast.last_trigger_time()
             print("\n")
             print(fcast.short_name)
             print(fcast.source)
@@ -2069,7 +2076,7 @@ def match_all_forecasts(all_energy_channels, model_names, obs_objs,
 #            print("Last trigger time: " + str(last_trigger_time))
 #            print("Last eruption time: " + str(last_eruption_time))
             
-            last_input_time = objh.last_input_time(fcast)
+            last_input_time = fcast.last_input_time()
 #            print("Last input time: " + str(last_input_time))
 
             sphinx.last_eruption_time = last_eruption_time
@@ -2082,7 +2089,7 @@ def match_all_forecasts(all_energy_channels, model_names, obs_objs,
                 matched_sphinx[fcast.short_name]['uses_eruptions'] = True
 
             #Check that forecast prediction window is after last trigger/input
-            objh.valid_forecast(fcast, last_trigger_time, last_input_time)
+            fcast.valid_forecast(last_trigger_time, last_input_time)
             if fcast.valid == False:
                 print("match_criteria_all_forecasts: Invalid forecast. "
                     "Issue time must start after last trigger "
@@ -2127,7 +2134,7 @@ def match_all_forecasts(all_energy_channels, model_names, obs_objs,
             ###### THRESHOLD QUANTITIES #####
             #Is a threshold crossed inside the prediction window?
             #Save forecasted and observed all clear to SPHINX object
-            all_fcast_thresholds = objh.identify_all_thresholds_one(fcast)
+            all_fcast_thresholds = fcast.identify_all_thresholds()
             
             observed_peak_flux = None
             observed_peak_flux_max = None
@@ -2145,7 +2152,7 @@ def match_all_forecasts(all_energy_channels, model_names, obs_objs,
                 #will be in an array in the same order as the
                 #thresholds
                 sphinx.thresholds.append(fcast_thresh)
-                sphinx.Add_Threshold(fcast_thresh)
+                sphinx.add_threshold(fcast_thresh)
                 thresh_key = objh.threshold_to_key(fcast_thresh)
 
                 ###### PREDICTION WINDOW OVERLAP WITH OBSERVED ####
@@ -2213,7 +2220,11 @@ def match_all_forecasts(all_energy_channels, model_names, obs_objs,
                         last_before_end(is_trigger_before_end[i],
                         is_input_before_end[i])
 
-                
+                    
+                    #Check if the model reports and ongoing event
+                    reports_ongoing = ongoing_status(observation_objs[i],
+                        channel, fcast_thresh)
+                    
                     ###ONSET PEAK & MAX FLUX
                     #Prediction window overlaps with observation
                     #Last eruption within 48 hrs - 15 mins before
@@ -2271,7 +2282,7 @@ def match_all_forecasts(all_energy_channels, model_names, obs_objs,
 
             #Save the SPHINX object with all of the forecasted and matched
             #observation values to a dictionary organized by energy channel
-            sphinx.Match_Report()
+            sphinx.match_report()
             matched_sphinx[fcast.short_name][energy_key].append(sphinx)
 
     #Print uniquely identified observed SEP events
