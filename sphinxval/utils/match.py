@@ -1561,6 +1561,12 @@ def match_all_clear(sphinx, observation_obj, is_win_overlap,
     if sphinx.observed_all_clear.all_clear_boolean == False:
         return None
     
+    #Save thresholds in All_Clear object
+    ac = cl.All_Clear(None,observation_obj.all_clear.threshold,
+        observation_obj.all_clear.threshold_units,
+        observation_obj.all_clear.probability_threshold)
+    sphinx.observed_all_clear = ac
+    
     all_clear_status = None
     
     if not is_win_overlap:
@@ -1608,10 +1614,7 @@ def match_all_clear(sphinx, observation_obj, is_win_overlap,
 #    print("  " + observation_obj.source)
 #    print("  " + str(all_clear_status))
     sphinx.observed_match_all_clear_source = observation_obj.source
-    ac = cl.All_Clear(all_clear_status,observation_obj.all_clear.threshold,
-        observation_obj.all_clear.threshold_units,
-        observation_obj.all_clear.probability_threshold)
-    sphinx.observed_all_clear = ac
+    sphinx.observed_all_clear.all_clear_boolean = all_clear_status
 
     return all_clear_status
 
@@ -1692,16 +1695,6 @@ def match_sep_quantities(sphinx, observation_obj, thresh, is_win_overlap,
     
     #If there is a threshold crossing in the prediction window
     if contains_thresh_cross:
-        #The eruption must occur in the right time range
-        if is_eruption_in_range != None:
-            if not is_eruption_in_range:
-                sep_status = None
-                prob.probability_value = 0.0
-                sphinx.observed_probability[thresh_key] = prob
-                sphinx.observed_probability_source[thresh_key] =\
-                    observation_obj.source
-                sphinx.sep_match_status[thresh_key] = "Eruption Out of Range"
-                return sep_status
         #The triggers and inputs must all be before threshold crossing
         if trigger_input_start:
             sep_status = True
@@ -1718,6 +1711,18 @@ def match_sep_quantities(sphinx, observation_obj, thresh, is_win_overlap,
                 observation_obj.source
             sphinx.sep_match_status[thresh_key] = "Trigger/Input after Observed Phenomenon"
             return sep_status
+ 
+        #The eruption must occur in the right time range
+        if is_eruption_in_range != None:
+            if not is_eruption_in_range:
+                sep_status = None
+                prob.probability_value = 0.0
+                sphinx.observed_probability[thresh_key] = prob
+                sphinx.observed_probability_source[thresh_key] =\
+                    observation_obj.source
+                sphinx.sep_match_status[thresh_key] = "Eruption Out of Range"
+                return sep_status
+
     
     
 #    print("Prediction window: " + str(sphinx.prediction.prediction_window_start) + " to "
@@ -1737,14 +1742,18 @@ def match_sep_quantities(sphinx, observation_obj, thresh, is_win_overlap,
  
     #Start time and channel fluence
     start_time = None
-    fluence = None
-    for i in range(len(observation_obj.event_lengths)):
-        event = observation_obj.event_lengths[i]
+    for event in observation_obj.event_lengths:
         if event.threshold != thresh['threshold']:
             continue
         sphinx.observed_match_sep_source[thresh_key] = observation_obj.source
         sphinx.observed_start_time[thresh_key] = event.start_time
-        sphinx.observed_fluence[thresh_key] = observation_obj.fluences[i]
+
+    fluence = None
+    for fl in observation_obj.fluences:
+        if fl.threshold != thresh['threshold']:
+            continue
+        sphinx.observed_fluence[thresh_key] = fl
+
 
     #Fluence spectra
     spectrum = None

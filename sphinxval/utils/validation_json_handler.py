@@ -965,7 +965,7 @@ def dict_to_event_length(event):
     return start_time, end_time, threshold, threshold_units
     
     
-def dict_to_fluence(fl_dict):
+def dict_to_fluence(event, fl_dict):
     """ Extract fleunce values from dictionary
         fl_dict = forecast_json['sep_forecast_submission']['forecasts'][0]['fluences'][0]
         
@@ -981,6 +981,8 @@ def dict_to_fluence(fl_dict):
     """
     fluence = None
     units = None
+    threshold = None
+    threshold_units = None
     uncertainty_low = None
     uncertainty_high = None
 
@@ -994,6 +996,16 @@ def dict_to_fluence(fl_dict):
         if isinstance(units, str):
             units = vunits.convert_string_to_units(units) #astropy
     
+    if 'threshold' in event:
+        threshold = event['threshold']
+        if isinstance(threshold, str):
+            threshold = float(threshold)
+
+    if 'threshold_units' in event:
+        threshold_units = event['threshold_units']
+        if isinstance(threshold_units, str):
+            threshold_units = vunits.convert_string_to_units(threshold_units) #astropy
+    
     if 'uncertainty_low' in fl_dict:
         uncertainty_low = fl_dict['uncertainty_low']
         if isinstance(uncertainty_low, str):
@@ -1004,7 +1016,7 @@ def dict_to_fluence(fl_dict):
         if isinstance(uncertainty_high, str):
             uncertainty_high = float(uncertainty_high)
 
-    return fluence, units, uncertainty_low, uncertainty_high
+    return fluence, units, threshold, threshold_units, uncertainty_low, uncertainty_high
 
 
 def dict_to_fluence_spectrum(spectrum):
