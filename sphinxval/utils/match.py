@@ -1437,6 +1437,16 @@ def match_observed_onset_peak(sphinx, observation_obj, is_win_overlap,
     if is_eruption_in_range != None:
         peak_criteria = (peak_criteria and is_eruption_in_range)
     
+    if not is_win_overlap:
+        sphinx.peak_intensity_match_status = "No Matched Observation"
+    if not is_pred_sep_overlap:
+        sphinx.peak_intensity_match_status = "No SEP Event"
+    if is_eruption_in_range != None and not is_eruption_in_range:
+        sphinx.peak_intensity_match_status = "Eruption Out of Range"
+    if not trigger_input_peak: #precedence
+        sphinx.peak_intensity_match_status = "Trigger/Input after Observed Phenomenon"
+ 
+ 
     if peak_criteria == True:
 #        print("Observed peak_intensity matched:")
 #        print(observation_obj.source)
@@ -1444,6 +1454,7 @@ def match_observed_onset_peak(sphinx, observation_obj, is_win_overlap,
 #        print(observation_obj.peak_intensity.time)
         sphinx.observed_match_peak_intensity_source = observation_obj.source
         sphinx.observed_peak_intensity = observation_obj.peak_intensity
+        sphinx.peak_intensity_match_status = "SEP Event"
 
     return peak_criteria
 
@@ -1491,7 +1502,16 @@ def match_observed_max_flux(sphinx, observation_obj, is_win_overlap,
     max_criteria = is_win_overlap and trigger_input_max and is_pred_sep_overlap
     if is_eruption_in_range != None:
         max_criteria = (max_criteria and is_eruption_in_range)
-    
+
+    if not is_win_overlap:
+        sphinx.peak_intensity_max_match_status = "No Matched Observation"
+    if not is_pred_sep_overlap:
+        sphinx.peak_intensity_max_match_status = "No SEP Event"
+    if is_eruption_in_range != None and not is_eruption_in_range:
+        sphinx.peak_intensity_max_match_status = "Eruption Out of Range"
+    if not trigger_input_max: #precedence
+        sphinx.peak_intensity_max_match_status = "Trigger/Input after Observed Phenomenon"
+
     if max_criteria == True:
 #        print("Observed peak_intensity_max matched:")
 #        print(observation_obj.source)
@@ -1500,6 +1520,7 @@ def match_observed_max_flux(sphinx, observation_obj, is_win_overlap,
         sphinx.observed_match_peak_intensity_max_source =\
             observation_obj.source
         sphinx.observed_peak_intensity_max = observation_obj.peak_intensity_max
+        sphinx.peak_intensity_max_match_status = "SEP Event"
 
     return max_criteria
 
@@ -1544,6 +1565,7 @@ def match_all_clear(sphinx, observation_obj, is_win_overlap,
     
     if not is_win_overlap:
         all_clear_status = None
+        sphinx.all_clear_match_status = "No Matched Observation"
         return all_clear_status
         
     #Prediction and observation windows overlap
@@ -1551,27 +1573,34 @@ def match_all_clear(sphinx, observation_obj, is_win_overlap,
     if is_sep_ongoing:
         all_clear_status = None
         sphinx.observed_match_all_clear_source = observation_obj.source
+        sphinx.all_clear_match_status = "Ongoing SEP Event"
         return all_clear_status
     
     #If there is no threshold crossing in prediction window,
     #then observed all clear is True
     if not contains_thresh_cross:
+        sphinx.all_clear_match_status = "No SEP Event"
         all_clear_status = True
     
     #If there is a threshold crossing in the prediction window
     if contains_thresh_cross:
-        #The eruption must occur in the right time range
-        if is_eruption_in_range != None:
-            if not is_eruption_in_range:
-                all_clear_status = None
-                sphinx.observed_match_all_clear_source = observation_obj.source
-                return all_clear_status
         #The triggers and inputs must all be before threshold crossing
         if trigger_input_start:
             #Observed all clear is False
+            sphinx.all_clear_match_status = "SEP Event"
             all_clear_status = False
-    
-    
+        else:
+            all_clear_status = None
+            sphinx.all_clear_match_status = "Trigger/Input after Observed Phenomenon"
+            return all_clear_status
+
+        #The eruption must occur in the right time range
+        if is_eruption_in_range != None:
+            if not is_eruption_in_range:
+                all_clear_status = True
+                sphinx.observed_match_all_clear_source = observation_obj.source
+                sphinx.all_clear_match_status = "Eruption Out of Range"
+
 #    print("Prediction window: " + str(sphinx.prediction.prediction_window_start) + " to "
 #        + str(sphinx.prediction.prediction_window_end))
 #    #All clear status
@@ -1637,6 +1666,7 @@ def match_sep_quantities(sphinx, observation_obj, thresh, is_win_overlap,
     
     if not is_win_overlap:
         sep_status = None
+        sphinx.sep_match_status[thresh_key] = "No Matched Observation"
         return sep_status
         
     #Prediction and observation windows overlap
@@ -1647,6 +1677,7 @@ def match_sep_quantities(sphinx, observation_obj, thresh, is_win_overlap,
         sphinx.observed_probability[thresh_key] = prob
         sphinx.observed_probability_source[thresh_key] =\
             observation_obj.source
+        sphinx.sep_match_status[thresh_key] = "Ongoing SEP Event"
         return sep_status
     
     #No threshold crossing in prediction window, no SEP event
@@ -1656,6 +1687,7 @@ def match_sep_quantities(sphinx, observation_obj, thresh, is_win_overlap,
         sphinx.observed_probability[thresh_key] = prob
         sphinx.observed_probability_source[thresh_key] =\
             observation_obj.source
+        sphinx.sep_match_status[thresh_key] = "No SEP Event"
         return sep_status
     
     #If there is a threshold crossing in the prediction window
@@ -1668,7 +1700,7 @@ def match_sep_quantities(sphinx, observation_obj, thresh, is_win_overlap,
                 sphinx.observed_probability[thresh_key] = prob
                 sphinx.observed_probability_source[thresh_key] =\
                     observation_obj.source
-
+                sphinx.sep_match_status[thresh_key] = "Eruption Out of Range"
                 return sep_status
         #The triggers and inputs must all be before threshold crossing
         if trigger_input_start:
@@ -1677,14 +1709,14 @@ def match_sep_quantities(sphinx, observation_obj, thresh, is_win_overlap,
             sphinx.observed_probability[thresh_key] = prob
             sphinx.observed_probability_source[thresh_key] =\
                 observation_obj.source
-
+            sphinx.sep_match_status[thresh_key] = "SEP Event"
         else:
             sep_status = None
             prob.probability_value = None
             sphinx.observed_probability[thresh_key] = prob
             sphinx.observed_probability_source[thresh_key] =\
                 observation_obj.source
-
+            sphinx.sep_match_status[thresh_key] = "Trigger/Input after Observed Phenomenon"
             return sep_status
     
     
@@ -1766,23 +1798,28 @@ def match_sep_end_time(sphinx, observation_obj, thresh, is_win_overlap,
     #Prediction and observation windows must overlap
     if not is_win_overlap:
         end_status = None
+        sphinx.end_time_match_status[thresh_key] = "No Matched Observation"
         return end_status
         
     #The prediction window must overlap with an SEP event
     if not is_pred_sep_overlap:
         end_status = False #no SEP event, no values
+        sphinx.end_time_match_status[thresh_key] = "No SEP Event"
         return end_status
 
     #If there is an SEP event, the eruption must occur in the right time range
     if is_eruption_in_range != None:
         if not is_eruption_in_range:
             sep_status = None
+            sphinx.end_time_match_status[thresh_key] = "Eruption Out of Range"
             return sep_status
     #The triggers and inputs must all be before threshold crossing
     if trigger_input_end:
         end_status = True
+        sphinx.end_time_match_status[thresh_key] = "SEP Event"
     else:
         end_status = None
+        sphinx.end_time_match_status[thresh_key] = "Trigger/Input after Observed Phenomenon"
         return end_status
     
     #Matched End Time
