@@ -51,17 +51,17 @@ def initialize_dict(model_names, all_energy_channels, all_obs_thresholds):
                         {"Forecast Issue Time":[],
                         "Observed SEP Event Date":[],
                         "Observed":[], "Predicted":[],
-                        "Matching Status": []}})
+                        "Match Status": []}})
                 else:
                     quantity_dict[model][quantity].update({energy_key: {}})
-                    for threshold in all_obs_thresholds:
-                        thresh_key = objh.threshold_to_key(threshold)
+                    for thresh in all_obs_thresholds[energy_key]:
+                        thresh_key = objh.threshold_to_key(thresh)
                         quantity_dict[model][quantity][energy_key].update({thresh_key:
                             {"Forecast Issue Time":[],
                             "Observed SEP Event Date":[],
                             "Observed":[], "Predicted":[],
-                            "Matching Status": []}})
- 
+                            "Match Status": []}})
+
     return quantity_dict
 
 
@@ -76,24 +76,11 @@ def fill_all_clear(sphinx, model, quantity_dict):
     energy_channel = sphinx.energy_channel
     ek = objh.energy_channel_to_key(energy_channel)
     
-    #Indicate whether a prediction was matched to an observation, discarded
-    #because of the timing or the inputs or after the observed phenomena,
-    #prediction reports ongoing event
-    #None - no status determined
-    #Matched - prediction was matched to an observation
-    #Discarded - prediction made after event started
-    #Ongoing - prediction reports that there is an ongoing event and isn't
-    #   really a forecast
-    match_status = "None"
     
     #Check if forecast for all clear
     pred_all_clear = sphinx.prediction.all_clear.all_clear_boolean
     if pred_all_clear == None:
-        continue
-        
-    obs_all_clear = sphinx.observed_all_clear.all_clear_boolean
-    if obs_all_clear == None:
-        continue
+        return
 
     pred_threshold = {'threshold': sphinx.prediction.all_clear.threshold,
         'threshold_units': sphinx.prediction.all_clear.threshold_units}
@@ -102,13 +89,17 @@ def fill_all_clear(sphinx, model, quantity_dict):
         
     #Thresholds must match
     if pred_threshold != obs_threshold:
-        continue
-    
+        return
+
     tk = objh.threshold_to_key(obs_threshold)
+
+    obs_all_clear = sphinx.observed_all_clear.all_clear_boolean
+
     quantity_dict[model][qk][ek][tk]['Forecast Issue Time'].append(sphinx.prediction.issue_time)
     quantity_dict[model][qk][ek][tk]['Observed SEP Event Date'].append(sphinx.observed_threshold_crossing[tk].crossing_time)
     quantity_dict[model][qk][ek][tk]['Observed'].append(obs_all_clear)
     quantity_dict[model][qk][ek][tk]['Predicted'].append(pred_all_clear)
+    quantity_dict[model][qk][ek][tk]['Match Status'].append(sphinx.all_clear_match_status)
 
     return quantity_dict
 
@@ -125,11 +116,11 @@ def fill_probability(sphinx, model, quantity_dict):
     ek = objh.energy_channel_to_key(energy_channel)
     
     #Check if a forecast exists for probability
-    if sphinx.prediction.probability == []:
-        continue
+    if sphinx.prediction.probabilities == []:
+        return
 
     #Check each forecast for probability
-    for prob_obj in sphinx.prediction.probability:
+    for prob_obj in sphinx.prediction.probabilities:
         pred_prob = prob_obj.probability_value
         if pred_prob == None:
             continue
@@ -144,13 +135,13 @@ def fill_probability(sphinx, model, quantity_dict):
         
         #Extact matching observed value for threshold
         obs_prob = sphinx.observed_probability[tk].probability_value
-        if obs_prob == None:
-            continue
 
         quantity_dict[model][qk][ek][tk]['Forecast Issue Time'].append(sphinx.prediction.issue_time)
         quantity_dict[model][qk][ek][tk]['Observed SEP Event Date'].append(sphinx.observed_threshold_crossing[tk].crossing_time)
         quantity_dict[model][qk][ek][tk]['Observed'].append(obs_prob)
         quantity_dict[model][qk][ek][tk]['Predicted'].append(pred_prob)
+        quantity_dict[model][qk][ek][tk]['Match Status'].append(sphinx.sep_match_status[tk])
+
 
     return quantity_dict
 
@@ -169,13 +160,13 @@ def fill_threshold_crossing_time(sphinx, model, quantity_dict):
     
     #Check if a forecast exists for probability
     if sphinx.prediction.threshold_crossings == []:
-        continue
+        return
 
     #Check each forecast for probability
     for obj in sphinx.prediction.threshold_crossings:
         predicted = obj.crossing_time
         if predicted == None or pd.isnull(predicted):
-            continue
+            return
 
         pred_thresh = {'threshold': obj.threshold,
             'threshold_units': obj.threshold_units}
@@ -187,13 +178,12 @@ def fill_threshold_crossing_time(sphinx, model, quantity_dict):
         
         #Extact matching observed value for threshold
         observed = sphinx.observed_threshold_crossing[tk].crossing_time
-        if observed == None or pd.isnull(observed):
-            continue
 
         quantity_dict[model][qk][ek][tk]['Forecast Issue Time'].append(sphinx.prediction.issue_time)
         quantity_dict[model][qk][ek][tk]['Observed SEP Event Date'].append(sphinx.observed_threshold_crossing[tk].crossing_time)
         quantity_dict[model][qk][ek][tk]['Observed'].append(observed)
         quantity_dict[model][qk][ek][tk]['Predicted'].append(predicted)
+        quantity_dict[model][qk][ek][tk]['Match Status'].append(sphinx.sep_match_status[tk])
 
     return quantity_dict
 
@@ -212,7 +202,7 @@ def fill_start_time(sphinx, model, quantity_dict):
     
     #Check if a forecast exists for probability
     if sphinx.prediction.event_lengths == []:
-        continue
+        return
 
     #Check each forecast for probability
     for obj in sphinx.prediction.event_lengths:
@@ -230,13 +220,12 @@ def fill_start_time(sphinx, model, quantity_dict):
         
         #Extact matching observed value for threshold
         observed = sphinx.observed_start_time[tk]
-        if observed == None or pd.isnull(observed):
-            continue
 
         quantity_dict[model][qk][ek][tk]['Forecast Issue Time'].append(sphinx.prediction.issue_time)
         quantity_dict[model][qk][ek][tk]['Observed SEP Event Date'].append(sphinx.observed_threshold_crossing[tk].crossing_time)
         quantity_dict[model][qk][ek][tk]['Observed'].append(observed)
         quantity_dict[model][qk][ek][tk]['Predicted'].append(predicted)
+        quantity_dict[model][qk][ek][tk]['Match Status'].append(sphinx.sep_match_status[tk])
 
     return quantity_dict
 
@@ -254,7 +243,7 @@ def fill_end_time(sphinx, model, quantity_dict):
     
     #Check if a forecast exists for probability
     if sphinx.prediction.event_lengths == []:
-        continue
+        return
 
     #Check each forecast for probability
     for obj in sphinx.prediction.event_lengths:
@@ -272,13 +261,13 @@ def fill_end_time(sphinx, model, quantity_dict):
         
         #Extact matching observed value for threshold
         observed = sphinx.observed_end_time[tk]
-        if observed == None or pd.isnull(observed):
-            continue
 
         quantity_dict[model][qk][ek][tk]['Forecast Issue Time'].append(sphinx.prediction.issue_time)
         quantity_dict[model][qk][ek][tk]['Observed SEP Event Date'].append(sphinx.observed_threshold_crossing[tk].crossing_time)
         quantity_dict[model][qk][ek][tk]['Observed'].append(observed)
         quantity_dict[model][qk][ek][tk]['Predicted'].append(predicted)
+        quantity_dict[model][qk][ek][tk]['Match Status'].append(sphinx.end_time_match_status[tk])
+
 
     return quantity_dict
 
@@ -296,9 +285,8 @@ def fill_fluence(sphinx, model, quantity_dict):
     
     #Check if a forecast exists for probability
     if sphinx.prediction.fluences == []:
-        continue
+        return
 
-    #Check each forecast for probability
     for obj in sphinx.prediction.fluences:
         predicted = obj.fluence
         if predicted == None or pd.isnull(predicted):
@@ -314,13 +302,12 @@ def fill_fluence(sphinx, model, quantity_dict):
         
         #Extact matching observed value for threshold
         observed = sphinx.observed_fluence[tk].fluence
-        if observed == None or pd.isnull(observed):
-            continue
 
         quantity_dict[model][qk][ek][tk]['Forecast Issue Time'].append(sphinx.prediction.issue_time)
         quantity_dict[model][qk][ek][tk]['Observed SEP Event Date'].append(sphinx.observed_threshold_crossing[tk].crossing_time)
         quantity_dict[model][qk][ek][tk]['Observed'].append(observed)
         quantity_dict[model][qk][ek][tk]['Predicted'].append(predicted)
+        quantity_dict[model][qk][ek][tk]['Match Status'].append(sphinx.sep_match_status[tk])
 
     return quantity_dict
 
@@ -338,7 +325,7 @@ def fill_fluence_spectrum(sphinx, model, quantity_dict):
     
     #Check if a forecast exists for probability
     if sphinx.prediction.fluences == []:
-        continue
+        return
 
     #Check each forecast for probability
     for obj in sphinx.prediction.fluence_spectra:
@@ -356,13 +343,12 @@ def fill_fluence_spectrum(sphinx, model, quantity_dict):
         
         #Extact matching observed value for threshold
         observed = sphinx.observed_fluence_spectrum[tk].fluence_spectrum
-        if observed == None or pd.isnull(observed):
-            continue
 
         quantity_dict[model][qk][ek][tk]['Forecast Issue Time'].append(sphinx.prediction.issue_time)
         quantity_dict[model][qk][ek][tk]['Observed SEP Event Date'].append(sphinx.observed_threshold_crossing[tk].crossing_time)
         quantity_dict[model][qk][ek][tk]['Observed'].append(observed)
         quantity_dict[model][qk][ek][tk]['Predicted'].append(predicted)
+        quantity_dict[model][qk][ek][tk]['Match Status'].append(sphinx.sep_match_status[tk])
 
     return quantity_dict
 
@@ -380,20 +366,38 @@ def fill_dict(matched_sphinx, model_names, all_energy_channels,
     #Loop through the forecasts for each model and fill in quantity_dict
     #as appropriate
     for model in model_names:
-        for sphinx in matched_sphinx[model]:
-            quantity_dict = fill_all_clear(sphinx, model, quantity_dict)
-            quantity_dict = fill_probability(sphinx, model, quantity_dict)
-            quantity_dict = fill_threshold_crossing_time(sphinx, model,
-                quantity_dict)
-            quantity_dict = fill_start_time(sphinx, model, quantity_dict)
-            quantity_dict = fill_end_time(sphinx, model, quantity_dict)
-            quantity_dict = fill_fluence(sphinx, model, quantity_dict)
-            quantity_dict = fill_fluence_spectrum(sphinx, model, quantity_dict)
+        for channel in all_energy_channels:
+            ek = objh.energy_channel_to_key(channel)
+            for sphinx in matched_sphinx[model][ek]:
+                fill_all_clear(sphinx, model, quantity_dict)
+                fill_probability(sphinx, model, quantity_dict)
+                fill_threshold_crossing_time(sphinx, model, quantity_dict)
+                fill_start_time(sphinx, model, quantity_dict)
+                fill_end_time(sphinx, model, quantity_dict)
+                fill_fluence(sphinx, model, quantity_dict)
+                fill_fluence_spectrum(sphinx, model, quantity_dict)
 
+            print("Model: " + model + ", energy channel: " + ek)
+            print('All Clear')
+            print(quantity_dict[model]['All Clear'][ek])
+            print('Probability')
+            print(quantity_dict[model]['Probability'][ek])
+            print('Threshold Crossing Time')
+            print(quantity_dict[model]['Threshold Crossing Time'][ek])
+            print('Start Time')
+            print(quantity_dict[model]['Start Time'][ek])
+            print('End Time')
+            print(quantity_dict[model]['End Time'][ek])
+            print('Fluence')
+            print(quantity_dict[model]['Fluence'][ek])
+            print('Fluence Spectrum')
+            print(quantity_dict[model]['Fluence Spectrum'][ek])
+
+    return quantity_dict
 
 
 def intuitive_validation(matched_sphinx, model_names, all_energy_channels,
-    all_observed_threhsolds, observed_sep_events):
+    all_observed_thresholds, observed_sep_events):
     """ In the intuitive_validation subroutine, forecasts are validated in a
         way similar to which people would interpret forecasts.
     
@@ -442,17 +446,6 @@ def intuitive_validation(matched_sphinx, model_names, all_energy_channels,
 
     #For each model and predicted quantity, create arrays of paired up values
     #so can calculate metrics
-    all_clear_dict = {}
-    probability_dict = {}
-    peak_intensity_dict = {}
-    peak_intensity_time_dict = {}
-    peak_intensity_max_dict = {}
-    peak_intensity_max_time_dict = {}
-    thresh_cross_time_dict = {}
-    start_time_dict = {}
-    end_time_dict = {}
-    fluence_dict = {}
-    fluence_spectrum_dict = {}
-    profile_dict = {}
-    
-    
+    quantity_dict = fill_dict(matched_sphinx, model_names,
+            all_energy_channels, all_observed_thresholds)
+

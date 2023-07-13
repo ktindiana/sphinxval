@@ -1,7 +1,7 @@
 from ..utils import validation_json_handler as vjson
 from ..utils import config as cfg
 from ..utils import object_handler as objh
-#from ..utils import validation as valid
+from ..utils import validation as valid
 from ..utils import tools
 from ..utils import match
 import logging
@@ -29,5 +29,6 @@ def validate(data_list, model_list):
         match.match_all_forecasts(all_energy_channels, model_names,
             obs_objs, model_objs)
 
-
-    
+    #Perform intuitive validation
+    valid.intuitive_validation(matched_sphinx, model_names,
+        all_energy_channels, all_observed_thresholds, observed_sep_events)

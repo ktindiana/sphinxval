@@ -387,7 +387,8 @@ class Event_Length:
         
 
 class Fluence:
-    def __init__(self, id, fluence, units, uncertainty_low, uncertainty_high):
+    def __init__(self, id, fluence, units, threshold, threshold_units,
+        uncertainty_low, uncertainty_high):
         """
         Input:
             :self: (object) Fluence object
@@ -404,6 +405,8 @@ class Fluence:
         self.id = id
         self.fluence = fluence
         self.units = units
+        self.threshold = threshold
+        self.threshold_units = threshold_units
         self.uncertainty_low = uncertainty_low
         self.uncertainty_high = uncertainty_high
         
@@ -521,9 +524,9 @@ class Forecast():
         #Forecasts
         self.source = None #source from which forcasts ingested
                         #JSON filename or perhaps database in future
-        self.all_clear = None #All_Clear object
-        self.peak_intensity = None #Peak_Intensity object
-        self.peak_intensity_max = None #Peak_Intensity object
+        self.all_clear = All_Clear(None, None, None, None) #All_Clear object
+        self.peak_intensity = Peak_Intensity(None, None, None, None, None, None) #Peak_Intensity object
+        self.peak_intensity_max = Peak_Intensity_Max(None, None, None, None, None, None) #Peak_Intensity object
         self.event_lengths = []
         self.fluences = []
         self.fluence_spectra = []
@@ -717,12 +720,21 @@ class Forecast():
 
         #Load Fluence
         if 'fluences' in dataD:
-            for event in dataD['fluences']:
-                fluence, units, uncertainty_low, uncertainty_high =\
-                    vjson.dict_to_fluence(event)
-                if fluence != None:
-                    self.fluences.append(Fluence("id", fluence, units,
-                        uncertainty_low, uncertainty_high))
+            for i in range(len(dataD['fluences'])):
+                event = {}
+                if 'event_lengths' in dataD:
+                    event = dataD['event_lengths'][i]
+
+                fl = dataD['fluences'][i]
+                fluence, units, threshold, threshold_units, uncertainty_low,\
+                    uncertainty_high = vjson.dict_to_fluence(event, fl)
+                    
+                if 'event_lengths' not in dataD:
+                    threshold = self.all_clear.threshold
+                    threshold_units = self.all_clear.threshold_units
+                
+                self.fluences.append(Fluence("id", fluence, units,
+                    threshold, threshold_units, uncertainty_low, uncertainty_high))
 
 
         #Load Fluence Spectra
@@ -1099,9 +1111,9 @@ class Observation():
         
         
         #Forecasts
-        self.all_clear = None #All_Clear object
-        self.peak_intensity = None #Peak_Intensity object
-        self.peak_intensity_max = None #Peak_Intensity object
+        self.all_clear = All_Clear(None, None, None, None) #All_Clear object
+        self.peak_intensity = Peak_Intensity(None, None, None, None, None, None) #Peak_Intensity object
+        self.peak_intensity_max = Peak_Intensity_Max(None, None, None, None, None, None)#Peak_Intensity object
         self.event_lengths = []
         self.fluences = []
         self.fluence_spectra = []
@@ -1207,11 +1219,20 @@ class Observation():
 
         #Load Fluence
         if 'fluences' in dataD:
-            for event in dataD['fluences']:
-                fluence, units, uncertainty_low, uncertainty_high =\
-                    vjson.dict_to_fluence(event)
+            for i in range(len(dataD['fluences'])):
+                event = {}
+                if 'event_lengths' in dataD:
+                    event = dataD['event_lengths'][i]
+                fl = dataD['fluences'][i]
+                fluence, units, threshold, threshold_units, uncertainty_low,\
+                    uncertainty_high = vjson.dict_to_fluence(event, fl)
+                    
+                if 'event_lengths' not in dataD:
+                    threshold = self.all_clear.threshold
+                    threshold_units = self.all_clear.threshold_units
+                
                 self.fluences.append(Fluence("id", fluence, units,
-                    uncertainty_low, uncertainty_high))
+                    threshold, threshold_units, uncertainty_low, uncertainty_high))
 
 
         #Load Fluence Spectra
@@ -1464,7 +1485,7 @@ class SPHINX:
         self.observed_threshold_crossing.update({key:Threshold_Crossing(None, None, None, None)})
         self.observed_event_length.update({key: Event_Length(None, None, None, None)})
         self.observed_start_time.update({key:None})
-        self.observed_fluence.update({key:Fluence("id",None, None, None, None)})
+        self.observed_fluence.update({key:Fluence("id",None, None, None, None, None, None)})
         self.observed_fluence_spectrum.update({key:Fluence_Spectrum(None, None, None, None, None, None, None)})
 
         self.end_time_match_status.update({key:""})
@@ -1845,7 +1866,7 @@ class SPHINX:
         self.observed_event_length[thresh_key] = Event_Length(None, None, None, None)
         self.observed_start_time[thresh_key] = None
         self.observed_end_time[thresh_key] = None
-        self.observed_fluence[thresh_key] = Fluence("id",None, None, None, None)
+        self.observed_fluence[thresh_key] = Fluence("id",None, None, None, None, None, None)
         self.observed_fluence_spectrum[thresh_key] = Fluence_Spectrum(None, None, None, None, None, None, None)
         
         return
