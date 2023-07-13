@@ -1404,14 +1404,14 @@ class SPHINX:
         #for that specific quantity.
         #These criteria are specified in match.py/match_all_forecasts()
         self.observed_match_peak_intensity_source = None
-        self.peak_intensity_match_status = None
+        self.peak_intensity_match_status = ""
         self.observed_peak_intensity = Peak_Intensity(None, None, None, None, None, None) #Peak Intensity Obj
         self.observed_match_peak_intensity_max_source = None
-        self.peak_intensity_max_match_status = None
+        self.peak_intensity_max_match_status = ""
         self.observed_peak_intensity_max = Peak_Intensity(None, None, None, None, None, None) #Peak Intensity Max Obj
         #Only one All Clear status allowed per energy channel
         self.observed_match_all_clear_source = None
-        self.all_clear_match_status = None
+        self.all_clear_match_status = ""
         self.observed_all_clear = All_Clear(None, None, None, None)  #All Clear Object
         #Uses thresholds from self.thresholds as keys
         self.observed_match_sep_source = {}
@@ -1425,8 +1425,8 @@ class SPHINX:
         self.end_time_match_status = {}
         self.observed_end_time = {} #datetime
 
+        #Probability matching status the same as self.sep_match_status
         self.observed_probability_source = {}
-        self.probability_match_status = {}
         self.observed_probability = {} #Probability object
         
         return
@@ -1460,18 +1460,17 @@ class SPHINX:
         
         #Observed values
         self.observed_match_sep_source.update({key:None})
-        self.sep_match_status.update({key:None})
+        self.sep_match_status.update({key:""})
         self.observed_threshold_crossing.update({key:Threshold_Crossing(None, None, None, None)})
         self.observed_event_length.update({key: Event_Length(None, None, None, None)})
         self.observed_start_time.update({key:None})
         self.observed_fluence.update({key:Fluence("id",None, None, None, None)})
         self.observed_fluence_spectrum.update({key:Fluence_Spectrum(None, None, None, None, None, None, None)})
 
-        self.end_time_match_status.update({key:None})
+        self.end_time_match_status.update({key:""})
         self.observed_end_time.update({key:None})
         
         self.observed_probability_source.update({key: None})
-        self.probability_match_status.update({key:None})
         self.observed_probability.update({key:Probability(None, None, None, None)})
         
         return
@@ -1563,6 +1562,7 @@ class SPHINX:
             for thresh in self.thresholds:
                 thresh_key = objh.threshold_to_key(thresh)
                 print(" Threshold: " + str(thresh))
+                print(" Match Status: " + self.sep_match_status[thresh_key])
                 print("  " + str(self.threshold_crossed_in_pred_win[thresh_key]))
                 print("  Observed threshold crossing times (NaT = no threshold crossing present \n"
                     "  that satisfied matching criteria): ")
@@ -1728,6 +1728,7 @@ class SPHINX:
         print("None = ongoing SEP event at start of the prediction window")
         print("-------------------------------------------------------------")
         print("  Matched observation: " + str(self.observed_match_all_clear_source))
+        print("  Match Status: " + self.all_clear_match_status)
         print("  Observed All Clear Status: "
             + str(self.observed_all_clear.all_clear_boolean))
         print("  All Clear Threshold: " + str(self.observed_all_clear.threshold))
@@ -1740,6 +1741,7 @@ class SPHINX:
         print("-------------------------------------------------------------")
         print("  Matched observation: " +
             str(self.observed_match_peak_intensity_source))
+        print("  Match Status: " + self.peak_intensity_match_status)
         print("  Intensity: " + str(self.observed_peak_intensity.intensity))
         print("  Units: " + str(self.observed_peak_intensity.units))
         print("  Time: " + str(self.observed_peak_intensity.time))
@@ -1750,6 +1752,7 @@ class SPHINX:
         print("-------------------------------------------------------------")
         print("  Matched observation: " +
             str(self.observed_match_peak_intensity_max_source))
+        print("  Match Status: " + self.peak_intensity_max_match_status)
         print("  Intensity: " + str(self.observed_peak_intensity_max.intensity))
         print("  Units: " + str(self.observed_peak_intensity_max.units))
         print("  Time: " + str(self.observed_peak_intensity_max.time))
@@ -1765,6 +1768,7 @@ class SPHINX:
         for thresh in self.thresholds:
             thresh_key = objh.threshold_to_key(thresh)
             print(" Threshold: " + str(thresh))
+            print("  Match Status: " + self.sep_match_status[thresh_key])
             print("  Matched observation: " + str(self.observed_probability_source[thresh_key]))
             print("  Probability: "
             + str(self.observed_probability[thresh_key].probability_value))
@@ -1777,6 +1781,7 @@ class SPHINX:
         for thresh in self.thresholds:
             thresh_key = objh.threshold_to_key(thresh)
             print(" Threshold: " + str(thresh))
+            print("  Match Status: " + self.sep_match_status[thresh_key])
             print("  Matched observation: " + str(self.observed_match_sep_source[thresh_key]))
             print("  Threshold crossing time: "
                 + str(self.observed_threshold_crossing[thresh_key].crossing_time))
@@ -1791,6 +1796,7 @@ class SPHINX:
         for thresh in self.thresholds:
             thresh_key = objh.threshold_to_key(thresh)
             print(" Threshold: " + str(thresh))
+            print("  Match Status: " + self.end_time_match_status[thresh_key])
             print("  Matched observation: " + str(self.observed_match_sep_source[thresh_key]))
             print("  End time: " + str(self.observed_end_time[thresh_key]))
                 
