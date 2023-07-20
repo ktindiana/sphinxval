@@ -1437,17 +1437,18 @@ def match_observed_onset_peak(sphinx, observation_obj, is_win_overlap,
     if is_eruption_in_range != None:
         peak_criteria = (peak_criteria and is_eruption_in_range)
     
-    if not is_win_overlap:
-        sphinx.peak_intensity_match_status = "No Matched Observation"
-    if not is_pred_sep_overlap:
-        sphinx.peak_intensity_match_status = "No SEP Event"
-    if is_eruption_in_range != None and not is_eruption_in_range:
-        sphinx.peak_intensity_match_status = "Eruption Out of Range"
-    if not trigger_input_peak: #precedence
-        sphinx.peak_intensity_match_status = "Trigger/Input after Observed Phenomenon"
+    if not peak_criteria:
+        if not is_win_overlap:
+            sphinx.peak_intensity_match_status = "No Matched Observation"
+        if not is_pred_sep_overlap:
+            sphinx.peak_intensity_match_status = "No SEP Event"
+        if is_eruption_in_range != None and not is_eruption_in_range:
+            sphinx.peak_intensity_match_status = "Eruption Out of Range"
+        if not trigger_input_peak: #precedence
+            sphinx.peak_intensity_match_status = "Trigger/Input after Observed Phenomenon"
  
  
-    if peak_criteria == True:
+    if peak_criteria:
 #        print("Observed peak_intensity matched:")
 #        print(observation_obj.source)
 #        print(observation_obj.peak_intensity.intensity)
@@ -1503,16 +1504,17 @@ def match_observed_max_flux(sphinx, observation_obj, is_win_overlap,
     if is_eruption_in_range != None:
         max_criteria = (max_criteria and is_eruption_in_range)
 
-    if not is_win_overlap:
-        sphinx.peak_intensity_max_match_status = "No Matched Observation"
-    if not is_pred_sep_overlap:
-        sphinx.peak_intensity_max_match_status = "No SEP Event"
-    if is_eruption_in_range != None and not is_eruption_in_range:
-        sphinx.peak_intensity_max_match_status = "Eruption Out of Range"
-    if not trigger_input_max: #precedence
-        sphinx.peak_intensity_max_match_status = "Trigger/Input after Observed Phenomenon"
+    if not max_criteria:
+        if not is_win_overlap:
+            sphinx.peak_intensity_max_match_status = "No Matched Observation"
+        if not is_pred_sep_overlap:
+            sphinx.peak_intensity_max_match_status = "No SEP Event"
+        if is_eruption_in_range != None and not is_eruption_in_range:
+            sphinx.peak_intensity_max_match_status = "Eruption Out of Range"
+        if not trigger_input_max: #precedence
+            sphinx.peak_intensity_max_match_status = "Trigger/Input after Observed Phenomenon"
 
-    if max_criteria == True:
+    if max_criteria:
 #        print("Observed peak_intensity_max matched:")
 #        print(observation_obj.source)
 #        print(observation_obj.peak_intensity_max.intensity)

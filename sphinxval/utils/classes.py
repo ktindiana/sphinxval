@@ -6,6 +6,7 @@ from . import validation_json_handler as vjson
 from . import units_handler as vunits
 from . import object_handler as objh
 import datetime
+import pandas as pd
 
 __version__ = "0.1"
 __author__ = "Katie Whitman"
@@ -1853,14 +1854,19 @@ class SPHINX:
         thresh_key = objh.threshold_to_key(threshold)
         
         #These criteria are specified in match.py/match_all_forecasts()
+        self.peak_intensity_match_status = "Unmatched"
+        self.observed_match_peak_intensity_source = None
         self.observed_peak_intensity = Peak_Intensity(None, None, None, None, None, None)
+        self.peak_intensity_max_match_status = "Unmatched"
         self.observed_match_peak_intensity_max_source = None
         self.observed_peak_intensity_max = Peak_Intensity_Max(None, None, None, None, None, None)
         
         #Only one All Clear status allowed per energy channel
+        self.all_clear_match_status = "Unmatched"
         self.observed_all_clear.all_clear_boolean = True
         
         #Uses thresholds from self.thresholds as keys
+        self.sep_match_status = "Unmatched"
         self.observed_probability[thresh_key].probability_value = 0.0
         self.observed_threshold_crossing[thresh_key] = Threshold_Crossing(None, None, None, None)
         self.observed_event_length[thresh_key] = Event_Length(None, None, None, None)
@@ -1870,5 +1876,294 @@ class SPHINX:
         self.observed_fluence_spectrum[thresh_key] = Fluence_Spectrum(None, None, None, None, None, None, None)
         
         return
+
+
+
+    def return_predicted_all_clear(self):
+        """ Pull out the predicted value.
+            Performs units checking with observed values.
+            
+            None is returned if threshold isn't found or model
+            doesn't make prediction.
+            
+        """
+        match_status = ""
+        
+        #Check if forecast for all clear
+        predicted = self.prediction.all_clear.all_clear_boolean
+        if predicted == None:
+            return predicted, match_status
+
+        pred_threshold = {'threshold': self.prediction.all_clear.threshold,
+            'threshold_units': self.prediction.all_clear.threshold_units}
+        obs_threshold = {'threshold': self.observed_all_clear.threshold,
+            'threshold_units': self.observed_all_clear.threshold_units}
+            
+        #Thresholds must match
+        if pred_threshold != obs_threshold:
+            predicted = None
+            match_status = "Units Mismatched"
+            return predicted, match_status
+
+        match_status = self.all_clear_match_status
+
+        return predicted, match_status
+
+
+
+    def return_predicted_probability(self, thresh_key):
+        """ Pull out the predicted value for the requested threshold.
+            Performs units checking with observed values.
+            
+            None is returned if threshold isn't found or model
+            doesn't make prediction.
+            
+        """
+        pred_prob = None
+        match_status = ""
+        
+        #Check if a forecast exists for probability
+        if self.prediction.probabilities == []:
+            return pred_prob, match_status
+
+        #Check each forecast for probability
+        for prob_obj in self.prediction.probabilities:
+            pred_thresh = {'threshold': prob_obj.threshold,
+                'threshold_units': prob_obj.threshold_units}
+            #Check that predicted threshold was applied in the observations
+            if pred_thresh not in self.thresholds:
+                continue
+
+            tk = objh.threshold_to_key(pred_thresh)
+            if tk != thresh_key:
+                continue
+            
+            predicted = prob_obj.probability_value
+            match_status = self.sep_match_status[tk]
+
+        return predicted, match_status
+
+
+
+    def return_predicted_threshold_crossing_time(self, thresh_key):
+        """ Pull out the predicted value for the requested threshold.
+            
+            None is returned if threshold isn't found or model
+            doesn't make prediction.
+            
+        """
+        
+        predicted = None
+        match_status = ""
+        
+        #Check if a forecast exists for probability
+        if self.prediction.threshold_crossings == []:
+            return predicted, match_status
+
+        #Check each forecast for probability
+        for obj in self.prediction.threshold_crossings:
+            pred_thresh = {'threshold': obj.threshold,
+                'threshold_units': obj.threshold_units}
+            #Check that predicted threshold was applied in the observations
+            if pred_thresh not in self.thresholds:
+                continue
+
+            tk = objh.threshold_to_key(pred_thresh)
+            if tk != thresh_key: continue
+ 
+            predicted = obj.crossing_time
+
+            match_status = self.sep_match_status[tk]
+
+        return predicted, match_status
+
+
+
+    def return_predicted_start_time(self, thresh_key):
+        """ Pull out the predicted value for the requested threshold.
+            
+            None is returned if threshold isn't found or model
+            doesn't make prediction.
+            
+        """
+        predicted = None
+        match_status = ""
+        
+        #Check if a forecast exists for probability
+        if self.prediction.event_lengths == []:
+            return predicted, match_status
+
+        #Check each forecast for probability
+        for obj in self.prediction.event_lengths:
+            predicted = obj.start_time
+            if predicted == None or pd.isnull(predicted):
+                continue
+
+            pred_thresh = {'threshold': obj.threshold,
+                'threshold_units': obj.threshold_units}
+            #Check that predicted threshold was applied in the observations
+            if pred_thresh not in self.thresholds:
+                continue
+
+            tk = objh.threshold_to_key(pred_thresh)
+            if tk != thresh_key: continue
+            
+            match_status = self.sep_match_status[tk]
+
+        return predicted, match_status
+
+
+
+
+    def return_predicted_end_time(self, thresh_key):
+        """ Pull out the predicted value for the requested threshold.
+            
+            None is returned if threshold isn't found or model
+            doesn't make prediction.
+            
+        """
+        predicted = None
+        match_status = ""
+        
+        #Check if a forecast exists for probability
+        if self.prediction.event_lengths == []:
+            return predicted, match_status
+
+        #Check each forecast for probability
+        for obj in self.prediction.event_lengths:
+            predicted = obj.end_time
+            if predicted == None or pd.isnull(predicted):
+                continue
+
+            pred_thresh = {'threshold': obj.threshold,
+                'threshold_units': obj.threshold_units}
+            #Check that predicted threshold was applied in the observations
+            if pred_thresh not in self.thresholds:
+                continue
+
+            tk = objh.threshold_to_key(pred_thresh)
+            if tk != thresh_key: continue
+            
+            match_status = self.end_time_match_status[tk]
+
+        return predicted, match_status
+
+
+
+    def return_predicted_fluence(self, thresh_key):
+        """ Pull out the predicted value for the requested threshold.
+            
+            None is returned if threshold isn't found or model
+            doesn't make prediction.
+            
+        """
+        predicted = None
+        units = None
+        match_status = ""
+
+        #Check if a forecast exists for probability
+        if self.prediction.fluences == []:
+            return predicted, units, match_status
+
+        for obj in self.prediction.fluences:
+            predicted = obj.fluence
+            if predicted == None or pd.isnull(predicted):
+                continue
+
+            pred_thresh = {'threshold': obj.threshold,
+                'threshold_units': obj.threshold_units}
+            #Check that predicted threshold was applied in the observations
+            if pred_thresh not in self.thresholds:
+                continue
+
+            tk = objh.threshold_to_key(pred_thresh)
+            if tk != thresh_key: continue
+            
+            units = obj.units
+            match_status = self.sep_match_status[tk]
+
+        return predicted, units, match_status
+
+
+
+    def return_predicted_fluence_spectrum(self, thresh_key):
+        """ Pull out the predicted value for the requested threshold.
+            
+            None is returned if threshold isn't found or model
+            doesn't make prediction.
+            
+        """
+        predicted = None
+        units = None
+        match_status = ""
+
+        #Check if a forecast exists for probability
+        if self.prediction.fluence_spectra == []:
+            return predicted, units, match_status
+
+        #Check each forecast for probability
+        for obj in self.prediction.fluence_spectra:
+            predicted = obj.fluence_spectrum
+            if predicted == None or pd.isnull(predicted):
+                continue
+
+            pred_thresh = {'threshold': obj.threshold_start,
+                'threshold_units': obj.threshold_units}
+            #Check that predicted threshold was applied in the observations
+            if pred_thresh not in self.thresholds:
+                match_status = "No Matching Threshold"
+                continue
+
+            tk = objh.threshold_to_key(pred_thresh)
+            if tk != thresh_key: continue
+            
+            units = obj.fluence_units
+            match_status = self.sep_match_status[tk]
+
+        return predicted, units, match_status
+
+
+
+    def return_predicted_peak_intensity(self):
+        """ Pull out the predicted value.
+            
+        """
+        #Check if prediction exists
+        predicted = self.prediction.peak_intensity.intensity
+        pred_units = self.prediction.peak_intensity.units
+        pred_time = self.prediction.peak_intensity.time
+        match_status = self.peak_intensity_match_status
+
+        #Observed value
+        obs_units = self.observed_peak_intensity.units
+        
+        if pred_units != obs_units:
+            predicted = None
+            match_status = "Mismatched Units"
+            return predicted, pred_units, pred_time, match_status
+
+        return predicted, pred_units, pred_time, match_status
+
+
+
+    def return_predicted_peak_intensity_max(self):
+        """ Pull out the predicted value.
+            
+        """
+        #Check if prediction exists
+        predicted = self.prediction.peak_intensity_max.intensity
+        pred_units = self.prediction.peak_intensity_max.units
+        pred_time = self.prediction.peak_intensity_max.time
+        match_status = self.peak_intensity_max_match_status
+
+        #Observed units
+        obs_units = self.observed_peak_intensity_max.units
+
+        if pred_units != obs_units:
+            predicted = None
+            match_status = "Mismatched Units"
+            return predicted, pred_units, pred_time, match_status
+
+        return predicted, pred_units, pred_time, match_status
 
 
