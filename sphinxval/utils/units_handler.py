@@ -113,16 +113,22 @@ def calc_conversion_factor(x_units, y_units):
         
         INPUTS:
         
-        :x_units: (string) units in CCMC SEP Scoreboard format
-        :y_units: (string) units in CCMC SEP Scoreboard format
+        :x_units: (string or AstroPy units) units in CCMC SEP Scoreboard format or already converted to astropy units
+        :y_units: (string or AstroPy units) units in CCMC SEP Scoreboard format or already converted to astropy units
+        
+        Both x_units and y_units must be in the same format
         
         OUTPUT:
         
         :conv: (float) conversion factor
     """
     
-    xu = convert_string_to_units(x_units)
-    yu = convert_string_to_units(y_units)
+    if isinstance(x_units, str):
+        xu = convert_string_to_units(x_units)
+        yu = convert_string_to_units(y_units)
+    else:
+        xu = x_units
+        yu = y_units
     
     #Try to convert y to x with astropy
     #will work for e.g. cm --> m or GeV --> MeV
@@ -148,10 +154,3 @@ def calc_conversion_factor(x_units, y_units):
     conv = None
     return conv
     
-    
-    
-    
-
-    
-        
-

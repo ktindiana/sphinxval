@@ -76,28 +76,28 @@ def initialize_dict():
             "Observed SEP Fluence Spectrum": [],
             "Observed SEP Fluence Spectrum Units": [],
             "Predicted SEP All Clear": [],
+            "All Clear Match Status": [],
             "Predicted SEP Probability": [],
+            "Probability Match Status": [],
             "Predicted SEP Threshold Crossing Time": [],
+            "Threshold Crossing Time Match Status": [],
             "Predicted SEP Start Time":[],
+            "Start Time Match Status": [],
             "Predicted SEP End Time": [],
+            "End Time Match Status": [],
             "Predicted SEP Peak Intensity (Onset Peak)": [],
             "Predicted SEP Peak Intensity (Onset Peak) Units": [],
             "Predicted SEP Peak Intensity (Onset Peak) Time": [],
+            "Peak Intensity Match Status": [],
             "Predicted SEP Peak Intensity Max (Max Flux)": [],
             "Predicted SEP Peak Intensity Max (Max Flux) Units": [],
             "Predicted SEP Peak Intensity Max (Max Flux) Time": [],
+            "Peak Intensity Max Match Status": [],
             "Predicted SEP Fluence": [],
             "Predicted SEP Fluence Units": [],
+            "Fluence Match Status": [],
             "Predicted SEP Fluence Spectrum": [],
             "Predicted SEP Fluence Spectrum Units": [],
-            "All Clear Match Status": [],
-            "Probability Match Status": [],
-            "Threshold Crossing Time Match Status": [],
-            "Start Time Match Status": [],
-            "End Time Match Status": [],
-            "Peak Intensity Match Status": [],
-            "Peak Intensity Max Match Status": [],
-            "Fluence Match Status": [],
             "Fluence Spectrum Match Status": [],
             "Time Profile Match Status": []}
 
@@ -284,28 +284,28 @@ def fill_dict_row(sphinx, dict, energy_key, thresh_key):
 
 
     dict["Predicted SEP All Clear"].append(pred_all_clear)
+    dict["All Clear Match Status"].append(ac_match_status)
     dict["Predicted SEP Probability"].append(pred_prob)
+    dict["Probability Match Status"].append(prob_match_status)
     dict["Predicted SEP Threshold Crossing Time"].append(pred_thresh_cross)
+    dict["Threshold Crossing Time Match Status"].append(tc_match_status)
     dict["Predicted SEP Start Time"].append(pred_start_time)
+    dict["Start Time Match Status"].append(st_match_status)
     dict["Predicted SEP End Time"].append(pred_end_time)
+    dict["End Time Match Status"].append(et_match_status)
     dict["Predicted SEP Peak Intensity (Onset Peak)"].append(pred_peak_intensity)
     dict["Predicted SEP Peak Intensity (Onset Peak) Units"].append(pred_pi_units)
     dict["Predicted SEP Peak Intensity (Onset Peak) Time"].append(pred_pi_time)
+    dict["Peak Intensity Match Status"].append(pi_match_status)
     dict["Predicted SEP Peak Intensity Max (Max Flux)"].append(pred_peak_intensity_max)
     dict["Predicted SEP Peak Intensity Max (Max Flux) Units"].append(pred_pimax_units)
     dict["Predicted SEP Peak Intensity Max (Max Flux) Time"].append(pred_pimax_time)
+    dict["Peak Intensity Max Match Status"].append(pimax_match_status)
     dict["Predicted SEP Fluence"].append(pred_fluence)
     dict["Predicted SEP Fluence Units"].append(pred_fl_units)
+    dict["Fluence Match Status"].append(fl_match_status)
     dict["Predicted SEP Fluence Spectrum"].append(pred_fl_spec)
     dict["Predicted SEP Fluence Spectrum Units"].append(pred_flsp_units)
-    dict["All Clear Match Status"].append(ac_match_status)
-    dict["Probability Match Status"].append(prob_match_status)
-    dict["Threshold Crossing Time Match Status"].append(tc_match_status)
-    dict["Start Time Match Status"].append(st_match_status)
-    dict["End Time Match Status"].append(et_match_status)
-    dict["Peak Intensity Match Status"].append(pi_match_status)
-    dict["Peak Intensity Max Match Status"].append(pimax_match_status)
-    dict["Fluence Match Status"].append(fl_match_status)
     dict["Fluence Spectrum Match Status"].append(flsp_match_status)
     dict["Time Profile Match Status"].append(None)
 

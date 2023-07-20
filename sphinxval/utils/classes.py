@@ -1902,7 +1902,7 @@ class SPHINX:
         #Thresholds must match
         if pred_threshold != obs_threshold:
             predicted = None
-            match_status = "Units Mismatched"
+            match_status = "No Matching Threshold"
             return predicted, match_status
 
         match_status = self.all_clear_match_status
@@ -1966,13 +1966,13 @@ class SPHINX:
                 'threshold_units': obj.threshold_units}
             #Check that predicted threshold was applied in the observations
             if pred_thresh not in self.thresholds:
+                match_status = "No Matching Threshold"
                 continue
 
             tk = objh.threshold_to_key(pred_thresh)
             if tk != thresh_key: continue
  
             predicted = obj.crossing_time
-
             match_status = self.sep_match_status[tk]
 
         return predicted, match_status
@@ -1995,19 +1995,17 @@ class SPHINX:
 
         #Check each forecast for probability
         for obj in self.prediction.event_lengths:
-            predicted = obj.start_time
-            if predicted == None or pd.isnull(predicted):
-                continue
-
             pred_thresh = {'threshold': obj.threshold,
                 'threshold_units': obj.threshold_units}
             #Check that predicted threshold was applied in the observations
-            if pred_thresh not in self.thresholds:
+            if obj.threshold != None and pred_thresh not in self.thresholds:
+                match_status = "No Matching Threshold"
                 continue
 
             tk = objh.threshold_to_key(pred_thresh)
             if tk != thresh_key: continue
-            
+
+            predicted = obj.start_time
             match_status = self.sep_match_status[tk]
 
         return predicted, match_status
@@ -2031,19 +2029,17 @@ class SPHINX:
 
         #Check each forecast for probability
         for obj in self.prediction.event_lengths:
-            predicted = obj.end_time
-            if predicted == None or pd.isnull(predicted):
-                continue
-
             pred_thresh = {'threshold': obj.threshold,
                 'threshold_units': obj.threshold_units}
             #Check that predicted threshold was applied in the observations
-            if pred_thresh not in self.thresholds:
+            if obj.threshold != None and pred_thresh not in self.thresholds:
+                match_status = "No Matching Threshold"
                 continue
 
             tk = objh.threshold_to_key(pred_thresh)
             if tk != thresh_key: continue
-            
+
+            predicted = obj.end_time
             match_status = self.end_time_match_status[tk]
 
         return predicted, match_status
@@ -2058,31 +2054,42 @@ class SPHINX:
             
         """
         predicted = None
-        units = None
+        pred_units = None
         match_status = ""
 
         #Check if a forecast exists for probability
         if self.prediction.fluences == []:
-            return predicted, units, match_status
+            return predicted, pred_units, match_status
 
         for obj in self.prediction.fluences:
-            predicted = obj.fluence
-            if predicted == None or pd.isnull(predicted):
-                continue
-
             pred_thresh = {'threshold': obj.threshold,
                 'threshold_units': obj.threshold_units}
             #Check that predicted threshold was applied in the observations
-            if pred_thresh not in self.thresholds:
+            if obj.threshold != None and pred_thresh not in self.thresholds:
+                match_status = "No Matching Threshold"
                 continue
 
             tk = objh.threshold_to_key(pred_thresh)
             if tk != thresh_key: continue
-            
-            units = obj.units
-            match_status = self.sep_match_status[tk]
 
-        return predicted, units, match_status
+            match_status = self.sep_match_status[tk]
+            predicted = obj.fluence
+
+            pred_units = obj.units
+            obs_units = self.observed_fluence[tk].units
+            if obs_units != None and pred_units != None:
+                if obs_units != pred_units:
+                    #Find a conversion factor from the prediction units
+                    #to the observation units
+                    conv = vunits.calc_conversion_factor(obs_units, pred_units)
+                    if conv != None:
+                        predicted = predicted * conv
+                        pred_units = obs_units
+                    else:
+                        predicted = None
+                        match_status = "Mismatched Units"
+
+        return predicted, pred_units, match_status
 
 
 
@@ -2094,33 +2101,36 @@ class SPHINX:
             
         """
         predicted = None
-        units = None
+        pred_units = None
         match_status = ""
 
         #Check if a forecast exists for probability
         if self.prediction.fluence_spectra == []:
-            return predicted, units, match_status
+            return predicted, pred_units, match_status
 
         #Check each forecast for probability
         for obj in self.prediction.fluence_spectra:
-            predicted = obj.fluence_spectrum
-            if predicted == None or pd.isnull(predicted):
-                continue
-
             pred_thresh = {'threshold': obj.threshold_start,
                 'threshold_units': obj.threshold_units}
             #Check that predicted threshold was applied in the observations
-            if pred_thresh not in self.thresholds:
+            if obj.threshold_start != None and pred_thresh not in self.thresholds:
                 match_status = "No Matching Threshold"
                 continue
 
             tk = objh.threshold_to_key(pred_thresh)
             if tk != thresh_key: continue
-            
-            units = obj.fluence_units
-            match_status = self.sep_match_status[tk]
 
-        return predicted, units, match_status
+            match_status = self.sep_match_status[tk]
+            predicted = obj.fluence_spectrum
+
+            obs_units = self.observed_fluence_spectrum[tk].fluence_units
+            pred_units = obj.fluence_units
+            
+            if obs_units != None and pred_units != None:
+                if obs_units != pred_units:
+                    match_status = "Mismatched Units"
+
+        return predicted, pred_units, match_status
 
 
 
@@ -2132,15 +2142,21 @@ class SPHINX:
         predicted = self.prediction.peak_intensity.intensity
         pred_units = self.prediction.peak_intensity.units
         pred_time = self.prediction.peak_intensity.time
-        match_status = self.peak_intensity_match_status
-
-        #Observed value
-        obs_units = self.observed_peak_intensity.units
         
-        if pred_units != obs_units:
-            predicted = None
-            match_status = "Mismatched Units"
-            return predicted, pred_units, pred_time, match_status
+        match_status = ""
+        if predicted != None:
+            match_status = self.peak_intensity_match_status
+
+        #Check units
+        obs_units = self.observed_peak_intensity.units
+        if obs_units != None and pred_units != None:
+            if obs_units != pred_units:
+                #Find a conversion factor from the prediction units
+                #to the observation units
+                conv = vunits.calc_conversion_factor(obs_units, pred_units)
+                if conv != None:
+                    predicted = predicted * conv
+                    pred_units = obs_units
 
         return predicted, pred_units, pred_time, match_status
 
@@ -2154,15 +2170,21 @@ class SPHINX:
         predicted = self.prediction.peak_intensity_max.intensity
         pred_units = self.prediction.peak_intensity_max.units
         pred_time = self.prediction.peak_intensity_max.time
-        match_status = self.peak_intensity_max_match_status
+        
+        match_status = None
+        if predicted != None:
+            match_status = self.peak_intensity_max_match_status
 
         #Observed units
         obs_units = self.observed_peak_intensity_max.units
-
-        if pred_units != obs_units:
-            predicted = None
-            match_status = "Mismatched Units"
-            return predicted, pred_units, pred_time, match_status
+        if obs_units != None and pred_units != None:
+            if obs_units != pred_units:
+                #Find a conversion factor from the prediction units
+                #to the observation units
+                conv = vunits.calc_conversion_factor(obs_units, pred_units)
+                if conv != None:
+                    predicted = predicted * conv
+                    pred_units = obs_units
 
         return predicted, pred_units, pred_time, match_status
 
