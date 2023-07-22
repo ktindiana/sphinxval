@@ -1,6 +1,10 @@
 #Subroutines related to validation
 from . import object_handler as objh
 from . import metrics
+from . import plotting_tools as plt_tools
+from scipy.stats import pearsonr
+import statistics
+import numpy as np
 import sys
 import pandas as pd
 
@@ -14,7 +18,8 @@ __email__ = "kathryn.whitman@nasa.gov"
     they have been matched to observations.
     
 """
-    
+
+######### DATAFRAMES CONTAINING OBSERVATIONS AND PREDICTIONS ######
 
 def initialize_dict():
     """ Set up a pandas df to hold each possible quantity,
@@ -102,7 +107,6 @@ def initialize_dict():
             "Time Profile Match Status": []}
 
     return dict
-
 
 
 
@@ -311,8 +315,6 @@ def fill_dict_row(sphinx, dict, energy_key, thresh_key):
 
  
 
-
-
 def fill_df(matched_sphinx, model_names, all_energy_channels,
     all_obs_thresholds):
     """ Fill in a dictionary with the all clear predictions and observations
@@ -335,11 +337,933 @@ def fill_df(matched_sphinx, model_names, all_energy_channels,
                 
     
     df = pd.DataFrame(dict)
-
     df.to_csv("../output/SPHINX_dataframe.csv")
-
-
     return df
+
+
+
+##################### METRICS #####################
+def initialize_flux_dict():
+    """ Metrics used for fluxes.
+    
+    """
+    dict = {"Model": [],
+            "Energy Channel": [],
+            "Threshold": [],
+            "Scatter Plot": [],
+            "Linear Regression Slope": [],
+            "Linear Regression y-intercept": [],
+            "Pearson Correlation Coefficient (Linear)": [],
+            "Pearson Correlation Coefficient (Log)": [],
+            "Spearman Correlation Coefficient (Linear)": [],
+            "Spearman Correlation Coefficient (Log)": [],
+            "Mean Error (ME)": [],
+            "Median Error (MedE)": [],
+            "Mean Log Error (MLE)": [],
+            "Median Log Error (MedLE)": [],
+            "Mean Absolute Error (MAE)": [],
+            "Median Absolute Error (MedAE)": [],
+            "Mean Absolute Log Error (MALE)": [],
+            "Median Absolute Log Error (MedALE)": [],
+            "Mean Absolute Percentage Error (MAPE)": [],
+            "Mean Accuracy Ratio": [],
+            "Root Mean Square Error (RMSE)": [],
+            "Root Mean Square Log Error (RMSLE)": [],
+            "Median Symmetric Accuracy (MdSA)": []
+            }
+    
+    return dict
+
+
+def initialize_time_dict():
+    """ Metrics for predictions related to time.
+    
+    """
+    dict = {"Model": [],
+            "Energy Channel": [],
+            "Threshold": [],
+            "Mean Error (pred - obs)": [],
+            "Median Error (pred - obs)": [],
+            "Mean Absolute Error (|pred - obs|)": [],
+            "Median Absolute Error (|pred - obs|)": [],
+            }
+
+
+def initialize_all_clear_dict():
+    """ Metrics for all clear predictions.
+    
+    """
+    dict = {"Model": [],
+            "Energy Channel": [],
+            "Threshold": [],
+            "All Clear True Positives": [], #Hits
+            "All Clear False Positives": [], #False Alarms
+            "All Clear True Negatives": [],  #Correct negatives
+            "All Clear False Negatives": [], #Misses
+            "Percent Correct": [],
+            "Bias": [],
+            "Hit Rate": [],
+            "False Alarm Rate": [],
+            "Frequency of Misses": [],
+            "Frequency of Hits": [],
+            "Probability of Correct Negatives": [],
+            "Frequency of Correct Negatives": [],
+            "False Alarm Ratio": [],
+            "Detection Failure Ratio": [],
+            "Threat Score": [],
+            "Odds Ratio": [],
+            "Gilbert Skill Score": [],
+            "True Skill Statistic": [],
+            "Heidke Skill Score": [],
+            "Odds Ratio Skill Score": [],
+#            "Mean Percentage Error": [],
+#            "Mean Absolute Percentage Error": []
+            }
+            
+    return dict
+
+            
+def initialize_probability_dict():
+    """ Metrics for probability predictions.
+    
+    """
+    dict = {"Model": [],
+            "Energy Channel": [],
+            "Threshold": [],
+            "Brier Score": [],
+            "Brier Skill Score": [],
+            "Linear Correlation Coefficient": [],
+            "Rank Order Correlation Coefficient": [],
+            }
+            
+    return dict
+
+
+
+
+def fill_flux_metrics_dict(dict, model, energy_key, thresh_key, figname,
+    slope, yint, r_lin, r_log, s_lin, s_log, ME, MedE, MLE, MedLE, MAE,
+    MedAE, MALE, MedALE, MAPE, MAR, RMSE, RMSLE, MdSA):
+    """ Put flux-related metrics into metrics dictionary.
+    
+    """
+    dict["Model"].append(model)
+    dict["Energy Channel"].append(energy_key)
+    dict["Threshold"].append(thresh_key)
+    dict["Scatter Plot"].append(figname)
+    dict["Linear Regression Slope"].append(slope)
+    dict["Linear Regression y-intercept"].append(yint)
+    dict["Pearson Correlation Coefficient (Linear)"].append(r_lin)
+    dict["Pearson Correlation Coefficient (Log)"].append(r_log)
+    dict["Spearman Correlation Coefficient (Linear)"].append(s_lin)
+    dict["Spearman Correlation Coefficient (Log)"].append(s_log)
+    dict["Mean Error (ME)"].append(ME)
+    dict["Median Error (MedE)"].append(MedE)
+    dict["Mean Log Error (MLE)"].append(MLE)
+    dict["Median Log Error (MedLE)"].append(MedLE)
+    dict["Mean Absolute Error (MAE)"].append(MAE)
+    dict["Median Absolute Error (MedAE)"].append(MedAE)
+    dict["Mean Absolute Log Error (MALE)"].append(MALE)
+    dict["Median Absolute Log Error (MedALE)"].append(MedALE)
+    dict["Mean Absolute Percentage Error (MAPE)"].append(MAPE)
+    dict["Mean Accuracy Ratio"].append(MAR)
+    dict["Root Mean Square Error (RMSE)"].append(RMSE)
+    dict["Root Mean Square Log Error (RMSLE)"].append(RMSLE)
+    dict["Median Symmetric Accuracy (MdSA)"].append(MdSA)
+    
+
+
+def fill_time_metrics_dict(dict, model, energy_key, thresh_key,
+    ME, MedE, MAE, MedAE):
+    """ Fill in metrics for time
+    """
+    dict["Model"].append(model)
+    dict["Energy Channel"].append(energy_key)
+    dict["Threshold"].append(thresh_key)
+    dict["Mean Error (pred - obs)"].append(ME)
+    dict["Median Error (pred - obs)"].append(MedE)
+    dict["Mean Absolute Error (|pred - obs|)"].append(MAE)
+    dict["Median Absolute Error (|pred - obs|)"].append(MedAE)
+
+
+
+def fill_all_clear_dict(dict, model, energy_key, thresh_key, scores):
+    """ Fill the all clear metrics dictionary with metrics for each model.
+    
+    """
+    dict["Model"].append(model)
+    dict["Energy Channel"].append(energy_key)
+    dict["Threshold"].append(thresh_key)
+    dict["All Clear True Positives"].append(scores['TP']) #Hits
+    dict["All Clear False Positives"].append(scores['FP']) #False Alarms
+    dict["All Clear True Negatives"].append(scores['TN'])  #Correct negatives
+    dict["All Clear False Negatives"].append(scores['FN']) #Misses
+    dict["Percent Correct"].append(scores['PC'])
+    dict["Bias"].append(scores['B'])
+    dict["Hit Rate"].append(scores['H'])
+    dict["False Alarm Rate"].append(scores['F'])
+    dict["Frequency of Misses"].append(scores['FOM'])
+    dict["Frequency of Hits"].append(scores['FOH'])
+    dict["Probability of Correct Negatives"].append(scores['POCN'])
+    dict["Frequency of Correct Negatives"].append(scores['FOCN'])
+    dict["False Alarm Ratio"].append(scores['FAR'])
+    dict["Detection Failure Ratio"].append(scores['DFR'])
+    dict["Threat Score"].append(scores['TS']) #Critical Success Index
+    dict["Odds Ratio"].append(scores['OR'])
+    dict["Gilbert Skill Score"].append(scores['GSS']) #Equitable Threat Score
+    dict["True Skill Statistic"].append(scores['TSS']) #Hanssen and Kuipers
+            #discriminant (true skill statistic, Peirce's skill score)
+    dict["Heidke Skill Score"].append(scores['HSS'])
+    dict["Odds Ratio Skill Score"].append(scores['ORSS'])
+#    dict["Mean Percentage Error"].append(scores[])
+#    dict["Mean Absolute Percentage Error"].append(scores[])
+
+
+
+def all_clear_intuitive_metrics(df, dict, model, energy_key, thresh_key):
+    """ Extract the appropriate predictions and calculate metrics
+        All Clear
+
+    """
+    #Select rows to calculate metrics
+    sub = df.loc[(df['Model'] == model) & (df['Energy Channel Key'] ==
+        energy_key) & (df['Threshold Key'] == thresh_key)]
+
+    sub = sub[['Model','Energy Channel Key', 'Threshold Key', 'Forecast Source',
+            'Prediction Window Start', 'Prediction Window End',
+            'Observed SEP All Clear', 'Predicted SEP All Clear',
+            'All Clear Match Status']]
+    sub = sub.loc[(sub['All Clear Match Status'] != 'Ongoing SEP Event')]
+    sub = sub.dropna() #drop rows containing None
+      
+    if sub.empty:
+        return
+    thr = thresh_key.strip().split(".")
+    thresh_fnm = thr[0] + "_" + thr[1]
+    
+    print("../output/all_clear_selections_" + model + "_"
+        + energy_key.strip() + "_" + thresh_fnm + ".csv")
+    sub.to_csv("../output/all_clear_selections_" + model + "_"
+        + energy_key.strip() + "_" + thresh_fnm + ".csv")
+
+    obs = sub['Observed SEP All Clear'].to_list()
+    pred = sub['Predicted SEP All Clear'].to_list()
+
+    print(obs)
+    print(pred)
+
+    #The metrics.py/calc_contingency_bool() routine needs the opposite boolean
+    # In calc_contingency_bool, the pandas crosstab predicts booleans as:
+    #   True = event
+    #   False = no event
+    # ALL CLEAR booleans are as follows:
+    #   True = no event
+    #   False = event
+    # Prior to inputting all clear predictions into this code, need to
+    #   switch the booleans
+    opposite_obs = [not x for x in obs]
+    opposite_pred = [not x for x in pred]
+    
+    scores = metrics.calc_contingency_bool(opposite_obs, opposite_pred)
+    fill_all_clear_dict(dict, model, energy_key, thresh_key, scores)
+
+
+
+def probabilty_intuitive_metrics(df, dict, model, energy_key, thresh_key):
+    """ Extract the appropriate predictions and calculate metrics
+        Probability
+
+    dict = {"Model": [],
+            "Energy Channel": [],
+            "Threshold": [],
+            "Brier Score": [],
+            "Brier Skill Score": [], #Need a reference to calculate
+            "Linear Correlation Coefficient": [],
+            "Rank Order Correlation Coefficient": [],
+            }
+
+    """
+    #Select rows to calculate metrics
+    sub = df.loc[(df['Model'] == model) & (df['Energy Channel Key'] ==
+        energy_key) & (df['Threshold Key'] == thresh_key)]
+
+    sub = sub[['Model','Energy Channel Key', 'Threshold Key', 'Forecast Source',
+            'Prediction Window Start', 'Prediction Window End',
+            'Observed SEP Probability',
+            'Predicted SEP Probability', 'Probability Match Status']]
+    sub = sub.loc[(sub['Probability Match Status'] != 'Ongoing SEP Event')]
+    sub = sub.dropna() #drop rows containing None
+      
+    if sub.empty:
+        return
+    thr = thresh_key.strip().split(".")
+    thresh_fnm = thr[0] + "_" + thr[1]
+    
+    print("../output/probability_selections_" + model + "_"
+        + energy_key.strip() + "_" + thresh_fnm + ".csv")
+    sub.to_csv("../output/probability_selections_" + model + "_"
+        + energy_key.strip() + "_" + thresh_fnm + ".csv")
+
+    obs = sub['Observed SEP Probability'].to_list()
+    pred = sub['Predicted SEP Probability'].to_list()
+
+    print(obs)
+    print(pred)
+
+    #Calculate metrics
+    brier_score = metrics.calc_brier(obs, pred)
+    brier_skill = None
+    lin_corr_coeff = None
+    rank_corr_coeff = None
+    
+    #Save to dict (ultimately dataframe)
+    dict['Model'].append(model)
+    dict['Energy Channel'].append(energy_key)
+    dict['Threshold'].append(thresh_key)
+    dict['Brier Score'].append(brier_score)
+    dict['Brier Skill Score'].append(brier_skill)
+    dict['Linear Correlation Coefficient'].append(lin_corr_coeff)
+    dict['Rank Order Correlation Coefficient'].append(rank_corr_coeff)
+
+    
+
+def peak_intensity_intuitive_metrics(df, dict, model, energy_key, thresh_key):
+    """ Extract the appropriate predictions and calculate metrics
+        Peak intensity
+
+    """
+    #Select rows to calculate metrics
+    sub = df.loc[(df['Model'] == model) & (df['Energy Channel Key'] ==
+        energy_key) & (df['Threshold Key'] == thresh_key)]
+
+    sub = sub[['Model','Energy Channel Key', 'Threshold Key', 'Forecast Source',
+            'Prediction Window Start', 'Prediction Window End',
+            'Observed SEP Threshold Crossing Time',
+            'Observed SEP Peak Intensity (Onset Peak)',
+            'Observed SEP Peak Intensity (Onset Peak) Units',
+            'Predicted SEP Peak Intensity (Onset Peak)',
+            'Predicted SEP Peak Intensity (Onset Peak) Units',
+            'Peak Intensity Match Status']]
+    sub = sub.loc[(sub['Peak Intensity Match Status'] == 'SEP Event')]
+    sub = sub.dropna() #drop rows containing None
+      
+    if sub.empty:
+        return
+
+    thr = thresh_key.strip().split(".")
+    thresh_fnm = thr[0] + "_" + thr[1]
+
+    print("../output/peak_intensity_selections_" + model + "_"
+        + energy_key.strip() + "_" + thresh_fnm + ".csv")
+    sub.to_csv("../output/peak_intensity_selections_" + model + "_"
+        + energy_key.strip() + "_" + thresh_fnm + ".csv")
+
+    obs = sub['Observed SEP Peak Intensity (Onset Peak)'].to_list()
+    pred = sub['Predicted SEP Peak Intensity (Onset Peak)'].to_list()
+    units = sub.iloc[0]['Observed SEP Peak Intensity (Onset Peak) Units']
+    print(obs)
+    print(pred)
+
+    if len(obs) > 1:
+        #PEARSON CORRELATION
+        r_lin, r_log = metrics.switch_error_func('r',obs,pred)
+        s_lin = None
+        s_log = None
+        
+        #LINEAR REGRESSION
+        obs_np = np.array(obs)
+        pred_np = np.array(pred)
+        slope, yint = np.polyfit(obs_np, pred_np, 1)
+
+        #Correlation Plot
+        corr_plot = plt_tools.correlation_plot(obs, pred,
+        "Peak Intensity Correlation", xlabel="Observations",
+        ylabel=("Model Predictions (" + str(units) + ")"), use_log = True)
+
+        figname = '../plots/Correlation_peak_intensity_' + model + "_" \
+            + energy_key.strip() + "_" + thresh_fnm + ".pdf"
+        corr_plot.savefig(figname, dpi=300, bbox_inches='tight')
+    else:
+        r_lin = None
+        r_log = None
+        s_lin = None
+        s_log = None
+        slope = None
+        yint = None
+        figname = ""
+
+
+    ME = statistics.mean(metrics.switch_error_func('E',obs,pred))
+    MedE = statistics.median(metrics.switch_error_func('E',obs,pred))
+    MAE = statistics.mean(metrics.switch_error_func('AE',obs,pred))
+    MedAE = statistics.median(metrics.switch_error_func('AE',obs,pred))
+    MLE = statistics.mean(metrics.switch_error_func('LE',obs,pred))
+    MedLE = statistics.median(metrics.switch_error_func('LE',obs,pred))
+    MALE = statistics.mean(metrics.switch_error_func('LE',obs,pred))
+    MedALE = statistics.median(metrics.switch_error_func('LE',obs,pred))
+    MAPE = statistics.mean(metrics.switch_error_func('APE',obs,pred))
+    MAR = None #Mean Accuracy Ratio
+    RMSE = metrics.switch_error_func('RMSE',obs,pred)
+    RMSLE = metrics.switch_error_func('RMSLE',obs,pred)
+    MdSA = None
+
+    ####METRICS
+    fill_flux_metrics_dict(dict, model, energy_key, thresh_key, figname,
+    slope, yint, r_lin, r_log, s_lin, s_log, ME, MedE, MLE, MedLE, MAE,
+    MedAE, MALE, MedALE, MAPE, MAR, RMSE, RMSLE, MdSA)
+
+
+
+
+def peak_intensity_max_intuitive_metrics(df, dict, model, energy_key,
+    thresh_key):
+    """ Extract the appropriate predictions and calculate metrics
+        Peak intensity
+
+    """
+    #Select rows to calculate metrics
+    sub = df.loc[(df['Model'] == model) & (df['Energy Channel Key'] ==
+        energy_key) & (df['Threshold Key'] == thresh_key)]
+
+    sub = sub[['Model','Energy Channel Key', 'Threshold Key', 'Forecast Source',
+            'Prediction Window Start', 'Prediction Window End',
+            'Observed SEP Threshold Crossing Time',
+            'Observed SEP Peak Intensity Max (Max Flux)',
+            'Observed SEP Peak Intensity Max (Max Flux) Units',
+            'Predicted SEP Peak Intensity Max (Max Flux)',
+            'Predicted SEP Peak Intensity Max (Max Flux) Units',
+            'Peak Intensity Max Match Status']]
+    sub = sub.loc[(sub['Peak Intensity Max Match Status'] == 'SEP Event')]
+    sub = sub.dropna() #drop rows containing None
+      
+    if sub.empty:
+        return
+    thr = thresh_key.strip().split(".")
+    thresh_fnm = thr[0] + "_" + thr[1]
+    sub.to_csv("../output/peak_intensity_max_selections_" + model + "_"
+        + energy_key.strip() + "_" + thresh_fnm + ".csv")
+
+    obs = sub['Observed SEP Peak Intensity Max (Max Flux)'].to_list()
+    pred = sub['Predicted SEP Peak Intensity Max (Max Flux)'].to_list()
+    units = sub.iloc[0]['Observed SEP Peak Intensity Max (Max Flux) Units']
+    print(obs)
+    print(pred)
+
+    if len(obs) > 1:
+        #PEARSON CORRELATION
+        r_lin, r_log = metrics.switch_error_func('r',obs,pred)
+        s_lin = None
+        s_log = None
+        
+        #LINEAR REGRESSION
+        obs_np = np.array(obs)
+        pred_np = np.array(pred)
+        slope, yint = np.polyfit(obs_np, pred_np, 1)
+
+        #Correlation Plot
+        corr_plot = plt_tools.correlation_plot(obs, pred,
+        "Peak Intensity Max (Max Flux) Correlation", xlabel="Observations",
+        ylabel=("Model Predictions (" + str(units) + ")"),
+        value="Peak Intensity Max (Max Flux)", use_log = True)
+
+        figname = '../plots/Correlation_peak_intensity_max' + model + "_" \
+                + energy_key.strip() + "_" + thresh_fnm + ".pdf"
+        corr_plot.savefig(figname, dpi=300, bbox_inches='tight')
+    else:
+        r_lin = None
+        r_log = None
+        s_lin = None
+        s_log = None
+        slope = None
+        yint = None
+        figname = ""
+
+
+    ME = statistics.mean(metrics.switch_error_func('E',obs,pred))
+    MedE = statistics.median(metrics.switch_error_func('E',obs,pred))
+    MAE = statistics.mean(metrics.switch_error_func('AE',obs,pred))
+    MedAE = statistics.median(metrics.switch_error_func('AE',obs,pred))
+    MLE = statistics.mean(metrics.switch_error_func('LE',obs,pred))
+    MedLE = statistics.median(metrics.switch_error_func('LE',obs,pred))
+    MALE = statistics.mean(metrics.switch_error_func('LE',obs,pred))
+    MedALE = statistics.median(metrics.switch_error_func('LE',obs,pred))
+    MAPE = statistics.mean(metrics.switch_error_func('APE',obs,pred))
+    MAR = None #Mean Accuracy Ratio
+    RMSE = metrics.switch_error_func('RMSE',obs,pred)
+    RMSLE = metrics.switch_error_func('RMSLE',obs,pred)
+    MdSA = None
+
+    ####METRICS
+    fill_flux_metrics_dict(dict, model, energy_key, thresh_key, figname,
+    slope, yint, r_lin, r_log, s_lin, s_log, ME, MedE, MLE, MedLE, MAE,
+    MedAE, MALE, MedALE, MAPE, MAR, RMSE, RMSLE, MdSA)
+
+
+
+
+def fluence_intuitive_metrics(df, dict, model, energy_key,
+    thresh_key):
+    """ Extract the appropriate predictions and calculate metrics
+        Fluence
+
+    """
+    #Select rows to calculate metrics
+    sub = df.loc[(df['Model'] == model) & (df['Energy Channel Key'] ==
+        energy_key) & (df['Threshold Key'] == thresh_key)]
+
+    sub = sub[['Model','Energy Channel Key', 'Threshold Key', 'Forecast Source',
+            'Prediction Window Start', 'Prediction Window End',
+            'Observed SEP Threshold Crossing Time',
+            'Observed SEP Fluence',
+            'Observed SEP Fluence Units',
+            'Predicted SEP Fluence',
+            'Predicted SEP Fluence Units',
+            'Fluence Match Status']]
+    sub = sub.loc[(sub['Fluence Match Status'] == 'SEP Event')]
+    sub = sub.dropna() #drop rows containing None
+      
+    if sub.empty:
+        return
+    thr = thresh_key.strip().split(".")
+    thresh_fnm = thr[0] + "_" + thr[1]
+    sub.to_csv("../output/fluence_selections_" + model + "_"
+        + energy_key.strip() + "_" + thresh_fnm + ".csv")
+
+    obs = sub['Observed SEP Fluence'].to_list()
+    pred = sub['Predicted SEP Fluence'].to_list()
+    units = sub.iloc[0]['Observed SEP Fluence Units']
+    print(obs)
+    print(pred)
+
+    if len(obs) > 1:
+        #PEARSON CORRELATION
+        r_lin, r_log = metrics.switch_error_func('r',obs,pred)
+        s_lin = None
+        s_log = None
+        
+        #LINEAR REGRESSION
+        obs_np = np.array(obs)
+        pred_np = np.array(pred)
+        slope, yint = np.polyfit(obs_np, pred_np, 1)
+
+        #Correlation Plot
+        corr_plot = plt_tools.correlation_plot(obs, pred,
+        "Fluence Correlation", xlabel="Observations",
+        ylabel=("Model Predictions (" + str(units) + ")"),
+        use_log = True)
+
+        figname = '../plots/Correlation_fluence_' + model + "_" \
+                + energy_key.strip() + "_" + thresh_fnm + ".pdf"
+        corr_plot.savefig(figname, dpi=300, bbox_inches='tight')
+    else:
+        r_lin = None
+        r_log = None
+        s_lin = None
+        s_log = None
+        slope = None
+        yint = None
+        figname = ""
+
+
+    ME = statistics.mean(metrics.switch_error_func('E',obs,pred))
+    MedE = statistics.median(metrics.switch_error_func('E',obs,pred))
+    MAE = statistics.mean(metrics.switch_error_func('AE',obs,pred))
+    MedAE = statistics.median(metrics.switch_error_func('AE',obs,pred))
+    MLE = statistics.mean(metrics.switch_error_func('LE',obs,pred))
+    MedLE = statistics.median(metrics.switch_error_func('LE',obs,pred))
+    MALE = statistics.mean(metrics.switch_error_func('LE',obs,pred))
+    MedALE = statistics.median(metrics.switch_error_func('LE',obs,pred))
+    MAPE = statistics.mean(metrics.switch_error_func('APE',obs,pred))
+    MAR = None #Mean Accuracy Ratio
+    RMSE = metrics.switch_error_func('RMSE',obs,pred)
+    RMSLE = metrics.switch_error_func('RMSLE',obs,pred)
+    MdSA = None
+
+    ####METRICS
+    fill_flux_metrics_dict(dict, model, energy_key, thresh_key, figname,
+    slope, yint, r_lin, r_log, s_lin, s_log, ME, MedE, MLE, MedLE, MAE,
+    MedAE, MALE, MedALE, MAPE, MAR, RMSE, RMSLE, MdSA)
+
+
+
+def threshold_crossing_intuitive_metrics(df, dict, model, energy_key,
+    thresh_key):
+    """ Extract the appropriate predictions and calculate metrics
+        Threshold Crossing
+
+    """
+    #Select rows to calculate metrics
+    sub = df.loc[(df['Model'] == model) & (df['Energy Channel Key'] ==
+        energy_key) & (df['Threshold Key'] == thresh_key)]
+
+    sub = sub[['Model','Energy Channel Key', 'Threshold Key', 'Forecast Source',
+            'Prediction Window Start', 'Prediction Window End',
+            'Observed SEP Threshold Crossing Time',
+            'Predicted SEP Threshold Crossing Time',
+            'Threshold Crossing Time Match Status']]
+    sub = sub.loc[(sub['Threshold Crossing Time Match Status'] == 'SEP Event')]
+    sub = sub.dropna() #drop rows containing None
+      
+    if sub.empty:
+        return
+    thr = thresh_key.strip().split(".")
+    thresh_fnm = thr[0] + "_" + thr[1]
+    sub.to_csv("../output/threshold_crossing_time_selections_" + model + "_"
+        + energy_key.strip() + "_" + thresh_fnm + ".csv")
+
+    obs = sub['Observed SEP Threshold Crossing Time'].to_list()
+    pred = sub['Predicted SEP Threshold Crossing Time'].to_list()
+    td = (sub['Predicted SEP Threshold Crossing Time'] - sub['Observed SEP Threshold Crossing Time']).to_list()
+    print(obs)
+    print(pred)
+    
+    td = td.dt.total_seconds()/(60*60) #convert to hours
+    td = td.to_list()
+    abs_td = [abs(x) for x in td]
+    print(td)
+
+    ME = statistics.mean(td)
+    MedE = statistics.median(td)
+    MAE = statistics.mean(abs_td)
+    MedAE = statistics.median(abs_td)
+    
+    fill_time_metrics_dict(dict, model, energy_key, thresh_key,
+    ME, MedE, MAE, MedAE)
+    
+
+def start_time_intuitive_metrics(df, dict, model, energy_key, thresh_key):
+    """ Extract the appropriate predictions and calculate metrics
+        Start Time
+
+    """
+    #Select rows to calculate metrics
+    sub = df.loc[(df['Model'] == model) & (df['Energy Channel Key'] ==
+        energy_key) & (df['Threshold Key'] == thresh_key)]
+
+    sub = sub[['Model','Energy Channel Key', 'Threshold Key', 'Forecast Source',
+            'Prediction Window Start', 'Prediction Window End',
+            'Observed SEP Start Time',
+            'Predicted SEP Start Time',
+            'Start Time Match Status']]
+    sub = sub.loc[(sub['Start Time Match Status'] == 'SEP Event')]
+    sub = sub.dropna() #drop rows containing None
+      
+    if sub.empty:
+        return
+    thr = thresh_key.strip().split(".")
+    thresh_fnm = thr[0] + "_" + thr[1]
+    sub.to_csv("../output/start_time_selections_" + model + "_"
+        + energy_key.strip() + "_" + thresh_fnm + ".csv")
+
+    obs = sub['Observed SEP Start Time'].to_list()
+    pred = sub['Predicted SEP Start Time'].to_list()
+    td = (sub['Predicted SEP Start Time'] - sub['Observed SEP Start Time']).to_list()
+    print(obs)
+    print(pred)
+    
+    td = td.dt.total_seconds()/(60*60) #convert to hours
+    td = td.to_list()
+    abs_td = [abs(x) for x in td]
+    print(td)
+
+    ME = statistics.mean(td)
+    MedE = statistics.median(td)
+    MAE = statistics.mean(abs_td)
+    MedAE = statistics.median(abs_td)
+    
+    fill_time_metrics_dict(dict, model, energy_key, thresh_key,
+    ME, MedE, MAE, MedAE)
+
+
+def end_time_intuitive_metrics(df, dict, model, energy_key,
+    thresh_key):
+    """ Extract the appropriate predictions and calculate metrics
+        End Time
+
+    """
+    #Select rows to calculate metrics
+    sub = df.loc[(df['Model'] == model) & (df['Energy Channel Key'] ==
+        energy_key) & (df['Threshold Key'] == thresh_key)]
+
+    sub = sub[['Model','Energy Channel Key', 'Threshold Key', 'Forecast Source',
+            'Prediction Window Start', 'Prediction Window End',
+            'Observed SEP End Time',
+            'Predicted SEP End Time',
+            'End Time Match Status']]
+    sub = sub.loc[(sub['End Time Match Status'] == 'SEP Event')]
+    sub = sub.dropna() #drop rows containing None
+      
+    if sub.empty:
+        return
+    thr = thresh_key.strip().split(".")
+    thresh_fnm = thr[0] + "_" + thr[1]
+    sub.to_csv("../output/end_time_selections_" + model + "_"
+        + energy_key.strip() + "_" + thresh_fnm + ".csv")
+
+    obs = sub['Observed SEP End Time'].to_list()
+    pred = sub['Predicted End Time'].to_list()
+    td = (sub['Predicted End Time'] - sub['Observed End Time']).to_list()
+    print(obs)
+    print(pred)
+    
+    td = td.dt.total_seconds()/(60*60) #convert to hours
+    td = td.to_list()
+    abs_td = [abs(x) for x in td]
+    print(td)
+
+    ME = statistics.mean(td)
+    MedE = statistics.median(td)
+    MAE = statistics.mean(abs_td)
+    MedAE = statistics.median(abs_td)
+    
+    fill_time_metrics_dict(dict, model, energy_key, thresh_key,
+    ME, MedE, MAE, MedAE)
+ 
+
+
+def duration_intuitive_metrics(df, dict, model, energy_key, thresh_key):
+    """ Extract the appropriate predictions and calculate metrics
+        Start Time
+
+    """
+    #Select rows to calculate metrics
+    sub = df.loc[(df['Model'] == model) & (df['Energy Channel Key'] ==
+        energy_key) & (df['Threshold Key'] == thresh_key)]
+
+    sub = sub[['Model','Energy Channel Key', 'Threshold Key', 'Forecast Source',
+            'Prediction Window Start', 'Prediction Window End',
+            'Observed SEP Start Time',
+            'Observed SEP End Time',
+            'Predicted SEP Start Time',
+            'Predicted SEP End Time',
+            'Start Time Match Status']]
+    sub = sub.loc[(sub['Start Time Match Status'] == 'SEP Event')]
+    sub = sub.dropna() #drop rows containing None
+      
+    if sub.empty:
+        return
+    thr = thresh_key.strip().split(".")
+    thresh_fnm = thr[0] + "_" + thr[1]
+    sub.to_csv("../output/start_time_selections_" + model + "_"
+        + energy_key.strip() + "_" + thresh_fnm + ".csv")
+
+    obs = (sub['Observed SEP End Time'] - sub['Observed SEP Start Time'])
+    pred = (sub['Predicted SEP End Time'] - sub['Predicted SEP Start Time'])
+    print(obs)
+    print(pred)
+    
+    obs = obs.dt.total_seconds()/(60*60) #convert to hours
+    pred = pred.dt.total_seconds()/(60*60)
+
+    td = pred - obs #shorter duration is negative
+    td = td.to_list()
+    abs_td = [abs(x) for x in td]
+    print(td)
+
+    ME = statistics.mean(td)
+    MedE = statistics.median(td)
+    MAE = statistics.mean(abs_td)
+    MedAE = statistics.median(abs_td)
+    
+    fill_time_metrics_dict(dict, model, energy_key, thresh_key,
+    ME, MedE, MAE, MedAE)
+
+
+
+
+def peak_intensity_time_intuitive_metrics(df, dict, model, energy_key,
+    thresh_key):
+    """ Extract the appropriate predictions and calculate metrics
+        Peak Intensity Time
+
+    """
+    #Select rows to calculate metrics
+    sub = df.loc[(df['Model'] == model) & (df['Energy Channel Key'] ==
+        energy_key) & (df['Threshold Key'] == thresh_key)]
+
+    sub = sub[['Model','Energy Channel Key', 'Threshold Key', 'Forecast Source',
+            'Prediction Window Start', 'Prediction Window End',
+            'Observed SEP Threshold Crossing Time',
+            'Observed SEP Peak Intensity (Onset Peak) Time',
+            'Predicted SEP Peak Intensity (Onset Peak) Time',
+            'Peak Intensity Match Status']]
+    sub = sub.loc[(sub['Peak Intensity Match Status'] == 'SEP Event')]
+    sub = sub.dropna() #drop rows containing None
+      
+    if sub.empty:
+        return
+    thr = thresh_key.strip().split(".")
+    thresh_fnm = thr[0] + "_" + thr[1]
+    sub.to_csv("../output/peak_intensity_time_selections_" + model + "_"
+        + energy_key.strip() + "_" + thresh_fnm + ".csv")
+
+    obs = sub['Observed SEP Peak Intensity (Onset Peak) Time'].to_list()
+    pred = sub['Predicted SEP Peak Intensity (Onset Peak) Time'].to_list()
+    td = (sub['Predicted SEP Peak Intensity (Onset Peak) Time'] - sub['Observed SEP Peak Intensity (Onset Peak) Time']).to_list()
+    print(obs)
+    print(pred)
+    
+    td = td.dt.total_seconds()/(60*60) #convert to hours
+    td = td.to_list()
+    abs_td = [abs(x) for x in td]
+    print(td)
+
+    ME = statistics.mean(td)
+    MedE = statistics.median(td)
+    MAE = statistics.mean(abs_td)
+    MedAE = statistics.median(abs_td)
+    
+    fill_time_metrics_dict(dict, model, energy_key, thresh_key,
+    ME, MedE, MAE, MedAE)
+
+
+
+def peak_intensity_max_time_intuitive_metrics(df, dict, model, energy_key,
+    thresh_key):
+    """ Extract the appropriate predictions and calculate metrics
+        Peak Intensity Max Time
+
+    """
+    #Select rows to calculate metrics
+    sub = df.loc[(df['Model'] == model) & (df['Energy Channel Key'] ==
+        energy_key) & (df['Threshold Key'] == thresh_key)]
+
+    sub = sub[['Model','Energy Channel Key', 'Threshold Key', 'Forecast Source',
+            'Prediction Window Start', 'Prediction Window End',
+            'Observed SEP Threshold Crossing Time',
+            'Observed SEP Peak Intensity Max (Max Flux) Time',
+            'Predicted SEP Peak Intensity Max (Max Flux) Time',
+            'Peak Intensity Max Match Status']]
+    sub = sub.loc[(sub['Peak Intensity Max Match Status'] == 'SEP Event')]
+    sub = sub.dropna() #drop rows containing None
+      
+    if sub.empty:
+        return
+    thr = thresh_key.strip().split(".")
+    thresh_fnm = thr[0] + "_" + thr[1]
+    sub.to_csv("../output/peak_intensity_max_time_selections_" + model + "_"
+        + energy_key.strip() + "_" + thresh_fnm + ".csv")
+
+    obs = sub['Observed SEP Peak Intensity Max (Max Flux) Time'].to_list()
+    pred = sub['Predicted SEP Peak Intensity Max (Max Flux) Time'].to_list()
+    td = (sub['Predicted SEP Peak Intensity Max (Max Flux) Time'] - sub['Observed SEP Peak Intensity Max (Max Flux) Time']).to_list()
+    print(obs)
+    print(pred)
+    
+    td = td.dt.total_seconds()/(60*60) #convert to hours
+    td = td.to_list()
+    abs_td = [abs(x) for x in td]
+    print(td)
+
+    ME = statistics.mean(td)
+    MedE = statistics.median(td)
+    MAE = statistics.mean(abs_td)
+    MedAE = statistics.median(abs_td)
+    
+    fill_time_metrics_dict(dict, model, energy_key, thresh_key,
+    ME, MedE, MAE, MedAE)
+
+
+def AWT_metrics(df, model_names, all_energy_channels,
+    all_observed_thresholds):
+    """ Metrics for Advanced Warning Time.
+    
+    """
+
+
+
+
+
+
+def calculate_intuitive_metrics(df, model_names, all_energy_channels,
+    all_observed_thresholds):
+    """ Calculate metrics appropriate to each quantity and
+        store in dataframes.
+            
+    Input:
+    
+        :df: (pandas DataFrame) containes matched observations and predictions
+        :model_names: (array of strings) all models read into code
+        
+    Output:
+    
+        Metrics pandas dataframes
+    
+    """
+    
+    all_clear_dict = initialize_all_clear_dict ()
+    probability_dict = initialize_probability_dict()
+    peak_intensity_dict = initialize_flux_dict()
+    peak_intensity_max_dict = initialize_flux_dict()
+    fluence_dict = initialize_flux_dict()
+    profile_dict = initialize_flux_dict()
+    thresh_cross_dict = initialize_time_dict()
+    start_time_dict = initialize_time_dict()
+    end_time_dict = initialize_time_dict()
+    duration_dict = initialize_time_dict()
+    peak_intensity_time_dict = initialize_time_dict()
+    peak_intensity_max_time_dict = initialize_time_dict()
+
+    
+    for model in model_names:
+        for channel in all_energy_channels:
+            ek = objh.energy_channel_to_key(channel)
+            for thresh in all_observed_thresholds[ek]:
+                tk = objh.threshold_to_key(thresh)
+
+                #Probability
+                probabilty_intuitive_metrics(df, probability_dict, model,
+                    ek, tk)
+                peak_intensity_intuitive_metrics(df, peak_intensity_dict, model,
+                    ek, tk)
+                peak_intensity_max_intuitive_metrics(df,
+                    peak_intensity_max_dict, model, ek, tk)
+                fluence_intuitive_metrics(df,fluence_dict, model, ek, tk)
+                threshold_crossing_intuitive_metrics(df, thresh_cross_dict,
+                    model, ek, tk)
+                start_time_intuitive_metrics(df, start_time_dict, model, ek, tk)
+                end_time_intuitive_metrics(df, end_time_dict, model, ek, tk)
+                duration_intuitive_metrics(df, duration_dict, model, ek, tk)
+                peak_intensity_time_intuitive_metrics(df,
+                    peak_intensity_time_dict, model, ek, tk)
+                peak_intensity_max_time_intuitive_metrics(df,
+                    peak_intensity_max_time_dict, model, ek, tk)
+                all_clear_intuitive_metrics(df, all_clear_dict, model, ek, tk)
+
+    prob_metrics_df = pd.DataFrame(probability_dict)
+    peak_intensity_metrics_df = pd.DataFrame(peak_intensity_dict)
+    peak_intensity_max_metrics_df = pd.DataFrame(peak_intensity_max_dict)
+    fluence_metrics_df = pd.DataFrame(fluence_dict)
+    thresh_cross_metrics_df = pd.DataFrame(thresh_cross_dict)
+    start_time_metrics_df = pd.DataFrame(start_time_dict)
+    end_time_metrics_df = pd.DataFrame(end_time_dict)
+    duration_metrics_df = pd.DataFrame(duration_dict)
+    peak_intensity_time_metrics_df = pd.DataFrame(peak_intensity_time_dict)
+    peak_intensity_max_time_metrics_df = pd.DataFrame(peak_intensity_max_time_dict)
+    all_clear_metrics_df = pd.DataFrame(all_clear_dict)
+
+    if not prob_metrics_df.empty:
+        prob_metrics_df.to_csv("../output/probability_metrics.csv")
+    if not peak_intensity_metrics_df.empty:
+        peak_intensity_metrics_df.to_csv("../output/peak_intensity_metrics.csv")
+    if not peak_intensity_max_metrics_df.empty:
+        peak_intensity_max_metrics_df.to_csv("../output/peak_intensity_max_metrics.csv")
+    if not fluence_metrics_df.empty:
+        fluence_metrics_df.to_csv("../output/fluence_metrics.csv")
+    if not thresh_cross_metrics_df.empty:
+        thresh_cross_metrics_df.to_csv("../output/threshold_crossing_metrics.csv")
+    if not start_time_metrics_df.empty:
+        start_time_metrics_df.to_csv("../output/start_time_metrics.csv")
+    if not end_time_metrics_df.empty:
+        end_time_metrics_df.to_csv("../output/end_time_metrics.csv")
+    if not duration_metrics_df.empty:
+        duration_metrics_df.to_csv("../output/duration_metrics.csv")
+    if not peak_intensity_time_metrics_df.empty:
+        peak_intensity_time_metrics_df.to_csv("../output/peak_intensity_time_metrics.csv")
+    if not peak_intensity_max_time_metrics_df.empty:
+        peak_intensity_max_time_metrics_df.to_csv("../output/peak_intensity_max_time_metrics.csv")
+    if not all_clear_metrics_df.empty:
+        all_clear_metrics_df.to_csv("../output/all_clear_metrics.csv")
 
 
 def intuitive_validation(matched_sphinx, model_names, all_energy_channels,
@@ -395,3 +1319,6 @@ def intuitive_validation(matched_sphinx, model_names, all_energy_channels,
     df = fill_df(matched_sphinx, model_names,
             all_energy_channels, all_observed_thresholds)
 
+
+    calculate_intuitive_metrics(df, model_names, all_energy_channels,
+            all_observed_thresholds)
