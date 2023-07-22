@@ -947,8 +947,8 @@ def calc_contingency_bool(y_true, y_pred):
     'PC': check_div(h+c, n),
     'B': check_div(h+f, h+m),
     'H': check_div(h, h+m),
-    'FAR': check_div(f, h+f),
-    'F': check_div(f, f+c),
+    'FAR': check_div(f, h+f), #False Alarm Ratio
+    'F': check_div(f, f+c), #False Alarm Rate
     'FOH': check_div(h, h+f),
     'FOM': check_div(m, h+m),
     'POCN': check_div(c, f+c),
