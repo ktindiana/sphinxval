@@ -387,6 +387,8 @@ def initialize_time_dict():
             "Mean Absolute Error (|pred - obs|)": [],
             "Median Absolute Error (|pred - obs|)": [],
             }
+            
+    return dict
 
 
 def initialize_all_clear_dict():
@@ -913,7 +915,7 @@ def threshold_crossing_intuitive_metrics(df, dict, model, energy_key,
 
     obs = sub['Observed SEP Threshold Crossing Time'].to_list()
     pred = sub['Predicted SEP Threshold Crossing Time'].to_list()
-    td = (sub['Predicted SEP Threshold Crossing Time'] - sub['Observed SEP Threshold Crossing Time']).to_list()
+    td = (sub['Predicted SEP Threshold Crossing Time'] - sub['Observed SEP Threshold Crossing Time']) #.to_list()
     print(obs)
     print(pred)
     
@@ -1099,7 +1101,7 @@ def peak_intensity_time_intuitive_metrics(df, dict, model, energy_key,
 
     obs = sub['Observed SEP Peak Intensity (Onset Peak) Time'].to_list()
     pred = sub['Predicted SEP Peak Intensity (Onset Peak) Time'].to_list()
-    td = (sub['Predicted SEP Peak Intensity (Onset Peak) Time'] - sub['Observed SEP Peak Intensity (Onset Peak) Time']).to_list()
+    td = (sub['Predicted SEP Peak Intensity (Onset Peak) Time'] - sub['Observed SEP Peak Intensity (Onset Peak) Time'])#.to_list()
     print(obs)
     print(pred)
     
@@ -1219,8 +1221,7 @@ def calculate_intuitive_metrics(df, model_names, all_energy_channels,
                 peak_intensity_max_intuitive_metrics(df,
                     peak_intensity_max_dict, model, ek, tk)
                 fluence_intuitive_metrics(df,fluence_dict, model, ek, tk)
-                threshold_crossing_intuitive_metrics(df, thresh_cross_dict,
-                    model, ek, tk)
+                threshold_crossing_intuitive_metrics(df, thresh_cross_dict, model, ek, tk)
                 start_time_intuitive_metrics(df, start_time_dict, model, ek, tk)
                 end_time_intuitive_metrics(df, end_time_dict, model, ek, tk)
                 duration_intuitive_metrics(df, duration_dict, model, ek, tk)
