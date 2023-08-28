@@ -1023,7 +1023,7 @@ class Forecast():
         self.valid = True
         if last_trigger_time != None:
             if self.issue_time < last_trigger_time:
-                    self.valid = False
+                self.valid = False
 
         if last_input_time != None:
             if self.issue_time < last_input_time:
