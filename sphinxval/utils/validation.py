@@ -7,6 +7,7 @@ from scipy.stats import pearsonr
 import statistics
 import numpy as np
 import sys
+import os.path
 import pandas as pd
 
 
@@ -314,7 +315,25 @@ def fill_dict_row(sphinx, dict, energy_key, thresh_key):
     dict["Fluence Spectrum Match Status"].append(flsp_match_status)
     dict["Time Profile Match Status"].append(None)
 
- 
+
+def prepare_outdirs():
+    for datafmt in ('pkl', 'csv', 'json', 'md'):
+        outdir = os.path.join(config.outpath, datafmt)
+        if not os.path.isdir(outdir):
+            os.mkdir(outdir)
+    
+def write_df(df, name, log=True):
+    """Writes a pandas dataframe to the standard location in multiple formats
+    """
+    dataformats = (('pkl',  getattr(df, 'to_pickle'), {}),
+                   ('csv',  getattr(df, 'to_csv'), {}),
+                   ('json', getattr(df, 'to_json'), {'default_handler':str}),
+                   ('md',   getattr(df, 'to_markdown'), {}))
+    for ext, write_func, kwargs in dataformats:
+        filepath = os.path.join(config.outpath, ext, name + '.' + ext)
+        write_func(filepath, **kwargs)
+        if log:
+            print('Wrote', filepath)
 
 def fill_df(matched_sphinx, model_names, all_energy_channels,
     all_obs_thresholds):
@@ -338,7 +357,7 @@ def fill_df(matched_sphinx, model_names, all_energy_channels,
                 
     
     df = pd.DataFrame(dict)
-    df.to_csv(config.outpath + "/SPHINX_dataframe.csv")
+    write_df(df, "SPHINX_dataframe")
     return df
 
 
@@ -543,11 +562,7 @@ def all_clear_intuitive_metrics(df, dict, model, energy_key, thresh_key):
         return
     thr = thresh_key.strip().split(".")
     thresh_fnm = thr[0] + "_" + thr[1]
-    
-    print(config.outpath + "/all_clear_selections_" + model + "_"
-        + energy_key.strip() + "_" + thresh_fnm + ".csv")
-    sub.to_csv(config.outpath + "/all_clear_selections_" + model + "_"
-        + energy_key.strip() + "_" + thresh_fnm + ".csv")
+    write_df(sub, "all_clear_selections_" + model + "_" + energy_key.strip() + "_" + thresh_fnm)
 
     obs = sub['Observed SEP All Clear'].to_list()
     pred = sub['Predicted SEP All Clear'].to_list()
@@ -601,11 +616,7 @@ def probabilty_intuitive_metrics(df, dict, model, energy_key, thresh_key):
         return
     thr = thresh_key.strip().split(".")
     thresh_fnm = thr[0] + "_" + thr[1]
-    
-    print(config.outpath + "/probability_selections_" + model + "_"
-        + energy_key.strip() + "_" + thresh_fnm + ".csv")
-    sub.to_csv(config.outpath + "/probability_selections_" + model + "_"
-        + energy_key.strip() + "_" + thresh_fnm + ".csv")
+    write_df(sub,"probability_selections_" + model + "_" + energy_key.strip() + "_" + thresh_fnm)
 
     obs = sub['Observed SEP Probability'].to_list()
     pred = sub['Predicted SEP Probability'].to_list()
@@ -655,11 +666,7 @@ def peak_intensity_intuitive_metrics(df, dict, model, energy_key, thresh_key):
 
     thr = thresh_key.strip().split(".")
     thresh_fnm = thr[0] + "_" + thr[1]
-
-    print(config.outpath + "/peak_intensity_selections_" + model + "_"
-        + energy_key.strip() + "_" + thresh_fnm + ".csv")
-    sub.to_csv(config.outpath + "/peak_intensity_selections_" + model + "_"
-        + energy_key.strip() + "_" + thresh_fnm + ".csv")
+    write_df(sub, "peak_intensity_selections_" + model + "_" + energy_key.strip() + "_" + thresh_fnm)
 
     obs = sub['Observed SEP Peak Intensity (Onset Peak)'].to_list()
     pred = sub['Predicted SEP Peak Intensity (Onset Peak)'].to_list()
@@ -743,8 +750,7 @@ def peak_intensity_max_intuitive_metrics(df, dict, model, energy_key,
         return
     thr = thresh_key.strip().split(".")
     thresh_fnm = thr[0] + "_" + thr[1]
-    sub.to_csv(config.outpath + "/peak_intensity_max_selections_" + model + "_"
-        + energy_key.strip() + "_" + thresh_fnm + ".csv")
+    write_df(sub, "peak_intensity_max_selections_" + model + "_" + energy_key.strip() + "_" + thresh_fnm)
 
     obs = sub['Observed SEP Peak Intensity Max (Max Flux)'].to_list()
     pred = sub['Predicted SEP Peak Intensity Max (Max Flux)'].to_list()
@@ -829,8 +835,7 @@ def fluence_intuitive_metrics(df, dict, model, energy_key,
         return
     thr = thresh_key.strip().split(".")
     thresh_fnm = thr[0] + "_" + thr[1]
-    sub.to_csv(config.outpath + "/fluence_selections_" + model + "_"
-        + energy_key.strip() + "_" + thresh_fnm + ".csv")
+    write_df(sub, "fluence_selections_" + model + "_" + energy_key.strip() + "_" + thresh_fnm)
 
     obs = sub['Observed SEP Fluence'].to_list()
     pred = sub['Predicted SEP Fluence'].to_list()
@@ -911,8 +916,7 @@ def threshold_crossing_intuitive_metrics(df, dict, model, energy_key,
         return
     thr = thresh_key.strip().split(".")
     thresh_fnm = thr[0] + "_" + thr[1]
-    sub.to_csv(config.outpath + "/threshold_crossing_time_selections_" + model + "_"
-        + energy_key.strip() + "_" + thresh_fnm + ".csv")
+    write_df(sub, "threshold_crossing_time_selections_" + model + "_" + energy_key.strip() + "_" + thresh_fnm)
 
     obs = sub['Observed SEP Threshold Crossing Time'].to_list()
     pred = sub['Predicted SEP Threshold Crossing Time'].to_list()
@@ -955,8 +959,7 @@ def start_time_intuitive_metrics(df, dict, model, energy_key, thresh_key):
         return
     thr = thresh_key.strip().split(".")
     thresh_fnm = thr[0] + "_" + thr[1]
-    sub.to_csv(config.outpath + "/start_time_selections_" + model + "_"
-        + energy_key.strip() + "_" + thresh_fnm + ".csv")
+    write_df(sub, "start_time_selections_" + model + "_" + energy_key.strip() + "_" + thresh_fnm)
 
     obs = sub['Observed SEP Start Time'].to_list()
     pred = sub['Predicted SEP Start Time'].to_list()
@@ -1000,8 +1003,7 @@ def end_time_intuitive_metrics(df, dict, model, energy_key,
         return
     thr = thresh_key.strip().split(".")
     thresh_fnm = thr[0] + "_" + thr[1]
-    sub.to_csv(config.outpath + "/end_time_selections_" + model + "_"
-        + energy_key.strip() + "_" + thresh_fnm + ".csv")
+    write_df(sub, "end_time_selections_" + model + "_" + energy_key.strip() + "_" + thresh_fnm)
 
     obs = sub['Observed SEP End Time'].to_list()
     pred = sub['Predicted End Time'].to_list()
@@ -1047,8 +1049,7 @@ def duration_intuitive_metrics(df, dict, model, energy_key, thresh_key):
         return
     thr = thresh_key.strip().split(".")
     thresh_fnm = thr[0] + "_" + thr[1]
-    sub.to_csv(config.outpath + "/start_time_selections_" + model + "_"
-        + energy_key.strip() + "_" + thresh_fnm + ".csv")
+    write_df(sub, "start_time_selections_" + model + "_" + energy_key.strip() + "_" + thresh_fnm)
 
     obs = (sub['Observed SEP End Time'] - sub['Observed SEP Start Time'])
     pred = (sub['Predicted SEP End Time'] - sub['Predicted SEP Start Time'])
@@ -1097,8 +1098,7 @@ def peak_intensity_time_intuitive_metrics(df, dict, model, energy_key,
         return
     thr = thresh_key.strip().split(".")
     thresh_fnm = thr[0] + "_" + thr[1]
-    sub.to_csv(config.outpath + "/peak_intensity_time_selections_" + model + "_"
-        + energy_key.strip() + "_" + thresh_fnm + ".csv")
+    write_df(sub, "peak_intensity_time_selections_" + model + "_" + energy_key.strip() + "_" + thresh_fnm)
 
     obs = sub['Observed SEP Peak Intensity (Onset Peak) Time'].to_list()
     pred = sub['Predicted SEP Peak Intensity (Onset Peak) Time'].to_list()
@@ -1144,8 +1144,7 @@ def peak_intensity_max_time_intuitive_metrics(df, dict, model, energy_key,
         return
     thr = thresh_key.strip().split(".")
     thresh_fnm = thr[0] + "_" + thr[1]
-    sub.to_csv(config.outpath + "/peak_intensity_max_time_selections_" + model + "_"
-        + energy_key.strip() + "_" + thresh_fnm + ".csv")
+    write_df(sub, "peak_intensity_max_time_selections_" + model + "_" + energy_key.strip() + "_" + thresh_fnm)
 
     obs = sub['Observed SEP Peak Intensity Max (Max Flux) Time'].to_list()
     pred = sub['Predicted SEP Peak Intensity Max (Max Flux) Time'].to_list()
@@ -1245,27 +1244,27 @@ def calculate_intuitive_metrics(df, model_names, all_energy_channels,
     all_clear_metrics_df = pd.DataFrame(all_clear_dict)
 
     if not prob_metrics_df.empty:
-        prob_metrics_df.to_csv(config.outpath + "/probability_metrics.csv")
+        write_df(prob_metrics_df, "probability_metrics")
     if not peak_intensity_metrics_df.empty:
-        peak_intensity_metrics_df.to_csv(config.outpath + "/peak_intensity_metrics.csv")
+        write_df(peak_intensity_metrics_df, "peak_intensity_metrics")
     if not peak_intensity_max_metrics_df.empty:
-        peak_intensity_max_metrics_df.to_csv(config.outpath + "/peak_intensity_max_metrics.csv")
+        write_df(peak_intensity_max_metrics_df, "peak_intensity_max_metrics")
     if not fluence_metrics_df.empty:
-        fluence_metrics_df.to_csv(config.outpath + "/fluence_metrics.csv")
+        write_df(fluence_metrics_df, "fluence_metrics")
     if not thresh_cross_metrics_df.empty:
-        thresh_cross_metrics_df.to_csv(config.outpath + "/threshold_crossing_metrics.csv")
+        write_df(thresh_cross_metrics_df, "threshold_crossing_metrics")
     if not start_time_metrics_df.empty:
-        start_time_metrics_df.to_csv(config.outpath + "/start_time_metrics.csv")
+        write_df(start_time_metrics_df, "start_time_metrics")
     if not end_time_metrics_df.empty:
-        end_time_metrics_df.to_csv(config.outpath + "/end_time_metrics.csv")
+        write_df(end_time_metrics_df, "end_time_metrics")
     if not duration_metrics_df.empty:
-        duration_metrics_df.to_csv(config.outpath + "/duration_metrics.csv")
+        write_df(duration_metrics_df, "duration_metrics")
     if not peak_intensity_time_metrics_df.empty:
-        peak_intensity_time_metrics_df.to_csv(config.outpath + "/peak_intensity_time_metrics.csv")
+        write_df(peak_intensity_time_metrics_df, "peak_intensity_time_metrics")
     if not peak_intensity_max_time_metrics_df.empty:
-        peak_intensity_max_time_metrics_df.to_csv(config.outpath + "/peak_intensity_max_time_metrics.csv")
+        write_df(peak_intensity_max_time_metrics_df, "peak_intensity_max_time_metrics")
     if not all_clear_metrics_df.empty:
-        all_clear_metrics_df.to_csv(config.outpath + "/all_clear_metrics.csv")
+        write_df(all_clear_metrics_df, "all_clear_metrics")
 
 
 def intuitive_validation(matched_sphinx, model_names, all_energy_channels,
@@ -1315,7 +1314,9 @@ def intuitive_validation(matched_sphinx, model_names, all_energy_channels,
     
     
     """
-
+    # Make sure the output directories exist
+    prepare_outdirs()
+    
     #For each model and predicted quantity, create arrays of paired up values
     #so can calculate metrics
     df = fill_df(matched_sphinx, model_names,
