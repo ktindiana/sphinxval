@@ -590,12 +590,10 @@ class Forecast():
                 continue
  
             if 'flare' in trig:
-                last_data_time, start_time, peak_time, end_time,\
-                location, lat, lon, intensity, integrated_intensity, \
-                noaa_region = vjson.dict_to_flare(trig['flare'])
-                flare = Flare("id", last_data_time, start_time,
-                    peak_time, end_time, location, intensity,
-                    integrated_intensity, noaa_region)
+                (last_data_time, start_time, peak_time, end_time,
+                 location, lat, lon, intensity, integrated_intensity, noaa_region) = vjson.dict_to_flare(trig['flare'])
+                flare = Flare("id", last_data_time, start_time, peak_time, end_time,
+                              location, lat, lon, intensity, integrated_intensity, noaa_region)
                 self.flares.append(flare)
                 continue
  
