@@ -3,7 +3,7 @@ from . import object_handler as objh
 from . import classes as cl
 import sys
 import pandas as pd
-
+import numpy as np
 
 __version__ = "0.1"
 __author__ = "Katie Whitman"
@@ -1993,13 +1993,21 @@ def revise_eruption_matches(matched_sphinx, all_energy_channels, obs_values,
                         
                         obs_idx = [ix for ix in range(len(matched_obs[j])) if matched_obs[j][ix].source == sep_source[j]]
                         td_eruptions.append(td_eruptions_array[j][obs_idx[0]])
+
+                    # TODO: fix the ugly hack to cast to np array to handle None values entered from above
+                    td_eruptions = np.array(td_eruptions, dtype='float') # Turn None into nan
                     
                     #Need to find which eruption is the closest
                     #to the SEP event and unmatch all the other forecasts
                     #Since all the time differences are necessarily negative,
                     #the max time will be the one closest to the SEP event
                     #and the preferable match
-                    best_eruption = max(td_eruptions)
+                    best_eruption = np.nanmax(td_eruptions)
+
+                    # If all td_eruptions  were None, then best_eruption will be a nan
+                    # In this case no unmatching is necessary
+                    if np.isnan(best_eruption):
+                        continue
 
                     #If all the time differences are the same, then the
                     #same eruption was used in the forecasts and nothing
@@ -2009,6 +2017,7 @@ def revise_eruption_matches(matched_sphinx, all_energy_channels, obs_values,
 
                     #The eruptions and forecasts to unmatch
                     #Get back to the indices associated with the sphinx objects
+                    # Note that if td_eruptions[ix] is nan the index will never be added
                     adj_idx = [ix for ix in range(len(td_eruptions)) if td_eruptions[ix] < best_eruption]
                     sphx_idx = []
                     for ix in adj_idx:
