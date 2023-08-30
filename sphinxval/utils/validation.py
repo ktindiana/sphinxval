@@ -920,10 +920,9 @@ def threshold_crossing_intuitive_metrics(df, dict, model, energy_key,
 
     obs = sub['Observed SEP Threshold Crossing Time'].to_list()
     pred = sub['Predicted SEP Threshold Crossing Time'].to_list()
-    td = (sub['Predicted SEP Threshold Crossing Time'] - sub['Observed SEP Threshold Crossing Time']) #.to_list()
+    td = (sub['Predicted SEP Threshold Crossing Time'] - sub['Observed SEP Threshold Crossing Time'])
     print(obs)
     print(pred)
-    
     td = td.dt.total_seconds()/(60*60) #convert to hours
     td = td.to_list()
     abs_td = [abs(x) for x in td]
@@ -963,7 +962,7 @@ def start_time_intuitive_metrics(df, dict, model, energy_key, thresh_key):
 
     obs = sub['Observed SEP Start Time'].to_list()
     pred = sub['Predicted SEP Start Time'].to_list()
-    td = (sub['Predicted SEP Start Time'] - sub['Observed SEP Start Time']).to_list()
+    td = (sub['Predicted SEP Start Time'] - sub['Observed SEP Start Time'])
     print(obs)
     print(pred)
     
@@ -1006,8 +1005,8 @@ def end_time_intuitive_metrics(df, dict, model, energy_key,
     write_df(sub, "end_time_selections_" + model + "_" + energy_key.strip() + "_" + thresh_fnm)
 
     obs = sub['Observed SEP End Time'].to_list()
-    pred = sub['Predicted End Time'].to_list()
-    td = (sub['Predicted End Time'] - sub['Observed End Time']).to_list()
+    pred = sub['Predicted SEP End Time'].to_list()
+    td = (sub['Predicted SEP End Time'] - sub['Observed SEP End Time'])
     print(obs)
     print(pred)
     
@@ -1102,7 +1101,7 @@ def peak_intensity_time_intuitive_metrics(df, dict, model, energy_key,
 
     obs = sub['Observed SEP Peak Intensity (Onset Peak) Time'].to_list()
     pred = sub['Predicted SEP Peak Intensity (Onset Peak) Time'].to_list()
-    td = (sub['Predicted SEP Peak Intensity (Onset Peak) Time'] - sub['Observed SEP Peak Intensity (Onset Peak) Time'])#.to_list()
+    td = (sub['Predicted SEP Peak Intensity (Onset Peak) Time'] - sub['Observed SEP Peak Intensity (Onset Peak) Time'])
     print(obs)
     print(pred)
     
@@ -1148,7 +1147,7 @@ def peak_intensity_max_time_intuitive_metrics(df, dict, model, energy_key,
 
     obs = sub['Observed SEP Peak Intensity Max (Max Flux) Time'].to_list()
     pred = sub['Predicted SEP Peak Intensity Max (Max Flux) Time'].to_list()
-    td = (sub['Predicted SEP Peak Intensity Max (Max Flux) Time'] - sub['Observed SEP Peak Intensity Max (Max Flux) Time']).to_list()
+    td = (sub['Predicted SEP Peak Intensity Max (Max Flux) Time'] - sub['Observed SEP Peak Intensity Max (Max Flux) Time'])
     print(obs)
     print(pred)
     
