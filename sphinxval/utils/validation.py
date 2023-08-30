@@ -567,9 +567,6 @@ def all_clear_intuitive_metrics(df, dict, model, energy_key, thresh_key):
     obs = sub['Observed SEP All Clear'].to_list()
     pred = sub['Predicted SEP All Clear'].to_list()
 
-    print(obs)
-    print(pred)
-
     #The metrics.py/calc_contingency_bool() routine needs the opposite boolean
     # In calc_contingency_bool, the pandas crosstab predicts booleans as:
     #   True = event
@@ -621,9 +618,6 @@ def probabilty_intuitive_metrics(df, dict, model, energy_key, thresh_key):
     obs = sub['Observed SEP Probability'].to_list()
     pred = sub['Predicted SEP Probability'].to_list()
 
-    print(obs)
-    print(pred)
-
     #Calculate metrics
     brier_score = metrics.calc_brier(obs, pred)
     brier_skill = None
@@ -671,8 +665,6 @@ def peak_intensity_intuitive_metrics(df, dict, model, energy_key, thresh_key):
     obs = sub['Observed SEP Peak Intensity (Onset Peak)'].to_list()
     pred = sub['Predicted SEP Peak Intensity (Onset Peak)'].to_list()
     units = sub.iloc[0]['Observed SEP Peak Intensity (Onset Peak) Units']
-    print(obs)
-    print(pred)
 
     if len(obs) > 1:
         #PEARSON CORRELATION
@@ -755,8 +747,6 @@ def peak_intensity_max_intuitive_metrics(df, dict, model, energy_key,
     obs = sub['Observed SEP Peak Intensity Max (Max Flux)'].to_list()
     pred = sub['Predicted SEP Peak Intensity Max (Max Flux)'].to_list()
     units = sub.iloc[0]['Observed SEP Peak Intensity Max (Max Flux) Units']
-    print(obs)
-    print(pred)
 
     if len(obs) > 1:
         #PEARSON CORRELATION
@@ -840,8 +830,6 @@ def fluence_intuitive_metrics(df, dict, model, energy_key,
     obs = sub['Observed SEP Fluence'].to_list()
     pred = sub['Predicted SEP Fluence'].to_list()
     units = sub.iloc[0]['Observed SEP Fluence Units']
-    print(obs)
-    print(pred)
 
     if len(obs) > 1:
         #PEARSON CORRELATION
@@ -921,12 +909,9 @@ def threshold_crossing_intuitive_metrics(df, dict, model, energy_key,
     obs = sub['Observed SEP Threshold Crossing Time'].to_list()
     pred = sub['Predicted SEP Threshold Crossing Time'].to_list()
     td = (sub['Predicted SEP Threshold Crossing Time'] - sub['Observed SEP Threshold Crossing Time'])
-    print(obs)
-    print(pred)
     td = td.dt.total_seconds()/(60*60) #convert to hours
     td = td.to_list()
     abs_td = [abs(x) for x in td]
-    print(td)
 
     ME = statistics.mean(td)
     MedE = statistics.median(td)
@@ -963,13 +948,10 @@ def start_time_intuitive_metrics(df, dict, model, energy_key, thresh_key):
     obs = sub['Observed SEP Start Time'].to_list()
     pred = sub['Predicted SEP Start Time'].to_list()
     td = (sub['Predicted SEP Start Time'] - sub['Observed SEP Start Time'])
-    print(obs)
-    print(pred)
     
     td = td.dt.total_seconds()/(60*60) #convert to hours
     td = td.to_list()
     abs_td = [abs(x) for x in td]
-    print(td)
 
     ME = statistics.mean(td)
     MedE = statistics.median(td)
@@ -1007,13 +989,10 @@ def end_time_intuitive_metrics(df, dict, model, energy_key,
     obs = sub['Observed SEP End Time'].to_list()
     pred = sub['Predicted SEP End Time'].to_list()
     td = (sub['Predicted SEP End Time'] - sub['Observed SEP End Time'])
-    print(obs)
-    print(pred)
     
     td = td.dt.total_seconds()/(60*60) #convert to hours
     td = td.to_list()
     abs_td = [abs(x) for x in td]
-    print(td)
 
     ME = statistics.mean(td)
     MedE = statistics.median(td)
@@ -1052,8 +1031,6 @@ def duration_intuitive_metrics(df, dict, model, energy_key, thresh_key):
 
     obs = (sub['Observed SEP End Time'] - sub['Observed SEP Start Time'])
     pred = (sub['Predicted SEP End Time'] - sub['Predicted SEP Start Time'])
-    print(obs)
-    print(pred)
     
     obs = obs.dt.total_seconds()/(60*60) #convert to hours
     pred = pred.dt.total_seconds()/(60*60)
@@ -1061,7 +1038,6 @@ def duration_intuitive_metrics(df, dict, model, energy_key, thresh_key):
     td = pred - obs #shorter duration is negative
     td = td.to_list()
     abs_td = [abs(x) for x in td]
-    print(td)
 
     ME = statistics.mean(td)
     MedE = statistics.median(td)
@@ -1102,13 +1078,10 @@ def peak_intensity_time_intuitive_metrics(df, dict, model, energy_key,
     obs = sub['Observed SEP Peak Intensity (Onset Peak) Time'].to_list()
     pred = sub['Predicted SEP Peak Intensity (Onset Peak) Time'].to_list()
     td = (sub['Predicted SEP Peak Intensity (Onset Peak) Time'] - sub['Observed SEP Peak Intensity (Onset Peak) Time'])
-    print(obs)
-    print(pred)
     
     td = td.dt.total_seconds()/(60*60) #convert to hours
     td = td.to_list()
     abs_td = [abs(x) for x in td]
-    print(td)
 
     ME = statistics.mean(td)
     MedE = statistics.median(td)
@@ -1148,13 +1121,10 @@ def peak_intensity_max_time_intuitive_metrics(df, dict, model, energy_key,
     obs = sub['Observed SEP Peak Intensity Max (Max Flux) Time'].to_list()
     pred = sub['Predicted SEP Peak Intensity Max (Max Flux) Time'].to_list()
     td = (sub['Predicted SEP Peak Intensity Max (Max Flux) Time'] - sub['Observed SEP Peak Intensity Max (Max Flux) Time'])
-    print(obs)
-    print(pred)
     
     td = td.dt.total_seconds()/(60*60) #convert to hours
     td = td.to_list()
     abs_td = [abs(x) for x in td]
-    print(td)
 
     ME = statistics.mean(td)
     MedE = statistics.median(td)
