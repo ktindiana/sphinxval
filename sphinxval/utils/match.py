@@ -1994,6 +1994,7 @@ def revise_eruption_matches(matched_sphinx, all_energy_channels, obs_values,
                         obs_idx = [ix for ix in range(len(matched_obs[j])) if matched_obs[j][ix].source == sep_source[j]]
                         td_eruptions.append(td_eruptions_array[j][obs_idx[0]])
 
+                    # TODO: fix the ugly hack to cast to np array to handle None values entered from above
                     td_eruptions = np.array(td_eruptions, dtype='float') # Turn None into nan
                     
                     #Need to find which eruption is the closest
@@ -2001,11 +2002,12 @@ def revise_eruption_matches(matched_sphinx, all_energy_channels, obs_values,
                     #Since all the time differences are necessarily negative,
                     #the max time will be the one closest to the SEP event
                     #and the preferable match
-                    #
-                    # TODO: fix the ugly hack to cast to np array to handle None values entered from above
-                    #best_eruption = max(td_eruptions)
                     best_eruption = np.nanmax(td_eruptions)
 
+                    # If all td_eruptions  were None, then best_eruption will be a nan
+                    # In this case no unmatching is necessary
+                    if np.isnan(best_eruption):
+                        continue
 
                     #If all the time differences are the same, then the
                     #same eruption was used in the forecasts and nothing
