@@ -1266,6 +1266,7 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
         obs_flux_interp = profile.interp_timeseries(obs_dates, obs_flux, "log", pred_dates)
         #Check for None values and remove
         obs, pred = profile.remove_none(obs_flux_interp,pred_flux)
+        obs, pred = profile.remove_zero(obs, pred)
         
         #PLOT TIME PROFILE TO CHECK
         date = [obs_dates,pred_dates,pred_dates]
