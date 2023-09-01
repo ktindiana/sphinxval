@@ -525,6 +525,7 @@ class Forecast():
         #Forecasts
         self.source = None #source from which forcasts ingested
                         #JSON filename or perhaps database in future
+        self.path = None #Path to JSON file
         self.all_clear = All_Clear(None, None, None, None) #All_Clear object
         self.peak_intensity = Peak_Intensity(None, None, None, None, None, None) #Peak_Intensity object
         self.peak_intensity_max = Peak_Intensity_Max(None, None, None, None, None, None) #Peak_Intensity object
@@ -660,6 +661,19 @@ class Forecast():
         
         if 'filename' in full_json:
             self.source = full_json['filename']
+            
+            #pull out path
+            fullpath = full_json['filename']
+            fullpath = fullpath.strip().split("/")
+            if fullpath[0] == "/":
+                svpath = "/"
+            else:
+                svpath = ""
+            for x in fullpath:
+                if ".json" in x: continue
+                svpath = svpath + x + "/"
+                
+            self.path = svpath
         
         #Supporting information
         if dataD != {}:
@@ -1445,6 +1459,9 @@ class SPHINX:
         self.end_time_match_status = {}
         self.observed_end_time = {} #datetime
 
+        self.time_profile_match_status = {}
+        self.observed_time_profile = {} #string, filename
+
         #Probability matching status the same as self.sep_match_status
         self.observed_probability_source = {}
         self.observed_probability = {} #Probability object
@@ -1489,6 +1506,9 @@ class SPHINX:
 
         self.end_time_match_status.update({key:""})
         self.observed_end_time.update({key:None})
+        
+        self.time_profile_match_status.update({key:""})
+        self.observed_time_profile.update({key:None})
         
         self.observed_probability_source.update({key: None})
         self.observed_probability.update({key:Probability(None, None, None, None)})
@@ -1819,6 +1839,17 @@ class SPHINX:
             print("  Match Status: " + self.end_time_match_status[thresh_key])
             print("  Matched observation: " + str(self.observed_match_sep_source[thresh_key]))
             print("  End time: " + str(self.observed_end_time[thresh_key]))
+            
+        print("-------------------------------------------------------------")
+        print("Observed SEP Time Profile: ")
+        print("None = no SEP event or no match with an observation")
+        print("-------------------------------------------------------------")
+        for thresh in self.thresholds:
+            thresh_key = objh.threshold_to_key(thresh)
+            print(" Threshold: " + str(thresh))
+            print("  Match Status: " + self.time_profile_match_status[thresh_key])
+            print("  Matched observation: " + str(self.observed_match_sep_source[thresh_key]))
+            print("  Time Profile: " + str(self.observed_time_profile[thresh_key]))
                 
         print("================== END REPORT ===============================")
 
@@ -2039,6 +2070,27 @@ class SPHINX:
 
             predicted = obj.end_time
             match_status = self.end_time_match_status[tk]
+
+        return predicted, match_status
+
+
+
+    def return_predicted_time_profile(self):
+        """ Pull out the predicted value for the requested threshold.
+            
+            None is returned if threshold isn't found or model
+            doesn't make prediction.
+            
+        """
+        predicted = None
+        match_status = ""
+        
+        #Check if a forecast exists
+        if self.prediction.sep_profile == None:
+            return predicted, match_status
+
+        predicted = self.prediction.sep_profile
+        match_status = self.time_profile_match_status[tk]
 
         return predicted, match_status
 

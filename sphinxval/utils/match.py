@@ -1853,6 +1853,92 @@ def match_sep_end_time(sphinx, observation_obj, thresh, is_win_overlap,
 
 
 
+def match_time_profile(sphinx, observation_obj, thresh, is_win_overlap,
+    is_eruption_in_range, trigger_input_end, is_pred_sep_overlap):
+    """ Apply criteria to determine if a forecast occurs prior to SEP
+        end time and extract the predicted time profile. If the forecast
+        is before the SEP end time, then compare the time profile.
+               
+       Matching:
+        - Prediction window overlaps with observation
+        - There is a threshold crossing in the prediction window OR
+            there is an ongoing SEP event at the start of the prediction window
+        - Last eruption within 48 hrs - 15 mins before threshold crossing
+        - The last trigger/input time if before the end time
+
+    Input:
+        
+        :sphinx: (SPHINX object) will be updated
+        :observation_obj: A single observation object
+        :thresh: (dict) threshold being tested
+        
+        The rest are the ith entry for the various boolean arrays
+        that are the length of all of the observations read into the code.
+
+    Output:
+    
+        :sep_status: (bool) a single boolean (or None) indicating the
+            whether SEP info was saved to the SPHINX object
+            True - SEP quantities added to SPHINX
+            False - no SEP event observed or an SEP is already ongoing
+            None - the observation isn't associated with the forecast
+        
+        The SPHINX object is updated with observed values if the value is
+        found to be True or False. Otherwise, values of None will be skipped
+        because it means that this particular observation doesn't match
+        
+    """
+    thresh_key = objh.threshold_to_key(thresh)
+
+    end_status = None
+    
+    #Prediction and observation windows must overlap
+    if not is_win_overlap:
+        end_status = None
+        sphinx.end_time_match_status[thresh_key] = "No Matched Observation"
+        return end_status
+        
+    #The prediction window must overlap with an SEP event
+    if not is_pred_sep_overlap:
+        end_status = False #no SEP event, no values
+        sphinx.end_time_match_status[thresh_key] = "No SEP Event"
+        return end_status
+
+    #If there is an SEP event, the eruption must occur in the right time range
+    if is_eruption_in_range != None:
+        if not is_eruption_in_range:
+            sep_status = None
+            sphinx.end_time_match_status[thresh_key] = "Eruption Out of Range"
+            return sep_status
+    #The triggers and inputs must all be before threshold crossing
+    if trigger_input_end:
+        end_status = True
+        sphinx.end_time_match_status[thresh_key] = "SEP Event"
+    else:
+        end_status = None
+        sphinx.end_time_match_status[thresh_key] = "Trigger/Input after Observed Phenomenon"
+        return end_status
+    
+    #Matched End Time
+#    print("Observed SEP end time matched:")
+#    print("  " + observation_obj.source)
+ 
+    #Start time and channel fluence
+    time_prof = None
+    for i in range(len(observation_obj.event_lengths)):
+        event = observation_obj.event_lengths[i]
+        if event.threshold != thresh['threshold']:
+            continue
+        sphinx.observed_match_sep_source[thresh_key] = observation_obj.source
+        sphinx.observed_time_profile[thresh_key] = observation_obj.source
+
+ #   print(sphinx.observed_end_times)
+
+    return end_status
+
+
+
+
 def sep_report(all_energy_channels, obs_values, model_names,
     observed_sep_events):
     """ Print out all the observed SEP events inside of the forecast
@@ -2349,8 +2435,8 @@ def match_all_forecasts(all_energy_channels, model_names, obs_objs,
     #In the case where the same model has forecasts derived from
     #multiple eruptions matched to the same SEP event, find the
     #best match and unmatch the other forecasts.
-    revise_eruption_matches(matched_sphinx, all_energy_channels, obs_values,
-        model_names, observed_sep_events)
+    revise_eruption_matches(matched_sphinx, all_energy_channels,
+        obs_values, model_names, observed_sep_events)
 
     return matched_sphinx, all_obs_thresholds, observed_sep_events
 
