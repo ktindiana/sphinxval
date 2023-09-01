@@ -193,6 +193,33 @@ def remove_none(obs, model):
     return obs_clean, model_clean
 
 
+def remove_zero(obs, model):
+    '''Remove None values from corresponding observations and model lists.
+        Only values that are real in both lists are kept.
+        obs is a single list of observations
+        model is a single list of model forecasts
+    '''
+    #Error checking
+    if len(obs) != len(model):
+        sys.exit('remove_none: Both input arrays must be the same length! '
+                'Exiting.')
+    #Clean None values from observations and remove correponding entries in
+    #the model
+    bad_index = [bad for bad, value in enumerate(obs) if value == 0]
+    obs_clean = list(obs)
+    model_clean = list(model)
+    for bad in sorted(bad_index, reverse=True):
+        del obs_clean[bad]
+        del model_clean[bad]
+
+    #Clean None values from the model and remove correponding entries in
+    #the observations
+    bad_index = [bad for bad, value in enumerate(model_clean) if value == 0]
+    for bad in sorted(bad_index, reverse=True):
+        del obs_clean[bad]
+        del model_clean[bad]
+
+    return obs_clean, model_clean
 
 
 def interp_timeseries(x_true, y_true, scale_true, x_pred):
