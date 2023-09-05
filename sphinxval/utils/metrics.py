@@ -863,7 +863,7 @@ def calc_contingency(y_true, y_pred, thresh):
     'OR': check_div(h*c, f*m),
     'GSS': check_GSS(h, f, m, n), #check_div((h-(h+f)*(h+m)/n), (h+f+m-(h+f)*(h+m)/n)),
     'TSS': check_div(h, h+m) - check_div(f, f+c),
-    'HSS': check_div(2.0 * (h*c + f*m), ((h+m) * (m+c) + (h+f) * (f+c))),
+    'HSS': check_div(2.0 * (h*c - f*m), ((h+m) * (m+c) + (h+f) * (f+c))),
     'ORSS': check_div((h*c - m*f), (h*c + m*f))
     }
     return scores
