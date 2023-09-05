@@ -1200,9 +1200,6 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
     model_names = sub['Model'].to_list()
     energy_chan = sub['Energy Channel Key'].to_list()
     
-    print(obs_profs)
-    print(pred_profs)
-
     sepE = []
     sepAE = []
     sepLE = []
@@ -1217,7 +1214,6 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
         all_obs_dates = []
         all_obs_flux = []
         print("======NAMES OF OBSERVED TIME PROFILE++++")
-        print(obs_profs[i])
         obs_fnames = obs_profs[i].strip().split(",")
         for j in range(len(obs_fnames)):
             dt, flx = profile.read_single_time_profile(obs_fnames[j])
@@ -1227,14 +1223,17 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
         obs_dates, obs_flux = profile.combine_time_profiles(all_obs_dates, all_obs_flux)
         pred_dates, pred_flux = profile.read_single_time_profile(pred_paths[i] + pred_profs[i])
         
-        #Remove zeros from predicted values
+        #Remove zeros
+        obs_flux, obs_dates = zip(*filter(lambda x:x[0]>0.0, zip(obs_flux, obs_dates)))
         pred_flux, pred_dates = zip(*filter(lambda x:x[0]>0.0, zip(pred_flux, pred_dates)))
+        
         #Interpolate observed time profile onto predicted timestamps
         obs_flux_interp = profile.interp_timeseries(obs_dates, obs_flux, "log", pred_dates)
+        
         #Check for None values and remove
         obs, pred = profile.remove_none(obs_flux_interp,pred_flux)
         obs, pred = profile.remove_zero(obs, pred)
-        
+
         #PLOT TIME PROFILE TO CHECK
         date = [obs_dates,pred_dates,pred_dates]
         values = [obs_flux, obs_flux_interp, pred_flux]
@@ -1248,8 +1247,7 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
         y_label="Particle Intensity", uselog_x = False, uselog_y = True,
         date_format="year", showplot=False,
         closeplot=True, saveplot=True, figname = figname)
-        
-        
+
         #Calculate a mean metric across an individual time profile
         if len(obs) >= 1 and len(pred) >= 1:
             E1 = statistics.mean(metrics.switch_error_func('E',obs,pred))
