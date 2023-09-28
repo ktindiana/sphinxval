@@ -3,13 +3,15 @@ from . import object_handler as objh
 from . import metrics
 from . import plotting_tools as plt_tools
 from . import config
+from . import time_profile as profile
+from . import resume
+import matplotlib.pylab as plt
 from scipy.stats import pearsonr
 import statistics
 import numpy as np
 import sys
 import os.path
 import pandas as pd
-from . import time_profile as profile
 
 
 __version__ = "0.1"
@@ -348,6 +350,7 @@ def prepare_outdirs():
         if not os.path.isdir(outdir):
             os.mkdir(outdir)
     
+
 def write_df(df, name, log=True):
     """Writes a pandas dataframe to the standard location in multiple formats
     """
@@ -361,6 +364,8 @@ def write_df(df, name, log=True):
         if log:
             print('Wrote', filepath)
 
+
+
 def fill_df(matched_sphinx, model_names, all_energy_channels,
     all_obs_thresholds):
     """ Fill in a dictionary with the all clear predictions and observations
@@ -372,13 +377,10 @@ def fill_df(matched_sphinx, model_names, all_energy_channels,
     #Loop through the forecasts for each model and fill in quantity_dict
     #as appropriate
     for model in model_names:
-        for channel in all_energy_channels:
-            ek = objh.energy_channel_to_key(channel)
-
+        for ek in all_energy_channels:
             print("---Model: " + model + ", Energy Channel: " + ek)
             for sphinx in matched_sphinx[model][ek]:
-                for thresh in all_obs_thresholds[ek]:
-                    tk = objh.threshold_to_key(thresh)
+                for tk in all_obs_thresholds[ek]:
                     fill_dict_row(sphinx, dict, ek, tk)
                 
     
@@ -432,6 +434,20 @@ def initialize_time_dict():
             "Median Error (pred - obs)": [],
             "Mean Absolute Error (|pred - obs|)": [],
             "Median Absolute Error (|pred - obs|)": [],
+            }
+            
+    return dict
+    
+    
+def initialize_awt_dict():
+    """ Metrics for Adanced Warning Time.
+    
+    """
+    dict = {"Model": [],
+            "Energy Channel": [],
+            "Threshold": [],
+            "Mean AWT (observed start - issue time)": [],
+            "Median AWT (observed start - issue time)": [],
             }
             
     return dict
@@ -611,6 +627,7 @@ def all_clear_intuitive_metrics(df, dict, model, energy_key, thresh_key):
     scores = metrics.calc_contingency_bool(opposite_obs, opposite_pred)
     fill_all_clear_dict(dict, model, energy_key, thresh_key, scores)
 
+    return sub
 
 
 def probabilty_intuitive_metrics(df, dict, model, energy_key, thresh_key):
@@ -719,6 +736,7 @@ def peak_intensity_intuitive_metrics(df, dict, model, energy_key, thresh_key):
         figname = config.plotpath + '/Correlation_peak_intensity_' + model + "_" \
             + energy_key.strip() + "_" + thresh_fnm + ".pdf"
         corr_plot.savefig(figname, dpi=300, bbox_inches='tight')
+        corr_plot.close()
     else:
         r_lin = None
         r_log = None
@@ -804,6 +822,7 @@ def peak_intensity_max_intuitive_metrics(df, dict, model, energy_key,
         figname = config.plotpath + '/Correlation_peak_intensity_max' + model + "_" \
                 + energy_key.strip() + "_" + thresh_fnm + ".pdf"
         corr_plot.savefig(figname, dpi=300, bbox_inches='tight')
+        corr_plot.close()
     else:
         r_lin = None
         r_log = None
@@ -889,6 +908,7 @@ def fluence_intuitive_metrics(df, dict, model, energy_key,
         figname = config.plotpath + '/Correlation_fluence_' + model + "_" \
                 + energy_key.strip() + "_" + thresh_fnm + ".pdf"
         corr_plot.savefig(figname, dpi=300, bbox_inches='tight')
+        corr_plot.close()
     else:
         r_lin = None
         r_log = None
@@ -1064,12 +1084,8 @@ def duration_intuitive_metrics(df, dict, model, energy_key, thresh_key):
             'Prediction Window Start', 'Prediction Window End',
             'Observed SEP Duration',
             'Predicted SEP Duration',
-            'Observed SEP Start Time',
-            'Observed SEP End Time',
-            'Predicted SEP Start Time',
-            'Predicted SEP End Time',
-            'Start Time Match Status']]
-    sub = sub.loc[(sub['Start Time Match Status'] == 'SEP Event')]
+            'Duration Match Status']]
+    sub = sub.loc[(sub['Duration Match Status'] == 'SEP Event')]
     sub = sub.dropna() #drop rows containing None
       
     if sub.empty:
@@ -1080,16 +1096,9 @@ def duration_intuitive_metrics(df, dict, model, energy_key, thresh_key):
 
     obs = sub['Observed SEP Duration']
     pred = sub['Predicted SEP Duration']
-    obs1 = (sub['Observed SEP End Time'] - sub['Observed SEP Start Time'])
-    pred1 = (sub['Predicted SEP End Time'] - sub['Predicted SEP Start Time'])
-    
-    obs1 = obs1.dt.total_seconds()/(60*60) #convert to hours
-    pred1 = pred1.dt.total_seconds()/(60*60)
 
     print(obs)
     print(pred)
-    print(obs1)
-    print(pred1)
 
     td = pred - obs #shorter duration is negative
     td = td.to_list()
@@ -1227,6 +1236,8 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
     thresh_fnm = thr[0] + "_" + thr[1]
     write_df(sub, "time_profile_selections_" + model + "_" + energy_key.strip() + "_" + thresh_fnm)
 
+    obs_st = sub['Observed SEP Start Time'].to_list()
+    obs_et = sub['Observed SEP End Time'].to_list()
     obs_profs = sub['Observed Time Profile'].to_list()
     pred_profs = sub['Predicted Time Profile'].to_list()
     pred_paths = sub['Forecast Path'].to_list()
@@ -1264,23 +1275,32 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
         pred_flux, pred_dates = zip(*filter(lambda x:x[0]>0.0, zip(pred_flux, pred_dates)))
         #Interpolate observed time profile onto predicted timestamps
         obs_flux_interp = profile.interp_timeseries(obs_dates, obs_flux, "log", pred_dates)
-        #Check for None values and remove
-        obs, pred = profile.remove_none(obs_flux_interp,pred_flux)
-        obs, pred = profile.remove_zero(obs, pred)
+        
+        #Trim the time profiles to the observed start and end time
+        trim_pred_dates, trim_pred_flux = profile.trim_profile(obs_st[i], obs_et[i], pred_dates, pred_flux)
+        trim_obs_dates, trim_obs_flux = profile.trim_profile(obs_st[i], obs_et[i], pred_dates, obs_flux_interp)
+        
         
         #PLOT TIME PROFILE TO CHECK
-        date = [obs_dates,pred_dates,pred_dates]
-        values = [obs_flux, obs_flux_interp, pred_flux]
-        labels=["Obs", "Interp Obs", "Model"]
+        date = [obs_dates, trim_obs_dates, pred_dates, trim_pred_dates]
+        values = [obs_flux, trim_obs_flux, pred_flux, trim_pred_flux]
+        labels=["Observations", "Interp Trimmed Obs", "Model", "Trimmed Model"]
         title = model_names[i] + ", " + energy_chan[i] + " Time Profile"
         figname = config.plotpath + "/Time_Profile_" + model_names[i] + "_" + energy_chan[i]\
             + "_" + thresh_fnm  + "_" + str(pred_dates[0])+ ".pdf"
         
         plt_tools.plot_time_profile(date, values, labels,
-        title=title, x_label="Date", y_min=1e-5,
+        title=title, x_label="Date", y_min=1e-5, y_max=1e4,
         y_label="Particle Intensity", uselog_x = False, uselog_y = True,
         date_format="year", showplot=False,
         closeplot=True, saveplot=True, figname = figname)
+        
+        
+        #Check for None and Zero values and remove
+        if trim_pred_flux == [] or trim_obs_flux == []: continue
+        obs, pred = profile.remove_none(trim_obs_flux,trim_pred_flux)
+        obs, pred = profile.remove_zero(obs, pred)
+        if obs == [] or pred == []: continue
         
         
         #Calculate a mean metric across an individual time profile
@@ -1327,6 +1347,7 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
                     + energy_key.strip() + "_" + thresh_fnm \
                     + "_" + str(pred_dates[0]) + ".pdf"
                 corr_plot.savefig(figname, dpi=300, bbox_inches='tight')
+                corr_plot.close()
 
 
     #Calculate mean of metrics for all time profiles
@@ -1388,17 +1409,45 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
 
 
 
-
-
-def AWT_metrics(df, model_names, all_energy_channels,
-    all_observed_thresholds):
-    """ Metrics for Advanced Warning Time.
+#def AWT_metrics(df, dict, model, energy_key, thresh_key):
+#    """ Metrics for Advanced Warning Time.
+#        Find the first forecast ahead of SEP events and calculate AWT
+#        for a given model, energy channel, and threshold.
+#    
+#    """
+#
+#    sub = df.loc[(df['Model'] == model) & (df['Energy Channel Key'] == energy_key)
+#                & (df['Threshold Key'] == thresh_key)]
+#
+#    sub = sub[['Model','Energy Channel Key', 'Threshold Key', 'Issue Time', 'Prediction Window Start', 'Prediction Window End', 'Observed SEP Start Time', 'Predicted SEP All Clear', 'All Clear Match Status', 'Predicted Probability', 'Probability Match Status', 'Predicted SEP Threshold Crossing Time', 'Threshold Crossing Time Match Status', 'Predicted SEP Start Time', 'Start Time Match Status', 'Predicted SEP End Time', 'End Time Match Status', 'Predicted SEP Duration', 'Duration Match Status', 'Predicted SEP Peak Intensity (Onset Peak) Time', 'Peak Intensity Match Status', 'Predicted SEP Peak Intensity Max (Max Flux) Time', 'Peak Intensity Max Match Status']]
+#
+#    #Identify all forecasts associated with observed SEP Events
+#    sub = sub.loc[(sub['All Clear Match Status'] == 'SEP Event')]
+#
+#    #Remove rows that don't have a forecast for at least one quantity.
+#    #We cannot check fluence only forecasts because there isn't a threshold
+#    #to apply to determine if an SEP event was forecasted or not.
+#    #We choose not to check a forecast for time profile only. Presumably, if
+#    #there is a forecast for a time profile, then all the other fields
+#    #will be filled in.
+#    sub = sub.loc[(sub['Predicted SEP All Clear'] == None
+#                    and sub['Predicted SEP Threshold Crossing Time' == None]
+#                    and sub['Predicted SEP Start Time'] == None
+#                    and sub['Predicted SEP End Time'] == None
+#                    and sub['Predicted SEP Duration'] == None
+#                    and sub['Predicted SEP Peak Intensity (Onset Peak)'] == None
+#                    and sub['Predicted SEP Peak Intensity Max (Max Flux)'] == None)
+#                    and sub['Predicted SEP Peak Intensity (Onset Peak) Time'] == None
+#                    and sub['Predicted SEP Peak Intensity Max (Max Flux) Time'] == None)]
+#
+#    #Remove rows with predicted peak intensity below threshold.
+#    threshold = objh.key_to_threshold(thresh_key)
+#    thresh = threshold['threshold']
+#    sub = sub.loc[(sub['Predicted SEP Peak Intensity (Onset Peak)'] != None
+#                    and (sub['Predicted SEP Peak Intensity (Onset Peak)'] >= thresh)))]
+#
+#    #Only rows with observed SEP events and some kind of forecast remains
     
-    """
-
-
-
-
 
 
 def calculate_intuitive_metrics(df, model_names, all_energy_channels,
@@ -1429,13 +1478,12 @@ def calculate_intuitive_metrics(df, model_names, all_energy_channels,
     duration_dict = initialize_time_dict()
     peak_intensity_time_dict = initialize_time_dict()
     peak_intensity_max_time_dict = initialize_time_dict()
+    awt_dict = initialize_awt_dict()
 
     
     for model in model_names:
-        for channel in all_energy_channels:
-            ek = objh.energy_channel_to_key(channel)
-            for thresh in all_observed_thresholds[ek]:
-                tk = objh.threshold_to_key(thresh)
+        for ek in all_energy_channels:
+            for tk in all_observed_thresholds[ek]:
 
                 #Probability
                 probabilty_intuitive_metrics(df, probability_dict, model,
@@ -1499,7 +1547,7 @@ def calculate_intuitive_metrics(df, model_names, all_energy_channels,
 
 
 def intuitive_validation(matched_sphinx, model_names, all_energy_channels,
-    all_observed_thresholds, observed_sep_events):
+    all_observed_thresholds, observed_sep_events, DoResume=False, r_df=None):
     """ In the intuitive_validation subroutine, forecasts are validated in a
         way similar to which people would interpret forecasts.
     
@@ -1539,6 +1587,10 @@ def intuitive_validation(matched_sphinx, model_names, all_energy_channels,
         :observed_sep_events: (dict) dictionary organized by model name,
             energy channel, and threshold containing all unique observed SEP
             events that fell inside a forecast prediction window
+        :DoResume: (bool) boolean to indicate whether the user wants to resume
+            building on a previous run of SPHINX
+        :r_df: (pandas dataframe) dataframe created from a previous run of
+            SPHINX. Newly input predictions will be appended.
     
     Output:
     
@@ -1553,6 +1605,15 @@ def intuitive_validation(matched_sphinx, model_names, all_energy_channels,
     df = fill_df(matched_sphinx, model_names,
             all_energy_channels, all_observed_thresholds)
 
+    ###RESUME WILL APPEND DF TO PREVIOUS DF
+    print("Resume boolean is " + str(DoResume))
+    if DoResume:
+        df = pd.concat([r_df, df], ignore_index=True)
+        write_df(df, "SPHINX_dataframe")
+
+        model_names = resume.identify_unique(df, 'Model')
+        all_energy_channels = resume.identify_unique(df, 'Energy Channel Key')
+        all_observed_thresholds = resume.identify_thresholds_per_energy_channel(df)
 
     calculate_intuitive_metrics(df, model_names, all_energy_channels,
             all_observed_thresholds)

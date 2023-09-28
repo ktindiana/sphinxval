@@ -7,7 +7,12 @@ parser.add_argument("--ModelList", type=str, default='', \
         help=("List containing filenames of prediction json files."))
 parser.add_argument("--DataList", type=str, default="",
         help=("List containing filenames of observation json files."))
-
+parser.add_argument("--resume",
+        help=("Specify resume to add forecasts to an existing "
+            "dataframe and recalculate metrics."), action="store_true")
+parser.add_argument("--DataFrame", type=str, default="",
+        help=("Filename of existing Pandas DataFrame containing the results of a previous SPHINX run in pkl format. "
+            "Must specify if choose resume."))
 
 #parser.add_argument("--OneModel", type=str, default="",
 #        help=("If want to validate only one model in the list, specify "
@@ -27,6 +32,8 @@ parser.add_argument("--DataList", type=str, default="",
 args = parser.parse_args()
 model_list = args.ModelList
 data_list = args.DataList
+resume = args.resume
+df_pkl = args.DataFrame
 
 #show_plot = args.showplot
 #PrintToScreen = args.PrintToScreen
@@ -34,4 +41,4 @@ data_list = args.DataList
 #SaveMetrics = args.SaveMetrics
 #onemodel = args.OneModel
 
-sphinxval.sphinx.validate(data_list, model_list)
+sphinxval.sphinx.validate(data_list, model_list, resume, df_pkl)
