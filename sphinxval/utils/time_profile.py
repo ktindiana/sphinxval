@@ -515,3 +515,55 @@ def combine_time_profiles(dates, profiles):
         full_profile.extend(profiles[idx[i]])
         
     return full_dates, full_profile
+
+
+
+def trim_profile(startdate, enddate, dates, fluxes):
+    """ Trim time series of fluxes between a start and end time.
+        stardate (datetime object)
+        enddate (datetime object)
+        dates - array-like list of datetime object dates
+        fluxes - array-like like of fluxes corresponding to the dates
+        
+        returns date and flux arrays trimmed between startdate and enddate.
+    """
+    trim_dates = []
+    trim_flux = []
+    
+    if startdate == None or enddate == None:
+        return trim_dates, trim_flux
+    if startdate == '' or enddate == '':
+        return trim_dates, trim_flux
+    
+    #Trim dates prior to startdate and after end date
+    for i in range(len(dates)):
+        if dates[i] < startdate: continue
+        if dates[i] > enddate: continue
+        
+        trim_dates.append(dates[i])
+        trim_flux.append(fluxes[i])
+    
+    return trim_dates, trim_flux
+    
+    
+def trim_profile_above_value(value,dates, fluxes):
+    """ Trim time series of fluxes between a start and end time.
+        value (float) - flux value, trim profile to only fluxes above
+            that value
+        dates - array-like list of datetime object dates
+        fluxes - array-like like of fluxes corresponding to the dates
+        
+        returns date and flux arrays trimmed between startdate and enddate.
+    """
+    trim_dates = []
+    trim_flux = []
+    
+    
+    #Trim dates prior to startdate
+    for i in range(len(dates)):
+        if fluxes[i] < value: continue
+        
+        trim_dates.append(dates[i])
+        trim_flux.append(fluxes[i])
+    
+    return trim_dates, trim_flux
