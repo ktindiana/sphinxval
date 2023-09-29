@@ -1288,6 +1288,7 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
         title = model_names[i] + ", " + energy_chan[i] + " Time Profile"
         figname = config.plotpath + "/Time_Profile_" + model_names[i] + "_" + energy_chan[i]\
             + "_" + thresh_fnm  + "_" + str(pred_dates[0])+ ".pdf"
+        figname = figname.replace(':', '_')
         
         plt_tools.plot_time_profile(date, values, labels,
         title=title, x_label="Date", y_min=1e-5, y_max=1e4,
@@ -1346,6 +1347,7 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
                     model + "_" \
                     + energy_key.strip() + "_" + thresh_fnm \
                     + "_" + str(pred_dates[0]) + ".pdf"
+                figname = figname.replace(':', '_')
                 corr_plot.savefig(figname, dpi=300, bbox_inches='tight')
                 corr_plot.close()
 
