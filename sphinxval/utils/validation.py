@@ -1161,6 +1161,23 @@ def peak_intensity_time_intuitive_metrics(df, dict, model, energy_key,
     ME, MedE, MAE, MedAE)
 
 
+def date_to_string(date):
+    """ Turn datetime into appropriate strings for filenames.
+    
+    """
+    year = date.year
+    month = date.month
+    day = date.day
+    hour = date.hour
+    min = date.minute
+    sec = date.second
+    
+    date_str = '{:d}{:02d}{:02d}_{:02d}hr{:02d}min{:02d}sec'.format(year, month, day, hour, min, sec)
+    
+                
+    return date_str
+
+
 
 def peak_intensity_max_time_intuitive_metrics(df, dict, model, energy_key,
     thresh_key):
@@ -1285,9 +1302,10 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
         date = [obs_dates, trim_obs_dates, pred_dates, trim_pred_dates]
         values = [obs_flux, trim_obs_flux, pred_flux, trim_pred_flux]
         labels=["Observations", "Interp Trimmed Obs", "Model", "Trimmed Model"]
+        str_date = date_to_string(pred_dates[0])
         title = model_names[i] + ", " + energy_chan[i] + " Time Profile"
         figname = config.plotpath + "/Time_Profile_" + model_names[i] + "_" + energy_chan[i]\
-            + "_" + thresh_fnm  + "_" + str(pred_dates[0])+ ".pdf"
+            + "_" + thresh_fnm  + "_" + str_date + ".pdf"
         
         plt_tools.plot_time_profile(date, values, labels,
         title=title, x_label="Date", y_min=1e-5, y_max=1e4,
@@ -1345,7 +1363,7 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
                 figname = config.plotpath + '/Correlation_time_profile_' +\
                     model + "_" \
                     + energy_key.strip() + "_" + thresh_fnm \
-                    + "_" + str(pred_dates[0]) + ".pdf"
+                    + "_" + str_date + ".pdf"
                 corr_plot.savefig(figname, dpi=300, bbox_inches='tight')
                 corr_plot.close()
 
