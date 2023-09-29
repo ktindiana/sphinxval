@@ -1,4 +1,4 @@
 # IGNORE ALL TEMPORARY TEXT EDITOR FILES
 *~
 *.un~
-
+*/__pycache__/*
