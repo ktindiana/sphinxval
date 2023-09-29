@@ -42,3 +42,5 @@ df_pkl = args.DataFrame
 #onemodel = args.OneModel
 
 sphinxval.sphinx.validate(data_list, model_list, resume, df_pkl)
+
+sphinxval.sphinx.report.report()
