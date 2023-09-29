@@ -460,10 +460,10 @@ def initialize_all_clear_dict():
     dict = {"Model": [],
             "Energy Channel": [],
             "Threshold": [],
-            "All Clear True Positives": [], #Hits
-            "All Clear False Positives": [], #False Alarms
-            "All Clear True Negatives": [],  #Correct negatives
-            "All Clear False Negatives": [], #Misses
+            "All Clear 'True Positives' (Hits)": [], #Hits
+            "All Clear 'False Positives' (False Alarms)": [], #False Alarms
+            "All Clear 'True Negatives' (Correct Negatives)": [],  #Correct negatives
+            "All Clear 'False Negatives' (Misses)": [], #Misses
             "Percent Correct": [],
             "Bias": [],
             "Hit Rate": [],
@@ -558,10 +558,10 @@ def fill_all_clear_dict(dict, model, energy_key, thresh_key, scores):
     dict["Model"].append(model)
     dict["Energy Channel"].append(energy_key)
     dict["Threshold"].append(thresh_key)
-    dict["All Clear True Positives"].append(scores['TP']) #Hits
-    dict["All Clear False Positives"].append(scores['FP']) #False Alarms
-    dict["All Clear True Negatives"].append(scores['TN'])  #Correct negatives
-    dict["All Clear False Negatives"].append(scores['FN']) #Misses
+    dict["All Clear 'True Positives' (Hits)"].append(scores['TP']) #Hits
+    dict["All Clear 'False Positives' (False Alarms)"].append(scores['FP']) #False Alarms
+    dict["All Clear 'True Negatives' (Correct Negatives)"].append(scores['TN'])  #Correct negatives
+    dict["All Clear 'False Negatives' (Misses)"].append(scores['FN']) #Misses
     dict["Percent Correct"].append(scores['PC'])
     dict["Bias"].append(scores['B'])
     dict["Hit Rate"].append(scores['H'])
