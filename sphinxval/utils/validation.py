@@ -1092,7 +1092,7 @@ def duration_intuitive_metrics(df, dict, model, energy_key, thresh_key):
         return
     thr = thresh_key.strip().split(".")
     thresh_fnm = thr[0] + "_" + thr[1]
-    write_df(sub, "start_time_selections_" + model + "_" + energy_key.strip() + "_" + thresh_fnm)
+    write_df(sub, "duration_selections_" + model + "_" + energy_key.strip() + "_" + thresh_fnm)
 
     obs = sub['Observed SEP Duration']
     pred = sub['Predicted SEP Duration']
@@ -1174,7 +1174,6 @@ def date_to_string(date):
     
     date_str = '{:d}{:02d}{:02d}_{:02d}hr{:02d}min{:02d}sec'.format(year, month, day, hour, min, sec)
     
-                
     return date_str
 
 
