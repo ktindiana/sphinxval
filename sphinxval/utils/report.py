@@ -295,12 +295,10 @@ def build_metrics_table(metrics, column_labels, metric_start_index):
     plot_string = ''
     for i in range(0, len(column_labels)):
         plot_index = None
-        print(column_labels[i])
         if type(column_labels[i]) == str:
     
             if ('plot' in column_labels[i]) or ('plot' in column_labels[i].lower()):
                 plot_index = i * 1
-                print(plot_index)
                 
             if not (plot_index is None):
                 plot_path = metrics[plot_index][9:]
@@ -743,11 +741,15 @@ def build_validation_reference_section(filename1, filename2):
     text += add_collapsible_segment_end()
     return text
 
-def report():
+def report(output_dir):
     global output_dir__
+
     # get all model metrics
     # analyze the output directory
-    output_dir__ = config.outpath + '/pkl/'
+    if output_dir is None:
+        output_dir__ = config.outpath + '/pkl/'
+    else:
+        output_dir__ = output_dir   
 
     files = os.listdir(output_dir__)
     if 'desktop.ini' in files:
@@ -757,7 +759,6 @@ def report():
     a = open(output_dir__ + 'sphinx_dataframe.pkl', 'rb')
     sphinx_dataframe = pickle.load(a)
     a.close()
-    print(sphinx_dataframe)
 
     # grab all models
     models = list(set(sphinx_dataframe['Model']))

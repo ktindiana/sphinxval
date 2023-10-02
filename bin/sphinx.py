@@ -28,7 +28,7 @@ parser.add_argument("--DataFrame", type=str, default="",
 #parser.add_argument("--SaveMetrics", help=("Flag to write out a json file "
 #                    "containing the validation results."),action="store_true")
 
-parser.add_argument("--ReportOnly", help=("Do not run SPHINX; simply generate reports from pre-existing SPHINX output. "), action="store_true")
+#parser.add_argument("--ReportOnly", help=("Do not run SPHINX; simply generate reports from pre-existing SPHINX output. "), action="store_true")
 
 
 
@@ -37,7 +37,7 @@ model_list = args.ModelList
 data_list = args.DataList
 resume = args.resume
 df_pkl = args.DataFrame
-report_only = args.ReportOnly
+#report_only = args.ReportOnly
 
 
 #show_plot = args.showplot
@@ -47,9 +47,5 @@ report_only = args.ReportOnly
 #onemodel = args.OneModel
 
 
-if report_only:
-    sphinxval.sphinx.report.report()
-else:
-    sphinxval.sphinx.validate(data_list, model_list, resume, df_pkl)
+sphinxval.sphinx.validate(data_list, model_list, resume, df_pkl)
 
-    sphinxval.sphinx.report.report()
