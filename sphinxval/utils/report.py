@@ -256,7 +256,7 @@ def build_info_events_table_start_time(filename, sphinx_dataframe):
     subset.insert(0, 'Observatory', 'dummy')
     selection_index = list(data.index)
     subset['Observatory'] = sphinx_dataframe.loc[selection_index, 'Observatory'].to_list()
-    subset = subset.rename(columns={'Observed SEP Duration' : 'Observations', 'Predicted SEP Duration' : 'Predictions'})
+    subset = subset.rename(columns={'Observed SEP Start Time' : 'Observations', 'Predicted SEP Start Time' : 'Predictions'})
     output = '\n' + subset.to_markdown(index=False) + '\n'
     n_events = len(data)
     return output, n_events
@@ -264,11 +264,11 @@ def build_info_events_table_start_time(filename, sphinx_dataframe):
 def build_info_events_table_duration(filename, sphinx_dataframe):
     try:
         data = pd.read_pickle(filename)
-        subset = data[['Prediction Window Start', 'Prediction Window End', 'Observed SEP Duration Time', 'Predicted SEP Duration Time']]
+        subset = data[['Prediction Window Start', 'Prediction Window End', 'Observed SEP Duration', 'Predicted SEP Duration']]
         subset.insert(0, 'Observatory', 'dummy')
         selection_index = list(data.index)
         subset['Observatory'] = sphinx_dataframe.loc[selection_index, 'Observatory'].to_list()
-        subset = subset.rename(columns={'Observed SEP Duration Time' : 'Observations', 'Predicted SEP Duration Time' : 'Predictions'})
+        subset = subset.rename(columns={'Observed SEP Duration' : 'Observations', 'Predicted SEP Duration' : 'Predictions'})
         output = '\n' + subset.to_markdown(index=False) + '\n'
         n_events = len(data)
     except FileNotFoundError:

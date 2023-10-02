@@ -460,10 +460,10 @@ def initialize_all_clear_dict():
     dict = {"Model": [],
             "Energy Channel": [],
             "Threshold": [],
-            "All Clear True Positives": [], #Hits
-            "All Clear False Positives": [], #False Alarms
-            "All Clear True Negatives": [],  #Correct negatives
-            "All Clear False Negatives": [], #Misses
+            "All Clear 'True Positives' (Hits)": [], #Hits
+            "All Clear 'False Positives' (False Alarms)": [], #False Alarms
+            "All Clear 'True Negatives' (Correct Negatives)": [],  #Correct negatives
+            "All Clear 'False Negatives' (Misses)": [], #Misses
             "Percent Correct": [],
             "Bias": [],
             "Hit Rate": [],
@@ -558,10 +558,10 @@ def fill_all_clear_dict(dict, model, energy_key, thresh_key, scores):
     dict["Model"].append(model)
     dict["Energy Channel"].append(energy_key)
     dict["Threshold"].append(thresh_key)
-    dict["All Clear True Positives"].append(scores['TP']) #Hits
-    dict["All Clear False Positives"].append(scores['FP']) #False Alarms
-    dict["All Clear True Negatives"].append(scores['TN'])  #Correct negatives
-    dict["All Clear False Negatives"].append(scores['FN']) #Misses
+    dict["All Clear 'True Positives' (Hits)"].append(scores['TP']) #Hits
+    dict["All Clear 'False Positives' (False Alarms)"].append(scores['FP']) #False Alarms
+    dict["All Clear 'True Negatives' (Correct Negatives)"].append(scores['TN'])  #Correct negatives
+    dict["All Clear 'False Negatives' (Misses)"].append(scores['FN']) #Misses
     dict["Percent Correct"].append(scores['PC'])
     dict["Bias"].append(scores['B'])
     dict["Hit Rate"].append(scores['H'])
@@ -1092,7 +1092,7 @@ def duration_intuitive_metrics(df, dict, model, energy_key, thresh_key):
         return
     thr = thresh_key.strip().split(".")
     thresh_fnm = thr[0] + "_" + thr[1]
-    write_df(sub, "start_time_selections_" + model + "_" + energy_key.strip() + "_" + thresh_fnm)
+    write_df(sub, "duration_selections_" + model + "_" + energy_key.strip() + "_" + thresh_fnm)
 
     obs = sub['Observed SEP Duration']
     pred = sub['Predicted SEP Duration']
@@ -1159,6 +1159,22 @@ def peak_intensity_time_intuitive_metrics(df, dict, model, energy_key,
     
     fill_time_metrics_dict(dict, model, energy_key, thresh_key,
     ME, MedE, MAE, MedAE)
+
+
+def date_to_string(date):
+    """ Turn datetime into appropriate strings for filenames.
+    
+    """
+    year = date.year
+    month = date.month
+    day = date.day
+    hour = date.hour
+    min = date.minute
+    sec = date.second
+    
+    date_str = '{:d}{:02d}{:02d}_{:02d}hr{:02d}min{:02d}sec'.format(year, month, day, hour, min, sec)
+    
+    return date_str
 
 
 
@@ -1285,10 +1301,10 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
         date = [obs_dates, trim_obs_dates, pred_dates, trim_pred_dates]
         values = [obs_flux, trim_obs_flux, pred_flux, trim_pred_flux]
         labels=["Observations", "Interp Trimmed Obs", "Model", "Trimmed Model"]
+        str_date = date_to_string(pred_dates[0])
         title = model_names[i] + ", " + energy_chan[i] + " Time Profile"
         figname = config.plotpath + "/Time_Profile_" + model_names[i] + "_" + energy_chan[i]\
-            + "_" + thresh_fnm  + "_" + str(pred_dates[0])+ ".pdf"
-        figname = figname.replace(':', '_')
+        + "_" + thresh_fnm  + "_" + str_date + ".pdf"
         
         plt_tools.plot_time_profile(date, values, labels,
         title=title, x_label="Date", y_min=1e-5, y_max=1e4,
@@ -1346,8 +1362,7 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
                 figname = config.plotpath + '/Correlation_time_profile_' +\
                     model + "_" \
                     + energy_key.strip() + "_" + thresh_fnm \
-                    + "_" + str(pred_dates[0]) + ".pdf"
-                figname = figname.replace(':', '_')
+                    + "_" + str_date + ".pdf"
                 corr_plot.savefig(figname, dpi=300, bbox_inches='tight')
                 corr_plot.close()
 
