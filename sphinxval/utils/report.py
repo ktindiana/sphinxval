@@ -100,7 +100,7 @@ def format_markdown_table(text, width=50):
         table_string += line
     return table_string
 
-def convert_pdfto_png(filename):
+def convert_pdf_to_png(filename):
     pages = pdf2image.convert_from_path(filename, 300)
     new_filename = filename.rstrip('.pdf') + '.png'
     pages[0].save(new_filename)
@@ -295,17 +295,22 @@ def build_metrics_table(metrics, column_labels, metric_start_index):
     plot_string = ''
     for i in range(0, len(column_labels)):
         plot_index = None
-        if type(column_labels[i]) == str:    
+        print(column_labels[i])
+        if type(column_labels[i]) == str:
+    
             if ('plot' in column_labels[i]) or ('plot' in column_labels[i].lower()):
                 plot_index = i * 1
+                print(plot_index)
                 
             if not (plot_index is None):
                 plot_path = metrics[plot_index][9:]
-                real_plot_path = output_dir__[:-4] + plot_path
+                # real_plot_path = output_dir__[:-4] + plot_path
                 # plot_path = metrics[plot_index].lstrip('./output/')
                 # real_plot_path = output_dir__.rstrip('pkl/') + '/p' + plot_path
+                real_plot_path = plot_path
+                
                 if os.path.exists(real_plot_path) and plot_path != '':
-                    new_path = convert_pdfto_png(real_plot_path)
+                    new_path = convert_pdf_to_png(real_plot_path)
                     new_path2 = ''
                     new_path_split = new_path.split('/')
                     start_reading = False
@@ -885,7 +890,7 @@ def report():
         validation_text = add_collapsible_segment(validation_header, validation_text)
         markdown_text = info_text + validation_text + markdown_text
 
-        a = open(config.reportpath + '/' + model + '-report.md', 'w')
+        a = open(config.reportpath + '/' + model + '_report.md', 'w')
         a.write(markdown_text)
         a.close()
 
