@@ -168,9 +168,9 @@ def check_fcast_for_resume(df, model_objs):
             #If model not already present, then new information and
             #want to add
             if sub.empty:
-                print("check_fcast_for_resume: Model " + model +
-                    " not present in previous data frame. "
-                    "Appending all forecasts.")
+                #print("check_fcast_for_resume: Model " + model +
+                #    " not present in previous data frame. "
+                #    "Appending all forecasts.")
                 select_objs[ek].append(obj)
                 continue
             
@@ -178,10 +178,10 @@ def check_fcast_for_resume(df, model_objs):
             #if energy channel not already present, then new information
             #and want to add
             if sub.empty:
-                print("check_fcast_for_resume: Model " + model +
-                    " and energy channel " + ek +
-                    " not present in previous data frame. "
-                    "Appending all forecasts.")
+                #print("check_fcast_for_resume: Model " + model +
+                #    " and energy channel " + ek +
+                #    " not present in previous data frame. "
+                #    "Appending all forecasts.")
                 select_objs[ek].append(obj)
                 continue
             
@@ -190,13 +190,13 @@ def check_fcast_for_resume(df, model_objs):
             #window in the input dataframe for that model and energy
             #channel
             ref_pred_win_st = sub['Prediction Window Start'].iloc[0]
-            print("check_fcast_for_resume: Model " + model +
-                " and energy channel " + ek + " last prediction "
-                "window start " + str(ref_pred_win_st))
-            print("Current forecast prediction window "
-                    + str(pred_win_st))
+            #print("check_fcast_for_resume: Model " + model +
+            #    " and energy channel " + ek + " last prediction "
+             #   "window start " + str(ref_pred_win_st))
+            #print("Current forecast prediction window "
+            #        + str(pred_win_st))
             if pred_win_st > ref_pred_win_st:
-                print("Keeping forecast")
+                #print("Keeping forecast")
                 select_objs[ek].append(obj)
     
     return select_objs
