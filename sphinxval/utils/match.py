@@ -2246,8 +2246,9 @@ def match_all_forecasts(all_energy_channels, model_names, obs_objs,
             fcast.valid_forecast(last_trigger_time, last_input_time)
             if fcast.valid == False:
                 print("match_criteria_all_forecasts: Invalid forecast. "
-                    "Issue time must start after last trigger "
-                    "or input time. Skipping " + fcast.source)
+                    "Issue time (" + str(fcast.issue_time) + ") must start after last "
+                    "trigger (" + str(last_trigger_time) + ") or input time ("
+                    + str(last_input_time) + "). Skipping " + fcast.source)
                 continue
                 
 
