@@ -1304,7 +1304,7 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
         str_date = date_to_string(pred_dates[0])
         title = model_names[i] + ", " + energy_chan[i] + " Time Profile"
         figname = config.plotpath + "/Time_Profile_" + model_names[i] + "_" + energy_chan[i]\
-        + "_" + thresh_fnm  + "_" + str_date + ".pdf"
+            + "_" + thresh_fnm  + "_" + str_date + ".pdf"
         
         plt_tools.plot_time_profile(date, values, labels,
         title=title, x_label="Date", y_min=1e-5, y_max=1e4,
