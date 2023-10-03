@@ -287,6 +287,16 @@ def build_info_events_table_end_time(filename, sphinx_dataframe):
     n_events = len(data)
     return output, n_events
 
+def build_info_events_table_time_profile(filename, sphinx_dataframe):
+    data = pd.read_pickle(filename)
+    subset = data[['Forecast Source', 'Prediction Window Start', 'Prediction Window End',  'Observed SEP End Time', 'Predicted SEP End Time']] # SOMETHING WEIRD ABOUT LABELS HERE
+    subset.insert(0, 'Observatory', 'dummy')
+    selection_index = list(data.index)
+    subset['Observatory'] = sphinx_dataframe.loc[selection_index, 'Observatory'].to_list()
+    output = '\n' + subset.to_markdown(index=False) + '\n'
+    n_events = len(data)
+    return output, n_events
+
 def build_metrics_table(metrics, column_labels, metric_start_index):
     metrics_table_string = ''
     subset = pd.DataFrame([metrics[metric_start_index:]], columns=column_labels[metric_start_index:])    
@@ -729,6 +739,43 @@ def build_end_time_section(filename, model, sphinx_dataframe):
     text += add_collapsible_segment_end()
     return text
 
+def build_time_profile_section(filename, model, sphinx_dataframe):
+    column_labels = list(pd.read_pickle(filename).columns)[1:]
+    data = pd.read_pickle(filename).to_numpy()
+    metrics = []
+    for i in range(0, len(data)):
+        if model == data[i][0]:
+            metrics.append(data[i])
+    text = ''
+    if len(metrics) > 0:    
+        text += add_collapsible_segment_start('Time Profile Metrics', '')
+    
+    for i in range(0, len(metrics)):
+        energy_threshold = '> ' + metrics[i][1].split('.')[1] + ' MeV'
+        obs_threshold = metrics[i][2].split('.')[1] + ' pfu'
+        pred_threshold = obs_threshold
+        threshold_string = '* Energy Channel: ' + energy_threshold + '\n'
+        threshold_string += '* Observations Threshold: ' + obs_threshold + '\n'
+        threshold_string += '* Predictions Threshold: ' + pred_threshold + '\n'
+        selections_filename = output_dir__ + 'end_time_selections_' + model + '_' + metrics[i][1] + '_threshold_' + obs_threshold.rstrip(' pfu') + '.pkl'
+        info_events_table, n_events = build_info_events_table_time_profile(selections_filename, sphinx_dataframe)
+        info_string = 'Instruments and SEP events used in validation<br>'
+        info_string += 'n = ' + str(n_events) + '<br>'
+        info_string += '...\n' # need to complete
+        info_string += info_events_table
+        metrics_string = "Metrics for Observed Time - Predicted Time are in hours.<br>Negative values indicate predicted time is later than observed.<br>Positive values indicate predicted time is earlier than observed.\n"
+        metrics_string_, plot_string = build_metrics_table(metrics[i], [None] + column_labels, 3)
+        metrics_string += metrics_string_
+        text += add_collapsible_segment_start(energy_threshold, '')
+        text += add_collapsible_segment('Thresholds Applied', threshold_string)
+        text += add_collapsible_segment('Validation Info', info_string)
+        text += add_collapsible_segment('Metrics', metrics_string)
+        text += add_collapsible_segment('Plots', plot_string)
+        text += add_collapsible_segment_end()
+    text += add_collapsible_segment_end()
+    return text
+
+
 def build_validation_reference_section(filename1, filename2):
     text = ''
     text += add_collapsible_segment_start('Validation Reference', '')
@@ -775,6 +822,7 @@ def report(output_dir):
     start_time = False
     duration = False
     end_time = False
+    time_profile = False
     
     for i in range(0, len(files)):
         if 'all_clear_metrics' in files[i]:
@@ -799,6 +847,8 @@ def report(output_dir):
             duration = True
         if 'end_time_metrics' in files[i]:
             end_time = True
+        if 'time_profile_metrics' in files[i]:
+            time_profile = True
             
     
     for i in range(0, len(models)):
@@ -881,7 +931,14 @@ def report(output_dir):
             end_time_filename = output_dir__ + 'end_time_metrics.pkl'
             validation_text += '* End Time\n'
             markdown_text += build_end_time_section(end_time_filename, model, sphinx_dataframe)
-
+        
+        if time_profile:
+            ### build the time profile metrics
+            time_profile_filename = output_dir__ + 'time_profile_metrics.pkl'
+            validation_text += '* Time Profile\n'
+            markdown_text += build_time_profile_section(time_profile_filename, model, sphinx_dataframe)
+            
+        
         ### build the validation reference
         vr_filename1 = config.referencepath + '/validation_reference_sheet_1.csv'
         vr_filename2 = config.referencepath + '/validation_reference_sheet_2.csv'
