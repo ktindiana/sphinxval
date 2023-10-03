@@ -101,6 +101,7 @@ def format_markdown_table(text, width=50):
     return table_string
 
 def convert_pdf_to_png(filename):
+    print(filename)
     pages = pdf2image.convert_from_path(filename, 300)
     new_filename = filename.rstrip('.pdf') + '.png'
     pages[0].save(new_filename)
@@ -306,19 +307,15 @@ def build_metrics_table(metrics, column_labels, metric_start_index):
     for i in range(0, len(column_labels)):
         plot_index = None
         if type(column_labels[i]) == str:
-    
             if ('plot' in column_labels[i]) or ('plot' in column_labels[i].lower()):
                 plot_index = i * 1
                 
             if not (plot_index is None):
-                plot_path = metrics[plot_index][9:]
-                # real_plot_path = output_dir__[:-4] + plot_path
-                # plot_path = metrics[plot_index].lstrip('./output/')
-                # real_plot_path = output_dir__.rstrip('pkl/') + '/p' + plot_path
-                real_plot_path = plot_path
+                plot_path = metrics[plot_index]
                 
-                if os.path.exists(real_plot_path) and plot_path != '':
-                    new_path = convert_pdf_to_png(real_plot_path)
+                if os.path.exists(plot_path) and plot_path != '':
+                    # new_path = convert_pdf_to_png(plot_path)
+                    new_path = plot_path
                     new_path2 = ''
                     new_path_split = new_path.split('/')
                     start_reading = False
@@ -327,11 +324,11 @@ def build_metrics_table(metrics, column_labels, metric_start_index):
                             start_reading = True
                         if start_reading:
                             new_path2 += new_path_split[i] + '/'
-                    new_path2 = new_path2.rstrip('/')
+                    new_path2 = '../' + new_path2.rstrip('/')
                     plot_string += '![](' + new_path2 + ')\n\n'
                 else:
                     plot_string = ''
-                    
+    
     if plot_string == '':
         plot_string = 'No image files found.\n\n'
     return metrics_table_string, plot_string
