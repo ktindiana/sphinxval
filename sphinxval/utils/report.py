@@ -1,4 +1,4 @@
-### sphinx markdown generator -- please ignore the mess for now
+### SPHINX MARKDOWN GENERATOR -- please ignore the mess for now
 
 import pandas as pd
 pd.set_option('mode.chained_assignment', None)
@@ -6,7 +6,12 @@ import datetime
 import os
 import pdf2image
 import pickle
+
+import markdown
+import PyPDF2 as pdf
+
 from . import config 
+
 
 def formatting_function(value):
     condition = True
@@ -312,20 +317,14 @@ def build_metrics_table(metrics, column_labels, metric_start_index):
                 
             if not (plot_index is None):
                 plot_path = metrics[plot_index]
-                
-                if os.path.exists(plot_path) and plot_path != '':
+                plot_path = '/plots/' + plot_path.split('plots')[1]               
+                full_path = os.getcwd().replace('\\', '/').replace('sphinxval', '') + plot_path
+                print(full_path)
+                print(os.path.exists(full_path))
+ 
+                if os.path.exists(full_path) and plot_path != '':
                     # new_path = convert_pdf_to_png(plot_path)
-                    new_path = plot_path
-                    new_path2 = ''
-                    new_path_split = new_path.split('/')
-                    start_reading = False
-                    for i in range(0, len(new_path_split)):
-                        if new_path_split[i] == 'plots':
-                            start_reading = True
-                        if start_reading:
-                            new_path2 += new_path_split[i] + '/'
-                    new_path2 = '../' + new_path2.rstrip('/')
-                    plot_string += '![](' + new_path2 + ')\n\n'
+                    plot_string += '![](' + full_path + ')\n\n'
                 else:
                     plot_string = ''
     
@@ -785,6 +784,138 @@ def build_validation_reference_section(filename1, filename2):
     text += add_collapsible_segment_end()
     return text
 
+
+
+### CONVERT MARKDOWN TO HTML 
+def get_image_string(original_string):
+    left = original_string.split('![](')[1]
+    result = left.split(')')[0]
+    result = result.replace('.png', '.pdf')
+    return result
+
+def convert_tables_html(text):
+    new_text = ''
+    outside_table = True
+    for i in range(0, len(text)):
+        line = text[i]
+        if line[0] == '|' and outside_table:
+            outside_table = False
+            table = ''            
+        if line[0] != '|':
+            if (not outside_table):    
+                if 'table' in locals():
+                    table_html = markdown.markdown(table, extensions=['markdown.extensions.tables'])
+                    new_text += table_html + '\n'
+            outside_table = True
+        if (not outside_table):
+            table += line   
+        if outside_table:
+            new_text += line + '\n'
+    new_text = new_text.split('\n')
+    return new_text
+
+def convert_plots_html(text):
+    new_text = ''
+    for i in range(0, len(text)):
+        line = text[i]
+        if line == '':
+            pass
+        else:
+            if line[0] == '!':
+                image_filename = '../' + get_image_string(line)
+                # CHECK IMAGE DIMENSIONS
+                reader = pdf.PdfReader(image_filename)
+                box = reader.pages[0].mediabox
+                width = str(box.width)
+                height = str(box.height + 60)
+                new_text += '<embed src="' + image_filename + '" alt="" height="' + height + '" width="' + width + '">'  
+            else:
+                new_text += line + '\n'
+    new_text = new_text.split('\n')
+    return new_text
+
+def convert_bullets_html(text):
+    new_text = ''
+    for i in range(0, len(text)):
+        line = text[i]
+        if line == '':
+            pass
+        else:
+            if '*' in line:
+                line_text = line.split('*')[1]
+                new_text += '<li>' + line_text + '</li>'
+            else:
+                new_text += line + '\n'
+    new_text = new_text.split('\n')
+    return new_text
+
+def add_space_between_sections(text):
+    # CHECK FOR BREAKS
+    text = ''.join(text)
+    text.replace('<br>', '')
+    # ADD SPACE BETWEEN SECTIONS
+    for i in range(0, len(text)):
+        if text[i] == '</details>' or text[i] == '</details>\n':
+            text[i] = '<br></details>'
+    return text
+
+def add_style(text):
+    text = '''<style>
+                table, th, td 
+                {
+                   border: 1px solid black;
+                   border-collapse: collapse;
+                }
+                html * 
+                {
+                    font-size: 16px;
+                    line-height: 1.25;
+                    color: #000000;
+                    font-family: Arial, sans-serif;
+                }
+              </style>''' + text
+    return text
+
+def convert_markdown_to_html(filename, size_limit=10000000):
+    
+    # CHECK HOW BIG THIS FILE IS
+    if os.path.getsize(filename) > size_limit:
+        print('This Markdown report is too big to convert to HTML: ', filename)
+    else:
+        print('Generating HTML report: ', filename.replace('.md', '.html'))
+        # CONVERT MARKDOWN TO HTML
+        a = open(filename, 'r')
+        text = a.readlines()
+        a.close()
+    
+        # REPLACE TABLES
+        text = convert_tables_html(text)
+    
+        # REPLACE IMAGES
+        text = convert_plots_html(text)
+    
+        # REPLACE BULLETS
+        text = convert_bullets_html(text)
+    
+        # ADD SPACE
+        text = add_space_between_sections(text)
+
+        # ADD STYLE
+        text = add_style(text)
+
+        # CONDENSE INTO ONE STRING
+        text_final = ''
+        for i in range(0, len(text)):
+            text_final += text[i]
+    
+        html = markdown.markdown(text_final)
+        a = open(filename.replace('.md', '.html'), 'w')
+        a.write(html)
+        a.close()
+        print('    Complete')
+
+
+# FINAL RESULT
 def report(output_dir):
     global output_dir__
 
@@ -936,18 +1067,20 @@ def report(output_dir):
             markdown_text += build_time_profile_section(time_profile_filename, model, sphinx_dataframe)
             
         
-        ### build the validation reference
+        ### BUILD THE VALIDATION REFERENCE
         vr_filename1 = config.referencepath + '/validation_reference_sheet_1.csv'
         vr_filename2 = config.referencepath + '/validation_reference_sheet_2.csv'
         markdown_text += build_validation_reference_section(vr_filename1, vr_filename2)
         
-        # finalize
+        # FINALIZE
         validation_text = add_collapsible_segment(validation_header, validation_text)
         markdown_text = info_text + validation_text + markdown_text
-
-        a = open(config.reportpath + '/' + model + '_report.md', 'w')
+        markdown_filename = config.reportpath + '/' + model + '_report.md'
+        a = open(markdown_filename, 'w')
         a.write(markdown_text)
         a.close()
+
+        convert_markdown_to_html(markdown_filename)
 
 
 
