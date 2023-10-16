@@ -4,7 +4,6 @@ import pandas as pd
 pd.set_option('mode.chained_assignment', None)
 import datetime
 import os
-import pdf2image
 import pickle
 
 import markdown
@@ -104,13 +103,6 @@ def format_markdown_table(text, width=50):
         line += '\n'
         table_string += line
     return table_string
-
-def convert_pdf_to_png(filename):
-    print(filename)
-    pages = pdf2image.convert_from_path(filename, 300)
-    new_filename = filename.rstrip('.pdf') + '.png'
-    pages[0].save(new_filename)
-    return new_filename
 
 def add_collapsible_segment(header, text):
     markdown = '<details>\n'
@@ -315,18 +307,23 @@ def build_metrics_table(metrics, column_labels, metric_start_index):
             if ('plot' in column_labels[i]) or ('plot' in column_labels[i].lower()):
                 plot_index = i * 1
                 
-            if not (plot_index is None):
+            if (not (plot_index is None)):
                 plot_path = metrics[plot_index]
-                plot_path = '/plots/' + plot_path.split('plots')[1]               
-                full_path = os.getcwd().replace('\\', '/').replace('sphinxval', '') + plot_path
-                print(full_path)
-                print(os.path.exists(full_path))
- 
-                if os.path.exists(full_path) and plot_path != '':
-                    # new_path = convert_pdf_to_png(plot_path)
-                    plot_string += '![](' + full_path + ')\n\n'
-                else:
+                if plot_path == '':
                     plot_string = ''
+                else:
+                    print(plot_path)
+                    print(len(plot_path))
+                    plot_path = '/plots/' + plot_path.split('plots')[1] 
+                    full_path = os.getcwd().replace('\\', '/').replace('sphinxval', '') + plot_path
+                    print(full_path)
+                    print(os.path.exists(full_path))
+ 
+                    if os.path.exists(full_path) and plot_path != '':
+                        # new_path = convert_pdf_to_png(plot_path)
+                        plot_string += '![](' + full_path + ')\n\n'
+                    else:
+                        plot_string = ''
     
     if plot_string == '':
         plot_string = 'No image files found.\n\n'
@@ -822,7 +819,7 @@ def convert_plots_html(text):
             pass
         else:
             if line[0] == '!':
-                image_filename = '../' + get_image_string(line)
+                image_filename = get_image_string(line)
                 # CHECK IMAGE DIMENSIONS
                 reader = pdf.PdfReader(image_filename)
                 box = reader.pages[0].mediabox
