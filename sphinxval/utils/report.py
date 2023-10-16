@@ -32,7 +32,7 @@ def formatting_function(value):
 
 def transpose_markdown(text):
     table = text.split('\n')
-    output = '| metric | value |\n'
+    output = '| Metric | Value |\n'
     output += '|:' + '-' * 48 + ':|:' + '-' * 48 + ':|\n'
     labels = table[0].split('|')
     values = table[2].split('|')
@@ -873,7 +873,7 @@ def add_style(text):
               </style>''' + text
     return text
 
-def convert_markdown_to_html(filename, size_limit=10000000):
+def convert_markdown_to_html(filename, size_limit=10**20):
     
     # CHECK HOW BIG THIS FILE IS
     if os.path.getsize(filename) > size_limit:
@@ -935,50 +935,60 @@ def report(output_dir):
     # grab all models
     models = list(set(sphinx_dataframe['Model']))
 
-    # check which sections to include
-    all_clear = False
-    peak_intensity = False
-    peak_intensity_max = False
-    peak_intensity_time = False
-    threshold_crossing = False
-    threshold_crossing_time = False
-    fluence = False
-    probability = False
-    start_time = False
-    duration = False
-    end_time = False
-    time_profile = False
-    
-    for i in range(0, len(files)):
-        if 'all_clear_metrics' in files[i]:
-            all_clear = True
-        if 'peak_intensity_metrics' in files[i]:
-            peak_intensity = True
-        if 'peak_intensity_max_metrics' in files[i]:
-            peak_intensity_max = True
-        if 'peak_intensity_time_metrics' in files[i]:
-            peak_intensity_time = True
-        if 'threshold_crossing_metrics' in files[i]:
-            threshold_crossing = True
-        if 'threshold_crossing_time_metrics' in files[i]:
-            threshold_crossing_time = True        
-        if 'fluence_metrics' in files[i]:
-            fluence = True
-        if 'probability_metrics' in files[i]:
-            probability = True
-        if 'start_time_metrics' in files[i]:
-            start_time = True
-        if 'duration_metrics' in files[i]:
-            duration = True
-        if 'end_time_metrics' in files[i]:
-            end_time = True
-        if 'time_profile_metrics' in files[i]:
-            time_profile = True
             
     
     for i in range(0, len(models)):
         model = models[i]
-    
+   
+
+        # check which sections to include
+        all_clear = False
+        peak_intensity = False
+        peak_intensity_max = False
+        peak_intensity_time = False
+        threshold_crossing = False
+        fluence = False
+        probability = False
+        start_time = False
+        duration = False
+        end_time = False
+        time_profile = False
+        
+        for j in range(0, len(files)):
+            if ('all_clear_selections_' + model) in files[j]:
+                all_clear = True
+                continue
+            if ('peak_intensity_selections_' + model) in files[j]:
+                peak_intensity = True
+                continue
+            if ('peak_intensity_max_selections_' + model) in files[j]:
+                peak_intensity_max = True
+                continue
+            if ('peak_intensity_max_time_selections_' + model) in files[j]:
+                peak_intensity_time = True
+                continue
+            if ('threshold_crossing_time_selections_' + model) in files[j]:
+                threshold_crossing = True
+                continue       
+            if ('fluence_selections_' + model) in files[j]:
+                fluence = True
+                continue
+            if ('probability_selections_' + model) in files[j]:
+                probability = True
+                continue
+            if ('start_time_selections_' + model) in files[j]:
+                start_time = True
+                continue
+            if ('duration_selections_' + model) in files[j]:
+                duration = True
+                continue
+            if ('end_time_selections_' + model) in files[j]:
+                end_time = True
+                continue
+            if ('time_profile_selections_' + model) in files[j]:
+                time_profile = True
+                continue
+ 
         # preamble -- define colors and font and whatnot
         info_header = 'Report Information'
         info_text = 'Date of Report: ' + datetime.datetime.today().strftime('%Y-%m-%d' + 't' + '%H:%M:%S') + '<br>'
@@ -1014,18 +1024,19 @@ def report(output_dir):
             peak_intensity_time_filename = output_dir__ + 'peak_intensity_time_metrics.pkl'
             validation_text += '* Peak Intensity Time\n'
             markdown_text += build_peak_intensity_time_section(peak_intensity_time_filename, model, sphinx_dataframe)
-            
+        
         if threshold_crossing:
             ### build the threshold crossing metrics
             threshold_crossing_filename = output_dir__ + 'threshold_crossing_metrics.pkl'
             validation_text += '* Threshold Crossing\n'
             markdown_text += build_threshold_crossing_section(threshold_crossing_filename, model, sphinx_dataframe)
-
+        '''
         if threshold_crossing_time:
             ### build the threshold crossing metrics
             threshold_crossing_time_filename = output_dir__ + 'threshold_crossing_time_metrics.pkl'
             validation_text += '* Threshold Crossing Time\n'
             markdown_text += build_threshold_crossing_time_section(threshold_crossing_time_filename, model, sphinx_dataframe)
+        '''
 
         if fluence:
             ### build the fluence metrics
