@@ -384,7 +384,10 @@ def plot_time_profile(date, values, labels, dy=None, dyl=None, dyh=None,
     #if not all(isinstance(x, datetime.datetime) for x in date):
     #    raise TypeError("Dates must be datetime objects.")
 
-    plt.style.use('seaborn-whitegrid')
+    try:
+        plt.style.use('seaborn-whitegrid')
+    except OSError:
+        plt.style.use('seaborn-v0_8-whitegrid')
 
     fig = plt.figure(figsize=(10,6))
     ax = plt.subplot(111)
@@ -569,7 +572,7 @@ def correlation_plot(obs_values, model_values, plot_title,
     obs_np = np.array(obs_clean)
     model_np = np.array(model_clean)
 
-    if obs_values == [] or model_np == []:
+    if list(obs_values) == [] or list(model_np) == []:
         return None
     
     

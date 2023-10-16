@@ -510,7 +510,7 @@ def is_time_before(time, obs_values, obs_key, energy_channel):
 
     #Check if time is before
     obs = obs_values[energy_key]['dataframes'][0]
-    time_diff = (time - obs[obs_key]).astype('timedelta64[h]')
+    time_diff = (time - obs[obs_key]).dt.total_seconds() / 3600.0
     is_before = (time_diff <= 0)
     is_before = list(is_before)
 
@@ -558,7 +558,7 @@ def is_time_before_thresh(time, obs_values, obs_key, energy_channel, threshold):
     #Check if time is before
     obs = obs_values[energy_key]['dataframes'][ix]
 
-    time_diff = (time - obs[obs_key]).astype('timedelta64[h]')
+    time_diff = (time - obs[obs_key]).dt.total_seconds() / 3600.0
     is_before = (time_diff <= 0)
     is_before = list(is_before)
 
@@ -1146,12 +1146,12 @@ def eruption_in_range(td_eruption_thresh_cross):
     """
     is_eruption_in_range = None
     if not pd.isnull(td_eruption_thresh_cross):
-        if td_eruption_thresh_cross <= -0.15\
-            and td_eruption_thresh_cross > -24.:
+        if td_eruption_thresh_cross.total_seconds() / 3600.0 <= -0.25\
+            and td_eruption_thresh_cross.total_seconds() / 3600.0 > -24.:
             is_eruption_in_range = True
             
-        if td_eruption_thresh_cross > -0.15\
-            or td_eruption_thresh_cross <= -24.:
+        if td_eruption_thresh_cross.total_seconds() / 3600.0 > -0.25\
+            or td_eruption_thresh_cross.total_seconds() / 3600.0 <= -24.:
             is_eruption_in_range = False
 
     return is_eruption_in_range
