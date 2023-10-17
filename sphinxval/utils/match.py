@@ -4,6 +4,7 @@ from . import classes as cl
 import sys
 import pandas as pd
 import numpy as np
+import datetime
 
 __version__ = "0.1"
 __author__ = "Katie Whitman"
@@ -2179,8 +2180,10 @@ def match_all_forecasts(all_energy_channels, model_names, obs_objs,
     #All observed values needed for matching, organized by
     #energy channel and threshold
     #Output as a pandas dataframe containing all observed values
+    print("match_all_forecasts: Compiling all observations into a dataframe: " + str(datetime.datetime.now()))
     obs_values = compile_all_obs(all_energy_channels, obs_objs)
-    
+
+    print("match_all_forecasts: Completed dataframe, identifying all thresholds applied to energy channels: " + str(datetime.datetime.now()))
     #Gather all thresholds applied in the observations for each energy channel
     all_obs_thresholds = {}
     for energy_key in all_energy_channels:
@@ -2188,6 +2191,7 @@ def match_all_forecasts(all_energy_channels, model_names, obs_objs,
         for obs_thresh in obs_values[energy_key]['thresholds']:
             all_obs_thresholds[energy_key].append(objh.threshold_to_key(obs_thresh))
 
+    print("match_all_forecasts: Starting matching process. Setting up dictionary for observed SEP events to go into a list for each model: " + str(datetime.datetime.now()))
 
     #Set up dictionary of sphinx objects organized by model name and
     #energy channel.
@@ -2207,11 +2211,11 @@ def match_all_forecasts(all_energy_channels, model_names, obs_objs,
                 obs_thresh_key = objh.threshold_to_key(obs_thresh)
                 observed_sep_events[model][energy_key].update({obs_thresh_key:[]})
 
-
+    print("match_all_forecasts: Starting matching process by energy channel. Setting up dictionary for observed SEP events to go into a list for each model: " + str(datetime.datetime.now()))
     #Launch into matching of observations and forecasts
     for energy_key in all_energy_channels:
         print("\n")
-        print("Identifying Match Criteria for " + str(energy_key))
+        print("Identifying Match Criteria for " + str(energy_key) + "," + str(datetime.datetime.now()))
         observation_objs = obs_objs[energy_key] #Observation objects
 
         forecasts = model_objs[energy_key] #all forecasts for channel
