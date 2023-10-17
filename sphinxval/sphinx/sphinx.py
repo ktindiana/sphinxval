@@ -5,6 +5,7 @@ from ..utils import validation as valid
 from ..utils import tools
 from ..utils import match
 from ..utils import resume
+from ..utils import report
 import pickle
 import logging
 import sys

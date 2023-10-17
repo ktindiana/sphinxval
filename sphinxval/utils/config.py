@@ -1,9 +1,9 @@
-datapath = '/Users/kwhitman/Documents/Programs/Validation/SPHINX/data'
-modelpath = '/Users/kwhitman/Documents/Programs/Validation/SPHINX/model'
-outpath = '/Users/kwhitman/Documents/Programs/Validation/SPHINX/output'
-plotpath = '/Users/kwhitman/Documents/Programs/Validation/SPHINX/plots'
-reportpath = '/Users/kwhitman/Documents/Programs/Validation/SPHINX/validation_reports'
-figpath = reportpath + '/figures'
+datapath = './data'
+modelpath = './model'
+outpath = './output'
+plotpath = './plots'
+referencepath = './reference'
+reportpath = './validation_reports'
 
 #Advanced Warning Time
 awt_cut = 96
