@@ -12,7 +12,7 @@ import numpy as np
 import sys
 import os.path
 import pandas as pd
-
+import datetime
 
 __version__ = "0.1"
 __author__ = "Katie Whitman"
@@ -354,10 +354,12 @@ def prepare_outdirs():
 def write_df(df, name, log=True):
     """Writes a pandas dataframe to the standard location in multiple formats
     """
+#    dataformats = (('pkl',  getattr(df, 'to_pickle'), {}),
+#                   ('csv',  getattr(df, 'to_csv'), {}),
+#                   ('json', getattr(df, 'to_json'), {'default_handler':str}),
+#                   ('md',   getattr(df, 'to_markdown'), {}))
     dataformats = (('pkl',  getattr(df, 'to_pickle'), {}),
-                   ('csv',  getattr(df, 'to_csv'), {}),
-                   ('json', getattr(df, 'to_json'), {'default_handler':str}),
-                   ('md',   getattr(df, 'to_markdown'), {}))
+                   ('csv',  getattr(df, 'to_csv'), {}))
     for ext, write_func, kwargs in dataformats:
         filepath = os.path.join(config.outpath, ext, name + '.' + ext)
         write_func(filepath, **kwargs)
@@ -367,7 +369,7 @@ def write_df(df, name, log=True):
 
 
 def fill_df(matched_sphinx, model_names, all_energy_channels,
-    all_obs_thresholds):
+    all_obs_thresholds, DoResume):
     """ Fill in a dictionary with the all clear predictions and observations
         organized by model and energy channel.
     """
@@ -385,7 +387,7 @@ def fill_df(matched_sphinx, model_names, all_energy_channels,
                 
     
     df = pd.DataFrame(dict)
-    write_df(df, "SPHINX_dataframe")
+    if not DoResume: write_df(df, "SPHINX_dataframe")
     return df
 
 
@@ -1490,6 +1492,7 @@ def calculate_intuitive_metrics(df, model_names, all_energy_channels,
                 all_clear_intuitive_metrics(df, all_clear_dict, model, ek, tk)
                 time_profile_intuitive_metrics(df, profile_dict, model, ek, tk)
 
+    print("calculate_intuitive_validation: Completed calculating all metrics: " + str(datetime.datetime.now()))
 
     prob_metrics_df = pd.DataFrame(probability_dict)
     peak_intensity_metrics_df = pd.DataFrame(peak_intensity_dict)
@@ -1529,6 +1532,9 @@ def calculate_intuitive_metrics(df, model_names, all_energy_channels,
         write_df(all_clear_metrics_df, "all_clear_metrics")
     if not time_profile_metrics_df.empty:
         write_df(time_profile_metrics_df, "time_profile_metrics")
+
+    print("calculate_intuitive_validation: Wrote out all metrics to file: " + str(datetime.datetime.now()))
+
 
 
 
@@ -1583,23 +1589,31 @@ def intuitive_validation(matched_sphinx, model_names, all_energy_channels,
     
     
     """
+    print("intuitive_validation: Beginning validation process: " + str(datetime.datetime.now()))
     # Make sure the output directories exist
     prepare_outdirs()
     
     #For each model and predicted quantity, create arrays of paired up values
     #so can calculate metrics
+    print("intuitive_validation: Filling dataframe with information from matched sphinx objects: " + str(datetime.datetime.now()))
     df = fill_df(matched_sphinx, model_names,
-            all_energy_channels, all_observed_thresholds)
+            all_energy_channels, all_observed_thresholds, DoResume)
+    print("intuitive_validation: Completed filling dataframe (and possibly writing): " + str(datetime.datetime.now()))
 
     ###RESUME WILL APPEND DF TO PREVIOUS DF
     print("Resume boolean is " + str(DoResume))
     if DoResume:
+        print("intuitive_validation: Resuming from a previous run. Concatenating new dataframe and previous dataframe: " + str(datetime.datetime.now()))
         df = pd.concat([r_df, df], ignore_index=True)
+        print("intuitive_validation: Completed concatenation. Writing out to file: " + str(datetime.datetime.now()))
         write_df(df, "SPHINX_dataframe")
+        print("intuitive_validation: Completed writing SPHINX_dataframe to file: " + str(datetime.datetime.now()))
 
         model_names = resume.identify_unique(df, 'Model')
         all_energy_channels = resume.identify_unique(df, 'Energy Channel Key')
         all_observed_thresholds = resume.identify_thresholds_per_energy_channel(df)
 
+    print("intuitive_validation: Calculating metrics from dataframe: " + str(datetime.datetime.now()))
     calculate_intuitive_metrics(df, model_names, all_energy_channels,
             all_observed_thresholds)
+    print("intuitive_validation: Validation process complete: " + str(datetime.datetime.now()))

@@ -1034,25 +1034,21 @@ class Forecast():
             Updated self.valid field
         
         """
-        #TEMPORARY FOR DEMO 2023-10-02, ALWAYS SET TO TRUE.
-        #ASPECS FORECASTS HAVE INVALID ISSUE TIMES THAT ARE BEFORE
-        #THE LAST DATA USED.
-        self.valid = True
+
+        if self.issue_time == None:
+            return
+            
+        if last_trigger_time == None and last_input_time == None:
+            return
         
-#        if self.issue_time == None:
-#            return
-#            
-#        if last_trigger_time == None and last_input_time == None:
-#            return
-#        
-#        self.valid = True
-#        if last_trigger_time != None:
-#            if self.issue_time < last_trigger_time:
-#                self.valid = False
-#
-#        if last_input_time != None:
-#            if self.issue_time < last_input_time:
-#                self.valid = False
+        self.valid = True
+        if last_trigger_time != None:
+            if self.issue_time < last_trigger_time:
+                self.valid = False
+
+        if last_input_time != None:
+            if self.issue_time < last_input_time:
+                self.valid = False
 
         return
 

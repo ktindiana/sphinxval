@@ -102,7 +102,7 @@ def last_prediction_windows(df):
     df_pred_win = pd.DataFrame()
    
     for model in models:
-        print(model)
+        #print(model)
         sub = df.loc[(df['Model'] == model)]
         if sub.empty: continue
                 
