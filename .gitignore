@@ -4,3 +4,9 @@
 __pycache__/
 **/__pycache__/
 *.bat
+data/*
+model/*
+output/*
+plots/*
+reference/*
+validation_reports/*

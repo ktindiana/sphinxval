@@ -1,10 +1,9 @@
-datapath = '../data'
-modelpath = '../model'
-outpath = '../output'
-plotpath = '../plots'
-referencepath = '../reference'
-reportpath = '../validation_reports'
-figpath = reportpath + '/figures'
+datapath = './data'
+modelpath = './model'
+outpath = './output'
+plotpath = './plots'
+referencepath = './reference'
+reportpath = './validation_reports'
 
 #Advanced Warning Time
 awt_cut = 96
