@@ -94,7 +94,7 @@ def zulu_to_time(zt):
         return 0
         
     if 'Z' not in zt or 'T' not in zt:
-        print("zulu_to_time: Time not in proper format. Returning None.")
+        print(f"WARNING: zulu_to_time: Time '{zt}' not in proper format. Returning None.")
         return None
     
     strzt = zt.split('T')
