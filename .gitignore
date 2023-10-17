@@ -4,6 +4,7 @@
 __pycache__/
 **/__pycache__/
 *.bat
+lists/*
 data/*
 model/*
 output/*
