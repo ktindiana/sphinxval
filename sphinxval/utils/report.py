@@ -237,17 +237,6 @@ def build_info_events_table_threshold_crossing(filename, sphinx_dataframe):
     n_events = len(data)
     return output, n_events
 
-def build_info_events_table_threshold_crossing_time(filename, sphinx_dataframe):
-    data = pd.read_pickle(filename)
-    subset = data[['Prediction Window Start', 'Prediction Window End', 'Observed SEP Threshold Crossing Time', 'Predicted SEP Threshold Crossing Time']]
-    subset.insert(0, 'Observatory', 'dummy')
-    selection_index = list(data.index)
-    subset['Observatory'] = sphinx_dataframe.loc[selection_index, 'Observatory'].to_list()
-    subset = subset.rename(columns={'Observed SEP Threshold Crossing Time' : 'Observations', 'Predicted SEP Threshold Crossing Time' : 'Predictions'})
-    output = '\n' + subset.to_markdown(index=False) + '\n'
-    n_events = len(data)
-    return output, n_events
-
 def build_info_events_table_start_time(filename, sphinx_dataframe):
     data = pd.read_pickle(filename)
     subset = data[['Prediction Window Start', 'Prediction Window End', 'Observed SEP Start Time', 'Predicted SEP Start Time']]
@@ -416,7 +405,7 @@ def build_peak_intensity_max_section(filename, model, sphinx_dataframe):
             metrics.append(data[i])
     text = ''
     if len(metrics) > 0:    
-        text += add_collapsible_segment_start('Onset Peak Max Metrics', '')
+        text += add_collapsible_segment_start('Peak Intensity Max Metrics', '')
     for i in range(0, len(metrics)):
         energy_threshold = '> ' + metrics[i][1].split('.')[1] + ' MeV'
         obs_threshold = metrics[i][2].split('.')[1] + ' pfu'
@@ -451,7 +440,7 @@ def build_peak_intensity_time_section(filename, model, sphinx_dataframe):
             metrics.append(data[i])
     text = ''
     if len(metrics) > 0:    
-        text += add_collapsible_segment_start('Onset Peak Time Metrics', '')
+        text += add_collapsible_segment_start('Peak Intensity Time Metrics', '')
     for i in range(0, len(metrics)):
         energy_threshold = '> ' + metrics[i][1].split('.')[1] + ' MeV'
         obs_threshold = metrics[i][2].split('.')[1] + ' pfu'
@@ -584,43 +573,6 @@ def build_threshold_crossing_section(filename, model, sphinx_dataframe):
         text += add_collapsible_segment_end()
     text += add_collapsible_segment_end()    
     return text
-
-
-def build_threshold_crossing_time_section(filename, model, sphinx_dataframe):
-    column_labels = list(pd.read_pickle(filename).columns)[1:]
-    data = pd.read_pickle(filename).to_numpy()
-    metrics = []
-    for i in range(0, len(data)):
-        if model == data[i][0]:
-            metrics.append(data[i])
-    text = ''
-    if len(metrics) > 0:    
-        text += add_collapsible_segment_start('Threshold Crossing Time Metrics', '')
-    
-    for i in range(0, len(metrics)):
-        energy_threshold = '> ' + metrics[i][1].split('.')[1] + ' MeV'
-        obs_threshold = metrics[i][2].split('.')[1] + ' pfu'
-        pred_threshold = obs_threshold
-        threshold_string = '* Energy Channel: ' + energy_threshold + '\n'
-        threshold_string += '* Observations Threshold: ' + obs_threshold + '\n'
-        threshold_string += '* Predictions Threshold: ' + pred_threshold + '\n'
-        selections_filename = output_dir__ + 'threshold_crossing_time_selections_' + model + '_' + metrics[i][1] + '_threshold_' + obs_threshold.rstrip(' pfu') + '.pkl'
-        info_events_table, n_events = build_info_events_table_threshold_crossing(selections_filename, sphinx_dataframe)
-        info_string = 'Instruments and SEP events used in validation<br>'
-        info_string += 'n = ' + str(n_events) + '<br>'
-        info_string += '...\n' # need to complete
-        info_string += info_events_table
-        metrics_string = "Metrics for Observed Time - Predicted Time are in hours.<br>Negative values indicate predicted time is later than observed.<br>Positive values indicate predicted time is earlier than observed.\n"
-        metrics_string_, plot_string = build_metrics_table(metrics[i], [None] + column_labels, 3)
-        metrics_string += metrics_string_
-        text += add_collapsible_segment_start(energy_threshold, '')
-        text += add_collapsible_segment('Thresholds Applied', threshold_string)
-        text += add_collapsible_segment('Validation Info', info_string)
-        text += add_collapsible_segment('Metrics', metrics_string)
-        text += add_collapsible_segment('Plots', plot_string)
-        text += add_collapsible_segment_end()
-    text += add_collapsible_segment_end()    
-    return text 
 
 def build_start_time_section(filename, model, sphinx_dataframe):
     column_labels = list(pd.read_pickle(filename).columns)[1:]
@@ -1030,13 +982,6 @@ def report(output_dir):
             threshold_crossing_filename = output_dir__ + 'threshold_crossing_metrics.pkl'
             validation_text += '* Threshold Crossing\n'
             markdown_text += build_threshold_crossing_section(threshold_crossing_filename, model, sphinx_dataframe)
-        '''
-        if threshold_crossing_time:
-            ### build the threshold crossing metrics
-            threshold_crossing_time_filename = output_dir__ + 'threshold_crossing_time_metrics.pkl'
-            validation_text += '* Threshold Crossing Time\n'
-            markdown_text += build_threshold_crossing_time_section(threshold_crossing_time_filename, model, sphinx_dataframe)
-        '''
 
         if fluence:
             ### build the fluence metrics
