@@ -1078,11 +1078,6 @@ def duration_intuitive_metrics(df, dict, model, energy_key, thresh_key):
 
     obs = sub['Observed SEP Duration']
     pred = sub['Predicted SEP Duration']
-    obs1 = (sub['Observed SEP End Time'] - sub['Observed SEP Start Time'])
-    pred1 = (sub['Predicted SEP End Time'] - sub['Predicted SEP Start Time'])
-    
-    obs1 = obs1.dt.total_seconds()/(60*60) #convert to hours
-    pred1 = pred1.dt.total_seconds()/(60*60)
 
     td = pred - obs #shorter duration is negative
     td = td.to_list()
