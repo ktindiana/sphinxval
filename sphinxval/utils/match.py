@@ -511,9 +511,9 @@ def is_time_before(time, obs_values, obs_key, energy_channel):
 
     #Check if time is before
     obs = obs_values[energy_key]['dataframes'][0]
-    time_diff = (time - obs[obs_key])/np.timedelta64(1, 'h')
+    time_diff = (time - obs[obs_key]).dt.total_seconds()/3600.
     is_before = (time_diff <= 0)
-    is_before = is_before[obs_key].values.tolist()
+    is_before = is_before.values.tolist()
 
     nat = [ix for ix in range(len(list(time_diff))) if pd.isnull(time_diff[ix])]
     for ix in nat:
@@ -559,9 +559,9 @@ def is_time_before_thresh(time, obs_values, obs_key, energy_channel, threshold):
     #Check if time is before
     obs = obs_values[energy_key]['dataframes'][ix]
 
-    time_diff = (time - obs[obs_key])/np.timedelta64(1,'h')
+    time_diff = (time - obs[obs_key]).dt.total_seconds()/3600.
     is_before = (time_diff <= 0)
-    is_before = is_before[obs_key].values.tolist()
+    is_before = is_before.values.tolist()
 
     #Check for Not a Time values
     nat = [ix for ix in range(len(list(time_diff))) if pd.isnull(time_diff[ix])]
@@ -604,8 +604,8 @@ def time_diff(time, obs_values, obs_key, energy_channel):
 
     #Check if time is before
     obs = obs_values[energy_key]['dataframes'][0]
-    time_diff = (time - obs[obs_key])/np.timedelta64(1,'h')
-    time_diff = time_diff[obs_key].values.tolist()
+    time_diff = (time - obs[obs_key]).dt.total_seconds()/3600.
+    time_diff = time_diff.values.tolist()
 
     return time_diff
     
@@ -648,8 +648,8 @@ def time_diff_thresh(time, obs_values, obs_key, energy_channel, threshold):
 
     #Check if time is before
     obs = obs_values[energy_key]['dataframes'][ix]
-    time_diff = (time - obs[obs_key])/np.timedelta64(1,'h')
-    time_diff = time_diff[obs_key].values.tolist()
+    time_diff = (time - obs[obs_key]).dt.total_seconds()/3600.
+    time_diff = time_diff.values.tolist()
 
     return time_diff
 
