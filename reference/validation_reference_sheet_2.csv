@@ -1,0 +1,8 @@
+﻿Skill Scores,,,
+Name,Attribute,Range,Perfect Score
+True Skill Score,Score,-1 to 1,1
+Heidke Skill Score,Score,-1 to 1,1
+Odds Ratio Skill Score,Score,-1 to 1,1
+Relative Operating Characteristic Skill Score (RSS),RSS,0 to 1,1
+Mean Percentage Error,Error,-infinity to infinity,0
+Mean Absolute Percentage Error,Error,0 to infinity,0
