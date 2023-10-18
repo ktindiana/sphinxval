@@ -1,7 +1,6 @@
 datapath = './data'
 modelpath = './model'
 outpath = './output'
-plotpath = './plots'
 referencepath = './reference'
 reportpath = './validation_reports'
 
