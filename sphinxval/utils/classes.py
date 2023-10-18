@@ -685,6 +685,10 @@ class Forecast():
             
             if 'sep_profile' in dataD:
                 self.sep_profile = dataD['sep_profile']
+                if 'ASPECS' in self.short_name:
+                    pth = self.path
+                    pth = pth.split("/")
+                    self.sep_profile = "../../../Profile/" + pth[len(pth)-3] + "/" + pth[len(pth)-2] + "/" + dataD['sep_profile']
             
             if 'prediction_window' in dataD:
                 self.prediction_window_start = dataD['prediction_window']['start_time']
@@ -980,6 +984,7 @@ class Forecast():
         if self.magnetograms != []:
             for magneto in self.magnetograms:
                 if magneto.products == []: continue
+                if magneto.products == None: continue
                 for prod in magneto.products:
                     last_data_time = prod['last_data_time']
                     if isinstance(last_data_time,datetime.date):
@@ -993,6 +998,7 @@ class Forecast():
         if self.coronagraphs != []:
             for corona in self.coronagraphs:
                 if corona.products == []: continue
+                if corona.products == None: continue
                 for prod in corona.products:
                     last_data_time = prod['last_data_time']
                     if isinstance(last_data_time,datetime.date):
@@ -1028,6 +1034,7 @@ class Forecast():
             Updated self.valid field
         
         """
+
         if self.issue_time == None:
             return
             
@@ -1967,10 +1974,10 @@ class SPHINX:
             if tk != thresh_key:
                 continue
             
-            predicted = prob_obj.probability_value
+            pred_prob = prob_obj.probability_value
             match_status = self.sep_match_status[tk]
 
-        return predicted, match_status
+        return pred_prob, match_status
 
 
 

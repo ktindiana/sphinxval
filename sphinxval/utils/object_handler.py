@@ -2,6 +2,7 @@ from . import classes as cl
 from . import units_handler as vunits
 import sys
 import datetime
+from astropy import units as u
 
 __version__ = "0.1"
 __author__ = "Katie Whitman"
@@ -103,6 +104,33 @@ def threshold_to_key(threshold):
     
     return key
 
+
+def key_to_threshold(key):
+    """ Want to organize observations and forecasts according
+        to energy channel and thresholds.
+        
+        Turn a string key into a threshold that can
+        be used to compare against data.
+        
+    Inputs:
+    
+        :key: (string) e.g. "threshold.10.0.units.1 / (cm2 s sr)"
+    
+    Output:
+    
+        :threshold: (dict)
+            {'threshold': 10, 'threshold_units': Unit("1 / (cm2 s sr)")}
+
+    """
+
+    key2 = key.replace("threshold.",'')
+    key2 = key2.replace(".units.",',')
+    key2 = key2.split(',')
+    
+    unts = u.Unit(key2[1])
+    threshold = {'threshold':float(key2[0]), 'threshold_units': unts}
+    
+    return threshold
 
 
 
