@@ -297,6 +297,14 @@ def load_objects_from_json(data_list, model_list):
                 continue
             model_objs[key].append(obj)
 
+
+    #Convert all_energy_channels to an array of string keys
+    for i in range(len(all_energy_channels)):
+        all_energy_channels[i] = objh.energy_channel_to_key(all_energy_channels[i])
+
+    del obs_jsons
+    del model_jsons
+
     return all_energy_channels, obs_objs, model_objs
 
 
