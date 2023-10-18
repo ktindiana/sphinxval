@@ -345,7 +345,7 @@ def fill_dict_row(sphinx, dict, energy_key, thresh_key):
 
 
 def prepare_outdirs():
-    for datafmt in ('pkl', 'csv', 'json', 'md'):
+    for datafmt in ('pkl', 'csv', 'json', 'md', 'plots'):
         outdir = os.path.join(config.outpath, datafmt)
         if not os.path.isdir(outdir):
             os.mkdir(outdir)
@@ -727,7 +727,7 @@ def peak_intensity_intuitive_metrics(df, dict, model, energy_key, thresh_key):
         "Peak Intensity Correlation", xlabel="Observations",
         ylabel=("Model Predictions (" + str(units) + ")"), use_log = True)
 
-        figname = config.plotpath + '/Correlation_peak_intensity_' + model + "_" \
+        figname = config.outpath + '/plots/Correlation_peak_intensity_' + model + "_" \
             + energy_key.strip() + "_" + thresh_fnm + ".pdf"
         corr_plot.savefig(figname, dpi=300, bbox_inches='tight')
         corr_plot.close()
@@ -811,7 +811,7 @@ def peak_intensity_max_intuitive_metrics(df, dict, model, energy_key,
         ylabel=("Model Predictions (" + str(units) + ")"),
         value="Peak Intensity Max (Max Flux)", use_log = True)
 
-        figname = config.plotpath + '/Correlation_peak_intensity_max' + model + "_" \
+        figname = config.outpath + '/plots/Correlation_peak_intensity_max' + model + "_" \
                 + energy_key.strip() + "_" + thresh_fnm + ".pdf"
         corr_plot.savefig(figname, dpi=300, bbox_inches='tight')
         corr_plot.close()
@@ -895,7 +895,7 @@ def fluence_intuitive_metrics(df, dict, model, energy_key,
         ylabel=("Model Predictions (" + str(units) + ")"),
         use_log = True)
 
-        figname = config.plotpath + '/Correlation_fluence_' + model + "_" \
+        figname = config.outpath + '/plots/Correlation_fluence_' + model + "_" \
                 + energy_key.strip() + "_" + thresh_fnm + ".pdf"
         corr_plot.savefig(figname, dpi=300, bbox_inches='tight')
         corr_plot.close()
@@ -1246,7 +1246,6 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
         all_obs_dates = []
         all_obs_flux = []
         print("======NAMES OF OBSERVED TIME PROFILE++++")
-        print(obs_profs[i])
         obs_fnames = obs_profs[i].strip().split(",")
         for j in range(len(obs_fnames)):
             dt, flx = profile.read_single_time_profile(obs_fnames[j])
@@ -1258,8 +1257,10 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
         if pred_dates == []:
             return
         
-        #Remove zeros from predicted values
+        #Remove zeros
+        obs_flux, obs_dates = zip(*filter(lambda x:x[0]>0.0, zip(obs_flux, obs_dates)))
         pred_flux, pred_dates = zip(*filter(lambda x:x[0]>0.0, zip(pred_flux, pred_dates)))
+        
         #Interpolate observed time profile onto predicted timestamps
         obs_flux_interp = profile.interp_timeseries(obs_dates, obs_flux, "log", pred_dates)
         
@@ -1274,7 +1275,7 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
         labels=["Observations", "Interp Trimmed Obs", "Model", "Trimmed Model"]
         str_date = date_to_string(pred_dates[0])
         title = model_names[i] + ", " + energy_chan[i] + " Time Profile"
-        figname = config.plotpath + "/Time_Profile_" + model_names[i] + "_" + energy_chan[i]\
+        figname = config.outpath + "/plots/Time_Profile_" + model_names[i] + "_" + energy_chan[i]\
             + "_" + thresh_fnm  + "_" + str_date + ".pdf"
         
         plt_tools.plot_time_profile(date, values, labels,
@@ -1283,13 +1284,11 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
         date_format="year", showplot=False,
         closeplot=True, saveplot=True, figname = figname)
         
-        
         #Check for None and Zero values and remove
         if trim_pred_flux == [] or trim_obs_flux == []: continue
         obs, pred = profile.remove_none(trim_obs_flux,trim_pred_flux)
         obs, pred = profile.remove_zero(obs, pred)
         if obs == [] or pred == []: continue
-        
         
         #Calculate a mean metric across an individual time profile
         if len(obs) >= 1 and len(pred) >= 1:
@@ -1330,7 +1329,7 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
                 ylabel=("Model Predictions"),
                 use_log = True)
 
-                figname = config.plotpath + '/Correlation_time_profile_' +\
+                figname = config.outpath + '/plots/Correlation_time_profile_' +\
                     model + "_" \
                     + energy_key.strip() + "_" + thresh_fnm \
                     + "_" + str_date + ".pdf"
