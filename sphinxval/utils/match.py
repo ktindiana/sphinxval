@@ -511,9 +511,9 @@ def is_time_before(time, obs_values, obs_key, energy_channel):
 
     #Check if time is before
     obs = obs_values[energy_key]['dataframes'][0]
-    time_diff = (time - obs[obs_key]).dt.total_seconds() / 3600.0
+    time_diff = (time - obs[obs_key])/np.timedelta64(1, 'h')
     is_before = (time_diff <= 0)
-    is_before = list(is_before)
+    is_before = is_before[obs_key].values.tolist()
 
     nat = [ix for ix in range(len(list(time_diff))) if pd.isnull(time_diff[ix])]
     for ix in nat:
@@ -559,10 +559,11 @@ def is_time_before_thresh(time, obs_values, obs_key, energy_channel, threshold):
     #Check if time is before
     obs = obs_values[energy_key]['dataframes'][ix]
 
-    time_diff = (time - obs[obs_key]).dt.total_seconds() / 3600.0
+    time_diff = (time - obs[obs_key])/np.timedelta64(1,'h')
     is_before = (time_diff <= 0)
-    is_before = list(is_before)
+    is_before = is_before[obs_key].values.tolist()
 
+    #Check for Not a Time values
     nat = [ix for ix in range(len(list(time_diff))) if pd.isnull(time_diff[ix])]
     for ix in nat:
         is_before[ix] = None
@@ -603,10 +604,10 @@ def time_diff(time, obs_values, obs_key, energy_channel):
 
     #Check if time is before
     obs = obs_values[energy_key]['dataframes'][0]
-    time_diff = (time - obs[obs_key]).astype('timedelta64[s]')
-    time_diff = time_diff/(60.*60.)
+    time_diff = (time - obs[obs_key])/np.timedelta64(1,'h')
+    time_diff = time_diff[obs_key].values.tolist()
 
-    return list(time_diff)
+    return time_diff
     
 
 def time_diff_thresh(time, obs_values, obs_key, energy_channel, threshold):
@@ -647,10 +648,10 @@ def time_diff_thresh(time, obs_values, obs_key, energy_channel, threshold):
 
     #Check if time is before
     obs = obs_values[energy_key]['dataframes'][ix]
-    time_diff = (time - obs[obs_key]).astype('timedelta64[s]')
-    time_diff = time_diff/(60.*60.)
+    time_diff = (time - obs[obs_key])/np.timedelta64(1,'h')
+    time_diff = time_diff[obs_key].values.tolist()
 
-    return list(time_diff)
+    return time_diff
 
 
 ############### MATCHING CRITERIA FOR SPECIFIC QUANTITIES #####
@@ -1130,7 +1131,7 @@ def eruption_in_range(td_eruption_thresh_cross):
     """ Determine if the eruption (CME/flare) is in the appropriate
         range to be responsible for an observed SEP event.
         
-        Require CME/flare to occur 15 mins to 24 hours before an
+        Require CME/flare to occur a few mins to 24 hours before an
         observed SEP event to be considered associated with that event.
     
     Input:
@@ -1145,19 +1146,14 @@ def eruption_in_range(td_eruption_thresh_cross):
             a better eruption matched to the SEP event
     
     """
-    if type(td_eruption_thresh_cross) == float:
-        seconds = td_eruption_thresh_cross * 1.0
-    elif type(td_eruption_thresh_cross) == datetime.timedelta:
-        seconds = td_eruption_thresh_cross.total_seconds()
-
     is_eruption_in_range = None
     if not pd.isnull(td_eruption_thresh_cross):
-        if seconds / 3600.0 <= -0.25\
-            and seconds / 3600.0 > -24.:
+        if td_eruption_thresh_cross <= -0.15\
+            and td_eruption_thresh_cross > -24.:
             is_eruption_in_range = True
             
-        if seconds / 3600.0 > -0.25\
-            or seconds / 3600.0 <= -24.:
+        if td_eruption_thresh_cross > -0.15\
+            or td_eruption_thresh_cross <= -24.:
             is_eruption_in_range = False
 
     return is_eruption_in_range
@@ -2364,7 +2360,7 @@ def match_all_forecasts(all_energy_channels, model_names, obs_objs,
                 #Loop over all observations inside the prediction window
                 for i in sphinx.overlapping_indices: #index of overlapping obs
 
-                    #Bool for eruption 48 hours to 15 mins before
+                    #Bool for eruption 24 hours to a few mins before
                     #threshold crossing.
                     #None if no SEP event
                     is_eruption_in_range =\
