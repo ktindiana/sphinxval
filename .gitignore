@@ -9,5 +9,4 @@ data/*
 model/*
 output/*
 plots/*
-reference/*
 validation_reports/*
