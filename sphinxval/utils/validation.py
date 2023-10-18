@@ -727,7 +727,7 @@ def peak_intensity_intuitive_metrics(df, dict, model, energy_key, thresh_key):
         "Peak Intensity Correlation", xlabel="Observations",
         ylabel=("Model Predictions (" + str(units) + ")"), use_log = True)
 
-        figname = config.plotpath + '/Correlation_peak_intensity_' + model + "_" \
+        figname = config.outpath + '/plots/Correlation_peak_intensity_' + model + "_" \
             + energy_key.strip() + "_" + thresh_fnm + ".pdf"
         corr_plot.savefig(figname, dpi=300, bbox_inches='tight')
         corr_plot.close()
@@ -811,7 +811,7 @@ def peak_intensity_max_intuitive_metrics(df, dict, model, energy_key,
         ylabel=("Model Predictions (" + str(units) + ")"),
         value="Peak Intensity Max (Max Flux)", use_log = True)
 
-        figname = config.plotpath + '/Correlation_peak_intensity_max' + model + "_" \
+        figname = config.outpath + '/plots/Correlation_peak_intensity_max' + model + "_" \
                 + energy_key.strip() + "_" + thresh_fnm + ".pdf"
         corr_plot.savefig(figname, dpi=300, bbox_inches='tight')
         corr_plot.close()
@@ -895,7 +895,7 @@ def fluence_intuitive_metrics(df, dict, model, energy_key,
         ylabel=("Model Predictions (" + str(units) + ")"),
         use_log = True)
 
-        figname = config.plotpath + '/Correlation_fluence_' + model + "_" \
+        figname = config.outpath + '/plots/Correlation_fluence_' + model + "_" \
                 + energy_key.strip() + "_" + thresh_fnm + ".pdf"
         corr_plot.savefig(figname, dpi=300, bbox_inches='tight')
         corr_plot.close()
@@ -1280,7 +1280,7 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
         labels=["Observations", "Interp Trimmed Obs", "Model", "Trimmed Model"]
         str_date = date_to_string(pred_dates[0])
         title = model_names[i] + ", " + energy_chan[i] + " Time Profile"
-        figname = config.plotpath + "/Time_Profile_" + model_names[i] + "_" + energy_chan[i]\
+        figname = config.outpath + "/plots/Time_Profile_" + model_names[i] + "_" + energy_chan[i]\
             + "_" + thresh_fnm  + "_" + str_date + ".pdf"
         
         plt_tools.plot_time_profile(date, values, labels,
@@ -1334,7 +1334,7 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
                 ylabel=("Model Predictions"),
                 use_log = True)
 
-                figname = config.plotpath + '/Correlation_time_profile_' +\
+                figname = config.outpath + '/plots/Correlation_time_profile_' +\
                     model + "_" \
                     + energy_key.strip() + "_" + thresh_fnm \
                     + "_" + str_date + ".pdf"
