@@ -1,0 +1,14 @@
+﻿Metrics,,,
+Name,Attribute,Range, Perfect Score
+Percent Correct,Accuracy,0 to 1,1
+Bias,Bias,0 to infinity,1
+Hit Rate,Discrimination,0 to 1,1
+False Alarm Rate,Discrimination,0 to 1,0
+Frequency of Misses,Discrimination,0 to 1,0
+Probability of Correct Negatives,Discrimination,0 to 1,1
+Frequency of Hits,Resolution,0 to 1,1
+False Alarm Ratio,Resolution,0 to 1,1
+Detection Failure Ratio,Resolution,0 to 1,0
+Frequency of Correct Negatives,Resolution,0 to 1,1
+Threat Score,Accuracy,0 to 1,1
+Odds Ratio,Accuracy,0 to infinity,infinity
