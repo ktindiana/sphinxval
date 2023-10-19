@@ -870,10 +870,11 @@ def peak_intensity_max_intuitive_metrics(df, dict, model, energy_key,
 
 
 
-#def peak_intensity_in_pred_win_metrics(df, dict, model, energy_key,
+#def max_flux_in_pred_win_metrics(df, dict, model, energy_key,
 #    thresh_key):
 #    """ Extract the appropriate predictions and calculate metrics
-#        Peak intensity
+#        Compare predicted max or onset peak flux to the max observed
+#        flux in the model's prediction window.
 #
 #    """
 #    #Select rows to calculate metrics
@@ -884,6 +885,7 @@ def peak_intensity_max_intuitive_metrics(df, dict, model, energy_key,
 #            'Prediction Window Start', 'Prediction Window End',
 #            'Observed SEP Threshold Crossing Time',
 #            'Observed SEP Peak Intensity Max (Max Flux)',
+#            'Observed SEP Peak Intensity Max (Max Flux) Time',
 #            'Observed SEP Peak Intensity Max (Max Flux) Units',
 #            'Predicted SEP Peak Intensity Max (Max Flux)',
 #            'Predicted SEP Peak Intensity Max (Max Flux) Units',
@@ -891,16 +893,40 @@ def peak_intensity_max_intuitive_metrics(df, dict, model, energy_key,
 #    sub = sub.loc[(sub['Peak Intensity Max Match Status'] == 'SEP Event')]
 #    sub = sub.dropna() #drop rows containing None
 #      
+#      
+#    #Models may fill only the Peak Intensity field. It can be ambiguous whether
+#    #the prediction is intended as onset peak or max flux. If no max flux field
+#    #found, then compare Peak Intensity to observed Max Flux.
 #    if sub.empty:
-#        return
+#        sub = df.loc[(df['Model'] == model) & (df['Energy Channel Key'] ==
+#            energy_key) & (df['Threshold Key'] == thresh_key)]
+#        sub = sub[['Model','Energy Channel Key', 'Threshold Key', 'Forecast Source',
+#            'Prediction Window Start', 'Prediction Window End',
+#            'Observed SEP Threshold Crossing Time',
+#            'Observed SEP Peak Intensity Max (Max Flux)',
+#            'Observed SEP Peak Intensity Max (Max Flux) Time',
+#            'Observed SEP Peak Intensity Max (Max Flux) Units',
+#            'Predicted SEP Peak Intensity (Onset Peak)',
+#            'Predicted SEP Peak Intensity (Onset Peak) Units',
+#            'Peak Intensity Match Status']]
+#        sub = sub.loc[(sub['Peak Intensity Match Status'] == 'SEP Event')]
+#        sub = sub.dropna() #drop rows containing None
+#        if sub.empty:
+#            return
+#        sub = sub.rename(columns={'Predicted SEP Peak Intensity (Onset Peak)': 'Predicted SEP Peak Intensity Max (Max Flux)', 'Predicted SEP Peak Intensity (Onset Peak) Units': 'Predicted SEP Peak Intensity Max (Max Flux) Units', 'Peak Intensity Match Status': 'Peak Intensity Max Match Status'})
+#        print("peak_intensity_max_intuitive_metrics: Model " + model + " did not explicitly "
+#            "include a peak_intensity_max field. Comparing peak_intensity to observed "
+#            "max flux.")
+#
+#
 #    thr = thresh_key.strip().split(".")
 #    thresh_fnm = thr[0] + "_" + thr[1]
 #    write_df(sub, "peak_intensity_max_selections_" + model + "_" + energy_key.strip() + "_" + thresh_fnm)
 #
 #    obs = sub['Observed SEP Peak Intensity Max (Max Flux)'].to_list()
-#    pred = sub['Predicted SEP Peak Intensity Max (Max Flux)'].to_list()
 #    units = sub.iloc[0]['Observed SEP Peak Intensity Max (Max Flux) Units']
-#
+#    pred = sub['Predicted SEP Peak Intensity Max (Max Flux)'].to_list()
+# 
 #    if len(obs) > 1:
 #        #PEARSON CORRELATION
 #        r_lin, r_log = metrics.switch_error_func('r',obs,pred)
@@ -918,7 +944,7 @@ def peak_intensity_max_intuitive_metrics(df, dict, model, energy_key,
 #        ylabel=("Model Predictions (" + str(units) + ")"),
 #        value="Peak Intensity Max (Max Flux)", use_log = True)
 #
-#        figname = config.plotpath + '/Correlation_peak_intensity_max' + model + "_" \
+#        figname = config.outpath + '/plots/Correlation_peak_intensity_max_' + model + "_" \
 #                + energy_key.strip() + "_" + thresh_fnm + ".pdf"
 #        corr_plot.savefig(figname, dpi=300, bbox_inches='tight')
 #        corr_plot.close()
@@ -950,7 +976,6 @@ def peak_intensity_max_intuitive_metrics(df, dict, model, energy_key,
 #    fill_flux_metrics_dict(dict, model, energy_key, thresh_key, figname,
 #    slope, yint, r_lin, r_log, s_lin, s_log, ME, MedE, MLE, MedLE, MAE,
 #    MedAE, MALE, MedALE, MAPE, MAR, RMSE, RMSLE, MdSA)
-#
 
 
 
