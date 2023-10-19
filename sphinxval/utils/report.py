@@ -11,7 +11,6 @@ import PyPDF2 as pdf
 
 from . import config 
 
-
 def formatting_function(value):
     condition = True
     num_floats = 2
@@ -43,7 +42,6 @@ def transpose_markdown(text):
     return output
     
 def format_markdown_table(text, width=50):
-    
     zero_to_one_metric_name = ['Percent Correct', 'Hit rate', 
                                'False Alarm Rate', 'Frequency of Misses', 
                                'Probability of Correct Negatives', 
@@ -52,11 +50,9 @@ def format_markdown_table(text, width=50):
                                'Frequency of Correct Negatives', 
                                'Threat Score', 'Brier Score', 
                                'Pearson Correlation Coefficient (linear)', 
-                               'Pearson Correlation Coefficient (log)']
-    
+                               'Pearson Correlation Coefficient (log)']    
     int_metric_name = ['Hits (TP)', 'Misses (FN)', 
                        'False Alarms (FP)', 'Correct Negatives (TN)']
-
     table = text.split('\n')
     table_string = ''
     for i in range(0, len(table)):
@@ -290,6 +286,7 @@ def build_metrics_table(metrics, column_labels, metric_start_index):
     subset.columns = subset.columns.str.replace('|', '&#124;', regex=False)
     metrics_table_string += '\n' + transpose_markdown(subset.to_markdown(index=False)) + '\n'
     plot_string = ''
+    plot_string_list = []
     for i in range(0, len(column_labels)):
         plot_index = None
         if type(column_labels[i]) == str:
@@ -301,14 +298,20 @@ def build_metrics_table(metrics, column_labels, metric_start_index):
                 if plot_path == '':
                     plot_string = ''
                 else:
-                    plot_path = config.outpath.replace('.', '') + '/plots/' + plot_path.split('plots')[1] 
+                    output_directory = config.outpath
+                    if '.' in output_directory:
+                        if output_directory[0] == '.':
+                            output_directory = output_directory[1:]
+                    
+                    plot_path = output_directory + '/plots/' + plot_path.split('plots')[1] 
                     full_path = os.getcwd().replace('\\', '/') + plot_path
                     full_path = full_path.replace('//', '/')
                     print(full_path)
                     print(os.path.exists(full_path))
  
                     if os.path.exists(full_path) and plot_path != '':
-                        plot_string += '![](' + full_path + ')\n\n'
+                        plot_string = '![](' + full_path + ')\n\n'
+                        plot_string_list.append(plot_string)
                     else:
                         plot_string = ''
     
@@ -319,7 +322,8 @@ def build_metrics_table(metrics, column_labels, metric_start_index):
             else:
                 print('Not displaying ' + plot_path)
         plot_string = 'No image files found.\n\n'
-    return metrics_table_string, plot_string
+        plot_string_list.append(plot_string)
+    return metrics_table_string, plot_string_list
 
 def build_all_clear_skill_scores_section(filename, model, sphinx_dataframe):
     column_labels = list(pd.read_pickle(filename).columns)[1:]
@@ -388,13 +392,16 @@ def build_peak_intensity_section(filename, model, sphinx_dataframe):
         info_string += '...\n' # need to complete
         info_string += info_events_table
         metrics_string = "Metrics for $log_{10}$(model) - $log_{10}$(Observations).<br>Positive values indicate model overprediction.<br>Negative values indicate model underprediction.<br>r_lin and r_log indicate the pearson's correlation coefficient calculated using values or $log_{10}$(values), respectively."
-        metrics_string_, plot_string = build_metrics_table(metrics[i], [None] + column_labels, 4)
+        metrics_string_, plot_string_list = build_metrics_table(metrics[i], [None] + column_labels, 4)
         metrics_string += metrics_string_
         text += add_collapsible_segment_start(energy_threshold, '')
         text += add_collapsible_segment('Thresholds Applied', threshold_string)
         text += add_collapsible_segment('Validation Info', info_string)
         text += add_collapsible_segment('Metrics', metrics_string)
-        text += add_collapsible_segment('Plots', plot_string)
+        for j in range(0, len(plot_string_list)):
+            # DETERMINE plot_type
+            plot_type = get_plot_type(plot_string_list[j])
+            text += add_collapsible_segment('Plot: ' + plot_type, plot_string_list[j])
         text += add_collapsible_segment_end()
     text += add_collapsible_segment_end()
     return text
@@ -423,13 +430,16 @@ def build_peak_intensity_max_section(filename, model, sphinx_dataframe):
         info_string += '...\n' # need to complete
         info_string += info_events_table
         metrics_string = "Metrics for $log_{10}$(model) - $log_{10}$(Observations).<br>Positive values indicate model overprediction.<br>Negative values indicate model underprediction.<br>r_lin and r_log indicate the pearson's correlation coefficient calculated using values or $log_{10}$(values), respectively."
-        metrics_string_, plot_string = build_metrics_table(metrics[i], [None] + column_labels, 4)
+        metrics_string_, plot_string_list = build_metrics_table(metrics[i], [None] + column_labels, 4)
         metrics_string += metrics_string_
         text += add_collapsible_segment_start(energy_threshold, '')
         text += add_collapsible_segment('Thresholds Applied', threshold_string)
         text += add_collapsible_segment('Validation Info', info_string)
         text += add_collapsible_segment('Metrics', metrics_string)
-        text += add_collapsible_segment('Plots', plot_string)
+        for j in range(0, len(plot_string_list)):
+            # DETERMINE plot_type
+            plot_type = get_plot_type(plot_string_list[j])
+            text += add_collapsible_segment('Plot: ' + plot_type, plot_string_list[j])
         text += add_collapsible_segment_end()
     text += add_collapsible_segment_end()    
     return text
@@ -458,13 +468,16 @@ def build_peak_intensity_time_section(filename, model, sphinx_dataframe):
         info_string += '...\n' # need to complete
         info_string += info_events_table
         metrics_string = "Metrics for Observed Time - Predicted Time are in hours.<br>Negative values indicate predicted time is later than observed.<br>Positive values indicate predicted time is earlier than observed.\n"
-        metrics_string_, plot_string = build_metrics_table(metrics[i], [None] + column_labels, 3)
+        metrics_string_, plot_string_list = build_metrics_table(metrics[i], [None] + column_labels, 3)
         metrics_string += metrics_string_
         text += add_collapsible_segment_start(energy_threshold, '')
         text += add_collapsible_segment('Thresholds Applied', threshold_string)
         text += add_collapsible_segment('Validation Info', info_string)
         text += add_collapsible_segment('Metrics', metrics_string)
-        text += add_collapsible_segment('Plots', plot_string)
+        for j in range(0, len(plot_string_list)):
+            # DETERMINE plot_type
+            plot_type = get_plot_type(plot_string_list[j])
+            text += add_collapsible_segment('Plot: ' + plot_type, plot_string_list[j])
         text += add_collapsible_segment_end()
     text += add_collapsible_segment_end()    
     return text
@@ -493,13 +506,16 @@ def build_fluence_section(filename, model, sphinx_dataframe):
         info_string += '...\n' # need to complete
         info_string += info_events_table
         metrics_string = "Metrics for $log_{10}$(model) - $log_{10}$(Observations).<br>Positive values indicate model overprediction.<br>Negative values indicate model underprediction.<br>r_lin and r_log indicate the pearson's correlation coefficient calculated using values or $log_{10}$(values), respectively."
-        metrics_string_, plot_string = build_metrics_table(metrics[i], [None] + column_labels, 4)
+        metrics_string_, plot_string_list = build_metrics_table(metrics[i], [None] + column_labels, 4)
         metrics_string += metrics_string_
         text += add_collapsible_segment_start(energy_threshold, '')
         text += add_collapsible_segment('Thresholds Applied', threshold_string)
         text += add_collapsible_segment('Validation Info', info_string)
         text += add_collapsible_segment('Metrics', metrics_string)
-        text += add_collapsible_segment('Plots', plot_string)
+        for j in range(0, len(plot_string_list)):
+            # DETERMINE plot_type
+            plot_type = get_plot_type(plot_string_list[j])
+            text += add_collapsible_segment('Plot: ' + plot_type, plot_string_list[j])
         text += add_collapsible_segment_end()
     text += add_collapsible_segment_end()    
     return text    
@@ -528,13 +544,16 @@ def build_probability_section(filename, model, sphinx_dataframe):
         info_string += '...\n' # need to complete
         info_string += info_events_table
         metrics_string = "Metrics for $log_{10}$(Model) - $log_{10}$(Observations).<br>Positive values indicate model overprediction.<br>Negative values indicate model underprediction.<br>r_lin and r_log indicate the pearson's correlation coefficient calculated using values or $log_{10}$(values), respectively."
-        metrics_string_, plot_string = build_metrics_table(metrics[i], [None] + column_labels, 3)
+        metrics_string_, plot_string_list = build_metrics_table(metrics[i], [None] + column_labels, 3)
         metrics_string += metrics_string_
         text += add_collapsible_segment_start(energy_threshold, '')
         text += add_collapsible_segment('Thresholds Applied', threshold_string)
         text += add_collapsible_segment('Validation Info', info_string)
         text += add_collapsible_segment('Metrics', metrics_string)
-        text += add_collapsible_segment('Plots', plot_string)
+        for j in range(0, len(plot_string_list)):
+            # DETERMINE plot_type
+            plot_type = get_plot_type(plot_string_list[j])
+            text += add_collapsible_segment('Plot: ' + plot_type, plot_string_list[j])
         text += add_collapsible_segment_end()
     text += add_collapsible_segment_end()    
     return text  
@@ -566,13 +585,16 @@ def build_threshold_crossing_section(filename, model, sphinx_dataframe):
         info_string += '...\n' # need to complete
         info_string += info_events_table
         metrics_string = "Metrics for Observed Time - Predicted Time are in hours.<br>Negative values indicate predicted time is later than observed.<br>Positive values indicate predicted time is earlier than observed.\n"
-        metrics_string_, plot_string = build_metrics_table(metrics[i], [None] + column_labels, 3)
+        metrics_string_, plot_string_list = build_metrics_table(metrics[i], [None] + column_labels, 3)
         metrics_string += metrics_string_
         text += add_collapsible_segment_start(energy_threshold, '')
         text += add_collapsible_segment('Thresholds Applied', threshold_string)
         text += add_collapsible_segment('Validation Info', info_string)
         text += add_collapsible_segment('Metrics', metrics_string)
-        text += add_collapsible_segment('Plots', plot_string)
+        for j in range(0, len(plot_string_list)):
+            # DETERMINE plot_type
+            plot_type = get_plot_type(plot_string_list[j])
+            text += add_collapsible_segment('Plot: ' + plot_type, plot_string_list[j])
         text += add_collapsible_segment_end()
     text += add_collapsible_segment_end()    
     return text
@@ -602,13 +624,16 @@ def build_start_time_section(filename, model, sphinx_dataframe):
         info_string += '...\n' # need to complete
         info_string += info_events_table
         metrics_string = "Metrics for Observed Time - Predicted Time are in hours.<br>Negative values indicate predicted time is later than observed.<br>Positive values indicate predicted time is earlier than observed.\n"
-        metrics_string_, plot_string = build_metrics_table(metrics[i], [None] + column_labels, 3)
+        metrics_string_, plot_string_list = build_metrics_table(metrics[i], [None] + column_labels, 3)
         metrics_string += metrics_string_
         text += add_collapsible_segment_start(energy_threshold, '')
         text += add_collapsible_segment('Thresholds Applied', threshold_string)
         text += add_collapsible_segment('Validation Info', info_string)
         text += add_collapsible_segment('Metrics', metrics_string)
-        text += add_collapsible_segment('Plots', plot_string)
+        for j in range(0, len(plot_string_list)):
+            # DETERMINE plot_type
+            plot_type = get_plot_type(plot_string_list[j])
+            text += add_collapsible_segment('Plot: ' + plot_type, plot_string_list[j])
         text += add_collapsible_segment_end()
     text += add_collapsible_segment_end()
     return text
@@ -638,14 +663,17 @@ def build_duration_section(filename, model, sphinx_dataframe):
             info_string += '...\n' # need to complete
             info_string += info_events_table
         metrics_string = "Metrics for Observed Time - Predicted Time are in hours.<br>Negative values indicate predicted time is later than observed.<br>Positive values indicate predicted time is earlier than observed.\n"
-        metrics_string_, plot_string = build_metrics_table(metrics[i], [None] + column_labels, 3)
+        metrics_string_, plot_string_list = build_metrics_table(metrics[i], [None] + column_labels, 3)
         metrics_string += metrics_string_
         text += add_collapsible_segment_start(energy_threshold, '')
         text += add_collapsible_segment('Thresholds Applied', threshold_string)
         if type(n_events) == int:
             text += add_collapsible_segment('Validation Info', info_string)
         text += add_collapsible_segment('Metrics', metrics_string)
-        text += add_collapsible_segment('Plots', plot_string)
+        for j in range(0, len(plot_string_list)):
+            # DETERMINE plot_type
+            plot_type = get_plot_type(plot_string_list[j])
+            text += add_collapsible_segment('Plot: ' + plot_type, plot_string_list[j])
         text += add_collapsible_segment_end()
     text += add_collapsible_segment_end()
     return text
@@ -676,13 +704,16 @@ def build_end_time_section(filename, model, sphinx_dataframe):
         info_string += '...\n' # need to complete
         info_string += info_events_table
         metrics_string = "Metrics for Observed Time - Predicted Time are in hours.<br>Negative values indicate predicted time is later than observed.<br>Positive values indicate predicted time is earlier than observed.\n"
-        metrics_string_, plot_string = build_metrics_table(metrics[i], [None] + column_labels, 3)
+        metrics_string_, plot_string_list = build_metrics_table(metrics[i], [None] + column_labels, 3)
         metrics_string += metrics_string_
         text += add_collapsible_segment_start(energy_threshold, '')
         text += add_collapsible_segment('Thresholds Applied', threshold_string)
         text += add_collapsible_segment('Validation Info', info_string)
         text += add_collapsible_segment('Metrics', metrics_string)
-        text += add_collapsible_segment('Plots', plot_string)
+        for j in range(0, len(plot_string_list)):
+            # DETERMINE plot_type
+            plot_type = get_plot_type(plot_string_list[j])
+            text += add_collapsible_segment('Plot: ' + plot_type, plot_string_list[j])
         text += add_collapsible_segment_end()
     text += add_collapsible_segment_end()
     return text
@@ -712,13 +743,16 @@ def build_time_profile_section(filename, model, sphinx_dataframe):
         info_string += '...\n' # need to complete
         info_string += info_events_table
         metrics_string = "Metrics for Observed Time - Predicted Time are in hours.<br>Negative values indicate predicted time is later than observed.<br>Positive values indicate predicted time is earlier than observed.\n"
-        metrics_string_, plot_string = build_metrics_table(metrics[i], [None] + column_labels, 3)
+        metrics_string_, plot_string_list = build_metrics_table(metrics[i], [None] + column_labels, 3)
         metrics_string += metrics_string_
         text += add_collapsible_segment_start(energy_threshold, '')
         text += add_collapsible_segment('Thresholds Applied', threshold_string)
         text += add_collapsible_segment('Validation Info', info_string)
         text += add_collapsible_segment('Metrics', metrics_string)
-        text += add_collapsible_segment('Plots', plot_string)
+        for j in range(0, len(plot_string_list)):
+            # DETERMINE plot_type
+            plot_type = get_plot_type(plot_string_list[j])
+            text += add_collapsible_segment('Plot: ' + plot_type, plot_string_list[j])
         text += add_collapsible_segment_end()
     text += add_collapsible_segment_end()
     return text
@@ -866,7 +900,15 @@ def convert_markdown_to_html(filename, size_limit=10**20):
         a.close()
         print('    Complete')
 
-
+def get_plot_type(plot_string):
+    if 'Time_Profile' in plot_string:
+        plot_type = 'Time Profile'
+    elif 'Correlation' in plot_string:
+        plot_type = 'Correlation'
+    else:
+        plot_type = 'None'
+    return plot_type
+    
 # FINAL RESULT
 def report(output_dir):
     global output_dir__
