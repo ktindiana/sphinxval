@@ -345,7 +345,7 @@ def fill_dict_row(sphinx, dict, energy_key, thresh_key):
 
 
 def prepare_outdirs():
-    for datafmt in ('pkl', 'csv', 'json', 'md', 'plots'):
+    for datafmt in ('pkl', 'csv', 'plots'):
         outdir = os.path.join(config.outpath, datafmt)
         if not os.path.isdir(outdir):
             os.mkdir(outdir)
@@ -354,10 +354,6 @@ def prepare_outdirs():
 def write_df(df, name, log=True):
     """Writes a pandas dataframe to the standard location in multiple formats
     """
-#    dataformats = (('pkl',  getattr(df, 'to_pickle'), {}),
-#                   ('csv',  getattr(df, 'to_csv'), {}),
-#                   ('json', getattr(df, 'to_json'), {'default_handler':str}),
-#                   ('md',   getattr(df, 'to_markdown'), {}))
     dataformats = (('pkl',  getattr(df, 'to_pickle'), {}),
                    ('csv',  getattr(df, 'to_csv'), {}))
     for ext, write_func, kwargs in dataformats:
@@ -391,6 +387,55 @@ def fill_df(matched_sphinx, model_names, all_energy_channels,
     return df
 
 
+
+def fill_tp_dataframe(df, all_energy_channels):
+    """ Fill a dataframe with the observed time profile of every
+        matched observation. This will be used to find the max flux in
+        a given prediction window.
+        
+        INPUT:
+        
+            :df: (pandas DataFrame) dataframe containing all information from
+                matched obs and predictions created by fill_df.
+                
+        OUTPUT:
+        
+            :tpdf: (pandas DataFrame) contains time column and flux columns for
+                each energy channel
+                
+    """
+    dict = {}
+    for ek in all_energy_channels:
+        dict.update({"Time " + ek: []})
+        dict.update({"Flux " + ek: []})
+    
+    for ek in all_energy_channels:
+        sub = df.loc[df['Energy Channel Key'] == ek]
+        #Extract only the unique filenames for time profiles in ek energy
+        #channel
+        all_tp = resume.identify_unique(sub, 'Observed Time Profile')
+        for tp in all_tp:
+            dt, flx = profile.read_single_time_profile(tp)
+             dict["Time " + ek].extend(dt)
+             dict["Flux " + ek].extend(flx)
+             
+        #Sort all of the fluxes in time order
+        sortidx = sorted(range(len(dict["Time " + ek])),
+                        key = lambda k, dict["Time " + ek][k])
+        dict["Time " + ek] = sorted(dict["Time " + ek])
+        dict["Flux " + ek] = [dict["Flux " + ek][i] for i in sortidx]
+
+        time = dict["Time " + ek]
+        flux = dict["Flux " + ek]
+        plt_tools.plot_time_profile([time],[flux],[ek],uselog_y=True)
+        plt.show()
+
+
+    tpdf = pd.DataFrame(dict)
+    
+    return tpdf
+    
+    
 
 ##################### METRICS #####################
 def initialize_flux_dict():
@@ -775,6 +820,8 @@ def peak_intensity_max_intuitive_metrics(df, dict, model, energy_key,
         Peak intensity
 
     """
+    peak_key = 'Observed SEP Peak Intensity Max (Max Flux)'
+
     #Select rows to calculate metrics
     sub = df.loc[(df['Model'] == model) & (df['Energy Channel Key'] ==
         energy_key) & (df['Threshold Key'] == thresh_key)]
@@ -809,10 +856,11 @@ def peak_intensity_max_intuitive_metrics(df, dict, model, energy_key,
         sub = sub.dropna() #drop rows containing None
         if sub.empty:
             return
-        sub = sub.rename(columns={'Predicted SEP Peak Intensity (Onset Peak)': 'Predicted SEP Peak Intensity Max (Max Flux)', 'Predicted SEP Peak Intensity (Onset Peak) Units': 'Predicted SEP Peak Intensity Max (Max Flux) Units', 'Peak Intensity Match Status': 'Peak Intensity Max Match Status'})
-        print("peak_intensity_max_intuitive_metrics: Model " + model + " did not explicitly "
-            "include a peak_intensity_max field. Comparing peak_intensity to observed "
-            "max flux.")
+        peak_key = 'Predicted SEP Peak Intensity (Onset Peak)'
+        print("peak_intensity_max_intuitive_metrics: Model " + model +
+                " did not explicitly "
+                "include a peak_intensity_max field. Comparing "
+                "peak_intensity to observed max flux.")
 
 
     thr = thresh_key.strip().split(".")
@@ -821,7 +869,7 @@ def peak_intensity_max_intuitive_metrics(df, dict, model, energy_key,
 
     obs = sub['Observed SEP Peak Intensity Max (Max Flux)'].to_list()
     units = sub.iloc[0]['Observed SEP Peak Intensity Max (Max Flux) Units']
-    pred = sub['Predicted SEP Peak Intensity Max (Max Flux)'].to_list()
+    pred = sub[peak_key].to_list()
  
     if len(obs) > 1:
         #PEARSON CORRELATION
@@ -840,7 +888,8 @@ def peak_intensity_max_intuitive_metrics(df, dict, model, energy_key,
         ylabel=("Model Predictions (" + str(units) + ")"),
         value="Peak Intensity Max (Max Flux)", use_log = True)
 
-        figname = config.outpath + '/plots/Correlation_peak_intensity_max_' + model + "_" \
+        figname = config.outpath + '/plots/Correlation_peak_intensity_max_' \
+                + model + "_" \
                 + energy_key.strip() + "_" + thresh_fnm + ".pdf"
         corr_plot.savefig(figname, dpi=300, bbox_inches='tight')
         corr_plot.close()
@@ -875,14 +924,49 @@ def peak_intensity_max_intuitive_metrics(df, dict, model, energy_key,
 
 
 
+def get_max_in_pw(tpdf, ek, pw_st, pw_end):
+    """ Check the flux inside the prediction window and pull out
+        the maximum value.
+        
+        INPUT:
+        
+            :tpdf: (pandas DataFrame) dataframe containing time and flux
+                columns for each observed energy channel.
+            :ek: (string) energy channel key
+            :pw_st: (pandas datetime) prediction window start time
+            :pw_end: (pandas datetime) prediction window end time
+            
+        OUTPUT:
+        
+            :max_flux: (float) maximum flux
+            :max_flux_time: (pandas datetime) time of max flux
+        
+    """
+    sub = tpdf[["Time " + ek], ["Flux " + ek]]
+    sub = sub.iloc[(sub["Time " + ek] < pw_end && sub["Time " + ek] >= pw_st)]
+    max_flux = sub["Flux " + ek].max()
+    times = sub.loc[(sub["Flux " + ek] == max_flux)]
+    times = times.to_list()
+    max_flux_time = times[0]
+    
+    return max_flux, max_flux_time
 
-def max_flux_in_pred_win_metrics(df, dict, model, energy_key,
+
+
+
+def max_flux_in_pred_win_metrics(df, tpdf, dict, model, energy_key,
     thresh_key):
     """ Extract the appropriate predictions and calculate metrics
         Compare predicted max or onset peak flux to the max observed
         flux in the model's prediction window.
 
+        If a model provides peak_intensity_max, then will compare with
+        observed max flux in prediction window. If that field isn't present in
+        the prediction, then will compare the peak_intensity.
+
     """
+    peak_key = 'Predicted SEP Peak Intensity Max (Max Flux)'
+    
     #Select rows to calculate metrics
     sub = df.loc[(df['Model'] == model) & (df['Energy Channel Key'] ==
         energy_key) & (df['Threshold Key'] == thresh_key)]
@@ -894,44 +978,77 @@ def max_flux_in_pred_win_metrics(df, dict, model, energy_key,
             'Observed SEP Peak Intensity Max (Max Flux) Time',
             'Observed SEP Peak Intensity Max (Max Flux) Units',
             'Predicted SEP Peak Intensity Max (Max Flux)',
-            'Predicted SEP Peak Intensity Max (Max Flux) Units',
-            'Peak Intensity Max Match Status']]
-    sub = sub.loc[(sub['Peak Intensity Max Match Status'] == 'SEP Event')]
-    sub = sub.dropna() #drop rows containing None
+            'Predicted SEP Peak Intensity Max (Max Flux) Units']]
+    sub_test = sub['Predicted SEP Peak Intensity Max (Max Flux)'].dropna()
+    #drop rows containing None
       
       
     #Models may fill only the Peak Intensity field. It can be ambiguous whether
     #the prediction is intended as onset peak or max flux. If no max flux field
     #found, then compare Peak Intensity to observed Max Flux.
-    if sub.empty:
+    if sub_test.empty:
         sub = df.loc[(df['Model'] == model) & (df['Energy Channel Key'] ==
             energy_key) & (df['Threshold Key'] == thresh_key)]
-        sub = sub[['Model','Energy Channel Key', 'Threshold Key', 'Forecast Source',
+        sub = sub[['Model','Energy Channel Key', 'Threshold Key',
+            'Forecast Source',
             'Prediction Window Start', 'Prediction Window End',
             'Observed SEP Threshold Crossing Time',
             'Observed SEP Peak Intensity Max (Max Flux)',
             'Observed SEP Peak Intensity Max (Max Flux) Time',
             'Observed SEP Peak Intensity Max (Max Flux) Units',
             'Predicted SEP Peak Intensity (Onset Peak)',
-            'Predicted SEP Peak Intensity (Onset Peak) Units',
-            'Peak Intensity Match Status']]
-        sub = sub.loc[(sub['Peak Intensity Match Status'] == 'SEP Event')]
-        sub = sub.dropna() #drop rows containing None
-        if sub.empty:
+            'Predicted SEP Peak Intensity (Onset Peak) Units']]
+        sub_test = sub['Predicted SEP Peak Intensity (Onset Peak)'].dropna()
+        #drop rows containing None
+        if sub_test.empty:
             return
-        sub = sub.rename(columns={'Predicted SEP Peak Intensity (Onset Peak)': 'Predicted SEP Peak Intensity Max (Max Flux)', 'Predicted SEP Peak Intensity (Onset Peak) Units': 'Predicted SEP Peak Intensity Max (Max Flux) Units', 'Peak Intensity Match Status': 'Peak Intensity Max Match Status'})
-        print("peak_intensity_max_intuitive_metrics: Model " + model + " did not explicitly "
-            "include a peak_intensity_max field. Comparing peak_intensity to observed "
-            "max flux.")
+        peak_key = 'Predicted SEP Peak Intensity (Onset Peak)'
+        print("max_flux_in_pred_win: Model " + model + " did not explicitly "
+            "include a peak_intensity_max field. Comparing peak_intensity to "
+            "observed max flux in the prediction window.")
 
+
+    #Check if the observed SEP max time is inside the prediction window.
+    sep_peak_in = (sub['Observed SEP Peak Intensity Max (Max Flux) Time'] < sub['Prediction Window End'] &&
+        sub['Observed SEP Peak Intensity Max (Max Flux) Time'] >=
+        sub['Prediction Window Start'])
+    sep_peak_in = sep_peak_in.to_list()
+    pw_st = sub['Prediction Window Start'].to_list()
+    pw_end = sub['Prediction Window End'].to_list()
+
+    obs = sub['Observed SEP Peak Intensity Max (Max Flux)'].to_list()
+    obs_time = sub['Observed SEP Peak Intensity Max (Max Flux) Time'].to_list()
+    units = sub.iloc[0]['Observed SEP Peak Intensity Max (Max Flux) Units']
+    pred = sub[peak_key].to_list()
+
+    #If there is not an observed SEP max flux in the prediction window,
+    #look at the observations at that time and pick out the maximum value
+    for i in range(len(sep_peak_in)):
+        if not sep_peak_in[i]:
+            max_flux = get_max_in_pw(tpdf, ek, pw_st[i], pw_end[i])
+            obs[i] = max_flux
+            obs_time[i] = max_flux_time
+
+    #Put values back into a dataframe so can be written out.
+    mx_flx_dict = {'Model': sub['Model'].to_list(),
+            'Energy Channel Key': sub['Energy Channel Key'].to_list(),
+            'Forecast Source': sub['Forecast Source'].to_list(),
+            'Prediction Window Start': pw_st,
+            'Prediction Window End': pw_end,
+            'Observed SEP Threshold Crossing Time': sub['Observed SEP Threshold Crossing Time'].to_list(),
+            'Observed Max Flux in Prediction Window': obs,
+            'Observed Max Flux Time': obs_time,
+            'Observed Max Flux Units': [units]*len(obs)
+            peak_key: pred,
+            peak_key + ' Units': sub[peak_key + ' Units'].to_list()
+            }
+    mx_flx_df = pd.DataFrame(mx_flx_dict)
 
     thr = thresh_key.strip().split(".")
     thresh_fnm = thr[0] + "_" + thr[1]
-    write_df(sub, "peak_intensity_max_selections_" + model + "_" + energy_key.strip() + "_" + thresh_fnm)
+    write_df(mx_flx_df, "max_flux_in_pred_win_selections_" + model + "_" + energy_key.strip() + "_" + thresh_fnm)
 
-    obs = sub['Observed SEP Peak Intensity Max (Max Flux)'].to_list()
-    units = sub.iloc[0]['Observed SEP Peak Intensity Max (Max Flux) Units']
-    pred = sub['Predicted SEP Peak Intensity Max (Max Flux)'].to_list()
+
  
     if len(obs) > 1:
         #PEARSON CORRELATION
@@ -946,11 +1063,11 @@ def max_flux_in_pred_win_metrics(df, dict, model, energy_key,
 
         #Correlation Plot
         corr_plot = plt_tools.correlation_plot(obs, pred,
-        "Peak Intensity Max (Max Flux) Correlation", xlabel="Observations",
+        "Max Flux in Prediction Window Correlation", xlabel="Observations",
         ylabel=("Model Predictions (" + str(units) + ")"),
-        value="Peak Intensity Max (Max Flux)", use_log = True)
+        value="Max Flux in Prediction Window", use_log = True)
 
-        figname = config.outpath + '/plots/Correlation_peak_intensity_max_' + model + "_" \
+        figname = config.outpath + '/plots/Correlation_max_flux_in_pred_win_' + model + "_" \
                 + energy_key.strip() + "_" + thresh_fnm + ".pdf"
         corr_plot.savefig(figname, dpi=300, bbox_inches='tight')
         corr_plot.close()
@@ -1605,6 +1722,10 @@ def calculate_intuitive_metrics(df, model_names, all_energy_channels,
     peak_intensity_max_time_dict = initialize_time_dict()
     awt_dict = initialize_awt_dict()
 
+    #A dataframe containing observed flux time profiles for all
+    #energy channels and all observations matched to predictions
+    tpdf = fill_tp_dataframe(df, all_energy_channels)
+    
     
     for model in model_names:
         for ek in all_energy_channels:
@@ -1628,6 +1749,9 @@ def calculate_intuitive_metrics(df, model_names, all_energy_channels,
                     peak_intensity_max_time_dict, model, ek, tk)
                 all_clear_intuitive_metrics(df, all_clear_dict, model, ek, tk)
                 time_profile_intuitive_metrics(df, profile_dict, model, ek, tk)
+                max_flux_in_pred_win_metrics(df, tpdf, max_dict, model, ek, tk)
+
+
 
     print("calculate_intuitive_validation: Completed calculating all metrics: " + str(datetime.datetime.now()))
 
