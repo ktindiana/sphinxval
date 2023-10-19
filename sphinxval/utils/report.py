@@ -301,20 +301,22 @@ def build_metrics_table(metrics, column_labels, metric_start_index):
                 if plot_path == '':
                     plot_string = ''
                 else:
-                    print(plot_path)
-                    print(len(plot_path))
-                    plot_path = '/plots/' + plot_path.split('plots')[1] 
-                    full_path = os.getcwd().replace('\\', '/').replace('sphinxval', '') + plot_path
+                    plot_path = config.outpath + '/plots/' + plot_path.split('plots')[1] 
+                    full_path = os.getcwd().replace('\\', '/') + plot_path
                     print(full_path)
                     print(os.path.exists(full_path))
  
                     if os.path.exists(full_path) and plot_path != '':
-                        # new_path = convert_pdf_to_png(plot_path)
                         plot_string += '![](' + full_path + ')\n\n'
                     else:
                         plot_string = ''
     
     if plot_string == '':
+        if 'plot_path' in locals():
+            if plot_path == '':
+                None
+            else:
+                print('Not displaying ' + plot_path)
         plot_string = 'No image files found.\n\n'
     return metrics_table_string, plot_string
 
