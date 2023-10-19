@@ -301,8 +301,9 @@ def build_metrics_table(metrics, column_labels, metric_start_index):
                 if plot_path == '':
                     plot_string = ''
                 else:
-                    plot_path = config.outpath + '/plots/' + plot_path.split('plots')[1] 
+                    plot_path = config.outpath.replace('.', '') + '/plots/' + plot_path.split('plots')[1] 
                     full_path = os.getcwd().replace('\\', '/') + plot_path
+                    full_path = full_path.replace('//', '/')
                     print(full_path)
                     print(os.path.exists(full_path))
  
