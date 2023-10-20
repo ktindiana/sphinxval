@@ -47,7 +47,8 @@ def switch_error_func(metric, y_true, y_pred):
     error : array-like
         Error between forecast and observation
     """
-
+    if len(y_true) < 1: return None
+    
     func = {
         'E': calc_E,
         'AE': calc_AE,
