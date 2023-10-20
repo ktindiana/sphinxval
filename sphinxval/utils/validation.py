@@ -404,34 +404,43 @@ def fill_tp_dataframe(df, all_energy_channels):
                 each energy channel
                 
     """
-    dict = {}
+    tpdf = {}
     for ek in all_energy_channels:
-        dict.update({"Time " + ek: []})
-        dict.update({"Flux " + ek: []})
+        tpdf.update({ek: None})
     
     for ek in all_energy_channels:
         sub = df.loc[df['Energy Channel Key'] == ek]
         #Extract only the unique filenames for time profiles in ek energy
         #channel
         all_tp = resume.identify_unique(sub, 'Observed Time Profile')
-        for tp in all_tp:
-            dt, flx = profile.read_single_time_profile(tp)
-             dict["Time " + ek].extend(dt)
-             dict["Flux " + ek].extend(flx)
-             
+        all_dates = []
+        all_fluxes = []
+        for tp in all_tp: #Can be multiple obs files
+            tp = tp.strip().split(",")
+            for fnm in tp:
+                dt, flx = profile.read_single_time_profile(fnm)
+                if dt == []: continue
+                all_dates.append(dt)
+                all_fluxes.append(flx)
+        
+
         #Sort all of the fluxes in time order
-        sortidx = sorted(range(len(dict["Time " + ek])),
-                        key = lambda k, dict["Time " + ek][k])
-        dict["Time " + ek] = sorted(dict["Time " + ek])
-        dict["Flux " + ek] = [dict["Flux " + ek][i] for i in sortidx]
+        first_dates = [all_dates[k][0] for k in range(len(all_dates))]
+        sortidx = sorted(range(len(first_dates)),
+                        key = lambda k: first_dates[k])
+        dict = {"Time": [], "Flux": []}
+        for idx in sortidx:
+            dict["Time"].extend(all_dates[idx])
+            dict["Flux"].extend(all_fluxes[idx])
+        
 
-        time = dict["Time " + ek]
-        flux = dict["Flux " + ek]
-        plt_tools.plot_time_profile([time],[flux],[ek],uselog_y=True)
-        plt.show()
+#        time = dict["Time"]
+#        flux = dict["Flux"]
+#        plt_tools.plot_time_profile([time],[flux],[ek],uselog_y=True)
+#        plt.show()
 
-
-    tpdf = pd.DataFrame(dict)
+        sortdf = pd.DataFrame(dict)
+        tpdf[ek] = sortdf
     
     return tpdf
     
@@ -942,11 +951,13 @@ def get_max_in_pw(tpdf, ek, pw_st, pw_end):
             :max_flux_time: (pandas datetime) time of max flux
         
     """
-    sub = tpdf[["Time " + ek], ["Flux " + ek]]
-    sub = sub.iloc[(sub["Time " + ek] < pw_end && sub["Time " + ek] >= pw_st)]
-    max_flux = sub["Flux " + ek].max()
-    times = sub.loc[(sub["Flux " + ek] == max_flux)]
-    times = times.to_list()
+    sub = tpdf[ek]
+    sub = sub.loc[(sub["Time"] < pw_end) & (sub["Time"] >= pw_st)]
+    if sub.empty: return None, pd.NaT
+    
+    max_flux = sub["Flux"].max()
+    times = sub.loc[(sub["Flux"] == max_flux)]
+    times = times["Time"].to_list()
     max_flux_time = times[0]
     
     return max_flux, max_flux_time
@@ -1009,9 +1020,9 @@ def max_flux_in_pred_win_metrics(df, tpdf, dict, model, energy_key,
 
 
     #Check if the observed SEP max time is inside the prediction window.
-    sep_peak_in = (sub['Observed SEP Peak Intensity Max (Max Flux) Time'] < sub['Prediction Window End'] &&
-        sub['Observed SEP Peak Intensity Max (Max Flux) Time'] >=
-        sub['Prediction Window Start'])
+    sep_peak_in = ((sub['Observed SEP Peak Intensity Max (Max Flux) Time'] < sub['Prediction Window End']) &
+        (sub['Observed SEP Peak Intensity Max (Max Flux) Time'] >=
+        sub['Prediction Window Start']))
     sep_peak_in = sep_peak_in.to_list()
     pw_st = sub['Prediction Window Start'].to_list()
     pw_end = sub['Prediction Window End'].to_list()
@@ -1025,9 +1036,14 @@ def max_flux_in_pred_win_metrics(df, tpdf, dict, model, energy_key,
     #look at the observations at that time and pick out the maximum value
     for i in range(len(sep_peak_in)):
         if not sep_peak_in[i]:
-            max_flux = get_max_in_pw(tpdf, ek, pw_st[i], pw_end[i])
+            max_flux, max_flux_time = get_max_in_pw(tpdf, energy_key, pw_st[i], pw_end[i])
+            #no times in prediction window
+            if max_flux == None or np.isnan(max_flux): continue
+            if max_flux_time == pd.NaT or max_flux_time == None: continue
             obs[i] = max_flux
             obs_time[i] = max_flux_time
+
+
 
     #Put values back into a dataframe so can be written out.
     mx_flx_dict = {'Model': sub['Model'].to_list(),
@@ -1038,11 +1054,14 @@ def max_flux_in_pred_win_metrics(df, tpdf, dict, model, energy_key,
             'Observed SEP Threshold Crossing Time': sub['Observed SEP Threshold Crossing Time'].to_list(),
             'Observed Max Flux in Prediction Window': obs,
             'Observed Max Flux Time': obs_time,
-            'Observed Max Flux Units': [units]*len(obs)
+            'Observed Max Flux Units': [units]*len(obs),
             peak_key: pred,
             peak_key + ' Units': sub[peak_key + ' Units'].to_list()
             }
     mx_flx_df = pd.DataFrame(mx_flx_dict)
+    mx_flx_df = mx_flx_df.dropna() #Remove any rows with none or Nan
+    obs = mx_flx_df['Observed Max Flux in Prediction Window']
+    pred = mx_flx_df[peak_key]
 
     thr = thresh_key.strip().split(".")
     thresh_fnm = thr[0] + "_" + thr[1]
@@ -1721,6 +1740,7 @@ def calculate_intuitive_metrics(df, model_names, all_energy_channels,
     peak_intensity_time_dict = initialize_time_dict()
     peak_intensity_max_time_dict = initialize_time_dict()
     awt_dict = initialize_awt_dict()
+    max_dict = initialize_flux_dict() #max in prediction window
 
     #A dataframe containing observed flux time profiles for all
     #energy channels and all observations matched to predictions
@@ -1767,6 +1787,7 @@ def calculate_intuitive_metrics(df, model_names, all_energy_channels,
     peak_intensity_max_time_metrics_df = pd.DataFrame(peak_intensity_max_time_dict)
     all_clear_metrics_df = pd.DataFrame(all_clear_dict)
     time_profile_metrics_df = pd.DataFrame(profile_dict)
+    max_metrics_df = pd.DataFrame(max_dict)
 
 
     if not prob_metrics_df.empty:
@@ -1793,6 +1814,8 @@ def calculate_intuitive_metrics(df, model_names, all_energy_channels,
         write_df(all_clear_metrics_df, "all_clear_metrics")
     if not time_profile_metrics_df.empty:
         write_df(time_profile_metrics_df, "time_profile_metrics")
+    if not max_metrics_df.empty:
+        write_df(max_metrics_df, "max_in_pred_win_metrics")
 
     print("calculate_intuitive_validation: Wrote out all metrics to file: " + str(datetime.datetime.now()))
 
