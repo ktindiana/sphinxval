@@ -180,11 +180,21 @@ def build_info_events_table_peak_intensity(filename, sphinx_dataframe):
 
 def build_info_events_table_peak_intensity_max(filename, sphinx_dataframe):
     data = pd.read_pickle(filename)
-    subset = data[['Prediction Window Start', 'Prediction Window End', 'Observed SEP Peak Intensity Max (Max Flux)', 'Predicted SEP Peak Intensity Max (Max Flux)']]
+
+    subset_list = ['Prediction Window Start', 'Prediction Window End']
+    columns = data.columns.to_list()
+    for i in range(0, len(columns)):
+        if 'Observed SEP Peak Intensity' in columns[i]:
+            if not ('Units' in columns[i]):
+                subset_list.append(columns[i])
+        elif 'Predicted SEP Peak Intensity' in columns[i]:
+            if not ('Units' in columns[i]):
+                subset_list.append(columns[i])
+    subset = data[subset_list]
     subset.insert(0, 'Observatory', 'dummy')
     selection_index = list(data.index)
     subset['Observatory'] = sphinx_dataframe.loc[selection_index, 'Observatory'].to_list()
-    subset = subset.rename(columns={'observed sep peak intensity (max flux)' : 'Observations', 'Predicted SEP Peak Intensity (Max Flux)' : 'Predictions'})
+    subset = subset.rename(columns={'Observed SEP Peak Intensity (Max Flux)' : 'Observations', 'Predicted SEP Peak Intensity (Max Flux)' : 'Predictions'})
     output = '\n' + subset.to_markdown(index=False) + '\n'
     n_events = len(data)
     return output, n_events
