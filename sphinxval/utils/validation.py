@@ -1550,6 +1550,7 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
 
     
     for i in range(len(obs_profs)):
+        print("Time profile of " + pred_profs[i] + " compared to observations.")
         all_obs_dates = []
         all_obs_flux = []
         #Read in and combine time profiles of observations inside
@@ -1565,7 +1566,7 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
             all_obs_flux)
         pred_dates, pred_flux = profile.read_single_time_profile(pred_paths[i]
             + pred_profs[i])
-        if pred_dates == []:
+        if pred_flux == []:
             return
         
         #Remove zeros
@@ -1602,7 +1603,6 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
         y_label="Particle Intensity", uselog_x = False, uselog_y = True,
         date_format="year", showplot=False,
         closeplot=True, saveplot=True, figname = tpfigname)
-        print("Wrote out " + tpfigname)
         
         #Check for None and Zero values and remove
         if trim_pred_flux == [] or trim_obs_flux == []: continue
@@ -1635,10 +1635,6 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
             if len(obs) > 1:
                 #PEARSON CORRELATION
                 r_lin, r_log = metrics.switch_error_func('r',obs,pred)
-                if r_log == None:
-                    print("PEARSONS LOG IS NONE")
-                    print(obs)
-                    print(pred)
                 s_lin = None
                 s_log = None
                 
@@ -1653,13 +1649,11 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
                 ylabel=("Model Predictions"),
                 use_log = True)
 
-                figname = config.outpath + '/plots/Correlation_time_profile_' +\
-                    model + "_" \
-                    + energy_key.strip() + "_" + thresh_fnm \
+                figname = config.outpath + '/plots/Correlation_time_profile_'\
+                    + model + "_" + energy_key.strip() + "_" + thresh_fnm \
                     + "_" + str_date + ".pdf"
                 corr_plot.savefig(figname, dpi=300, bbox_inches='tight')
                 corr_plot.close()
-
 
     #Calculate mean of metrics for all time profiles
     if len(sepE) > 1:
