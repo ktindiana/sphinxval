@@ -2,7 +2,7 @@ datapath = './data'
 modelpath = './model'
 outpath = './output'
 referencepath = './reference'
-reportpath = './validation_reports'
+reportpath = './reports'
 
 #Advanced Warning Time
 awt_cut = 96

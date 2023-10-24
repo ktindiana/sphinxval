@@ -9,4 +9,4 @@ data/*
 model/*
 output/*
 plots/*
-validation_reports/*
+reports/*
