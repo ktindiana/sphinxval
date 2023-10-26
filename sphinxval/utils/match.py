@@ -2303,7 +2303,7 @@ def match_all_forecasts(all_energy_channels, model_names, obs_objs,
                                 fcast_thresh = cfg.mm_obs_threshold
                                 print("Predicted threshold associated with \'mismatched\' "
                                 "observational threshold " + str(fcast_thresh))
-                
+                                sphinx.mismatch = True
                 
                 #Check if this threshold is present in the observations
                 #Can only be compared if present in both
