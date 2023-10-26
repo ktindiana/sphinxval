@@ -5,6 +5,7 @@
 from . import validation_json_handler as vjson
 from . import units_handler as vunits
 from . import object_handler as objh
+from . import config as cfg
 import datetime
 import pandas as pd
 
@@ -593,8 +594,9 @@ class Forecast():
             if 'flare' in trig:
                 (last_data_time, start_time, peak_time, end_time,
                  location, lat, lon, intensity, integrated_intensity, noaa_region) = vjson.dict_to_flare(trig['flare'])
-                flare = Flare("id", last_data_time, start_time, peak_time, end_time,
-                              location, lat, lon, intensity, integrated_intensity, noaa_region)
+                flare = Flare("id", last_data_time, start_time, peak_time,
+                            end_time, location, lat, lon, intensity,
+                            integrated_intensity, noaa_region)
                 self.flares.append(flare)
                 continue
  
@@ -1914,6 +1916,18 @@ class SPHINX:
         return
 
 
+    def allowed_thresh_mismatch(self, pred_threshold, obs_threshold):
+        """ Check if thresholds allowed via config file.
+        """
+        #If allow mismatching energy channels and thresholds
+        if cfg.do_mismatch:
+            if cfg.mm_model in self.prediction.short_name:
+                if pred_threshold == cfg.mm_pred_threshold and \
+                    obs_threshold == cfg.mm_obs_threshold:
+                    return True
+                    
+        return False
+    
 
     def return_predicted_all_clear(self):
         """ Pull out the predicted value.
@@ -1934,17 +1948,36 @@ class SPHINX:
             'threshold_units': self.prediction.all_clear.threshold_units}
         obs_threshold = {'threshold': self.observed_all_clear.threshold,
             'threshold_units': self.observed_all_clear.threshold_units}
-            
+        match_status = self.all_clear_match_status
+        
+        #If allow mismatching energy channels and thresholds
+        if self.allowed_thresh_mismatch(pred_threshold, obs_threshold):
+            return predicted, match_status
+        
         #Thresholds must match
         if pred_threshold != obs_threshold:
             predicted = None
             match_status = "No Matching Threshold"
             return predicted, match_status
 
-        match_status = self.all_clear_match_status
 
         return predicted, match_status
 
+
+    def mismatch_thresh_key(self, pred_thresh):
+        """ Check if predicted threshold should be matched up with a
+            different observed threshold. Make a new thresh key.
+            
+        """
+        tk = objh.threshold_to_key(pred_thresh)
+        if pred_thresh not in self.thresholds:
+            if cfg.do_mismatch and cfg.mm_model in self.prediction.short_name:
+                if pred_thresh == cfg.mm_pred_threshold:
+                    obs_thresh = cfg.mm_obs_threshold
+                    if cfg.mm_obs_threshold in self.thresholds:
+                        tk = objh.threshold_to_key(cfg.mm_obs_threshold)
+                        
+        return tk
 
 
     def return_predicted_probability(self, thresh_key):
@@ -1966,12 +1999,14 @@ class SPHINX:
         for prob_obj in self.prediction.probabilities:
             pred_thresh = {'threshold': prob_obj.threshold,
                 'threshold_units': prob_obj.threshold_units}
-            #Check that predicted threshold was applied in the observations
-            if pred_thresh not in self.thresholds:
-                continue
-
             tk = objh.threshold_to_key(pred_thresh)
+            
+            #Check that predicted threshold was applied in the observations
+            #If mismatch allowed, will make a new tk that matches observations
+            tk = self.mismatch_thresh_key(pred_thresh)
+            
             if tk != thresh_key:
+                match_status = "No Matching Threshold"
                 continue
             
             pred_prob = prob_obj.probability_value
@@ -2000,13 +2035,15 @@ class SPHINX:
         for obj in self.prediction.threshold_crossings:
             pred_thresh = {'threshold': obj.threshold,
                 'threshold_units': obj.threshold_units}
+            tk = objh.threshold_to_key(pred_thresh)
+
             #Check that predicted threshold was applied in the observations
-            if pred_thresh not in self.thresholds:
+            #If mismatch allowed, will make a new tk that matches observations
+            tk = self.mismatch_thresh_key(pred_thresh)
+            
+            if tk != thresh_key:
                 match_status = "No Matching Threshold"
                 continue
-
-            tk = objh.threshold_to_key(pred_thresh)
-            if tk != thresh_key: continue
  
             predicted = obj.crossing_time
             match_status = self.sep_match_status[tk]
@@ -2033,13 +2070,19 @@ class SPHINX:
         for obj in self.prediction.event_lengths:
             pred_thresh = {'threshold': obj.threshold,
                 'threshold_units': obj.threshold_units}
+            tk = objh.threshold_to_key(pred_thresh)
             #Check that predicted threshold was applied in the observations
-            if obj.threshold != None and pred_thresh not in self.thresholds:
-                match_status = "No Matching Threshold"
+            if obj.threshold == None:
                 continue
 
+            #Check that predicted threshold was applied in the observations
+            #If mismatch allowed, will make a new tk that matches observations
+            tk = self.mismatch_thresh_key(pred_thresh)
+
             tk = objh.threshold_to_key(pred_thresh)
-            if tk != thresh_key: continue
+            if tk != thresh_key:
+                match_status = "No Matching Threshold"
+                continue
 
             predicted = obj.start_time
             match_status = self.sep_match_status[tk]
@@ -2067,13 +2110,18 @@ class SPHINX:
         for obj in self.prediction.event_lengths:
             pred_thresh = {'threshold': obj.threshold,
                 'threshold_units': obj.threshold_units}
+            tk = objh.threshold_to_key(pred_thresh)
             #Check that predicted threshold was applied in the observations
-            if obj.threshold != None and pred_thresh not in self.thresholds:
-                match_status = "No Matching Threshold"
+            if obj.threshold == None:
                 continue
 
-            tk = objh.threshold_to_key(pred_thresh)
-            if tk != thresh_key: continue
+            #Check that predicted threshold was applied in the observations
+            #If mismatch allowed, will make a new tk that matches observations
+            tk = self.mismatch_thresh_key(pred_thresh)
+            
+            if tk != thresh_key:
+                match_status = "No Matching Threshold"
+                continue
 
             predicted = obj.end_time
             match_status = self.end_time_match_status[tk]
@@ -2121,13 +2169,19 @@ class SPHINX:
         for obj in self.prediction.fluences:
             pred_thresh = {'threshold': obj.threshold,
                 'threshold_units': obj.threshold_units}
+            tk = objh.threshold_to_key(pred_thresh)
+            
             #Check that predicted threshold was applied in the observations
-            if obj.threshold != None and pred_thresh not in self.thresholds:
-                match_status = "No Matching Threshold"
+            if obj.threshold == None:
                 continue
 
-            tk = objh.threshold_to_key(pred_thresh)
-            if tk != thresh_key: continue
+            #Check that predicted threshold was applied in the observations
+            #If mismatch allowed, will make a new tk that matches observations
+            tk = self.mismatch_thresh_key(pred_thresh)
+
+            if tk != thresh_key:
+                match_status = "No Matching Threshold"
+                continue
 
             match_status = self.sep_match_status[tk]
             predicted = obj.fluence
@@ -2169,13 +2223,21 @@ class SPHINX:
         for obj in self.prediction.fluence_spectra:
             pred_thresh = {'threshold': obj.threshold_start,
                 'threshold_units': obj.threshold_units}
+            tk = objh.threshold_to_key(pred_thresh)
+
             #Check that predicted threshold was applied in the observations
-            if obj.threshold_start != None and pred_thresh not in self.thresholds:
+            if obj.threshold_start == None:
+                continue
+
+            #Check that predicted threshold was applied in the observations
+            #If mismatch allowed, will make a new tk that matches observations
+            tk = self.mismatch_thresh_key(pred_thresh)
+
+            if tk != thresh_key:
                 match_status = "No Matching Threshold"
                 continue
 
-            tk = objh.threshold_to_key(pred_thresh)
-            if tk != thresh_key: continue
+
 
             match_status = self.sep_match_status[tk]
             predicted = obj.fluence_spectrum
