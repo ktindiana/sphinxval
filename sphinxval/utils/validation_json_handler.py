@@ -1,5 +1,6 @@
 from . import classes as cl
 from . import object_handler as objh
+from . import config as cfg
 import json
 import calendar
 import datetime
@@ -232,6 +233,7 @@ def observation_object_from_json(obs_json, energy_channel):
 def forecast_object_from_json(fcast_json, energy_channel):
     """ Create a Forecast object from json file.
     """
+            
     fcast = cl.Forecast(energy_channel)
     fcast.add_triggers_from_dict(fcast_json)
     fcast.add_inputs_from_dict(fcast_json)
@@ -289,9 +291,20 @@ def load_objects_from_json(data_list, model_list):
             obs_objs[key].append(obj)
             
     for json in model_jsons:
+        short_name = json["sep_forecast_submission"]["model"]["short_name"]
         for channel in all_energy_channels:
             key = objh.energy_channel_to_key(channel)
-            obj = forecast_object_from_json(json, channel)
+            pred_channel = channel
+
+            #If mismatched observation and prediction energy channels
+            #enabled, then find the correct prediction energy channel
+            #to load.
+            if cfg.do_mismatch:
+                if cfg.mm_model in short_name:
+                    if channel == cfg.mm_obs_energy_channel:
+                        pred_channel = cfg.mm_pred_energy_channel
+                
+            obj = forecast_object_from_json(json, pred_channel)
             #skip if energy block wasn't present in json
             if obj.prediction_window_start == None:
                 continue

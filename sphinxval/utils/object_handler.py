@@ -134,6 +134,34 @@ def key_to_threshold(key):
 
 
 
+def compare_energy_channels(channel1, channel2):
+    """ Returns true if energy channels are the same,
+        False if they are not.
+        
+    """
+    ek1 = energy_channel_to_key(channel1)
+    ek2 = energy_channel_to_key(channel2)
+    
+    if ek1 == ek2:
+        return True
+    else:
+        return False
+
+
+def compare_thresholds(thresh1, thresh2):
+    """ Returns true if thresholds are the same,
+        False if they are not.
+        
+    """
+    tk1 = threshold_to_key(thresh1)
+    tk2 = threshold_to_key(thresh2)
+    
+    if tk1 == tk2:
+        return True
+    else:
+        return False
+
+
 def identify_all_thresholds(all_obj):
     """ Find all the thresholds applied to a given energy channel.
         Thresholds are applied in:
