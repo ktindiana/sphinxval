@@ -350,6 +350,10 @@ def prepare_outdirs():
         if not os.path.isdir(outdir):
             os.mkdir(outdir)
     
+    if not os.path.isdir(config.reportpath):
+        os.mkdir(config.reportpath)
+
+
 
 def write_df(df, name, log=True):
     """Writes a pandas dataframe to the standard location in multiple formats
@@ -739,7 +743,42 @@ def probabilty_intuitive_metrics(df, dict, model, energy_key, thresh_key):
     dict['Linear Correlation Coefficient'].append(lin_corr_coeff)
     dict['Rank Order Correlation Coefficient'].append(rank_corr_coeff)
 
-    
+
+def calc_all_flux_metrics(obs, pred):
+    """ Calculate the metrics used for assessing fluxes.
+    """
+    ME = None
+    MedE = None
+    MAE = None
+    MedAE = None
+    MLE = None
+    MedLE = None
+    MALE = None
+    MedALE = None
+    MAPE = None
+    MAR = None #Mean Accuracy Ratio
+    RMSE = None
+    RMSLE = None
+    MdSA = None
+
+    if len(obs) >= 1:
+        ME = statistics.mean(metrics.switch_error_func('E',obs,pred))
+        MedE = statistics.median(metrics.switch_error_func('E',obs,pred))
+        MAE = statistics.mean(metrics.switch_error_func('AE',obs,pred))
+        MedAE = statistics.median(metrics.switch_error_func('AE',obs,pred))
+        MLE = statistics.mean(metrics.switch_error_func('LE',obs,pred))
+        MedLE = statistics.median(metrics.switch_error_func('LE',obs,pred))
+        MALE = statistics.mean(metrics.switch_error_func('ALE',obs,pred))
+        MedALE = statistics.median(metrics.switch_error_func('ALE',obs,pred))
+        MAPE = statistics.mean(metrics.switch_error_func('APE',obs,pred))
+        MAR = None #Mean Accuracy Ratio
+        RMSE = metrics.switch_error_func('RMSE',obs,pred)
+        RMSLE = metrics.switch_error_func('RMSLE',obs,pred)
+        MdSA = None
+
+    return ME, MedE, MAE, MedAE, MLE, MedLE, MALE, MedALE, MAPE, MAR, RMSE,\
+        RMSLE, MdSA
+
 
 def peak_intensity_intuitive_metrics(df, dict, model, energy_key, thresh_key):
     """ Extract the appropriate predictions and calculate metrics
@@ -802,19 +841,8 @@ def peak_intensity_intuitive_metrics(df, dict, model, energy_key, thresh_key):
         figname = ""
 
 
-    ME = statistics.mean(metrics.switch_error_func('E',obs,pred))
-    MedE = statistics.median(metrics.switch_error_func('E',obs,pred))
-    MAE = statistics.mean(metrics.switch_error_func('AE',obs,pred))
-    MedAE = statistics.median(metrics.switch_error_func('AE',obs,pred))
-    MLE = statistics.mean(metrics.switch_error_func('LE',obs,pred))
-    MedLE = statistics.median(metrics.switch_error_func('LE',obs,pred))
-    MALE = statistics.mean(metrics.switch_error_func('ALE',obs,pred))
-    MedALE = statistics.median(metrics.switch_error_func('ALE',obs,pred))
-    MAPE = statistics.mean(metrics.switch_error_func('APE',obs,pred))
-    MAR = None #Mean Accuracy Ratio
-    RMSE = metrics.switch_error_func('RMSE',obs,pred)
-    RMSLE = metrics.switch_error_func('RMSLE',obs,pred)
-    MdSA = None
+    ME, MedE, MAE, MedAE, MLE, MedLE, MALE, MedALE, MAPE, MAR, RMSE,\
+        RMSLE, MdSA = calc_all_flux_metrics(obs, pred)
 
     ####METRICS
     fill_flux_metrics_dict(dict, model, energy_key, thresh_key, figname,
@@ -913,19 +941,8 @@ def peak_intensity_max_intuitive_metrics(df, dict, model, energy_key,
         figname = ""
 
 
-    ME = statistics.mean(metrics.switch_error_func('E',obs,pred))
-    MedE = statistics.median(metrics.switch_error_func('E',obs,pred))
-    MAE = statistics.mean(metrics.switch_error_func('AE',obs,pred))
-    MedAE = statistics.median(metrics.switch_error_func('AE',obs,pred))
-    MLE = statistics.mean(metrics.switch_error_func('LE',obs,pred))
-    MedLE = statistics.median(metrics.switch_error_func('LE',obs,pred))
-    MALE = statistics.mean(metrics.switch_error_func('ALE',obs,pred))
-    MedALE = statistics.median(metrics.switch_error_func('ALE',obs,pred))
-    MAPE = statistics.mean(metrics.switch_error_func('APE',obs,pred))
-    MAR = None #Mean Accuracy Ratio
-    RMSE = metrics.switch_error_func('RMSE',obs,pred)
-    RMSLE = metrics.switch_error_func('RMSLE',obs,pred)
-    MdSA = None
+    ME, MedE, MAE, MedAE, MLE, MedLE, MALE, MedALE, MAPE, MAR, RMSE,\
+        RMSLE, MdSA = calc_all_flux_metrics(obs, pred)
 
     ####METRICS
     fill_flux_metrics_dict(dict, model, energy_key, thresh_key, figname,
@@ -1132,19 +1149,8 @@ def max_flux_in_pred_win_metrics(df, tpdf, dict, model, energy_key,
         figname = ""
 
 
-    ME = statistics.mean(metrics.switch_error_func('E',obs,pred))
-    MedE = statistics.median(metrics.switch_error_func('E',obs,pred))
-    MAE = statistics.mean(metrics.switch_error_func('AE',obs,pred))
-    MedAE = statistics.median(metrics.switch_error_func('AE',obs,pred))
-    MLE = statistics.mean(metrics.switch_error_func('LE',obs,pred))
-    MedLE = statistics.median(metrics.switch_error_func('LE',obs,pred))
-    MALE = statistics.mean(metrics.switch_error_func('ALE',obs,pred))
-    MedALE = statistics.median(metrics.switch_error_func('ALE',obs,pred))
-    MAPE = statistics.mean(metrics.switch_error_func('APE',obs,pred))
-    MAR = None #Mean Accuracy Ratio
-    RMSE = metrics.switch_error_func('RMSE',obs,pred)
-    RMSLE = metrics.switch_error_func('RMSLE',obs,pred)
-    MdSA = None
+    ME, MedE, MAE, MedAE, MLE, MedLE, MALE, MedALE, MAPE, MAR, RMSE,\
+        RMSLE, MdSA = calc_all_flux_metrics(obs, pred)
 
     ####METRICS
     fill_flux_metrics_dict(dict, model, energy_key, thresh_key, figname,
@@ -1215,19 +1221,8 @@ def fluence_intuitive_metrics(df, dict, model, energy_key,
         figname = ""
 
 
-    ME = statistics.mean(metrics.switch_error_func('E',obs,pred))
-    MedE = statistics.median(metrics.switch_error_func('E',obs,pred))
-    MAE = statistics.mean(metrics.switch_error_func('AE',obs,pred))
-    MedAE = statistics.median(metrics.switch_error_func('AE',obs,pred))
-    MLE = statistics.mean(metrics.switch_error_func('LE',obs,pred))
-    MedLE = statistics.median(metrics.switch_error_func('LE',obs,pred))
-    MALE = statistics.mean(metrics.switch_error_func('ALE',obs,pred))
-    MedALE = statistics.median(metrics.switch_error_func('ALE',obs,pred))
-    MAPE = statistics.mean(metrics.switch_error_func('APE',obs,pred))
-    MAR = None #Mean Accuracy Ratio
-    RMSE = metrics.switch_error_func('RMSE',obs,pred)
-    RMSLE = metrics.switch_error_func('RMSLE',obs,pred)
-    MdSA = None
+    ME, MedE, MAE, MedAE, MLE, MedLE, MALE, MedALE, MAPE, MAR, RMSE,\
+        RMSLE, MdSA = calc_all_flux_metrics(obs, pred)
 
     ####METRICS
     fill_flux_metrics_dict(dict, model, energy_key, thresh_key, figname,
@@ -1859,7 +1854,7 @@ def calculate_intuitive_metrics(df, model_names, all_energy_channels,
     if not time_profile_metrics_df.empty:
         write_df(time_profile_metrics_df, "time_profile_metrics")
     if not max_metrics_df.empty:
-        write_df(max_metrics_df, "max_in_pred_win_metrics")
+        write_df(max_metrics_df, "max_flux_in_pred_win_metrics")
 
     print("calculate_intuitive_validation: Wrote out all metrics to file: " + str(datetime.datetime.now()))
 
@@ -1924,17 +1919,23 @@ def intuitive_validation(matched_sphinx, model_names, all_energy_channels,
     #For each model and predicted quantity, create arrays of paired up values
     #so can calculate metrics
     print("intuitive_validation: Filling dataframe with information from matched sphinx objects: " + str(datetime.datetime.now()))
+
     df = fill_df(matched_sphinx, model_names,
             all_energy_channels, all_observed_thresholds, DoResume)
+ 
     print("intuitive_validation: Completed filling dataframe (and possibly writing): " + str(datetime.datetime.now()))
 
     ###RESUME WILL APPEND DF TO PREVIOUS DF
     print("Resume boolean is " + str(DoResume))
     if DoResume:
         print("intuitive_validation: Resuming from a previous run. Concatenating new dataframe and previous dataframe: " + str(datetime.datetime.now()))
+ 
         df = pd.concat([r_df, df], ignore_index=True)
+
         print("intuitive_validation: Completed concatenation. Writing out to file: " + str(datetime.datetime.now()))
+
         write_df(df, "SPHINX_dataframe")
+
         print("intuitive_validation: Completed writing SPHINX_dataframe to file: " + str(datetime.datetime.now()))
 
         model_names = resume.identify_unique(df, 'Model')
@@ -1942,6 +1943,8 @@ def intuitive_validation(matched_sphinx, model_names, all_energy_channels,
         all_observed_thresholds = resume.identify_thresholds_per_energy_channel(df)
 
     print("intuitive_validation: Calculating metrics from dataframe: " + str(datetime.datetime.now()))
+ 
     calculate_intuitive_metrics(df, model_names, all_energy_channels,
             all_observed_thresholds)
+ 
     print("intuitive_validation: Validation process complete: " + str(datetime.datetime.now()))
