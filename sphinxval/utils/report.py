@@ -180,11 +180,21 @@ def build_info_events_table_peak_intensity(filename, sphinx_dataframe):
 
 def build_info_events_table_peak_intensity_max(filename, sphinx_dataframe):
     data = pd.read_pickle(filename)
-    subset = data[['Prediction Window Start', 'Prediction Window End', 'Observed SEP Peak Intensity Max (Max Flux)', 'Predicted SEP Peak Intensity Max (Max Flux)']]
+
+    subset_list = ['Prediction Window Start', 'Prediction Window End']
+    columns = data.columns.to_list()
+    for i in range(0, len(columns)):
+        if 'Observed SEP Peak Intensity' in columns[i]:
+            if not ('Units' in columns[i]):
+                subset_list.append(columns[i])
+        elif 'Predicted SEP Peak Intensity' in columns[i]:
+            if not ('Units' in columns[i]):
+                subset_list.append(columns[i])
+    subset = data[subset_list]
     subset.insert(0, 'Observatory', 'dummy')
     selection_index = list(data.index)
     subset['Observatory'] = sphinx_dataframe.loc[selection_index, 'Observatory'].to_list()
-    subset = subset.rename(columns={'observed sep peak intensity (max flux)' : 'Observations', 'Predicted SEP Peak Intensity (Max Flux)' : 'Predictions'})
+    subset = subset.rename(columns={'Observed SEP Peak Intensity (Max Flux)' : 'Observations', 'Predicted SEP Peak Intensity (Max Flux)' : 'Predictions'})
     output = '\n' + subset.to_markdown(index=False) + '\n'
     n_events = len(data)
     return output, n_events
@@ -199,6 +209,26 @@ def build_info_events_table_fluence(filename, sphinx_dataframe):
     output = '\n' + subset.to_markdown(index=False) + '\n'
     n_events = len(data)
     return output, n_events
+
+def build_info_events_table_max_flux_in_pred_win(filename, sphinx_dataframe):
+    data = pd.read_pickle(filename)
+    subset_list = ['Prediction Window Start', 'Prediction Window End', 'Observed Max Flux in Prediction Window', 'Observed Max Flux Time']
+    columns = data.columns.to_list()
+    for i in range(0, len(columns)):
+        if 'Predicted SEP Peak Intensity' in columns[i]:
+            if not ('Units' in columns[i]):
+                subset_list.append(columns[i])
+    subset = data[subset_list]
+    subset.insert(0, 'Observatory', 'dummy')
+    selection_index = list(data.index)
+    subset['Observatory'] = sphinx_dataframe.loc[selection_index, 'Observatory'].to_list()
+    subset = subset.rename(columns={'Observed SEP Fluence' : 'Observations', 'Predicted SEP Fluence' : 'Predictions'})
+    output = '\n' + subset.to_markdown(index=False) + '\n'
+    n_events = len(data)
+    return output, n_events
+
+
+
 
 def build_info_events_table_probability(filename, sphinx_dataframe):
     data = pd.read_pickle(filename)
@@ -314,7 +344,7 @@ def build_metrics_table(metrics, column_labels, metric_start_index):
                         plot_string_list.append(plot_string)
                     else:
                         plot_string = ''
-    
+ 
     if plot_string == '':
         if 'plot_path' in locals():
             if plot_path == '':
@@ -323,6 +353,7 @@ def build_metrics_table(metrics, column_labels, metric_start_index):
                 print('Not displaying ' + plot_path)
         plot_string = 'No image files found.\n\n'
         plot_string_list.append(plot_string)
+    print(plot_string_list)
     return metrics_table_string, plot_string_list
 
 def build_all_clear_skill_scores_section(filename, model, sphinx_dataframe):
@@ -519,6 +550,47 @@ def build_fluence_section(filename, model, sphinx_dataframe):
         text += add_collapsible_segment_end()
     text += add_collapsible_segment_end()    
     return text    
+
+
+def build_max_flux_in_pred_win_section(filename, model, sphinx_dataframe):
+    column_labels = list(pd.read_pickle(filename).columns)[1:]
+    data = pd.read_pickle(filename).to_numpy()
+    metrics = []
+    for i in range(0, len(data)):
+        if model == data[i][0]:
+            metrics.append(data[i])
+    text = ''
+    if len(metrics) > 0:    
+        text += add_collapsible_segment_start('Max Flux in Prediction Window Metrics', '')
+    for i in range(0, len(metrics)):
+        energy_threshold = '> ' + metrics[i][1].split('.')[1] + ' MeV'
+        obs_threshold = metrics[i][2].split('.')[1] + ' pfu'
+        pred_threshold = obs_threshold
+        threshold_string = '* Energy Channel: ' + energy_threshold + '\n'
+        threshold_string += '* Observations Threshold: ' + obs_threshold + '\n'
+        threshold_string += '* Predictions Threshold: ' + pred_threshold + '\n'
+        selections_filename = output_dir__ + 'max_flux_in_pred_win_selections_' + model + '_' + metrics[i][1] + '_threshold_' + obs_threshold.rstrip(' pfu') + '.pkl'
+        info_events_table, n_events = build_info_events_table_max_flux_in_pred_win(selections_filename, sphinx_dataframe)
+        info_string = 'Instruments and SEP events used in validation<br>'
+        info_string += 'n = ' + str(n_events) + '<br>'
+        info_string += '...\n' # need to complete
+        info_string += info_events_table
+        metrics_string = "Metrics for $log_{10}$(model) - $log_{10}$(Observations).<br>Positive values indicate model overprediction.<br>Negative values indicate model underprediction.<br>r_lin and r_log indicate the pearson's correlation coefficient calculated using values or $log_{10}$(values), respectively."
+        metrics_string_, plot_string_list = build_metrics_table(metrics[i], [None] + column_labels, 4)
+        metrics_string += metrics_string_
+        text += add_collapsible_segment_start(energy_threshold, '')
+        text += add_collapsible_segment('Thresholds Applied', threshold_string)
+        text += add_collapsible_segment('Validation Info', info_string)
+        text += add_collapsible_segment('Metrics', metrics_string)
+        for j in range(0, len(plot_string_list)):
+            # DETERMINE plot_type
+            plot_type = get_plot_type(plot_string_list[j])
+            text += add_collapsible_segment('Plot: ' + plot_type, plot_string_list[j])
+        text += add_collapsible_segment_end()
+    text += add_collapsible_segment_end()    
+    return text    
+
+
 
 def build_probability_section(filename, model, sphinx_dataframe):
     column_labels = list(pd.read_pickle(filename).columns)[1:]
@@ -937,7 +1009,6 @@ def report(output_dir):
     for i in range(0, len(models)):
         model = models[i]
    
-
         # check which sections to include
         all_clear = False
         peak_intensity = False
@@ -945,6 +1016,7 @@ def report(output_dir):
         peak_intensity_time = False
         threshold_crossing = False
         fluence = False
+        max_flux_in_pred_win = False
         probability = False
         start_time = False
         duration = False
@@ -969,6 +1041,9 @@ def report(output_dir):
                 continue       
             if ('fluence_selections_' + model) in files[j]:
                 fluence = True
+                continue
+            if ('max_flux_in_pred_win_selections_' + model) in files[j]:
+                max_flux_in_pred_win = True
                 continue
             if ('probability_selections_' + model) in files[j]:
                 probability = True
@@ -1034,6 +1109,13 @@ def report(output_dir):
             validation_text += '* Fluence\n'
             markdown_text += build_fluence_section(fluence_filename, model, sphinx_dataframe)
         
+        if max_flux_in_pred_win:
+            ### build the maximum flux in prediction window metrics
+            max_flux_in_pred_win_filename = output_dir__ + 'max_in_pred_win_metrics.pkl'
+            # max_flux_in_pred_win_filename = output_dir__ + 'max_flux_in_pred_win_metrics.pkl'
+            validation_text += '* Max Flux in Prediction Window\n'
+            markdown_text += build_max_flux_in_pred_win_section(max_flux_in_pred_win_filename, model, sphinx_dataframe)
+
         if probability:    
             ### build the probability metrics
             probability_filename = output_dir__ + 'probability_metrics.pkl'
