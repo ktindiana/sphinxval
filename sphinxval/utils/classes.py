@@ -1390,6 +1390,11 @@ class SPHINX:
         self.prediction = None #Forecast object
 
         #MATCHING INFORMATION
+        #If user specified in config file to allow the observations
+        #and predictions to have two different energy channels and thresholds,
+        #self.mismatch will be changed to True to indicate this choice in the
+        #matching.
+        self.mismatch = False
         #Observations with observations windows that overlap with
         #the prediction windows - first rough cut at matching
         self.prediction_observation_windows_overlap = [] #array of Observation objs
