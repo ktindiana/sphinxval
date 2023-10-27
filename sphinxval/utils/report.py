@@ -335,7 +335,7 @@ def build_metrics_table(metrics, column_labels, metric_start_index):
                     
                     plot_path = output_directory + '/plots/' + plot_path.split('plots')[1] 
                     full_path = os.getcwd().replace('\\', '/') + plot_path
-                    full_path = full_path.replace('//', '/')
+                    full_path = full_path.replace('//', '/') + '.pdf'
                     print(full_path)
                     print(os.path.exists(full_path))
  
@@ -356,6 +356,54 @@ def build_metrics_table(metrics, column_labels, metric_start_index):
     print(plot_string_list)
     return metrics_table_string, plot_string_list
 
+def build_all_clear_skill_scores_section(filename, model, sphinx_dataframe):
+    data = pd.read_pickle(filename)
+    data = data[data.Model == model]
+    column_labels = data.columns
+    text = ''
+    number_rows = data.shape[0]
+    if number_rows > 0:
+        text += add_collapsible_segment_start('All Clear Skill Scores', '')
+
+    skill_score_table_labels = list(column_labels[9:])
+    print(skill_score_table_labels)
+    for i in range(0, number_rows):
+        energy_threshold = '> ' + data.iloc[i]['Energy Channel'].split('.')[1] + ' MeV'
+        obs_threshold = data.iloc[i]['Threshold'].split('.')[1] + ' pfu'
+        pred_threshold = data.iloc[i]['Prediction Threshold'].split('.')[1] + ' pfu'
+        threshold_string = '* Energy Channel: ' + energy_threshold + '\n'
+        threshold_string += '* Observation Threshold: ' + obs_threshold + '\n'
+        threshold_string += '* Predictions Threshold: ' + pred_threshold + '\n'
+        hits = data.iloc[i]["All Clear 'True Positives' (Hits)"]
+        false_alarms = data.iloc[i]["All Clear 'False Positives' (False Alarms)"]
+        correct_negatives = data.iloc[i]["All Clear 'True Negatives' (Correct Negatives)"]
+        misses = data.iloc[i]["All Clear 'False Negatives' (Misses)"]
+        contingency_table_values = [hits, false_alarms, correct_negatives, misses]
+        contingency_table_string = build_contingency_table(*contingency_table_values)
+        info_string = 'Instruments and SEP events used in validation<br>'
+        info_string += 'N = ' + str(sum(contingency_table_values)) + '<br>'
+        info_string += '...\n' # need to complete
+        # include selections
+        print(model)
+        print(data.iloc[i]['Energy Channel'])
+        selections_filename = output_dir__ + 'all_clear_selections_' + model + '_' + data.iloc[i]['Energy Channel'] + '_threshold_' + obs_threshold.rstrip(' pfu') + '.pkl'
+        info_string += build_info_events_table(selections_filename)
+        skill_score_table_values = data.iloc[i, 9:]
+        skill_score_table_string = build_skill_score_table(skill_score_table_labels, skill_score_table_values)
+        text += add_collapsible_segment_start(energy_threshold, '')
+        text += add_collapsible_segment('Thresholds Applied', threshold_string)
+        text += add_collapsible_segment('Validation Info', info_string)
+        text += add_collapsible_segment('Contingency Table', contingency_table_string)
+        text += add_collapsible_segment('Skill Scores Table', skill_score_table_string)
+        text += add_collapsible_segment_end()
+    text += add_collapsible_segment_end()
+    return text
+
+
+
+
+
+'''
 def build_all_clear_skill_scores_section(filename, model, sphinx_dataframe):
     column_labels = list(pd.read_pickle(filename).columns)[1:]
     data = pd.read_pickle(filename).to_numpy()
@@ -381,6 +429,7 @@ def build_all_clear_skill_scores_section(filename, model, sphinx_dataframe):
         contingency_table_values = metrics[i][3:3 + 4]
         contingency_table_string = build_contingency_table(*contingency_table_values)
         info_string = 'Instruments and SEP events used in validation<br>'
+        print(contingency_table_values)
         info_string += 'N = ' + str(sum(contingency_table_values)) + '<br>'
         info_string += '...\n' # need to complete
         
@@ -398,6 +447,7 @@ def build_all_clear_skill_scores_section(filename, model, sphinx_dataframe):
         text += add_collapsible_segment_end()
     text += add_collapsible_segment_end()
     return text
+'''
 
 def build_peak_intensity_section(filename, model, sphinx_dataframe):
     column_labels = list(pd.read_pickle(filename).columns)[1:]
@@ -1111,8 +1161,7 @@ def report(output_dir):
         
         if max_flux_in_pred_win:
             ### build the maximum flux in prediction window metrics
-            max_flux_in_pred_win_filename = output_dir__ + 'max_in_pred_win_metrics.pkl'
-            # max_flux_in_pred_win_filename = output_dir__ + 'max_flux_in_pred_win_metrics.pkl'
+            max_flux_in_pred_win_filename = output_dir__ + 'max_flux_in_pred_win_metrics.pkl'
             validation_text += '* Max Flux in Prediction Window\n'
             markdown_text += build_max_flux_in_pred_win_section(max_flux_in_pred_win_filename, model, sphinx_dataframe)
 
