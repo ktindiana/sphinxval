@@ -2212,6 +2212,12 @@ def match_all_forecasts(all_energy_channels, model_names, obs_objs,
             #One SPHINX object contains all matching information and
             #predicted and observed values (and all thresholds)
             sphinx = objh.initialize_sphinx(fcast)
+            
+            #If this is a set of predictions and observations that are
+            #allowed to have a set of mismatched energy channels and
+            #thresholds
+            if energy_key == cfg.mm_energy_key:
+                sphinx.mismatch = True
 
             #Get Trigger and Input information
             last_eruption_time, last_trigger_time =\
@@ -2289,21 +2295,18 @@ def match_all_forecasts(all_energy_channels, model_names, obs_objs,
             
             for f_thresh in all_fcast_thresholds:
                 print("Checking Threshold: " + str(f_thresh))
-                
                 fcast_thresh = f_thresh
-                #If mismatched energy channels and thresholds allowed, check
-                #for appropriate threshold in observations.
-                if cfg.do_mismatch:
-                    if cfg.mm_model in fcast.short_name:
-                        obs_energy_channel = cfg.mm_obs_energy_channel
-                        obs_ek = objh.energy_channel_to_key(obs_energy_channel)
-                        if energy_key == obs_ek:
-                            if cfg.mm_pred_threshold == f_thresh:
-                                #Set threshold to the observed one that is being compared
-                                fcast_thresh = cfg.mm_obs_threshold
-                                print("Predicted threshold associated with \'mismatched\' "
+                
+                #If this is a mismatch energy channel, then only want to
+                #test the mismatched threshold specified in config.py
+                if sphinx.mismatch:
+                    if f_thresh == cfg.mm_pred_threshold:
+                        #set threshold as the observed threshold
+                        fcast_thresh = cfg.mm_obs_threshold
+                        print("Predicted threshold associated with \'mismatched\' "
                                 "observational threshold " + str(fcast_thresh))
-                                sphinx.mismatch = True
+                    else:
+                        continue
                 
                 #Check if this threshold is present in the observations
                 #Can only be compared if present in both
