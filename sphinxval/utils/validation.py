@@ -684,8 +684,7 @@ def fill_all_clear_dict(dict, model, energy_key, thresh_key, pred_energy_key,
 
 
 
-def all_clear_intuitive_metrics(df, dict, model, energy_key, thresh_key,
-        mismatch):
+def all_clear_intuitive_metrics(df, dict, model, energy_key, thresh_key):
     """ Extract the appropriate predictions and calculate metrics
         All Clear
 
@@ -696,8 +695,6 @@ def all_clear_intuitive_metrics(df, dict, model, energy_key, thresh_key,
     #Select rows to calculate metrics
     sub = df.loc[(df['Model'] == model) & (df['Energy Channel Key'] ==
         energy_key) & (df['Threshold Key'] == thresh_key)]
-
-    sub = sub.loc[(sub['Mismatch Allowed'] == mismatch)]
 
     sub = sub[['Model','Energy Channel Key', 'Threshold Key',
             'Mismatch Allowed',
@@ -711,7 +708,7 @@ def all_clear_intuitive_metrics(df, dict, model, energy_key, thresh_key,
       
     if sub.empty:
         return
-
+    mismatch = bool(sub.iloc[0]['Mismatch Allowed'])
     pred_energy_key = str(sub.iloc[0]['Prediction Energy Channel Key'])
     pred_thresh_key = str(sub.iloc[0]['Prediction Threshold Key'])
     
@@ -745,8 +742,7 @@ def all_clear_intuitive_metrics(df, dict, model, energy_key, thresh_key,
     return sub
 
 
-def probabilty_intuitive_metrics(df, dict, model, energy_key, thresh_key,
-        mismatch):
+def probabilty_intuitive_metrics(df, dict, model, energy_key, thresh_key):
     """ Extract the appropriate predictions and calculate metrics
         Probability
 
@@ -764,8 +760,6 @@ def probabilty_intuitive_metrics(df, dict, model, energy_key, thresh_key,
     sub = df.loc[(df['Model'] == model) & (df['Energy Channel Key'] ==
         energy_key) & (df['Threshold Key'] == thresh_key)]
 
-    sub = sub.loc[(sub['Mismatch Allowed'] == mismatch)]
-
     sub = sub[['Model','Energy Channel Key', 'Threshold Key',
             'Mismatch Allowed',
             'Prediction Energy Channel Key', 'Prediction Threshold Key',
@@ -779,6 +773,7 @@ def probabilty_intuitive_metrics(df, dict, model, energy_key, thresh_key,
     if sub.empty:
         return
 
+    mismatch = bool(sub.iloc[0]['Mismatch Allowed'])
     pred_energy_key = str(sub.iloc[0]['Prediction Energy Channel Key'])
     pred_thresh_key = str(sub.iloc[0]['Prediction Threshold Key'])
 
@@ -848,8 +843,7 @@ def calc_all_flux_metrics(obs, pred):
 
 
 
-def peak_intensity_intuitive_metrics(df, dict, model, energy_key, thresh_key,
-        mismatch):
+def peak_intensity_intuitive_metrics(df, dict, model, energy_key, thresh_key):
     """ Extract the appropriate predictions and calculate metrics
         Peak intensity
 
@@ -858,8 +852,6 @@ def peak_intensity_intuitive_metrics(df, dict, model, energy_key, thresh_key,
     sub = df.loc[(df['Model'] == model) & (df['Energy Channel Key'] ==
         energy_key) & (df['Threshold Key'] == thresh_key)]
 
-    sub = sub.loc[(sub['Mismatch Allowed'] == mismatch)]
-    
     sub = sub[['Model','Energy Channel Key', 'Threshold Key',
             'Mismatch Allowed',
             'Prediction Energy Channel Key', 'Prediction Threshold Key',
@@ -877,6 +869,7 @@ def peak_intensity_intuitive_metrics(df, dict, model, energy_key, thresh_key,
     if sub.empty:
         return
 
+    mismatch = bool(sub.iloc[0]['Mismatch Allowed'])
     pred_energy_key = str(sub.iloc[0]['Prediction Energy Channel Key'])
     pred_thresh_key = str(sub.iloc[0]['Prediction Threshold Key'])
     
@@ -937,7 +930,7 @@ def peak_intensity_intuitive_metrics(df, dict, model, energy_key, thresh_key,
 
 
 def peak_intensity_max_intuitive_metrics(df, dict, model, energy_key,
-    thresh_key, mismatch):
+    thresh_key):
     """ Extract the appropriate predictions and calculate metrics
         Peak intensity
 
@@ -947,8 +940,6 @@ def peak_intensity_max_intuitive_metrics(df, dict, model, energy_key,
     #Select rows to calculate metrics
     sub = df.loc[(df['Model'] == model) & (df['Energy Channel Key'] ==
         energy_key) & (df['Threshold Key'] == thresh_key)]
-
-    sub = sub.loc[(sub['Mismatch Allowed'] == mismatch)]
 
     sub = sub[['Model','Energy Channel Key', 'Threshold Key',
             'Mismatch Allowed',
@@ -971,7 +962,6 @@ def peak_intensity_max_intuitive_metrics(df, dict, model, energy_key,
     if sub.empty:
         sub = df.loc[(df['Model'] == model) & (df['Energy Channel Key'] ==
             energy_key) & (df['Threshold Key'] == thresh_key)]
-        sub = sub.loc[(sub['Mismatch Allowed'] == mismatch)]
         sub = sub[['Model','Energy Channel Key', 'Threshold Key',
             'Mismatch Allowed',
             'Prediction Energy Channel Key', 'Prediction Threshold Key',
@@ -993,7 +983,7 @@ def peak_intensity_max_intuitive_metrics(df, dict, model, energy_key,
                 "include a peak_intensity_max field. Comparing "
                 "peak_intensity to observed max flux.")
 
-
+    mismatch = bool(sub.iloc[0]['Mismatch Allowed'])
     pred_energy_key = str(sub.iloc[0]['Prediction Energy Channel Key'])
     pred_thresh_key = str(sub.iloc[0]['Prediction Threshold Key'])
 
@@ -1086,7 +1076,7 @@ def get_max_in_pw(tpdf, ek, pw_st, pw_end):
 
 
 def max_flux_in_pred_win_metrics(df, tpdf, dict, model, energy_key,
-    thresh_key, mismatch):
+    thresh_key):
     """ Extract the appropriate predictions and calculate metrics
         Compare predicted max or onset peak flux to the max observed
         flux in the model's prediction window.
@@ -1101,8 +1091,6 @@ def max_flux_in_pred_win_metrics(df, tpdf, dict, model, energy_key,
     #Select rows to calculate metrics
     sub = df.loc[(df['Model'] == model) & (df['Energy Channel Key'] ==
         energy_key) & (df['Threshold Key'] == thresh_key)]
-
-    sub = sub.loc[(sub['Mismatch Allowed'] == mismatch)]
 
     sub = sub[['Model','Energy Channel Key', 'Threshold Key',
             'Mismatch Allowed',
@@ -1125,7 +1113,6 @@ def max_flux_in_pred_win_metrics(df, tpdf, dict, model, energy_key,
     if sub_test.empty:
         sub = df.loc[(df['Model'] == model) & (df['Energy Channel Key'] ==
             energy_key) & (df['Threshold Key'] == thresh_key)]
-        sub = sub.loc[(sub['Mismatch Allowed'] == mismatch)]
 
         sub = sub[['Model','Energy Channel Key', 'Threshold Key',
             'Mismatch Allowed',
@@ -1152,6 +1139,7 @@ def max_flux_in_pred_win_metrics(df, tpdf, dict, model, energy_key,
         + ". Including max fluxes for SEP "
         "events above " + thresh_key + ".")
 
+    mismatch = bool(sub.iloc[0]['Mismatch Allowed'])
     pred_energy_key = str(sub.iloc[0]['Prediction Energy Channel Key'])
     pred_thresh_key = str(sub.iloc[0]['Prediction Threshold Key'])
 
@@ -1283,7 +1271,7 @@ def max_flux_in_pred_win_metrics(df, tpdf, dict, model, energy_key,
 
 
 def fluence_intuitive_metrics(df, dict, model, energy_key,
-    thresh_key, mismatch):
+    thresh_key):
     """ Extract the appropriate predictions and calculate metrics
         Fluence
 
@@ -1292,8 +1280,6 @@ def fluence_intuitive_metrics(df, dict, model, energy_key,
     sub = df.loc[(df['Model'] == model) & (df['Energy Channel Key'] ==
         energy_key) & (df['Threshold Key'] == thresh_key)]
     
-    sub = sub.loc[(sub['Mismatch Allowed'] == mismatch)]
-
     sub = sub[['Model','Energy Channel Key', 'Threshold Key',
             'Mismatch Allowed',
             'Prediction Energy Channel Key', 'Prediction Threshold Key',
@@ -1311,6 +1297,7 @@ def fluence_intuitive_metrics(df, dict, model, energy_key,
     if sub.empty:
         return
 
+    mismatch = bool(sub.iloc[0]['Mismatch Allowed'])
     pred_energy_key = str(sub.iloc[0]['Prediction Energy Channel Key'])
     pred_thresh_key = str(sub.iloc[0]['Prediction Threshold Key'])
 
@@ -1371,7 +1358,7 @@ def fluence_intuitive_metrics(df, dict, model, energy_key,
 
 
 def threshold_crossing_intuitive_metrics(df, dict, model, energy_key,
-    thresh_key, mismatch):
+    thresh_key):
     """ Extract the appropriate predictions and calculate metrics
         Threshold Crossing
 
@@ -1379,8 +1366,6 @@ def threshold_crossing_intuitive_metrics(df, dict, model, energy_key,
     #Select rows to calculate metrics
     sub = df.loc[(df['Model'] == model) & (df['Energy Channel Key'] ==
         energy_key) & (df['Threshold Key'] == thresh_key)]
-
-    sub = sub.loc[(sub['Mismatch Allowed'] == mismatch)]
 
     sub = sub[['Model','Energy Channel Key', 'Threshold Key',
             'Mismatch Allowed',
@@ -1396,6 +1381,7 @@ def threshold_crossing_intuitive_metrics(df, dict, model, energy_key,
     if sub.empty:
         return
 
+    mismatch = bool(sub.iloc[0]['Mismatch Allowed'])
     pred_energy_key = str(sub.iloc[0]['Prediction Energy Channel Key'])
     pred_thresh_key = str(sub.iloc[0]['Prediction Threshold Key'])
 
@@ -1424,8 +1410,7 @@ def threshold_crossing_intuitive_metrics(df, dict, model, energy_key,
     pred_energy_key, pred_thresh_key, ME, MedE, MAE, MedAE)
     
 
-def start_time_intuitive_metrics(df, dict, model, energy_key, thresh_key,
-    mismatch):
+def start_time_intuitive_metrics(df, dict, model, energy_key, thresh_key):
     """ Extract the appropriate predictions and calculate metrics
         Start Time
 
@@ -1433,8 +1418,6 @@ def start_time_intuitive_metrics(df, dict, model, energy_key, thresh_key,
     #Select rows to calculate metrics
     sub = df.loc[(df['Model'] == model) & (df['Energy Channel Key'] ==
         energy_key) & (df['Threshold Key'] == thresh_key)]
-
-    sub = sub.loc[(sub['Mismatch Allowed'] == mismatch)]
 
     sub = sub[['Model','Energy Channel Key', 'Threshold Key',
             'Mismatch Allowed',
@@ -1450,6 +1433,7 @@ def start_time_intuitive_metrics(df, dict, model, energy_key, thresh_key,
     if sub.empty:
         return
 
+    mismatch = bool(sub.iloc[0]['Mismatch Allowed'])
     pred_energy_key = str(sub.iloc[0]['Prediction Energy Channel Key'])
     pred_thresh_key = str(sub.iloc[0]['Prediction Threshold Key'])
 
@@ -1479,7 +1463,7 @@ def start_time_intuitive_metrics(df, dict, model, energy_key, thresh_key,
 
 
 def end_time_intuitive_metrics(df, dict, model, energy_key,
-    thresh_key, mismatch):
+    thresh_key):
     """ Extract the appropriate predictions and calculate metrics
         End Time
 
@@ -1487,8 +1471,6 @@ def end_time_intuitive_metrics(df, dict, model, energy_key,
     #Select rows to calculate metrics
     sub = df.loc[(df['Model'] == model) & (df['Energy Channel Key'] ==
         energy_key) & (df['Threshold Key'] == thresh_key)]
-
-    sub = sub.loc[(sub['Mismatch Allowed'] == mismatch)]
 
     sub = sub[['Model','Energy Channel Key', 'Threshold Key',
             'Mismatch Allowed',
@@ -1504,6 +1486,7 @@ def end_time_intuitive_metrics(df, dict, model, energy_key,
     if sub.empty:
         return
 
+    mismatch = bool(sub.iloc[0]['Mismatch Allowed'])
     pred_energy_key = str(sub.iloc[0]['Prediction Energy Channel Key'])
     pred_thresh_key = str(sub.iloc[0]['Prediction Threshold Key'])
 
@@ -1532,8 +1515,7 @@ def end_time_intuitive_metrics(df, dict, model, energy_key,
  
 
 
-def duration_intuitive_metrics(df, dict, model, energy_key, thresh_key,
-        mismatch):
+def duration_intuitive_metrics(df, dict, model, energy_key, thresh_key):
     """ Extract the appropriate predictions and calculate metrics
         Start Time
 
@@ -1541,8 +1523,6 @@ def duration_intuitive_metrics(df, dict, model, energy_key, thresh_key,
     #Select rows to calculate metrics
     sub = df.loc[(df['Model'] == model) & (df['Energy Channel Key'] ==
         energy_key) & (df['Threshold Key'] == thresh_key)]
-
-    sub = sub.loc[(sub['Mismatch Allowed'] == mismatch)]
 
     sub = sub[['Model','Energy Channel Key', 'Threshold Key',
             'Mismatch Allowed',
@@ -1558,6 +1538,7 @@ def duration_intuitive_metrics(df, dict, model, energy_key, thresh_key,
     if sub.empty:
         return
 
+    mismatch = bool(sub.iloc[0]['Mismatch Allowed'])
     pred_energy_key = str(sub.iloc[0]['Prediction Energy Channel Key'])
     pred_thresh_key = str(sub.iloc[0]['Prediction Threshold Key'])
 
@@ -1588,7 +1569,7 @@ def duration_intuitive_metrics(df, dict, model, energy_key, thresh_key,
 
 
 def peak_intensity_time_intuitive_metrics(df, dict, model, energy_key,
-    thresh_key, mismatch):
+    thresh_key):
     """ Extract the appropriate predictions and calculate metrics
         Peak Intensity Time
 
@@ -1596,8 +1577,6 @@ def peak_intensity_time_intuitive_metrics(df, dict, model, energy_key,
     #Select rows to calculate metrics
     sub = df.loc[(df['Model'] == model) & (df['Energy Channel Key'] ==
         energy_key) & (df['Threshold Key'] == thresh_key)]
-
-    sub = sub.loc[(sub['Mismatch Allowed'] == mismatch)]
 
     sub = sub[['Model','Energy Channel Key', 'Threshold Key',
             'Mismatch Allowed',
@@ -1614,6 +1593,7 @@ def peak_intensity_time_intuitive_metrics(df, dict, model, energy_key,
     if sub.empty:
         return
 
+    mismatch = bool(sub.iloc[0]['Mismatch Allowed'])
     pred_energy_key = str(sub.iloc[0]['Prediction Energy Channel Key'])
     pred_thresh_key = str(sub.iloc[0]['Prediction Threshold Key'])
 
@@ -1660,7 +1640,7 @@ def date_to_string(date):
 
 
 def peak_intensity_max_time_intuitive_metrics(df, dict, model, energy_key,
-    thresh_key, mismatch):
+    thresh_key):
     """ Extract the appropriate predictions and calculate metrics
         Peak Intensity Max Time
 
@@ -1668,8 +1648,6 @@ def peak_intensity_max_time_intuitive_metrics(df, dict, model, energy_key,
     #Select rows to calculate metrics
     sub = df.loc[(df['Model'] == model) & (df['Energy Channel Key'] ==
         energy_key) & (df['Threshold Key'] == thresh_key)]
-
-    sub = sub.loc[(sub['Mismatch Allowed'] == mismatch)]
 
     sub = sub[['Model','Energy Channel Key', 'Threshold Key',
             'Mismatch Allowed',
@@ -1686,6 +1664,7 @@ def peak_intensity_max_time_intuitive_metrics(df, dict, model, energy_key,
     if sub.empty:
         return
 
+    mismatch = bool(sub.iloc[0]['Mismatch Allowed'])
     pred_energy_key = str(sub.iloc[0]['Prediction Energy Channel Key'])
     pred_thresh_key = str(sub.iloc[0]['Prediction Threshold Key'])
 
@@ -1715,7 +1694,7 @@ def peak_intensity_max_time_intuitive_metrics(df, dict, model, energy_key,
 
 
 def time_profile_intuitive_metrics(df, dict, model, energy_key,
-    thresh_key, mismatch):
+    thresh_key):
     """ Extract the appropriate predictions and calculate metrics
         Time Profile
 
@@ -1723,8 +1702,6 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
     #Select rows to calculate metrics
     sub = df.loc[(df['Model'] == model) & (df['Energy Channel Key'] ==
         energy_key) & (df['Threshold Key'] == thresh_key)]
-
-    sub = sub.loc[(sub['Mismatch Allowed'] == mismatch)]
 
     sub = sub[['Model','Energy Channel Key', 'Threshold Key',
             'Mismatch Allowed',
@@ -1745,6 +1722,7 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
     if sub.empty:
         return
 
+    mismatch = bool(sub.iloc[0]['Mismatch Allowed'])
     pred_energy_key = str(sub.iloc[0]['Prediction Energy Channel Key'])
     pred_thresh_key = str(sub.iloc[0]['Prediction Threshold Key'])
 
@@ -2025,39 +2003,25 @@ def calculate_intuitive_metrics(df, model_names, all_energy_channels,
     for model in model_names:
         for ek in all_energy_channels:
             for tk in all_observed_thresholds[ek]:
-
-                mismatch = [False]
-                #If user allows mismatch in config.py
-                if config.do_mismatch and config.mm_model in model:
-                    mm_ek = objh.energy_channel_to_key(config.mm_obs_energy_channel)
-                    mm_tk = objh.threshold_to_key(config.mm_obs_threshold)
-                    if ek == mm_ek and tk == mm_tk:
-                        mismatch.append(True)
-                
-                for mm in mismatch:
-                    probabilty_intuitive_metrics(df, probability_dict,model,
-                        ek,tk,mm)
-                    peak_intensity_intuitive_metrics(df, peak_intensity_dict,
-                        model,ek,tk,mm)
-                    peak_intensity_max_intuitive_metrics(df,
-                        peak_intensity_max_dict,model,ek,tk,mm)
-                    fluence_intuitive_metrics(df,fluence_dict, model,ek,tk,mm)
-                    threshold_crossing_intuitive_metrics(df, thresh_cross_dict,
-                        model,ek,tk,mm)
-                    start_time_intuitive_metrics(df, start_time_dict,
-                        model,ek,tk,mm)
-                    end_time_intuitive_metrics(df, end_time_dict,model,ek,tk,mm)
-                    duration_intuitive_metrics(df, duration_dict,model,ek,tk,mm)
-                    peak_intensity_time_intuitive_metrics(df,
-                        peak_intensity_time_dict,model,ek,tk,mm)
-                    peak_intensity_max_time_intuitive_metrics(df,
-                        peak_intensity_max_time_dict,model,ek,tk,mm)
-                    all_clear_intuitive_metrics(df, all_clear_dict,
-                        model,ek,tk,mm)
-                    time_profile_intuitive_metrics(df, profile_dict,
-                        model,ek,tk,mm)
-                    max_flux_in_pred_win_metrics(df, tpdf, max_dict,
-                        model,ek,tk,mm)
+                probabilty_intuitive_metrics(df, probability_dict,model,ek,tk)
+                peak_intensity_intuitive_metrics(df, peak_intensity_dict,
+                    model,ek,tk)
+                peak_intensity_max_intuitive_metrics(df,
+                    peak_intensity_max_dict,model,ek,tk)
+                fluence_intuitive_metrics(df,fluence_dict, model,ek,tk)
+                threshold_crossing_intuitive_metrics(df, thresh_cross_dict,
+                    model,ek,tk)
+                start_time_intuitive_metrics(df, start_time_dict,
+                    model,ek,tk)
+                end_time_intuitive_metrics(df, end_time_dict,model,ek,tk)
+                duration_intuitive_metrics(df, duration_dict,model,ek,tk)
+                peak_intensity_time_intuitive_metrics(df,
+                    peak_intensity_time_dict,model,ek,tk)
+                peak_intensity_max_time_intuitive_metrics(df,
+                    peak_intensity_max_time_dict,model,ek,tk)
+                all_clear_intuitive_metrics(df, all_clear_dict,model,ek,tk)
+                time_profile_intuitive_metrics(df, profile_dict,model,ek,tk)
+                max_flux_in_pred_win_metrics(df, tpdf, max_dict,model,ek,tk)
 
 
     print("calculate_intuitive_validation: Completed calculating all metrics: " + str(datetime.datetime.now()))

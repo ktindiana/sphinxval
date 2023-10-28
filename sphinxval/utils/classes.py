@@ -1491,7 +1491,7 @@ class SPHINX:
         key = objh.threshold_to_key(threshold)
         
         self.threshold_crossed_in_pred_win.update({key:[]})
-
+        
         #Criteria related to observed threshold crossing times
         self.eruptions_before_threshold_crossing.update({key:[]})
         self.time_difference_eruptions_threshold_crossing.update({key:[]})
@@ -1566,7 +1566,8 @@ class SPHINX:
         print("  Original prediction source: " + self.prediction.source)
         print("  Prediction Issue time: " + str(self.prediction.issue_time))
         print("  Energy Channel: " + str(self.energy_channel))
-
+        print("  User allowed mismatch: " + str(self.mismatch))
+        
         print("-------------------------------------------------------------")
         print("All Observations overlapping with the Prediction Window")
         print("-------------------------------------------------------------")
@@ -1604,6 +1605,8 @@ class SPHINX:
         else:
             for thresh in self.thresholds:
                 print("  " + str(thresh))
+                
+                
 
         print("-------------------------------------------------------------")
         print("Were thresholds crossed inside of the Prediction Window?")
@@ -1956,8 +1959,9 @@ class SPHINX:
         match_status = self.all_clear_match_status
         
         #If allow mismatching energy channels and thresholds
-        if self.allowed_thresh_mismatch(pred_threshold, obs_threshold):
-            return predicted, match_status
+        if self.mismatch:
+            if self.allowed_thresh_mismatch(pred_threshold, obs_threshold):
+                return predicted, match_status
         
         #Thresholds must match
         if pred_threshold != obs_threshold:
@@ -1980,7 +1984,7 @@ class SPHINX:
                 if pred_thresh == cfg.mm_pred_threshold:
                     obs_thresh = cfg.mm_obs_threshold
                     if cfg.mm_obs_threshold in self.thresholds:
-                        tk = objh.threshold_to_key(cfg.mm_obs_threshold)
+                        tk = cfg.mm_obs_tk
                         
         return tk
 
@@ -2008,7 +2012,8 @@ class SPHINX:
             
             #Check that predicted threshold was applied in the observations
             #If mismatch allowed, will make a new tk that matches observations
-            tk = self.mismatch_thresh_key(pred_thresh)
+            if self.mismatch:
+                tk = self.mismatch_thresh_key(pred_thresh)
             
             if tk != thresh_key:
                 match_status = "No Matching Threshold"
@@ -2044,7 +2049,8 @@ class SPHINX:
 
             #Check that predicted threshold was applied in the observations
             #If mismatch allowed, will make a new tk that matches observations
-            tk = self.mismatch_thresh_key(pred_thresh)
+            if self.mismatch:
+                tk = self.mismatch_thresh_key(pred_thresh)
             
             if tk != thresh_key:
                 match_status = "No Matching Threshold"
@@ -2082,9 +2088,9 @@ class SPHINX:
 
             #Check that predicted threshold was applied in the observations
             #If mismatch allowed, will make a new tk that matches observations
-            tk = self.mismatch_thresh_key(pred_thresh)
+            if self.mismatch:
+                tk = self.mismatch_thresh_key(pred_thresh)
 
-            tk = objh.threshold_to_key(pred_thresh)
             if tk != thresh_key:
                 match_status = "No Matching Threshold"
                 continue
@@ -2115,14 +2121,17 @@ class SPHINX:
         for obj in self.prediction.event_lengths:
             pred_thresh = {'threshold': obj.threshold,
                 'threshold_units': obj.threshold_units}
-            tk = objh.threshold_to_key(pred_thresh)
+
             #Check that predicted threshold was applied in the observations
             if obj.threshold == None:
                 continue
 
+            tk = objh.threshold_to_key(pred_thresh)
+            
             #Check that predicted threshold was applied in the observations
             #If mismatch allowed, will make a new tk that matches observations
-            tk = self.mismatch_thresh_key(pred_thresh)
+            if self.mismatch:
+                tk = self.mismatch_thresh_key(pred_thresh)
             
             if tk != thresh_key:
                 match_status = "No Matching Threshold"
@@ -2135,24 +2144,24 @@ class SPHINX:
 
 
 
-    def return_predicted_time_profile(self):
-        """ Pull out the predicted value for the requested threshold.
-            
-            None is returned if threshold isn't found or model
-            doesn't make prediction.
-            
-        """
-        predicted = None
-        match_status = ""
-        
-        #Check if a forecast exists
-        if self.prediction.sep_profile == None:
-            return predicted, match_status
-
-        predicted = self.prediction.sep_profile
-        match_status = self.time_profile_match_status[tk]
-
-        return predicted, match_status
+#    def return_predicted_time_profile(self):
+#        """ Pull out the predicted value for the requested threshold.
+#            
+#            None is returned if threshold isn't found or model
+#            doesn't make prediction.
+#            
+#        """
+#        predicted = None
+#        match_status = ""
+#        
+#        #Check if a forecast exists
+#        if self.prediction.sep_profile == None:
+#            return predicted, match_status
+#
+#        predicted = self.prediction.sep_profile
+#        match_status = self.time_profile_match_status[tk]
+#
+#        return predicted, match_status
 
 
 
@@ -2174,16 +2183,18 @@ class SPHINX:
         for obj in self.prediction.fluences:
             pred_thresh = {'threshold': obj.threshold,
                 'threshold_units': obj.threshold_units}
-            tk = objh.threshold_to_key(pred_thresh)
             
             #Check that predicted threshold was applied in the observations
             if obj.threshold == None:
                 continue
 
+            tk = objh.threshold_to_key(pred_thresh)
+            
             #Check that predicted threshold was applied in the observations
             #If mismatch allowed, will make a new tk that matches observations
-            tk = self.mismatch_thresh_key(pred_thresh)
-
+            if self.mismatch:
+                tk = self.mismatch_thresh_key(pred_thresh)
+                
             if tk != thresh_key:
                 match_status = "No Matching Threshold"
                 continue
@@ -2228,20 +2239,21 @@ class SPHINX:
         for obj in self.prediction.fluence_spectra:
             pred_thresh = {'threshold': obj.threshold_start,
                 'threshold_units': obj.threshold_units}
-            tk = objh.threshold_to_key(pred_thresh)
 
             #Check that predicted threshold was applied in the observations
             if obj.threshold_start == None:
                 continue
 
+            tk = objh.threshold_to_key(pred_thresh)
+            
             #Check that predicted threshold was applied in the observations
             #If mismatch allowed, will make a new tk that matches observations
-            tk = self.mismatch_thresh_key(pred_thresh)
+            if self.mismatch:
+                tk = self.mismatch_thresh_key(pred_thresh)
 
             if tk != thresh_key:
                 match_status = "No Matching Threshold"
                 continue
-
 
 
             match_status = self.sep_match_status[tk]
