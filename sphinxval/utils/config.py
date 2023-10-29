@@ -1,4 +1,5 @@
 from . import units_handler as vunits
+from . import object_handler as objh
 
 datapath = './data'
 modelpath = './model'
@@ -21,6 +22,8 @@ peak_flux_cut = 8e-1
 #Set peak_flux_cut to something above the floor of the detector
 #background
 
+
+##### MISMATCH #######
 #Allow Mismatching Energy Channels and Thresholds
 #Allow different observed and predicted energy channels and thresholds
 #to be compared to each other.
@@ -40,15 +43,24 @@ e_units = vunits.convert_string_to_units("MeV")
 #"MeV^-1*s^-1*cm^-2*sr^-1" (differential)
 t_units = vunits.convert_string_to_units("pfu")
 
-#MODEL INFO
-mm_model = "SEPMOD" #Model short name contains this string
-mm_pred_energy_channel = {"min": 10, "max": -1, "units": e_units}
-mm_pred_threshold = {"threshold": 0.001, "threshold_units": t_units}
+######SET MODEL INFO#####
+mm_model = "COMESEP" #Model short name contains this string
+mm_pred_energy_channel = {"min": 10.0, "max": -1, "units": e_units}
+mm_pred_threshold = {"threshold": 10, "threshold_units": t_units}
 
-#OBSERVATION INFO
-mm_obs_energy_channel = {"min": 10, "max": -1, "units": e_units}
-mm_obs_threshold = {"threshold": 10, "threshold_units": t_units}
+######SET OBSERVATION INFO#######
+mm_obs_energy_channel = {"min": 30.0, "max": -1, "units": e_units}
+mm_obs_threshold = {"threshold": 1.0, "threshold_units": t_units}
 
+###AUTOMATIC
+mm_pred_ek = objh.energy_channel_to_key(mm_pred_energy_channel)
+mm_pred_tk = objh.threshold_to_key(mm_pred_threshold)
+mm_obs_ek = objh.energy_channel_to_key(mm_obs_energy_channel)
+mm_obs_tk = objh.threshold_to_key(mm_obs_threshold)
+mm_energy_key = mm_obs_ek + "_" + mm_pred_ek
+mm_thresh_key = mm_obs_tk + "_" + mm_pred_tk
 
-
-email = "kathryn.whitman@nasa.gov"  #Your email for output JSON files
+#Dictionaries throughout the code will use mm_energy_key to
+#organize observation and model objects.
+#The observed threshold key, mm_obs_tk, will be used in
+#organizing observed and predicted values by threshold.
