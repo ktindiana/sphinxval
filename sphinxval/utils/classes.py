@@ -1021,7 +1021,7 @@ class Forecast():
         return last_time
 
 
-    def valid_forecast(self, last_trigger_time, last_input_time):
+    def valid_forecast(self, verbose=False):
         """ Check that the triggers and inputs are at the same time of
             or before the start of the prediction window. The prediction
             window cannot start before the info required to make
@@ -1033,16 +1033,24 @@ class Forecast():
             
         Output:
         
-            Updated self.valid field
+            Updated self.valid field, or None if there is no trigger
         
         """
+        last_input_time = self.last_input_time()
+        last_eruption_time, last_trigger_time = self.last_trigger_time()
 
         if self.issue_time == None:
-            return
+            self.valid = None
+            if verbose:
+                print("Issue time not available.")
+            return self.valid
             
         if last_trigger_time == None and last_input_time == None:
-            return
-        
+            self.valid = None
+            if verbose:
+                print("Trigger timing data not available.")
+            return self.valid
+
         self.valid = True
         if last_trigger_time != None:
             if self.issue_time < last_trigger_time:
@@ -1052,7 +1060,13 @@ class Forecast():
             if self.issue_time < last_input_time:
                 self.valid = False
 
-        return
+        if verbose and not self.valid:
+            print("Invalid forecast. "
+                  "Issue time (" + str(self.issue_time) + ") must start after last "
+                  "trigger (" + str(last_trigger_time) + ") or input time ("
+                  + str(last_input_time) + ").")
+
+        return self.valid
 
 
     def print_forecast_values(self):
