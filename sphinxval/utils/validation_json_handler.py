@@ -33,22 +33,9 @@ __email__ = "kathryn.whitman@nasa.gov"
 
 def read_in_json(filename):
     """Read in json file """
-    if not os.path.isfile(filename):
-        print("validation_json_handler: could not read in file " \
-                + filename)
-        return {}
-
     with open(filename) as f:
-        try:
-            info=json.load(f)
-        except:
-            print("validation_json_handler: json module could not read in file " \
-                + filename)
-            return {}
-
+        info = json.load(f)
     return info
-
-
 
 def make_ccmc_zulu_time(dt):
     """ Make a datetime string in the format YYYY-MM-DDTHH:MM:SSZ
@@ -172,28 +159,35 @@ def get_path(filepath):
 
 
 ###### SUBROUTINES TO READ JSONS AND CREATE CLASS OBJECTS ##########
-def read_json_list(filename):
-    """Read all of the json files in to a list containing each json entry.
+def read_list_of_jsons(filename):
+    """Read all of the json files in to a list.
     """
-    all_json = []
+    json_files = []
     with open(filename) as list:
         for line in list:
             line = line.lstrip()
             if line == '': continue
             if line[0] == "#": continue
             json_fname = line.rstrip()
-            json_info = read_in_json(json_fname)
-            if json_info == {}:
-                continue
-            
-            print("read in " + json_fname)
-            json_info.update({'filename':json_fname})
-            all_json.append(json_info)
+            json_files.append(json_fname)
+    return json_files
 
+def read_json_list(json_files, verbose=True):
+    """Read all of the json files in to a list containing each json entry.
+    """
+    all_json = []
+    for json_fname in json_files:
+        json_info = read_in_json(json_fname)
+        if json_info == {}:
+            continue
+        if verbose:
+            print("read in " + json_fname)
+        json_info.update({'filename':json_fname})
+        all_json.append(json_info)
     return all_json
 
 
-def identify_all_energy_channels(all_json):
+def identify_all_energy_channels(all_json, kind):
     """ Search through all OBSERVATION jsons and
         create an array of all possible energy channels.
         
@@ -207,11 +201,20 @@ def identify_all_energy_channels(all_json):
             energy channels present in all_jsons
             
     """
+    if kind == 'obsservation':
+        key1 = 'sep_observation_submission'
+        key2 = 'observations'
+    elif kind == 'forecast':
+        key1 = 'sep_forecast_submission'
+        key2 = 'forecasts'
+    else:
+        raise Exception(f"kind={kind} invalid.  Must be 'observation' or 'forecast'")
+    
     all_energy_channels = []
     for entry in all_json:
-        if 'sep_observation_submission' not in entry: continue
+        if key1 not in entry: continue
         
-        obs = entry['sep_observation_submission']['observations']
+        obs = entry[key1][key2]
         for block in obs:
             energy_channel = block['energy_channel']
             if energy_channel not in all_energy_channels:
@@ -266,12 +269,12 @@ def load_objects_from_json(data_list, model_list):
             the forecast jsons
         
     """
-    obs_jsons = read_json_list(data_list)
-    model_jsons = read_json_list(model_list)
+    obs_jsons = read_json_list(read_list_of_jsons(data_list))
+    model_jsons = read_json_list(read_list_of_jsons(model_list))
     
     #Find energy channels available in the OBSERVATIONS
     #Only channels with observed values will be validated
-    all_energy_channels = identify_all_energy_channels(obs_jsons)
+    all_energy_channels = identify_all_energy_channels(obs_jsons, 'observation')
     
     obs_objs = {}
     model_objs = {}
