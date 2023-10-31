@@ -2290,6 +2290,14 @@ def match_all_forecasts(all_energy_channels, model_names, obs_objs,
             #Save forecasted and observed all clear to SPHINX object
             all_fcast_thresholds = fcast.identify_all_thresholds()
             
+            #Even if a mismatch is allowed for a particular model, there may
+            #be some forecasts from the model that don't contain any fields
+            #with the excepted threshold, e.g. all clear = True, so no
+            #event_lengths or threshold_crossings fields
+            if cfg.do_mismatch:
+                if cfg.mm_pred_threshold not in all_fcast_thresholds:
+                    all_fcast_thresholds.append(cfg.mm_pred_threshold)
+            
             observed_peak_flux = None
             observed_peak_flux_max = None
             
