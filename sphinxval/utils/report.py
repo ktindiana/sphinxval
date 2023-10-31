@@ -29,9 +29,7 @@ def formatting_function(value):
         if num_floats >= 5:
             condition = False
     return formatted_value
-
-
-
+    
 def transpose_markdown(text):
     table = text.split('\n')
     output = '| Metric | Value |\n'
@@ -339,30 +337,26 @@ def append_subset_list(selections_filename, subset_list, include_after, exclusio
             include = True
     return subset_list
 
-def build_peak_intensity_section(filename, model, sphinx_dataframe):
+def build_section(filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, skip_label_list=[], rename_dict={}):
     data = pd.read_pickle(filename)
     data = data[data.Model == model]
     column_labels = data.columns    
-    metric_label_start = 'Linear Regression Slope'
     metric_index_start = list(column_labels).index(metric_label_start)
-    skip_label_list = [] # ADD THINGS TO EXCLUDE
     text = ''
     number_rows = data.shape[0]
     if number_rows > 0:
-        text += add_collapsible_segment_start('Peak Intensity Metrics', '')
+        text += add_collapsible_segment_start(section_title + ' Metrics', '')
     for i in range(0, number_rows):
         threshold_string, energy_threshold, obs_threshold, pred_threshold, mismatch_allowed_string = build_threshold_string(data, i)
-        selections_filename = output_dir__ + 'peak_intensity_max_selections_' + model + '_' + data.iloc[i]['Energy Channel'] + '_threshold_' + obs_threshold.rstrip(' pfu') + mismatch_allowed_string + '.pkl'
+        selections_filename = output_dir__ + section_tag + '_selections_' + model + '_' + data.iloc[i]['Energy Channel'] + '_threshold_' + obs_threshold.rstrip(' pfu') + mismatch_allowed_string + '.pkl'
         subset_list = ['Prediction Window Start', 'Prediction Window End']
         subset_list = append_subset_list(selections_filename, subset_list, 'Prediction Window End', 'Units')
-        # rename_dict = {'Observed SEP Peak Intensity (Onset Peak)' : 'Observations', 'Predicted SEP Peak Intensity (Onset Peak)' : 'Predictions'}
-        rename_dict = {}
         info_string_, n_events = build_info_events_table(selections_filename, sphinx_dataframe, subset_list, rename_dict)
         info_string = 'Instruments and SEP events used in validation<br>'
         info_string += 'N = ' + str(n_events) + '<br>'
         info_string += '...\n' # need to complete
         info_string += info_string_
-        metrics_string = "Metrics for $log_{10}$(model) - $log_{10}$(Observations).<br>Positive values indicate model overprediction.<br>Negative values indicate model underprediction.<br>r_lin and r_log indicate the pearson's correlation coefficient calculated using values or $log_{10}$(values), respectively."
+        metrics_string = metrics_description_string + '' 
         metrics_string_, plot_string_list = build_metrics_table(data, i, metric_index_start, skip_label_list)
         metrics_string += metrics_string_
         text += add_collapsible_segment_start(energy_threshold, '')
@@ -375,373 +369,6 @@ def build_peak_intensity_section(filename, model, sphinx_dataframe):
         text += add_collapsible_segment_end()
     text += add_collapsible_segment_end()
     return text
-
-
-def build_peak_intensity_max_section(filename, model, sphinx_dataframe):
-    data = pd.read_pickle(filename)
-    data = data[data.Model == model]
-    column_labels = data.columns    
-    metric_label_start = 'Linear Regression Slope'
-    metric_index_start = list(column_labels).index(metric_label_start)
-    skip_label_list = [] # ADD THINGS TO EXCLUDE
-    text = ''
-    number_rows = data.shape[0]
-    if number_rows > 0:
-        text += add_collapsible_segment_start('Peak Intensity Max Metrics', '')
-    for i in range(0, number_rows):
-        threshold_string, energy_threshold, obs_threshold, pred_threshold, mismatch_allowed_string = build_threshold_string(data, i)
-        selections_filename = output_dir__ + 'peak_intensity_max_selections_' + model + '_' + data.iloc[i]['Energy Channel'] + '_threshold_' + obs_threshold.rstrip(' pfu') + mismatch_allowed_string + '.pkl'
-        subset_list = ['Prediction Window Start', 'Prediction Window End']
-        subset_list = append_subset_list(selections_filename, subset_list, 'Prediction Window End', 'Units')
-        # rename_dict = {'Observed SEP Peak Intensity (Onset Peak)' : 'Observations', 'Predicted SEP Peak Intensity (Onset Peak)' : 'Predictions'}
-        rename_dict = {}
-        info_string_, n_events = build_info_events_table(selections_filename, sphinx_dataframe, subset_list, rename_dict)
-        info_string = 'Instruments and SEP events used in validation<br>'
-        info_string += 'N = ' + str(n_events) + '<br>'
-        info_string += '...\n' # need to complete
-        info_string += info_string_
-        metrics_string = "Metrics for $log_{10}$(model) - $log_{10}$(Observations).<br>Positive values indicate model overprediction.<br>Negative values indicate model underprediction.<br>r_lin and r_log indicate the pearson's correlation coefficient calculated using values or $log_{10}$(values), respectively."
-        metrics_string_, plot_string_list = build_metrics_table(data, i, metric_index_start, skip_label_list)
-        metrics_string += metrics_string_
-        text += add_collapsible_segment_start(energy_threshold, '')
-        text += add_collapsible_segment('Thresholds Applied', threshold_string)
-        text += add_collapsible_segment('Validation Info', info_string)
-        text += add_collapsible_segment('Metrics', metrics_string)
-        for j in range(0, len(plot_string_list)):
-            plot_type = get_plot_type(plot_string_list[j])
-            text += add_collapsible_segment('Plot: ' + plot_type, plot_string_list[j])
-        text += add_collapsible_segment_end()
-    text += add_collapsible_segment_end()
-    return text
-
-def build_peak_intensity_time_section(filename, model, sphinx_dataframe):
-    data = pd.read_pickle(filename)
-    data = data[data.Model == model]
-    column_labels = data.columns    
-    metric_label_start = 'Mean Error (pred - obs)'
-    metric_index_start = list(column_labels).index(metric_label_start)
-    skip_label_list = [] # ADD THINGS TO EXCLUDE
-    text = ''
-    number_rows = data.shape[0]
-    if number_rows > 0:
-        text += add_collapsible_segment_start('Peak Intensity Time Metrics', '')
-    for i in range(0, number_rows):
-        threshold_string, energy_threshold, obs_threshold, pred_threshold, mismatch_allowed_string = build_threshold_string(data, i)
-        selections_filename = output_dir__ + 'peak_intensity_time_selections_' + model + '_' + data.iloc[i]['Energy Channel'] + '_threshold_' + obs_threshold.rstrip(' pfu') + mismatch_allowed_string + '.pkl'
-        subset_list = ['Prediction Window Start', 'Prediction Window End']
-        subset_list = append_subset_list(selections_filename, subset_list, 'Prediction Window End', 'Units')
-        rename_dict = {}
-        info_string_, n_events = build_info_events_table(selections_filename, sphinx_dataframe, subset_list, rename_dict)
-        info_string = 'Instruments and SEP events used in validation<br>'
-        info_string += 'N = ' + str(n_events) + '<br>'
-        info_string += '...\n' # need to complete
-        info_string += info_string_
-        metrics_string = "Metrics for Observed Time - Predicted Time are in hours.<br>Negative values indicate predicted time is later than observed.<br>Positive values indicate predicted time is earlier than observed.\n"
-        metrics_string_, plot_string_list = build_metrics_table(data, i, metric_index_start, skip_label_list)
-        metrics_string += metrics_string_
-        text += add_collapsible_segment_start(energy_threshold, '')
-        text += add_collapsible_segment('Thresholds Applied', threshold_string)
-        text += add_collapsible_segment('Validation Info', info_string)
-        text += add_collapsible_segment('Metrics', metrics_string)
-        for j in range(0, len(plot_string_list)):
-            plot_type = get_plot_type(plot_string_list[j])
-            text += add_collapsible_segment('Plot: ' + plot_type, plot_string_list[j])
-        text += add_collapsible_segment_end()
-    text += add_collapsible_segment_end()
-    return text
-
-
-
-
-
-
-def build_fluence_section(filename, model, sphinx_dataframe):
-    data = pd.read_pickle(filename)
-    data = data[data.Model == model]
-    column_labels = data.columns    
-    metric_label_start = 'Linear Regression Slope'
-    metric_index_start = list(column_labels).index(metric_label_start)
-    skip_label_list = [] # ADD THINGS TO EXCLUDE
-    text = ''
-    number_rows = data.shape[0]
-    if number_rows > 0:
-        text += add_collapsible_segment_start('Fluence Metrics', '')
-    for i in range(0, number_rows):
-        threshold_string, energy_threshold, obs_threshold, pred_threshold, mismatch_allowed_string = build_threshold_string(data, i)
-        selections_filename = output_dir__ + 'fluence_selections_' + model + '_' + data.iloc[i]['Energy Channel'] + '_threshold_' + obs_threshold.rstrip(' pfu') + mismatch_allowed_string + '.pkl'
-        subset_list = ['Prediction Window Start', 'Prediction Window End']
-        subset_list = append_subset_list(selections_filename, subset_list, 'Prediction Window End', 'Units')
-        rename_dict = {}
-        info_string_, n_events = build_info_events_table(selections_filename, sphinx_dataframe, subset_list, rename_dict)
-        info_string = 'Instruments and SEP events used in validation<br>'
-        info_string += 'N = ' + str(n_events) + '<br>'
-        info_string += '...\n' # need to complete
-        info_string += info_string_
-        metrics_string = "Metrics for $log_{10}$(model) - $log_{10}$(Observations).<br>Positive values indicate model overprediction.<br>Negative values indicate model underprediction.<br>r_lin and r_log indicate the pearson's correlation coefficient calculated using values or $log_{10}$(values), respectively."
-        metrics_string_, plot_string_list = build_metrics_table(data, i, metric_index_start, skip_label_list)
-        metrics_string += metrics_string_
-        text += add_collapsible_segment_start(energy_threshold, '')
-        text += add_collapsible_segment('Thresholds Applied', threshold_string)
-        text += add_collapsible_segment('Validation Info', info_string)
-        text += add_collapsible_segment('Metrics', metrics_string)
-        for j in range(0, len(plot_string_list)):
-            plot_type = get_plot_type(plot_string_list[j])
-            text += add_collapsible_segment('Plot: ' + plot_type, plot_string_list[j])
-        text += add_collapsible_segment_end()
-    text += add_collapsible_segment_end()
-    return text 
-
-def build_max_flux_in_pred_win_section(filename, model, sphinx_dataframe):
-    data = pd.read_pickle(filename)
-    data = data[data.Model == model]
-    column_labels = data.columns    
-    metric_label_start = 'Linear Regression Slope'
-    metric_index_start = list(column_labels).index(metric_label_start)
-    skip_label_list = [] # ADD THINGS TO EXCLUDE
-    text = ''
-    number_rows = data.shape[0]
-    if number_rows > 0:
-        text += add_collapsible_segment_start('Max Flux in Prediction Window Metrics', '')
-    for i in range(0, number_rows):
-        threshold_string, energy_threshold, obs_threshold, pred_threshold, mismatch_allowed_string = build_threshold_string(data, i)
-        selections_filename = output_dir__ + 'max_flux_in_pred_win_selections_' + model + '_' + data.iloc[i]['Energy Channel'] + '_threshold_' + obs_threshold.rstrip(' pfu') + mismatch_allowed_string + '.pkl'
-        subset_list = ['Prediction Window Start', 'Prediction Window End']
-        subset_list = append_subset_list(selections_filename, subset_list, 'Prediction Window End', 'Units')
-        rename_dict = {}
-        info_string_, n_events = build_info_events_table(selections_filename, sphinx_dataframe, subset_list, rename_dict)
-        info_string = 'Instruments and SEP events used in validation<br>'
-        info_string += 'N = ' + str(n_events) + '<br>'
-        info_string += '...\n' # need to complete
-        info_string += info_string_
-        metrics_string = "Metrics for $log_{10}$(model) - $log_{10}$(Observations).<br>Positive values indicate model overprediction.<br>Negative values indicate model underprediction.<br>r_lin and r_log indicate the pearson's correlation coefficient calculated using values or $log_{10}$(values), respectively."
-        metrics_string_, plot_string_list = build_metrics_table(data, i, metric_index_start, skip_label_list)
-        metrics_string += metrics_string_
-        text += add_collapsible_segment_start(energy_threshold, '')
-        text += add_collapsible_segment('Thresholds Applied', threshold_string)
-        text += add_collapsible_segment('Validation Info', info_string)
-        text += add_collapsible_segment('Metrics', metrics_string)
-        for j in range(0, len(plot_string_list)):
-            plot_type = get_plot_type(plot_string_list[j])
-            text += add_collapsible_segment('Plot: ' + plot_type, plot_string_list[j])
-        text += add_collapsible_segment_end()
-    text += add_collapsible_segment_end()
-    return text 
-
-def build_probability_section(filename, model, sphinx_dataframe):
-    data = pd.read_pickle(filename)
-    data = data[data.Model == model]
-    column_labels = data.columns    
-    metric_label_start = 'Brier Score'
-    metric_index_start = list(column_labels).index(metric_label_start)
-    skip_label_list = [] # ADD THINGS TO EXCLUDE
-    text = ''
-    number_rows = data.shape[0]
-    if number_rows > 0:
-        text += add_collapsible_segment_start('Probability Metrics', '')
-    for i in range(0, number_rows):
-        threshold_string, energy_threshold, obs_threshold, pred_threshold, mismatch_allowed_string = build_threshold_string(data, i)
-        selections_filename = output_dir__ + 'probability_selections_' + model + '_' + data.iloc[i]['Energy Channel'] + '_threshold_' + obs_threshold.rstrip(' pfu') + mismatch_allowed_string + '.pkl'
-        subset_list = ['Prediction Window Start', 'Prediction Window End']
-        subset_list = append_subset_list(selections_filename, subset_list, 'Prediction Window End', 'Units')
-        rename_dict = {}
-        info_string_, n_events = build_info_events_table(selections_filename, sphinx_dataframe, subset_list, rename_dict)
-        info_string = 'Instruments and SEP events used in validation<br>'
-        info_string += 'N = ' + str(n_events) + '<br>'
-        info_string += '...\n' # need to complete
-        info_string += info_string_
-        metrics_string = "Metrics for $log_{10}$(Model) - $log_{10}$(Observations).<br>Positive values indicate model overprediction.<br>Negative values indicate model underprediction.<br>r_lin and r_log indicate the pearson's correlation coefficient calculated using values or $log_{10}$(values), respectively."
-        metrics_string_, plot_string_list = build_metrics_table(data, i, metric_index_start, skip_label_list)
-        metrics_string += metrics_string_
-        text += add_collapsible_segment_start(energy_threshold, '')
-        text += add_collapsible_segment('Thresholds Applied', threshold_string)
-        text += add_collapsible_segment('Validation Info', info_string)
-        text += add_collapsible_segment('Metrics', metrics_string)
-        for j in range(0, len(plot_string_list)):
-            plot_type = get_plot_type(plot_string_list[j])
-            text += add_collapsible_segment('Plot: ' + plot_type, plot_string_list[j])
-        text += add_collapsible_segment_end()
-    text += add_collapsible_segment_end()
-    return text
-    
-def build_threshold_crossing_time_section(filename, model, sphinx_dataframe):
-    data = pd.read_pickle(filename)
-    data = data[data.Model == model]
-    column_labels = data.columns    
-    metric_label_start = 'Mean Error (pred - obs)'
-    metric_index_start = list(column_labels).index(metric_label_start)
-    skip_label_list = [] # ADD THINGS TO EXCLUDE
-    text = ''
-    number_rows = data.shape[0]
-    if number_rows > 0:
-        text += add_collapsible_segment_start('Threshold Crossing Time Metrics', '')
-    for i in range(0, number_rows):
-        threshold_string, energy_threshold, obs_threshold, pred_threshold, mismatch_allowed_string = build_threshold_string(data, i)
-        selections_filename = output_dir__ + 'threshold_crossing_time_selections_' + model + '_' + data.iloc[i]['Energy Channel'] + '_threshold_' + obs_threshold.rstrip(' pfu') + mismatch_allowed_string + '.pkl'
-        subset_list = ['Prediction Window Start', 'Prediction Window End']
-        subset_list = append_subset_list(selections_filename, subset_list, 'Prediction Window End', 'Units')
-        rename_dict = {}
-        info_string_, n_events = build_info_events_table(selections_filename, sphinx_dataframe, subset_list, rename_dict)
-        info_string = 'Instruments and SEP events used in validation<br>'
-        info_string += 'N = ' + str(n_events) + '<br>'
-        info_string += '...\n' # need to complete
-        info_string += info_string_
-        metrics_string = "Metrics for Observed Time - Predicted Time are in hours.<br>Negative values indicate predicted time is later than observed.<br>Positive values indicate predicted time is earlier than observed.\n"
-        metrics_string_, plot_string_list = build_metrics_table(data, i, metric_index_start, skip_label_list)
-        metrics_string += metrics_string_
-        text += add_collapsible_segment_start(energy_threshold, '')
-        text += add_collapsible_segment('Thresholds Applied', threshold_string)
-        text += add_collapsible_segment('Validation Info', info_string)
-        text += add_collapsible_segment('Metrics', metrics_string)
-        for j in range(0, len(plot_string_list)):
-            plot_type = get_plot_type(plot_string_list[j])
-            text += add_collapsible_segment('Plot: ' + plot_type, plot_string_list[j])
-        text += add_collapsible_segment_end()
-    text += add_collapsible_segment_end()
-    return text 
-
-def build_start_time_section(filename, model, sphinx_dataframe):
-    data = pd.read_pickle(filename)
-    data = data[data.Model == model]
-    column_labels = data.columns    
-    metric_label_start = 'Mean Error (pred - obs)'
-    metric_index_start = list(column_labels).index(metric_label_start)
-    skip_label_list = [] # ADD THINGS TO EXCLUDE
-    text = ''
-    number_rows = data.shape[0]
-    if number_rows > 0:
-        text += add_collapsible_segment_start('Start Time Metrics', '')
-    for i in range(0, number_rows):
-        threshold_string, energy_threshold, obs_threshold, pred_threshold, mismatch_allowed_string = build_threshold_string(data, i)
-        selections_filename = output_dir__ + 'start_time_selections_' + model + '_' + data.iloc[i]['Energy Channel'] + '_threshold_' + obs_threshold.rstrip(' pfu') + mismatch_allowed_string + '.pkl'
-        subset_list = ['Prediction Window Start', 'Prediction Window End']
-        subset_list = append_subset_list(selections_filename, subset_list, 'Prediction Window End', 'Units')
-        rename_dict = {}
-        info_string_, n_events = build_info_events_table(selections_filename, sphinx_dataframe, subset_list, rename_dict)
-        info_string = 'Instruments and SEP events used in validation<br>'
-        info_string += 'N = ' + str(n_events) + '<br>'
-        info_string += '...\n' # need to complete
-        info_string += info_string_
-        metrics_string = "Metrics for Observed Time - Predicted Time are in hours.<br>Negative values indicate predicted time is later than observed.<br>Positive values indicate predicted time is earlier than observed.\n"
-        metrics_string_, plot_string_list = build_metrics_table(data, i, metric_index_start, skip_label_list)
-        metrics_string += metrics_string_
-        text += add_collapsible_segment_start(energy_threshold, '')
-        text += add_collapsible_segment('Thresholds Applied', threshold_string)
-        text += add_collapsible_segment('Validation Info', info_string)
-        text += add_collapsible_segment('Metrics', metrics_string)
-        for j in range(0, len(plot_string_list)):
-            plot_type = get_plot_type(plot_string_list[j])
-            text += add_collapsible_segment('Plot: ' + plot_type, plot_string_list[j])
-        text += add_collapsible_segment_end()
-    text += add_collapsible_segment_end()
-    return text
-    
-def build_duration_section(filename, model, sphinx_dataframe):
-    data = pd.read_pickle(filename)
-    data = data[data.Model == model]
-    column_labels = data.columns    
-    metric_label_start = 'Mean Error (pred - obs)'
-    metric_index_start = list(column_labels).index(metric_label_start)
-    skip_label_list = [] # ADD THINGS TO EXCLUDE
-    text = ''
-    number_rows = data.shape[0]
-    if number_rows > 0:
-        text += add_collapsible_segment_start('Duration Metrics', '')
-    for i in range(0, number_rows):
-        threshold_string, energy_threshold, obs_threshold, pred_threshold, mismatch_allowed_string = build_threshold_string(data, i)
-        selections_filename = output_dir__ + 'duration_selections_' + model + '_' + data.iloc[i]['Energy Channel'] + '_threshold_' + obs_threshold.rstrip(' pfu') + mismatch_allowed_string + '.pkl'
-        subset_list = ['Prediction Window Start', 'Prediction Window End']
-        subset_list = append_subset_list(selections_filename, subset_list, 'Prediction Window End', 'Units')
-        rename_dict = {}
-        info_string_, n_events = build_info_events_table(selections_filename, sphinx_dataframe, subset_list, rename_dict)
-        info_string = 'Instruments and SEP events used in validation<br>'
-        info_string += 'N = ' + str(n_events) + '<br>'
-        info_string += '...\n' # need to complete
-        info_string += info_string_
-        metrics_string = "Metrics for Observed Time - Predicted Time are in hours.<br>Negative values indicate predicted time is later than observed.<br>Positive values indicate predicted time is earlier than observed.\n"
-        metrics_string_, plot_string_list = build_metrics_table(data, i, metric_index_start, skip_label_list)
-        metrics_string += metrics_string_
-        text += add_collapsible_segment_start(energy_threshold, '')
-        text += add_collapsible_segment('Thresholds Applied', threshold_string)
-        text += add_collapsible_segment('Validation Info', info_string)
-        text += add_collapsible_segment('Metrics', metrics_string)
-        for j in range(0, len(plot_string_list)):
-            plot_type = get_plot_type(plot_string_list[j])
-            text += add_collapsible_segment('Plot: ' + plot_type, plot_string_list[j])
-        text += add_collapsible_segment_end()
-    text += add_collapsible_segment_end()
-    return text 
-
-def build_end_time_section(filename, model, sphinx_dataframe):
-    data = pd.read_pickle(filename)
-    data = data[data.Model == model]
-    column_labels = data.columns    
-    metric_label_start = 'Mean Error (pred - obs)'
-    metric_index_start = list(column_labels).index(metric_label_start)
-    skip_label_list = [] # ADD THINGS TO EXCLUDE
-    text = ''
-    number_rows = data.shape[0]
-    if number_rows > 0:
-        text += add_collapsible_segment_start('End Time Metrics', '')
-    for i in range(0, number_rows):
-        threshold_string, energy_threshold, obs_threshold, pred_threshold, mismatch_allowed_string = build_threshold_string(data, i)
-        selections_filename = output_dir__ + 'end_time_selections_' + model + '_' + data.iloc[i]['Energy Channel'] + '_threshold_' + obs_threshold.rstrip(' pfu') + mismatch_allowed_string + '.pkl'
-        subset_list = ['Prediction Window Start', 'Prediction Window End']
-        subset_list = append_subset_list(selections_filename, subset_list, 'Prediction Window End', 'Units')
-        rename_dict = {}
-        info_string_, n_events = build_info_events_table(selections_filename, sphinx_dataframe, subset_list, rename_dict)
-        info_string = 'Instruments and SEP events used in validation<br>'
-        info_string += 'N = ' + str(n_events) + '<br>'
-        info_string += '...\n' # need to complete
-        info_string += info_string_
-        metrics_string = "Metrics for Observed Time - Predicted Time are in hours.<br>Negative values indicate predicted time is later than observed.<br>Positive values indicate predicted time is earlier than observed.\n"
-        metrics_string_, plot_string_list = build_metrics_table(data, i, metric_index_start, skip_label_list)
-        metrics_string += metrics_string_
-        text += add_collapsible_segment_start(energy_threshold, '')
-        text += add_collapsible_segment('Thresholds Applied', threshold_string)
-        text += add_collapsible_segment('Validation Info', info_string)
-        text += add_collapsible_segment('Metrics', metrics_string)
-        for j in range(0, len(plot_string_list)):
-            plot_type = get_plot_type(plot_string_list[j])
-            text += add_collapsible_segment('Plot: ' + plot_type, plot_string_list[j])
-        text += add_collapsible_segment_end()
-    text += add_collapsible_segment_end()
-    return text 
-
-def build_time_profile_section(filename, model, sphinx_dataframe):
-    data = pd.read_pickle(filename)
-    data = data[data.Model == model]
-    column_labels = data.columns    
-    metric_label_start = 'Linear Regression Slope'
-    metric_index_start = list(column_labels).index(metric_label_start)
-    skip_label_list = ['Time Profile Selection Plot'] # ADD THINGS TO EXCLUDE
-    text = ''
-    number_rows = data.shape[0]
-    if number_rows > 0:
-        text += add_collapsible_segment_start('Time Profile Metrics', '')
-    for i in range(0, number_rows):
-        threshold_string, energy_threshold, obs_threshold, pred_threshold, mismatch_allowed_string = build_threshold_string(data, i)
-        selections_filename = output_dir__ + 'time_profile_selections_' + model + '_' + data.iloc[i]['Energy Channel'] + '_threshold_' + obs_threshold.rstrip(' pfu') + mismatch_allowed_string + '.pkl'
-        subset_list = ['Prediction Window Start', 'Prediction Window End']
-        subset_list = append_subset_list(selections_filename, subset_list, 'Prediction Window End', 'Units')
-        rename_dict = {}
-        info_string_, n_events = build_info_events_table(selections_filename, sphinx_dataframe, subset_list, rename_dict)
-        info_string = 'Instruments and SEP events used in validation<br>'
-        info_string += 'N = ' + str(n_events) + '<br>'
-        info_string += '...\n' # need to complete
-        info_string += info_string_
-        metrics_string = "Metrics for Observed Time - Predicted Time are in hours.<br>Negative values indicate predicted time is later than observed.<br>Positive values indicate predicted time is earlier than observed.\n"
-        metrics_string_, plot_string_list = build_metrics_table(data, i, metric_index_start, skip_label_list)
-        metrics_string += metrics_string_
-        text += add_collapsible_segment_start(energy_threshold, '')
-        text += add_collapsible_segment('Thresholds Applied', threshold_string)
-        text += add_collapsible_segment('Validation Info', info_string)
-        text += add_collapsible_segment('Metrics', metrics_string)
-        for j in range(0, len(plot_string_list)):
-            plot_type = get_plot_type(plot_string_list[j])
-            text += add_collapsible_segment('Plot: ' + plot_type, plot_string_list[j])
-        text += add_collapsible_segment_end()
-    text += add_collapsible_segment_end()
-    return text 
     
 def build_validation_reference_section(filename1, filename2):
     text = ''
@@ -994,70 +621,124 @@ def report(output_dir):
             markdown_text += build_all_clear_skill_scores_section(all_clear_filename, model, sphinx_dataframe)
 
         if peak_intensity:
-            ### build the onset peak flux metrics
-            peak_intensity_filename = output_dir__ + 'peak_intensity_metrics.pkl'
-            validation_text += '* Peak Intensity\n'
-            markdown_text += build_peak_intensity_section(peak_intensity_filename, model, sphinx_dataframe)
+            ### build the peak intensity metrics
+            metric_label_start = 'Linear Regression Slope'
+            section_title = 'Peak Intensity'
+            section_tag = 'peak_intensity'
+            metrics_description_string = "Metrics for $log_{10}$(model) - $log_{10}$(Observations).<br>Positive values indicate model overprediction.<br>Negative values indicate model underprediction.<br>r_lin and r_log indicate the pearson's correlation coefficient calculated using values or $log_{10}$(values), respectively."
+            section_filename = output_dir__ + section_tag + '_metrics.pkl'
+            validation_text += '* ' + section_title + '\n'
+            markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string)
             
         if peak_intensity_max:
-            ### build the max flux metrics
-            peak_intensity_max_filename = output_dir__ + 'peak_intensity_max_metrics.pkl'
-            validation_text += '* Peak Intensity Max\n'
-            markdown_text += build_peak_intensity_max_section(peak_intensity_max_filename, model, sphinx_dataframe)
-
+            ### build the peak intensity max metrics
+            metric_label_start = 'Linear Regression Slope'
+            section_title = 'Peak Intensity Max'
+            section_tag = 'peak_intensity_max'
+            metrics_description_string = "Metrics for $log_{10}$(model) - $log_{10}$(Observations).<br>Positive values indicate model overprediction.<br>Negative values indicate model underprediction.<br>r_lin and r_log indicate the pearson's correlation coefficient calculated using values or $log_{10}$(values), respectively."
+            section_filename = output_dir__ + section_tag + '_metrics.pkl'
+            validation_text += '* ' + section_title + '\n'
+            markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string)
+            
         if peak_intensity_time:
-            ### build the flux time metrics
-            peak_intensity_time_filename = output_dir__ + 'peak_intensity_time_metrics.pkl'
-            validation_text += '* Peak Intensity Time\n'
-            markdown_text += build_peak_intensity_time_section(peak_intensity_time_filename, model, sphinx_dataframe)
+            ### build the peak intensity time metrics
+            metric_label_start = 'Mean Error (pred - obs)'
+            section_title = 'Peak Intensity Time'
+            section_tag = 'peak_intensity_time'
+            metrics_description_string = "Metrics for Observed Time - Predicted Time are in hours.<br>Negative values indicate predicted time is later than observed.<br>Positive values indicate predicted time is earlier than observed.\n"
+            section_filename = output_dir__ + section_tag + '_metrics.pkl'
+            validation_text += '* ' + section_title + '\n'
+            markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string)
         
         if threshold_crossing:
             ### build the threshold crossing metrics
-            threshold_crossing_filename = output_dir__ + 'threshold_crossing_metrics.pkl'
-            validation_text += '* Threshold Crossing\n'
-            markdown_text += build_threshold_crossing_time_section(threshold_crossing_filename, model, sphinx_dataframe)
+            metric_label_start = 'Mean Error (pred - obs)'
+            section_title = 'Threshold Crossing Time'
+            section_tag = 'threshold_crossing_time'
+            alt_section_tag = 'threshold_crossing'
+            metrics_description_string = "Metrics for Observed Time - Predicted Time are in hours.<br>Negative values indicate predicted time is later than observed.<br>Positive values indicate predicted time is earlier than observed.\n"
+            section_filename = output_dir__ + alt_section_tag + '_metrics.pkl'
+            validation_text += '* ' + section_title + '\n'
+            markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string)
+        
 
         if fluence:
             ### build the fluence metrics
-            fluence_filename = output_dir__ + 'fluence_metrics.pkl'
-            validation_text += '* Fluence\n'
-            markdown_text += build_fluence_section(fluence_filename, model, sphinx_dataframe)
+            metric_label_start = 'Linear Regression Slope'
+            section_title = 'Fluence'
+            section_tag = 'fluence'
+            metrics_description_string = "Metrics for $log_{10}$(model) - $log_{10}$(Observations).<br>Positive values indicate model overprediction.<br>Negative values indicate model underprediction.<br>r_lin and r_log indicate the pearson's correlation coefficient calculated using values or $log_{10}$(values), respectively."
+            section_filename = output_dir__ + section_tag + '_metrics.pkl'
+            validation_text += '* ' + section_title + '\n'
+            markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string)
+        
         
         if max_flux_in_pred_win:
             ### build the maximum flux in prediction window metrics
-            max_flux_in_pred_win_filename = output_dir__ + 'max_flux_in_pred_win_metrics.pkl'
-            validation_text += '* Max Flux in Prediction Window\n'
-            markdown_text += build_max_flux_in_pred_win_section(max_flux_in_pred_win_filename, model, sphinx_dataframe)
+            metric_label_start = 'Linear Regression Slope'
+            section_title = 'Max Flux in Prediction Window'
+            section_tag = 'max_flux_in_pred_win'
+            metrics_description_string = "Metrics for $log_{10}$(model) - $log_{10}$(Observations).<br>Positive values indicate model overprediction.<br>Negative values indicate model underprediction.<br>r_lin and r_log indicate the pearson's correlation coefficient calculated using values or $log_{10}$(values), respectively."
+            section_filename = output_dir__ + section_tag + '_metrics.pkl'
+            validation_text += '* ' + section_title + '\n'
+            markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string)
+        
 
         if probability:    
             ### build the probability metrics
-            probability_filename = output_dir__ + 'probability_metrics.pkl'
-            validation_text += '* Probability\n'
-            markdown_text += build_probability_section(probability_filename, model, sphinx_dataframe)
+            metric_label_start = 'Brier Score'
+            section_title = 'Probability'
+            section_tag = 'probability'
+            metrics_description_string = "Metrics for $log_{10}$(Model) - $log_{10}$(Observations).<br>Positive values indicate model overprediction.<br>Negative values indicate model underprediction.<br>r_lin and r_log indicate the pearson's correlation coefficient calculated using values or $log_{10}$(values), respectively."
+            section_filename = output_dir__ + section_tag + '_metrics.pkl'
+            validation_text += '* ' + section_title + '\n'
+            markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string)
+        
         
         if start_time:
             ### build the start time metrics
-            start_time_filename = output_dir__ + 'start_time_metrics.pkl'
-            validation_text += '* Start Time\n'
-            markdown_text += build_start_time_section(start_time_filename, model, sphinx_dataframe)
+            metric_label_start = 'Mean Error (pred - obs)'
+            section_title = 'Start Time'
+            section_tag = 'start_time'
+            metrics_description_string = "Metrics for Observed Time - Predicted Time are in hours.<br>Negative values indicate predicted time is later than observed.<br>Positive values indicate predicted time is earlier than observed.\n"
+            section_filename = output_dir__ + section_tag + '_metrics.pkl'
+            validation_text += '* ' + section_title + '\n'
+            markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string)
+        
         
         if duration:
             ### build the duration metrics
-            duration_filename = output_dir__ + 'duration_metrics.pkl'
-            validation_text += '* Duration\n'
-            markdown_text += build_duration_section(duration_filename, model, sphinx_dataframe)
+            metric_label_start = 'Mean Error (pred - obs)'
+            section_title = 'Duration'
+            section_tag = 'duration'
+            metrics_description_string = "Metrics for Observed Time - Predicted Time are in hours.<br>Negative values indicate predicted time is later than observed.<br>Positive values indicate predicted time is earlier than observed.\n"
+            section_filename = output_dir__ + section_tag + '_metrics.pkl'
+            validation_text += '* ' + section_title + '\n'
+            markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string)
+        
             
         if end_time:
             ### build the end time metrics
-            end_time_filename = output_dir__ + 'end_time_metrics.pkl'
-            validation_text += '* End Time\n'
-            markdown_text += build_end_time_section(end_time_filename, model, sphinx_dataframe)
+            metric_label_start = 'Mean Error (pred - obs)'
+            section_title = 'End Time'
+            section_tag = 'end_time'
+            metrics_description_string = "Metrics for Observed Time - Predicted Time are in hours.<br>Negative values indicate predicted time is later than observed.<br>Positive values indicate predicted time is earlier than observed.\n"
+            section_filename = output_dir__ + section_tag + '_metrics.pkl'
+            validation_text += '* ' + section_title + '\n'
+            markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string)
+        
         
         if time_profile:
             ### build the time profile metrics
-            time_profile_filename = output_dir__ + 'time_profile_metrics.pkl'
-            validation_text += '* Time Profile\n'
-            markdown_text += build_time_profile_section(time_profile_filename, model, sphinx_dataframe)
+            metric_label_start = 'Linear Regression Slope'
+            section_title = 'Time Profile'
+            section_tag = 'time_profile'
+            metrics_description_string = "Metrics for Observed Time - Predicted Time are in hours.<br>Negative values indicate predicted time is later than observed.<br>Positive values indicate predicted time is earlier than observed.\n"
+            section_filename = output_dir__ + section_tag + '_metrics.pkl'
+            validation_text += '* ' + section_title + '\n'
+            skip_label_list = ['Time Profile Selection Plot']
+            markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, skip_label_list=skip_label_list)
+        
             
         
         ### BUILD THE VALIDATION REFERENCE
