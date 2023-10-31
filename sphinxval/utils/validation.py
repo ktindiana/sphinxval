@@ -1129,7 +1129,9 @@ def max_flux_in_pred_win_metrics(df, tpdf, dict, model, energy_key,
         #drop rows containing None
         if sub_test.empty:
             return
+ 
         peak_key = 'Predicted SEP Peak Intensity (Onset Peak)'
+        match_key = 'Peak Intensity Match Status'
         print("max_flux_in_pred_win: Model " + model + " did not explicitly "
             "include a peak_intensity_max field. Comparing peak_intensity to "
             "observed max flux in the prediction window.")

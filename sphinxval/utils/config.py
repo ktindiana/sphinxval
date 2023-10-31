@@ -44,13 +44,13 @@ e_units = vunits.convert_string_to_units("MeV")
 t_units = vunits.convert_string_to_units("pfu")
 
 ######SET MODEL INFO#####
-mm_model = "COMESEP" #Model short name contains this string
+mm_model = "SEPMOD" #Model short name contains this string
 mm_pred_energy_channel = {"min": 10.0, "max": -1, "units": e_units}
-mm_pred_threshold = {"threshold": 10, "threshold_units": t_units}
+mm_pred_threshold = {"threshold": 0.001, "threshold_units": t_units}
 
 ######SET OBSERVATION INFO#######
-mm_obs_energy_channel = {"min": 30.0, "max": -1, "units": e_units}
-mm_obs_threshold = {"threshold": 1.0, "threshold_units": t_units}
+mm_obs_energy_channel = {"min": 10.0, "max": -1, "units": e_units}
+mm_obs_threshold = {"threshold": 10.0, "threshold_units": t_units}
 
 ###AUTOMATIC
 mm_pred_ek = objh.energy_channel_to_key(mm_pred_energy_channel)
