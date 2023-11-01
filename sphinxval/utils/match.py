@@ -2242,12 +2242,9 @@ def match_all_forecasts(all_energy_channels, model_names, obs_objs,
                 matched_sphinx[fcast.short_name]['uses_eruptions'] = True
 
             #Check that forecast prediction window is after last trigger/input
-            fcast.valid_forecast(last_trigger_time, last_input_time)
+            fcast.valid_forecast(verbose=True)
             if fcast.valid == False:
-                print("match_criteria_all_forecasts: Invalid forecast. "
-                    "Issue time (" + str(fcast.issue_time) + ") must start after last "
-                    "trigger (" + str(last_trigger_time) + ") or input time ("
-                    + str(last_input_time) + "). Skipping " + fcast.source)
+                print("match_criteria_all_forecasts: Skipping invalid " + fcast.source)
                 continue
                 
 
