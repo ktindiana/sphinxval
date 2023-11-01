@@ -201,7 +201,7 @@ def identify_all_energy_channels(all_json, kind):
             energy channels present in all_jsons
             
     """
-    if kind == 'obsservation':
+    if kind == 'observation':
         key1 = 'sep_observation_submission'
         key2 = 'observations'
     elif kind == 'forecast':
