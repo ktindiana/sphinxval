@@ -33,22 +33,9 @@ __email__ = "kathryn.whitman@nasa.gov"
 
 def read_in_json(filename):
     """Read in json file """
-    if not os.path.isfile(filename):
-        print("validation_json_handler: could not read in file " \
-                + filename)
-        return {}
-
     with open(filename) as f:
-        try:
-            info=json.load(f)
-        except:
-            print("validation_json_handler: json module could not read in file " \
-                + filename)
-            return {}
-
+        info = json.load(f)
     return info
-
-
 
 def make_ccmc_zulu_time(dt):
     """ Make a datetime string in the format YYYY-MM-DDTHH:MM:SSZ
@@ -172,28 +159,35 @@ def get_path(filepath):
 
 
 ###### SUBROUTINES TO READ JSONS AND CREATE CLASS OBJECTS ##########
-def read_json_list(filename):
-    """Read all of the json files in to a list containing each json entry.
+def read_list_of_jsons(filename):
+    """Read all of the json files in to a list.
     """
-    all_json = []
+    json_files = []
     with open(filename) as list:
         for line in list:
             line = line.lstrip()
             if line == '': continue
             if line[0] == "#": continue
             json_fname = line.rstrip()
-            json_info = read_in_json(json_fname)
-            if json_info == {}:
-                continue
-            
-            print("read in " + json_fname)
-            json_info.update({'filename':json_fname})
-            all_json.append(json_info)
+            json_files.append(json_fname)
+    return json_files
 
+def read_json_list(json_files, verbose=True):
+    """Read all of the json files in to a list containing each json entry.
+    """
+    all_json = []
+    for json_fname in json_files:
+        json_info = read_in_json(json_fname)
+        if json_info == {}:
+            continue
+        if verbose:
+            print("read in " + json_fname)
+        json_info.update({'filename':json_fname})
+        all_json.append(json_info)
     return all_json
 
 
-def identify_all_energy_channels(all_json):
+def identify_all_energy_channels(all_json, kind):
     """ Search through all OBSERVATION jsons and
         create an array of all possible energy channels.
         
@@ -207,11 +201,20 @@ def identify_all_energy_channels(all_json):
             energy channels present in all_jsons
             
     """
+    if kind == 'observation':
+        key1 = 'sep_observation_submission'
+        key2 = 'observations'
+    elif kind == 'forecast':
+        key1 = 'sep_forecast_submission'
+        key2 = 'forecasts'
+    else:
+        raise Exception(f"kind={kind} invalid.  Must be 'observation' or 'forecast'")
+    
     all_energy_channels = []
     for entry in all_json:
-        if 'sep_observation_submission' not in entry: continue
+        if key1 not in entry: continue
         
-        obs = entry['sep_observation_submission']['observations']
+        obs = entry[key1][key2]
         for block in obs:
             energy_channel = block['energy_channel']
             if energy_channel not in all_energy_channels:
@@ -266,12 +269,12 @@ def load_objects_from_json(data_list, model_list):
             the forecast jsons
         
     """
-    obs_jsons = read_json_list(data_list)
-    model_jsons = read_json_list(model_list)
+    obs_jsons = read_json_list(read_list_of_jsons(data_list))
+    model_jsons = read_json_list(read_list_of_jsons(model_list))
     
     #Find energy channels available in the OBSERVATIONS
     #Only channels with observed values will be validated
-    all_energy_channels = identify_all_energy_channels(obs_jsons)
+    all_energy_channels = identify_all_energy_channels(obs_jsons, 'observation')
     
     obs_objs = {}
     model_objs = {}
@@ -295,19 +298,19 @@ def load_objects_from_json(data_list, model_list):
             key = objh.energy_channel_to_key(channel)
             obj = observation_object_from_json(json, channel)
 #            print("Trying " + obj.source)
-#            print("Prediction window start: " + str(obj.observation_window_start))
+#            print("Observation window start: " + str(obj.observation_window_start))
             #skip if energy block wasn't present in json
             if obj.observation_window_start != None:
                 obs_objs[key].append(obj)
-#                print("Adding " + obj.source + " to dictionary under "
-#                    "key " + key)
+ #               print("Adding " + obj.source + " to dictionary under "
+ #                   "key " + key)
         
             if cfg.do_mismatch:
                 if key == cfg.mm_obs_ek:
                     obj = observation_object_from_json(json, channel)
                     if obj.observation_window_start != None:
                         obs_objs[cfg.mm_energy_key].append(obj)
- #                       print("Adding " + obj.source + " to dictionary under key " + cfg.mm_energy_key)
+#                        print("Adding " + obj.source + " to dictionary under key " + cfg.mm_energy_key)
             
 
     #Load json objects
@@ -322,7 +325,7 @@ def load_objects_from_json(data_list, model_list):
             #skip if energy block wasn't present in json
             if obj.prediction_window_start != None:
                 model_objs[key].append(obj)
- #               print("Adding " + obj.source + " to dictionary under key " + key)
+#                print("Adding " + obj.source + " to dictionary under key " + key)
 
             #If mismatched observation and prediction energy channels
             #enabled, then find the correct prediction energy channel
@@ -396,6 +399,11 @@ def check_forecast_json(full_json, energy_channel):
 #                    + full_json['filename'] +
 #                    ". Initializing all to None.")
                 dataD = {}
+                if cfg.do_mismatch:
+                    ek = objh.energy_channel_to_key(energy_channel)
+                    if ek == cfg.mm_obs_ek:
+                        dataD = extract_block(jsonD, cfg.mm_pred_energy_channel)
+                
         else:
 #            print("check_forecast_json: forecast block not "
 #                    "found in forecast json"
@@ -855,10 +863,12 @@ def extract_block(jsonD, energy_channel):
             
     """
     dataD = None
+    ek = objh.energy_channel_to_key(energy_channel)
     
     for block in jsonD:
         if 'energy_channel' in block:
-            if block['energy_channel'] == energy_channel:
+            json_ek = objh.energy_channel_to_key(block['energy_channel'])
+            if json_ek == ek:
                 dataD = block
                 return dataD
                 
@@ -1233,75 +1243,3 @@ def dict_to_probability(prob_dict):
                 vunits.convert_string_to_units(threshold_units) #astropy
 
     return probability_value, uncertainty, threshold, threshold_units
-
-
-
-
-#def process_numbers(injson):
-#    """ Go through all the numerical entries in the json and
-#        ensure they are in float variables.
-#        
-#        This subroutine uses set_json_value_by_index() in
-#        validation_json_handler.py. BE CAREFUL AND NOTE that this
-#        subroutine changes the value of the entries inherently in
-#        the input json (injson) itself. Once injson is passed
-#        into this routine, it will be modified even if
-#        nothing is returned as output.
-#        
-#        INPUTS:
-#        
-#        :injson: (json dictionary) single forecast or observation json
-#        
-#        OUTPUTS
-#        
-#        :outjson:(json dictionary) same json but with units fields modified
-#        
-#    """
-#    #all of the possible units entries in a json block
-#    keys_all_floats = keys.id_all_floats
-#    keys_all_arrays = keys.id_all_arrays
-#
-#
-#id_all_floats = [id_energy_min,id_energy_max, id_peak_intensity,
-#            id_peak_intensity_esp,
-#            id_peak_intensity_max,
-#            id_fluence,id_fluence_spectrum,
-#            id_fluence_uncertainty_low,id_fluence_uncertainty_high,
-#            id_fluence_spectrum_threshold_start,id_fluence_spectrum_threshold_end,
-#            id_event_length_threshold, id_thresh_uncertainty,
-#            id_crossing_threshold, id_prob_uncertainty,id_prob_threshold,
-#            id_probability, id_all_clear_threshold,
-#            id_all_clear_probability_threshold]
-#            
-#id_all_arrays = [id_fluences,id_fluence_spectra,id_event_lengths,
-#            id_threshold_crossings,id_probabilities]
-#
-#
-#    nblocks = return_nforecasts(injson)
-#    narr = -1
-#    for i in range(nblocks):
-#        for key in keys_all_floats:
-#            key_chain = keys.get_key_chain(key)
-#            
-#            #Check for values stored in arrays
-#            if any(x in key_chain for x in keys_all_arrays):
-#                for arr_key in keys_all_arrays:
-#                    if arr_key in key_chain:
-#                        narr = len(return_json_value_by_index(injson,arr_key,i))
-#                        for j in range(narr):
-#                            float_val = return_json_value_by_index(injson,key,i,j)
-#                            if float_val == vars.errval: continue
-#                            if isinstance(float_val,str) and float_val != ""\
-#                                and float_val != None:
-#                                float_val = float(float_val)
-#                                check =\
-#                                    set_json_value_by_index(float_val,injson,key,i,j)
-#            #Not an array-based field
-#            else:
-#                float_val = return_json_value_by_index(injson,key,i)
-#                if float_val == vars.errval: continue
-#                if isinstance(float_val,str) and float_val != "" and float_val != None:
-#                    float_val = float(float_val)
-#                    check = set_json_value_by_index(float_val,injson,key,i)
-#            
-#    return injson

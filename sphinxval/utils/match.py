@@ -379,7 +379,7 @@ def does_win_overlap(energy_key, fcast, obs_values):
     return is_win_overlap
 
 
-def observed_time_in_pred_win(fcast, obs_values, obs_key):
+def observed_time_in_pred_win(fcast, obs_values, obs_key, energy_key):
     """ Find whether an observed time occurred inside of the prediction
         window across all of the observations
         
@@ -389,7 +389,7 @@ def observed_time_in_pred_win(fcast, obs_values, obs_key):
     Input:
     
         :fcast: (Forecast object) single forecast
-        :obs_values: (dict of pandas DataFrames) for a single
+        :obs_df: (dict of pandas DataFrames) for a single
             energy channel and all observed threshold.
         :obs_key: (string) identifies which time in the pandas
             Dataframe should be compared, 'threshold_crossing_time'
@@ -401,10 +401,7 @@ def observed_time_in_pred_win(fcast, obs_values, obs_key):
             where energy_key is the key made from the fcast
             energy_channel
     
-    """
-    energy_channel = fcast.energy_channel
-    energy_key = objh.energy_channel_to_key(energy_channel)
-    
+    """    
     pred_win_st = fcast.prediction_window_start
     pred_win_end = fcast.prediction_window_end
 
@@ -413,13 +410,12 @@ def observed_time_in_pred_win(fcast, obs_values, obs_key):
         return [None]*len(obs_values[energy_key]['dataframes'][0])
            
     #Extract pandas dataframe for correct energy and threshold
-    energy_key = objh.energy_channel_to_key(energy_channel)
-    obs = obs_values[energy_key]['dataframes'][0] #all obs for threshold
+    obs_df = obs_values[energy_key]['dataframes'][0] #all obs for threshold
 
     #Check if a threshold crossing is contained inside of the
     #prediction window; returns False if pd.NaT
-    contains_obs_time = (obs[obs_key] >= pd.Timestamp(pred_win_st)) \
-        & (obs[obs_key] < pd.Timestamp(pred_win_end))
+    contains_obs_time = (obs_df[obs_key] >= pd.Timestamp(pred_win_st)) \
+        & (obs_df[obs_key] < pd.Timestamp(pred_win_end))
  
     return list(contains_obs_time)
 
@@ -685,13 +681,12 @@ def onset_peak_criteria(sphinx, fcast, obs_values, observation_objs, energy_key)
     """
     last_trigger_time = sphinx.last_trigger_time
     last_input_time = sphinx.last_input_time
-#    channel = fcast.energy_channel
     
     ###### MATCHING: ONSET PEAK IN PREDICTION WINDOW #####
     #Is the onset peak inside of the prediction window?
     #Get the time difference - negative means trigger is before
     is_onset_peak_in_pred_win = observed_time_in_pred_win(fcast,
-                                    obs_values, 'peak_time')
+                                obs_values, 'peak_time', energy_key)
 
     if sphinx.overlapping_indices != []:
         for ix in sphinx.overlapping_indices:
@@ -791,7 +786,7 @@ def max_flux_criteria(sphinx, fcast, obs_values, observation_objs, energy_key):
     #Is the max flux inside of the prediction window?
     #Get the time difference - negative means trigger is before
     is_max_flux_in_pred_win = observed_time_in_pred_win(fcast,
-                            obs_values, 'max_time')
+                            obs_values, 'max_time', energy_key)
 
     if sphinx.overlapping_indices != []:
         for ix in sphinx.overlapping_indices:
@@ -2216,8 +2211,9 @@ def match_all_forecasts(all_energy_channels, model_names, obs_objs,
             #If this is a set of predictions and observations that are
             #allowed to have a set of mismatched energy channels and
             #thresholds
-            if energy_key == cfg.mm_energy_key:
+            if cfg.do_mismatch and energy_key == cfg.mm_energy_key:
                 sphinx.mismatch = True
+                print("Mismatched channel allowed.")
 
             #Get Trigger and Input information
             last_eruption_time, last_trigger_time =\
@@ -2242,12 +2238,9 @@ def match_all_forecasts(all_energy_channels, model_names, obs_objs,
                 matched_sphinx[fcast.short_name]['uses_eruptions'] = True
 
             #Check that forecast prediction window is after last trigger/input
-            fcast.valid_forecast(last_trigger_time, last_input_time)
+            fcast.valid_forecast(verbose=True)
             if fcast.valid == False:
-                print("match_criteria_all_forecasts: Invalid forecast. "
-                    "Issue time (" + str(fcast.issue_time) + ") must start after last "
-                    "trigger (" + str(last_trigger_time) + ") or input time ("
-                    + str(last_input_time) + "). Skipping " + fcast.source)
+                print("match_criteria_all_forecasts: Skipping invalid " + fcast.source)
                 continue
                 
 
