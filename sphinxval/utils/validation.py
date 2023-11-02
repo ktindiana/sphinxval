@@ -1813,7 +1813,7 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
             tpfigame = tpfigname + "_mm"
         
         if tp_plotnames == "":
-            tp_plotnames = tpfigname
+            tp_plotnames = tpfigname + ".pdf"
         else:
             tp_plotnames += ";" + tpfigname + ".pdf"
             
