@@ -1760,7 +1760,7 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
     sepRMSLE = []
 #    sepMdSA = None
 
-    
+    tp_plotnames = ""
     for i in range(len(obs_profs)):
         print("Time profile of " + pred_profs[i] + " compared to observations.")
         all_obs_dates = []
@@ -1812,6 +1812,12 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
         if mismatch:
             tpfigame = tpfigname + "_mm"
         
+        if tp_plotnames == "":
+            tp_plotnames = tpfigname
+        else:
+            tp_plotnames += ";" + tpfigname + ".pdf"
+            
+            
         plt_tools.plot_time_profile(date, values, labels,
         title=title, x_label="Date", y_min=1e-5, y_max=1e4,
         y_label="Particle Intensity", uselog_x = False, uselog_y = True,
@@ -1927,7 +1933,7 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
     fill_flux_metrics_dict(dict, model, energy_key, thresh_key,
     pred_energy_key, pred_thresh_key, figname,
     slope, yint, r_lin, r_log, s_lin, s_log, ME, MedE, MLE, MedLE, MAE,
-    MedAE, MALE, MedALE, MAPE, MAR, RMSE, RMSLE, MdSA, tpfigname)
+    MedAE, MALE, MedALE, MAPE, MAR, RMSE, RMSLE, MdSA, tp_plotnames)
 
 
 
