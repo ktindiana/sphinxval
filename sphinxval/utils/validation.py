@@ -1366,7 +1366,7 @@ def fluence_intuitive_metrics(df, dict, model, energy_key,
 
     ####METRICS
     fill_flux_metrics_dict(dict, model, energy_key, thresh_key,
-    pred_thresh_key, pred_energy_key, figname,
+    pred_energy_key, pred_thresh_key, figname,
     slope, yint, r_lin, r_log, s_lin, s_log, ME, MedE, MLE, MedLE, MAE,
     MedAE, MALE, MedALE, MAPE, MAR, RMSE, RMSLE, MdSA)
 

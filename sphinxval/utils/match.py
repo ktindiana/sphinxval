@@ -2099,7 +2099,11 @@ def revise_eruption_matches(matched_sphinx, all_energy_channels, obs_values,
                     #The eruptions and forecasts to unmatch
                     #Get back to the indices associated with the sphinx objects
                     # Note that if td_eruptions[ix] is nan the index will never be added
-                    adj_idx = [ix for ix in range(len(td_eruptions)) if td_eruptions[ix] < best_eruption]
+                    #If eruptions near an SEP event are within a few hours of each other
+                    #cannot really say which is the correct one to associate with the
+                    #SEP event, so keep both. e.g. March 7, 2012, e.g. slight change
+                    #in CME start time when CME refit
+                    adj_idx = [ix for ix in range(len(td_eruptions)) if td_eruptions[ix] < (best_eruption - datetime.timedelta(hours=3))]
                     sphx_idx = []
                     for ix in adj_idx:
                         sphx_idx = idx_event[ix]
