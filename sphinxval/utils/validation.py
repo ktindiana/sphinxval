@@ -683,6 +683,17 @@ def fill_all_clear_dict(dict, model, energy_key, thresh_key, pred_energy_key,
 #    dict["Mean Absolute Percentage Error"].append(scores[])
 
 
+def make_thresh_fname(thresh_key):
+    """ Make threshold string for filenames.
+    
+    """
+    thr = thresh_key.strip().split(".units") #threshold.10.0.units.1 / (cm2 s sr)
+    thr = thr[0] #threshold.10.0
+    thr = thr.strip().split("threshold.")
+    thresh_fnm = "threshold_" + thr[1]
+    return thresh_fnm
+
+
 
 def all_clear_intuitive_metrics(df, dict, model, energy_key, thresh_key):
     """ Extract the appropriate predictions and calculate metrics
@@ -712,8 +723,7 @@ def all_clear_intuitive_metrics(df, dict, model, energy_key, thresh_key):
     pred_energy_key = str(sub.iloc[0]['Prediction Energy Channel Key'])
     pred_thresh_key = str(sub.iloc[0]['Prediction Threshold Key'])
     
-    thr = thresh_key.strip().split(".")
-    thresh_fnm = thr[0] + "_" + thr[1]
+    thresh_fnm = make_thresh_fname(thresh_key)
     fnm = "all_clear_selections_" + model + "_" + energy_key.strip() + "_" +\
             thresh_fnm
     if mismatch:
@@ -777,8 +787,8 @@ def probabilty_intuitive_metrics(df, dict, model, energy_key, thresh_key):
     pred_energy_key = str(sub.iloc[0]['Prediction Energy Channel Key'])
     pred_thresh_key = str(sub.iloc[0]['Prediction Threshold Key'])
 
-    thr = thresh_key.strip().split(".")
-    thresh_fnm = thr[0] + "_" + thr[1]
+
+    thresh_fnm = make_thresh_fname(thresh_key)
     fnm = "probability_selections_" + model + "_" + energy_key.strip() + "_" +\
         thresh_fnm
     if mismatch:
@@ -873,8 +883,7 @@ def peak_intensity_intuitive_metrics(df, dict, model, energy_key, thresh_key):
     pred_energy_key = str(sub.iloc[0]['Prediction Energy Channel Key'])
     pred_thresh_key = str(sub.iloc[0]['Prediction Threshold Key'])
     
-    thr = thresh_key.strip().split(".")
-    thresh_fnm = thr[0] + "_" + thr[1]
+    thresh_fnm = make_thresh_fname(thresh_key)
     fnm = "peak_intensity_selections_" + model + "_" + energy_key.strip() \
             + "_" + thresh_fnm
     if mismatch:
@@ -987,8 +996,7 @@ def peak_intensity_max_intuitive_metrics(df, dict, model, energy_key,
     pred_energy_key = str(sub.iloc[0]['Prediction Energy Channel Key'])
     pred_thresh_key = str(sub.iloc[0]['Prediction Threshold Key'])
 
-    thr = thresh_key.strip().split(".")
-    thresh_fnm = thr[0] + "_" + thr[1]
+    thresh_fnm = make_thresh_fname(thresh_key)
     fnm = "peak_intensity_max_selections_" + model + "_" + energy_key.strip()\
         + "_" + thresh_fnm
     if mismatch:
@@ -1226,8 +1234,7 @@ def max_flux_in_pred_win_metrics(df, tpdf, dict, model, energy_key,
 #    print("PRED")
 #    print(pred)
 
-    thr = thresh_key.strip().split(".")
-    thresh_fnm = thr[0] + "_" + thr[1]
+    thresh_fnm = make_thresh_fname(thresh_key)
     fnm = "max_flux_in_pred_win_selections_" + model + "_" + energy_key.strip() + "_" + thresh_fnm
     if mismatch:
         fnm = fnm + "_mm"
@@ -1310,8 +1317,7 @@ def fluence_intuitive_metrics(df, dict, model, energy_key,
     pred_energy_key = str(sub.iloc[0]['Prediction Energy Channel Key'])
     pred_thresh_key = str(sub.iloc[0]['Prediction Threshold Key'])
 
-    thr = thresh_key.strip().split(".")
-    thresh_fnm = thr[0] + "_" + thr[1]
+    thresh_fnm = make_thresh_fname(thresh_key)
     fnm = "fluence_selections_" + model + "_" + energy_key.strip() + "_" \
             + thresh_fnm
     if mismatch:
@@ -1394,8 +1400,7 @@ def threshold_crossing_intuitive_metrics(df, dict, model, energy_key,
     pred_energy_key = str(sub.iloc[0]['Prediction Energy Channel Key'])
     pred_thresh_key = str(sub.iloc[0]['Prediction Threshold Key'])
 
-    thr = thresh_key.strip().split(".")
-    thresh_fnm = thr[0] + "_" + thr[1]
+    thresh_fnm = make_thresh_fname(thresh_key)
     fnm = "threshold_crossing_time_selections_" + model + "_" \
             + energy_key.strip() + "_" + thresh_fnm
     if mismatch:
@@ -1446,8 +1451,7 @@ def start_time_intuitive_metrics(df, dict, model, energy_key, thresh_key):
     pred_energy_key = str(sub.iloc[0]['Prediction Energy Channel Key'])
     pred_thresh_key = str(sub.iloc[0]['Prediction Threshold Key'])
 
-    thr = thresh_key.strip().split(".")
-    thresh_fnm = thr[0] + "_" + thr[1]
+    thresh_fnm = make_thresh_fname(thresh_key)
     fnm = "start_time_selections_" + model + "_" + energy_key.strip() \
             + "_" + thresh_fnm
     if mismatch:
@@ -1499,8 +1503,7 @@ def end_time_intuitive_metrics(df, dict, model, energy_key,
     pred_energy_key = str(sub.iloc[0]['Prediction Energy Channel Key'])
     pred_thresh_key = str(sub.iloc[0]['Prediction Threshold Key'])
 
-    thr = thresh_key.strip().split(".")
-    thresh_fnm = thr[0] + "_" + thr[1]
+    thresh_fnm = make_thresh_fname(thresh_key)
     fnm = "end_time_selections_" + model + "_" + energy_key.strip() + "_" + thresh_fnm
     if mismatch:
         fnm = fnm + "_mm"
@@ -1551,8 +1554,7 @@ def duration_intuitive_metrics(df, dict, model, energy_key, thresh_key):
     pred_energy_key = str(sub.iloc[0]['Prediction Energy Channel Key'])
     pred_thresh_key = str(sub.iloc[0]['Prediction Threshold Key'])
 
-    thr = thresh_key.strip().split(".")
-    thresh_fnm = thr[0] + "_" + thr[1]
+    thresh_fnm = make_thresh_fname(thresh_key)
     fnm = "duration_selections_" + model + "_" + energy_key.strip() \
             + "_" + thresh_fnm
     if mismatch:
@@ -1606,8 +1608,7 @@ def peak_intensity_time_intuitive_metrics(df, dict, model, energy_key,
     pred_energy_key = str(sub.iloc[0]['Prediction Energy Channel Key'])
     pred_thresh_key = str(sub.iloc[0]['Prediction Threshold Key'])
 
-    thr = thresh_key.strip().split(".")
-    thresh_fnm = thr[0] + "_" + thr[1]
+    thresh_fnm = make_thresh_fname(thresh_key)
     fnm = "peak_intensity_time_selections_" + model + "_" \
             + energy_key.strip() + "_" + thresh_fnm
     if mismatch:
@@ -1677,8 +1678,7 @@ def peak_intensity_max_time_intuitive_metrics(df, dict, model, energy_key,
     pred_energy_key = str(sub.iloc[0]['Prediction Energy Channel Key'])
     pred_thresh_key = str(sub.iloc[0]['Prediction Threshold Key'])
 
-    thr = thresh_key.strip().split(".")
-    thresh_fnm = thr[0] + "_" + thr[1]
+    thresh_fnm = make_thresh_fname(thresh_key)
     fnm = "peak_intensity_max_time_selections_" + model + "_" \
             + energy_key.strip() + "_" + thresh_fnm
     if mismatch:
@@ -1735,8 +1735,7 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
     pred_energy_key = str(sub.iloc[0]['Prediction Energy Channel Key'])
     pred_thresh_key = str(sub.iloc[0]['Prediction Threshold Key'])
 
-    thr = thresh_key.strip().split(".")
-    thresh_fnm = thr[0] + "_" + thr[1]
+    thresh_fnm = make_thresh_fname(thresh_key)
     fnm = "time_profile_selections_" + model + "_" + energy_key.strip() \
             + "_" + thresh_fnm
     if mismatch:
