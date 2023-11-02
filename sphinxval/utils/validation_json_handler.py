@@ -298,19 +298,19 @@ def load_objects_from_json(data_list, model_list):
             key = objh.energy_channel_to_key(channel)
             obj = observation_object_from_json(json, channel)
 #            print("Trying " + obj.source)
-#            print("Prediction window start: " + str(obj.observation_window_start))
+#            print("Observation window start: " + str(obj.observation_window_start))
             #skip if energy block wasn't present in json
             if obj.observation_window_start != None:
                 obs_objs[key].append(obj)
-#                print("Adding " + obj.source + " to dictionary under "
-#                    "key " + key)
+ #               print("Adding " + obj.source + " to dictionary under "
+ #                   "key " + key)
         
             if cfg.do_mismatch:
                 if key == cfg.mm_obs_ek:
                     obj = observation_object_from_json(json, channel)
                     if obj.observation_window_start != None:
                         obs_objs[cfg.mm_energy_key].append(obj)
- #                       print("Adding " + obj.source + " to dictionary under key " + cfg.mm_energy_key)
+#                        print("Adding " + obj.source + " to dictionary under key " + cfg.mm_energy_key)
             
 
     #Load json objects
@@ -325,7 +325,7 @@ def load_objects_from_json(data_list, model_list):
             #skip if energy block wasn't present in json
             if obj.prediction_window_start != None:
                 model_objs[key].append(obj)
- #               print("Adding " + obj.source + " to dictionary under key " + key)
+#                print("Adding " + obj.source + " to dictionary under key " + key)
 
             #If mismatched observation and prediction energy channels
             #enabled, then find the correct prediction energy channel
@@ -399,6 +399,11 @@ def check_forecast_json(full_json, energy_channel):
 #                    + full_json['filename'] +
 #                    ". Initializing all to None.")
                 dataD = {}
+                if cfg.do_mismatch:
+                    ek = objh.energy_channel_to_key(energy_channel)
+                    if ek == cfg.mm_obs_ek:
+                        dataD = extract_block(jsonD, cfg.mm_pred_energy_channel)
+                
         else:
 #            print("check_forecast_json: forecast block not "
 #                    "found in forecast json"
@@ -858,10 +863,12 @@ def extract_block(jsonD, energy_channel):
             
     """
     dataD = None
+    ek = objh.energy_channel_to_key(energy_channel)
     
     for block in jsonD:
         if 'energy_channel' in block:
-            if block['energy_channel'] == energy_channel:
+            json_ek = objh.energy_channel_to_key(block['energy_channel'])
+            if json_ek == ek:
                 dataD = block
                 return dataD
                 
@@ -1236,75 +1243,3 @@ def dict_to_probability(prob_dict):
                 vunits.convert_string_to_units(threshold_units) #astropy
 
     return probability_value, uncertainty, threshold, threshold_units
-
-
-
-
-#def process_numbers(injson):
-#    """ Go through all the numerical entries in the json and
-#        ensure they are in float variables.
-#        
-#        This subroutine uses set_json_value_by_index() in
-#        validation_json_handler.py. BE CAREFUL AND NOTE that this
-#        subroutine changes the value of the entries inherently in
-#        the input json (injson) itself. Once injson is passed
-#        into this routine, it will be modified even if
-#        nothing is returned as output.
-#        
-#        INPUTS:
-#        
-#        :injson: (json dictionary) single forecast or observation json
-#        
-#        OUTPUTS
-#        
-#        :outjson:(json dictionary) same json but with units fields modified
-#        
-#    """
-#    #all of the possible units entries in a json block
-#    keys_all_floats = keys.id_all_floats
-#    keys_all_arrays = keys.id_all_arrays
-#
-#
-#id_all_floats = [id_energy_min,id_energy_max, id_peak_intensity,
-#            id_peak_intensity_esp,
-#            id_peak_intensity_max,
-#            id_fluence,id_fluence_spectrum,
-#            id_fluence_uncertainty_low,id_fluence_uncertainty_high,
-#            id_fluence_spectrum_threshold_start,id_fluence_spectrum_threshold_end,
-#            id_event_length_threshold, id_thresh_uncertainty,
-#            id_crossing_threshold, id_prob_uncertainty,id_prob_threshold,
-#            id_probability, id_all_clear_threshold,
-#            id_all_clear_probability_threshold]
-#            
-#id_all_arrays = [id_fluences,id_fluence_spectra,id_event_lengths,
-#            id_threshold_crossings,id_probabilities]
-#
-#
-#    nblocks = return_nforecasts(injson)
-#    narr = -1
-#    for i in range(nblocks):
-#        for key in keys_all_floats:
-#            key_chain = keys.get_key_chain(key)
-#            
-#            #Check for values stored in arrays
-#            if any(x in key_chain for x in keys_all_arrays):
-#                for arr_key in keys_all_arrays:
-#                    if arr_key in key_chain:
-#                        narr = len(return_json_value_by_index(injson,arr_key,i))
-#                        for j in range(narr):
-#                            float_val = return_json_value_by_index(injson,key,i,j)
-#                            if float_val == vars.errval: continue
-#                            if isinstance(float_val,str) and float_val != ""\
-#                                and float_val != None:
-#                                float_val = float(float_val)
-#                                check =\
-#                                    set_json_value_by_index(float_val,injson,key,i,j)
-#            #Not an array-based field
-#            else:
-#                float_val = return_json_value_by_index(injson,key,i)
-#                if float_val == vars.errval: continue
-#                if isinstance(float_val,str) and float_val != "" and float_val != None:
-#                    float_val = float(float_val)
-#                    check = set_json_value_by_index(float_val,injson,key,i)
-#            
-#    return injson

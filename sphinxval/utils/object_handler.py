@@ -29,7 +29,7 @@ def build_model_list(all_model):
             
     """
     model_names = []
-    keys = all_model.keys()
+    keys = all_model.keys() #energy channels
     for key in keys:
         models = all_model[key] #array
         for fcast in models:
