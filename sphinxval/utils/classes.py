@@ -705,6 +705,12 @@ class Forecast():
                     vjson.zulu_to_time(self.prediction_window_end)
 
         
+            #####MODIFICATION FOR REleASE######
+            if "REleASE" in self.short_name:
+                if self.prediction_window_start == self.prediction_window_end:
+                    self.prediction_window_start = self.prediction_window_start - datetime.timedelta(minutes=15)
+                    self.prediction_window_end = self.prediction_window_end + datetime.timedelta(minutes=15)
+        
         #Only add objects of the predicted values are present in the json
         #Load All Clear
         all_clear, threshold, threshold_units, probability_threshold = \

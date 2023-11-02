@@ -1150,8 +1150,10 @@ def max_flux_in_pred_win_metrics(df, tpdf, dict, model, energy_key,
         (sub['Observed SEP Peak Intensity Max (Max Flux) Time'] >=
         sub['Prediction Window Start']))
     sep_peak_in = sep_peak_in.to_list()
+    max_time = sub['Observed SEP Peak Intensity Max (Max Flux) Time'].to_list()
     pw_st = sub['Prediction Window Start'].to_list()
     pw_end = sub['Prediction Window End'].to_list()
+    
 
     obs = sub['Observed SEP Peak Intensity Max (Max Flux)'].to_list()
     obs_time = sub['Observed SEP Peak Intensity Max (Max Flux) Time'].to_list()
@@ -1180,8 +1182,8 @@ def max_flux_in_pred_win_metrics(df, tpdf, dict, model, energy_key,
         if not sep_peak_in[i]:
             max_flux, max_flux_time = get_max_in_pw(tpdf, energy_key, pw_st[i], pw_end[i])
             #no times in prediction window
-            if max_flux == None or np.isnan(max_flux): continue
-            if max_flux_time == pd.NaT or max_flux_time == None: continue
+#            if max_flux == None or np.isnan(max_flux): continue
+#            if max_flux_time == pd.NaT or max_flux_time == None: continue
             obs[i] = max_flux
             obs_time[i] = max_flux_time
             obs_units[i] = units
@@ -1211,6 +1213,11 @@ def max_flux_in_pred_win_metrics(df, tpdf, dict, model, energy_key,
             }
     mx_flx_df = pd.DataFrame(mx_flx_dict)
     mx_flx_df = mx_flx_df.dropna() #Remove any rows with none or Nan
+    
+    #REMOVE ANY PLACES WHERE THERE ARE 0 FLUX VALUES; NOT SURE WHY
+    #CHECK THIS - Happened when ran RELeASE with SOHO/EPHIN
+    mx_flx_df = mx_flx_df.loc[(mx_flx_df['Observed Max Flux in Prediction Window'] > 0) & (mx_flx_df[peak_key] > 0)]
+    
     obs = mx_flx_df['Observed Max Flux in Prediction Window'].to_list()
     pred = mx_flx_df[peak_key].to_list()
 #    print("After dropping NaN")
