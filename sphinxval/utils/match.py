@@ -2103,7 +2103,7 @@ def revise_eruption_matches(matched_sphinx, all_energy_channels, obs_values,
                     #cannot really say which is the correct one to associate with the
                     #SEP event, so keep both. e.g. March 7, 2012, e.g. slight change
                     #in CME start time when CME refit
-                    adj_idx = [ix for ix in range(len(td_eruptions)) if td_eruptions[ix] < (best_eruption - datetime.timedelta(hours=3))]
+                    adj_idx = [ix for ix in range(len(td_eruptions)) if td_eruptions[ix] < (best_eruption - 3.0)]
                     sphx_idx = []
                     for ix in adj_idx:
                         sphx_idx = idx_event[ix]
