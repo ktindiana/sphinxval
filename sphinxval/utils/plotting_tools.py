@@ -556,6 +556,7 @@ def correlation_plot(obs_values, model_values, plot_title,
             
         returns plt
     '''
+    plt.figure(figsize=(8,5))
     corr = 0
     obs_np = []
     model_np = []
@@ -573,7 +574,7 @@ def correlation_plot(obs_values, model_values, plot_title,
     model_np = np.array(model_clean)
 
     if list(obs_values) == [] or list(model_np) == []:
-        return None
+        return plt
     
     
     if use_log or use_logx:
@@ -606,7 +607,6 @@ def correlation_plot(obs_values, model_values, plot_title,
 
 
     ######MAKE CORRELATION PLOT########
-    plt.figure(figsize=(8,5))
     ax = plt.subplot(111)
     plt.style.use('default')
     plt.grid(which="both", axis="both")
