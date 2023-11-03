@@ -1026,6 +1026,7 @@ def peak_intensity_max_intuitive_metrics(df, dict, model, energy_key,
 
         figname = config.outpath + '/plots/Correlation_peak_intensity_max_' \
                 + model + "_" + energy_key.strip() + "_" + thresh_fnm
+        print(figname)
         if mismatch:
             figname = figname + "_mm"
         corr_plot.savefig(figname+ ".pdf", dpi=300, bbox_inches='tight')

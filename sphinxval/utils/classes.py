@@ -687,10 +687,10 @@ class Forecast():
             
             if 'sep_profile' in dataD:
                 self.sep_profile = dataD['sep_profile']
-                if 'ASPECS' in self.short_name:
-                    pth = self.path
-                    pth = pth.split("/")
-                    self.sep_profile = "../../../Profile/" + pth[len(pth)-3] + "/" + pth[len(pth)-2] + "/" + dataD['sep_profile']
+#                if 'ASPECS' in self.short_name:
+#                    pth = self.path
+#                    pth = pth.split("/")
+#                    self.sep_profile = "../../../Profile/" + pth[len(pth)-3] + "/" + pth[len(pth)-2] + "/" + dataD['sep_profile']
             
             if 'prediction_window' in dataD:
                 self.prediction_window_start = dataD['prediction_window']['start_time']
