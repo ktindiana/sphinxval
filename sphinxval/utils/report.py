@@ -207,7 +207,6 @@ def build_info_events_table(filename, sphinx_dataframe, subset_list, subset_repl
 
 def build_threshold_string(data, i):
     energy_threshold_data = data.iloc[i]['Energy Channel']
-    print(energy_threshold_data)
     if energy_threshold_data.count('MeV') > 1:
         energy_threshold_values = energy_threshold_data.split('_')
         energy_threshold = ''
@@ -233,10 +232,8 @@ def build_threshold_string(data, i):
         else:
             energy_threshold = energy_threshold_min + ' < E < ' + energy_threshold_max + ' MeV'
         mismatch_allowed_string = ''
-    print(mismatch_allowed_string)
     obs_threshold = data.iloc[i]['Threshold'].split('.units.')[0].split('threshold.')[1] + ' pfu'
-    if float(obs_threshold.split(' pfu')[0]) < 1:
-        obs_threshold = '0'
+    print(data.iloc[i]['Prediction Threshold'])
     pred_threshold = data.iloc[i]['Prediction Threshold'].split('.units.')[0].split('threshold.')[1] + ' pfu'
     threshold_string = '* Energy Channel: ' + energy_threshold + '\n'
     threshold_string += '* Observation Threshold: ' + obs_threshold + '\n'
@@ -255,7 +252,6 @@ def build_all_clear_skill_scores_section(filename, model, sphinx_dataframe):
     skill_score_table_labels = list(column_labels[skill_score_start_index:])
     for i in range(0, number_rows):
         threshold_string, energy_threshold, obs_threshold, pred_threshold, mismatch_allowed_string = build_threshold_string(data, i)
-        print(mismatch_allowed_string)
         hits = data.iloc[i]["All Clear 'True Positives' (Hits)"]
         false_alarms = data.iloc[i]["All Clear 'False Positives' (False Alarms)"]
         correct_negatives = data.iloc[i]["All Clear 'True Negatives' (Correct Negatives)"]
@@ -304,37 +300,56 @@ def build_metrics_table(data, current_index, metric_index_start, skip_label_list
     metrics_table_string += '\n' + make_markdown_table(column_1, column_2, subset) + '\n'
     plot_string = ''
     plot_string_list = []
+    time_profile_flag = False
+    if 'Time Profile Selection Plot' in column_labels:
+        time_profile_flag = True
     for i in range(0, len(column_labels)):
         plot_index = None
         if type(column_labels[i]) == str:
-            if ('plot' in column_labels[i]) or ('plot' in column_labels[i].lower()):
-                plot_index = i * 1
-                
+            if time_profile_flag:
+                if (column_labels[i] == 'Time Profile Selection Plot'):
+                    plot_index = i * 1
+            else:
+                if ('plot' in column_labels[i]) or ('plot' in column_labels[i].lower()):
+                    plot_index = i * 1
             if (not (plot_index is None)):
                 plot_path = data.iloc[current_index][column_labels[plot_index]]
                 if plot_path == '':
                     plot_string = ''
                 else:
                     output_directory = config.outpath
-                    if '.' in output_directory:
-                        if output_directory[0] == '.':
-                            output_directory = output_directory[1:]
-                    plot_path = output_directory + '/plots/' + plot_path.split('plots')[1] 
-                    full_path = os.getcwd().replace('\\', '/') + plot_path
-                    full_path = full_path.replace('//', '/') + '.pdf'
-                    if os.path.exists(full_path) and plot_path != '':
-                        plot_string = '![](' + full_path + ')\n\n'
-                        plot_string_list.append(plot_string)
+                    if time_profile_flag:
+                        plot_string_list_ = plot_path.split(';')
+                        for j in range(0, len(plot_string_list_)):
+                            full_path = os.getcwd().replace('\\', '/') + plot_string_list_[j][1:]
+                            full_path = full_path.replace('//', '/')
+                            print(full_path)
+                            if os.path.exists(full_path):
+                                plot_string_list.append('![](' + full_path + ')\n\n')
+                            else:
+                                plot_string = ''
                     else:
-                        plot_string = ''
-    if plot_string == '':
-        if 'plot_path' in locals():
-            if plot_path == '':
-                None
-            else:
-                print('Not displaying ' + plot_path)
-        plot_string = 'No image files found.\n\n'
-        plot_string_list.append(plot_string)
+                        if '.' in output_directory:
+                            if output_directory[0] == '.':
+                                output_directory = output_directory[1:]
+                        plot_path = output_directory + '/plots/' + plot_path.split('plots')[1] 
+                        full_path = os.getcwd().replace('\\', '/') + plot_path
+                        full_path = full_path.replace('//', '/') + '.pdf'
+                        if os.path.exists(full_path) and plot_path != '':
+                            plot_string = '![](' + full_path + ')\n\n'
+                            plot_string_list.append(plot_string)
+                        else:
+                            plot_string = ''
+    if not time_profile_flag:
+        if plot_string == '':
+            if 'plot_path' in locals():
+                if plot_path == '':
+                    None
+                else:
+                    print('Not displaying ' + plot_path)
+            plot_string = 'No image files found.\n\n'
+            plot_string_list.append(plot_string)
+
     return metrics_table_string, plot_string_list
 
 def append_subset_list(selections_filename, subset_list, include_after, exclusion_pattern=None):
@@ -368,7 +383,6 @@ def build_section(filename, model, sphinx_dataframe, metric_label_start, section
         text += add_collapsible_segment_start(section_title + ' Metrics', '')
     for i in range(0, number_rows):
         threshold_string, energy_threshold, obs_threshold, pred_threshold, mismatch_allowed_string = build_threshold_string(data, i)
-        print(mismatch_allowed_string)
         selections_filename = output_dir__ + section_tag + '_selections_' + model + '_' + data.iloc[i]['Energy Channel'] + '_threshold_' + obs_threshold.rstrip(' pfu') + mismatch_allowed_string + '.pkl'
         subset_list = ['Prediction Window Start', 'Prediction Window End']
         subset_list = append_subset_list(selections_filename, subset_list, 'Prediction Window End', 'Units')
@@ -386,7 +400,7 @@ def build_section(filename, model, sphinx_dataframe, metric_label_start, section
         text += add_collapsible_segment('Metrics', metrics_string)
         for j in range(0, len(plot_string_list)):
             plot_type = get_plot_type(plot_string_list[j])
-            text += add_collapsible_segment('Plot: ' + plot_type, plot_string_list[j])
+            text += add_collapsible_segment('Plot: ' + plot_type + ' ' + str(j + 1), plot_string_list[j])
         text += add_collapsible_segment_end()
     text += add_collapsible_segment_end()
     return text
