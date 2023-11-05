@@ -418,6 +418,7 @@ def get_image_string(original_string):
         # FIND LAST RIGHT PARENTHESES
         last_right_parentheses_index = -(original_string[::-1].index(')') + 1)
         result = original_string[:last_right_parentheses_index]
+        result = result.split('![](')[1]
     else:
         left = original_string.split('![](')[1]
         result = left.split(')')[0]
