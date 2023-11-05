@@ -411,8 +411,16 @@ def build_validation_reference_section(filename1, filename2):
 
 ### CONVERT MARKDOWN TO HTML 
 def get_image_string(original_string):
-    left = original_string.split('![](')[1]
-    result = left.split(')')[0]
+    # COUNT NUMBER OF PARENTHESES
+    left_parentheses = original_string.count('(')
+    right_parentheses = original_string.count(')')
+    if (left_parentheses > 1) or (right_parentheses > 1):
+        # FIND LAST RIGHT PARENTHESES
+        last_right_parentheses_index = -(original_string[::-1].index(')') + 1)
+        result = original_string[:last_right_parentheses_index]
+    else:
+        left = original_string.split('![](')[1]
+        result = left.split(')')[0]
     return result
 
 def convert_tables_html(text):
