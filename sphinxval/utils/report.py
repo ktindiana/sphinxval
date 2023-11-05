@@ -266,7 +266,9 @@ def build_all_clear_skill_scores_section(filename, model, sphinx_dataframe):
         info_string += '...\n' # need to complete
         
         selections_filename = output_dir__ + 'all_clear_selections_' + model + '_' + data.iloc[i]['Energy Channel'] + '_threshold_' + obs_threshold.rstrip(' pfu') + mismatch_allowed_string + '.pkl'
-        info_string_, n_events = build_info_events_table(selections_filename, sphinx_dataframe, [], {})
+        subset_list = ['Prediction Window Start', 'Prediction Window End']
+        subset_list = append_subset_list(selections_filename, subset_list, 'Prediction Window End', 'Units')
+        info_string_, n_events = build_info_events_table(selections_filename, sphinx_dataframe, subset_list, {})
         info_string += info_string_
         skill_score_table_values = data.iloc[i, skill_score_start_index:]
         skill_score_table_string = build_skill_score_table(skill_score_table_labels, skill_score_table_values)
@@ -278,18 +280,6 @@ def build_all_clear_skill_scores_section(filename, model, sphinx_dataframe):
         text += add_collapsible_segment_end()
     text += add_collapsible_segment_end()
     return text
-
-def build_info_events_table_peak_intensity(filename, sphinx_dataframe):
-    data = pd.read_pickle(filename)
-    subset = data[['Prediction Window Start', 'Prediction Window End', 'Observed SEP Peak Intensity (Onset Peak)', 'Predicted SEP Peak Intensity (Onset Peak)']]
-    subset.insert(0, 'Observatory', 'dummy')
-    selection_index = list(data.index)
-    subset['Observatory'] = sphinx_dataframe.loc[selection_index, 'Observatory'].to_list()
-    subset = subset.rename(columns={'Observed SEP Peak Intensity (Onset Peak)' : 'Observations', 'Predicted SEP Peak Intensity (Onset Peak)' : 'Predictions'})
-    subset = subset
-    output = '\n' + subset.to_markdown(index=False) + '\n'
-    n_events = len(data)
-    return output, n_events
 
 def build_metrics_table(data, current_index, metric_index_start, skip_label_list):
     metrics_table_string = ''
