@@ -13,6 +13,9 @@ parser.add_argument("--resume",
 parser.add_argument("--DataFrame", type=str, default="",
         help=("Filename of existing Pandas DataFrame containing the results of a previous SPHINX run in pkl format. "
             "Must specify if choose resume."))
+parser.add_argument("--RelativePathPlots", type=bool, default=True, \
+        help=("Generate reports with relative paths for plots"))
+
 
 #parser.add_argument("--OneModel", type=str, default="",
 #        help=("If want to validate only one model in the list, specify "
@@ -37,6 +40,8 @@ model_list = args.ModelList
 data_list = args.DataList
 resume = args.resume
 df_pkl = args.DataFrame
+relative_path_plots = args.RelativePathPlots
+
 #report_only = args.ReportOnly
 
 
@@ -48,4 +53,4 @@ df_pkl = args.DataFrame
 
 
 sphinxval.sphinx.validate(data_list, model_list, resume, df_pkl)
-sphinxval.sphinx.report.report(None)
+sphinxval.sphinx.report.report(None, relative_path_plots)
