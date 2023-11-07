@@ -12,6 +12,10 @@ import PyPDF2 as pdf
 
 from . import config 
 
+def replace_backslash_with_forward_slash(input_string):
+    replaced_string = input_string.replace('\\', '/')
+    return replaced_string
+
 def formatting_function(value):
     condition = True
     num_floats = 2
@@ -233,7 +237,6 @@ def build_threshold_string(data, i):
             energy_threshold = energy_threshold_min + ' < E < ' + energy_threshold_max + ' MeV'
         mismatch_allowed_string = ''
     obs_threshold = data.iloc[i]['Threshold'].split('.units.')[0].split('threshold.')[1] + ' pfu'
-    print(data.iloc[i]['Prediction Threshold'])
     pred_threshold = data.iloc[i]['Prediction Threshold'].split('.units.')[0].split('threshold.')[1] + ' pfu'
     threshold_string = '* Energy Channel: ' + energy_threshold + '\n'
     threshold_string += '* Observation Threshold: ' + obs_threshold + '\n'
@@ -263,7 +266,9 @@ def build_all_clear_skill_scores_section(filename, model, sphinx_dataframe):
         info_string += '...\n' # need to complete
         
         selections_filename = output_dir__ + 'all_clear_selections_' + model + '_' + data.iloc[i]['Energy Channel'] + '_threshold_' + obs_threshold.rstrip(' pfu') + mismatch_allowed_string + '.pkl'
-        info_string_, n_events = build_info_events_table(selections_filename, sphinx_dataframe, [], {})
+        subset_list = ['Prediction Window Start', 'Prediction Window End']
+        subset_list = append_subset_list(selections_filename, subset_list, 'Prediction Window End', 'Units')
+        info_string_, n_events = build_info_events_table(selections_filename, sphinx_dataframe, subset_list, {})
         info_string += info_string_
         skill_score_table_values = data.iloc[i, skill_score_start_index:]
         skill_score_table_string = build_skill_score_table(skill_score_table_labels, skill_score_table_values)
@@ -276,18 +281,6 @@ def build_all_clear_skill_scores_section(filename, model, sphinx_dataframe):
     text += add_collapsible_segment_end()
     return text
 
-def build_info_events_table_peak_intensity(filename, sphinx_dataframe):
-    data = pd.read_pickle(filename)
-    subset = data[['Prediction Window Start', 'Prediction Window End', 'Observed SEP Peak Intensity (Onset Peak)', 'Predicted SEP Peak Intensity (Onset Peak)']]
-    subset.insert(0, 'Observatory', 'dummy')
-    selection_index = list(data.index)
-    subset['Observatory'] = sphinx_dataframe.loc[selection_index, 'Observatory'].to_list()
-    subset = subset.rename(columns={'Observed SEP Peak Intensity (Onset Peak)' : 'Observations', 'Predicted SEP Peak Intensity (Onset Peak)' : 'Predictions'})
-    subset = subset
-    output = '\n' + subset.to_markdown(index=False) + '\n'
-    n_events = len(data)
-    return output, n_events
-
 def build_metrics_table(data, current_index, metric_index_start, skip_label_list):
     metrics_table_string = ''
     column_labels = list(data.columns)
@@ -298,59 +291,46 @@ def build_metrics_table(data, current_index, metric_index_start, skip_label_list
     column_1 = 'Metric'
     column_2 = 'Value'
     metrics_table_string += '\n' + make_markdown_table(column_1, column_2, subset) + '\n'
-    plot_string = ''
+    plot_string_list, plot_file_string_list = build_plot_string_list(data, current_index)
+    return metrics_table_string, plot_string_list, plot_file_string_list
+    
+def build_plot_string_list(data, current_index):
     plot_string_list = []
-    time_profile_flag = False
-    if 'Time Profile Selection Plot' in column_labels:
-        time_profile_flag = True
-    for i in range(0, len(column_labels)):
-        plot_index = None
-        if type(column_labels[i]) == str:
-            if time_profile_flag:
-                if (column_labels[i] == 'Time Profile Selection Plot'):
-                    plot_index = i * 1
-            else:
-                if ('plot' in column_labels[i]) or ('plot' in column_labels[i].lower()):
-                    plot_index = i * 1
-            if (not (plot_index is None)):
-                plot_path = data.iloc[current_index][column_labels[plot_index]]
-                if plot_path == '':
-                    plot_string = ''
-                else:
-                    output_directory = config.outpath
-                    if time_profile_flag:
-                        plot_string_list_ = plot_path.split(';')
-                        for j in range(0, len(plot_string_list_)):
-                            full_path = os.getcwd().replace('\\', '/') + plot_string_list_[j][1:]
-                            full_path = full_path.replace('//', '/')
-                            print(full_path)
-                            if os.path.exists(full_path):
-                                plot_string_list.append('![](' + full_path + ')\n\n')
-                            else:
-                                plot_string = ''
-                    else:
-                        if '.' in output_directory:
-                            if output_directory[0] == '.':
-                                output_directory = output_directory[1:]
-                        plot_path = output_directory + '/plots/' + plot_path.split('plots')[1] 
-                        full_path = os.getcwd().replace('\\', '/') + plot_path
-                        full_path = full_path.replace('//', '/') + '.pdf'
-                        if os.path.exists(full_path) and plot_path != '':
-                            plot_string = '![](' + full_path + ')\n\n'
-                            plot_string_list.append(plot_string)
-                        else:
-                            plot_string = ''
-    if not time_profile_flag:
-        if plot_string == '':
-            if 'plot_path' in locals():
-                if plot_path == '':
-                    None
-                else:
-                    print('Not displaying ' + plot_path)
+    plot_file_string_list = []
+    if 'Scatter Plot' in data.columns:    
+        plot_string_ = data.iloc[current_index]['Scatter Plot']
+        if plot_string_ == '':
             plot_string = 'No image files found.\n\n'
+            plot_file_string = ''
             plot_string_list.append(plot_string)
-
-    return metrics_table_string, plot_string_list
+            plot_file_string_list.append(plot_file_string)
+        else:    
+            if relative_path_plots__:
+                plot_string = os.path.relpath(plot_string_, 'reports/')
+                plot_file_string = os.path.relpath(plot_string_, '.')
+            else:
+                plot_string = os.path.abspath(plot_string_)
+                plot_file_string = plot_string + ''
+            plot_string = replace_backslash_with_forward_slash(plot_string) + '.pdf'
+            plot_file_string = replace_backslash_with_forward_slash(plot_file_string) + '.pdf'
+            plot_string_list.append('![](' +  plot_string + ')\n\n')
+            plot_file_string_list.append(plot_file_string)
+        
+    if 'Time Profile Selection Plot' in data.columns:
+        time_profile_plot_string = data.iloc[current_index]['Time Profile Selection Plot']
+        time_profile_plot_string_list = time_profile_plot_string.split(';')
+        for i in range(0, len(time_profile_plot_string_list)):
+            if relative_path_plots__:
+                plot_string = os.path.relpath(time_profile_plot_string_list[i], 'reports/')
+                plot_file_string = os.path.relpath(time_profile_plot_string_list[i], '.')
+            else:
+                plot_string = os.path.abspath(time_profile_plot_string_list[i])
+                plot_file_string = plot_string + ''
+            plot_string = replace_backslash_with_forward_slash(plot_string)
+            plot_file_string = replace_backslash_with_forward_slash(plot_file_string)
+            plot_string_list.append('![](' +  plot_string + ')\n\n')
+            plot_file_string_list.append(plot_file_string)
+    return plot_string_list, plot_file_string_list
 
 def append_subset_list(selections_filename, subset_list, include_after, exclusion_pattern=None):
     # HACKY
@@ -392,7 +372,7 @@ def build_section(filename, model, sphinx_dataframe, metric_label_start, section
         info_string += '...\n' # need to complete
         info_string += info_string_
         metrics_string = metrics_description_string + '' 
-        metrics_string_, plot_string_list = build_metrics_table(data, i, metric_index_start, skip_label_list)
+        metrics_string_, plot_string_list, plot_file_string_list = build_metrics_table(data, i, metric_index_start, skip_label_list)
         metrics_string += metrics_string_
         text += add_collapsible_segment_start(energy_threshold, '')
         text += add_collapsible_segment('Thresholds Applied', threshold_string)
@@ -421,9 +401,17 @@ def build_validation_reference_section(filename1, filename2):
 
 ### CONVERT MARKDOWN TO HTML 
 def get_image_string(original_string):
-    left = original_string.split('![](')[1]
-    result = left.split(')')[0]
-    result = result.replace('.png', '.pdf')
+    # COUNT NUMBER OF PARENTHESES
+    left_parentheses = original_string.count('(')
+    right_parentheses = original_string.count(')')
+    if (left_parentheses > 1) or (right_parentheses > 1):
+        # FIND LAST RIGHT PARENTHESES
+        last_right_parentheses_index = -(original_string[::-1].index(')') + 1)
+        result = original_string[:last_right_parentheses_index]
+        result = result.split('![](')[1]
+    else:
+        left = original_string.split('![](')[1]
+        result = left.split(')')[0]
     return result
 
 def convert_tables_html(text):
@@ -455,13 +443,16 @@ def convert_plots_html(text):
             pass
         else:
             if line[0] == '!':
-                image_filename = get_image_string(line)
+                image_filename_plot_path = get_image_string(line)
                 # CHECK IMAGE DIMENSIONS
+                image_filename = os.path.abspath(image_filename_plot_path)
+                image_filename = replace_backslash_with_forward_slash(image_filename)
+                image_filename = image_filename.replace('output/plots/', 'sphinxval/output/plots/')
                 reader = pdf.PdfReader(image_filename)
                 box = reader.pages[0].mediabox
                 width = str(box.width)
                 height = str(box.height + 60)
-                new_text += '<embed src="' + image_filename + '" alt="" height="' + height + '" width="' + width + '">'  
+                new_text += '<embed src="' + image_filename_plot_path + '" alt="" height="' + height + '" width="' + width + '">'  
             else:
                 new_text += line + '\n'
     new_text = new_text.split('\n')
@@ -557,8 +548,9 @@ def get_plot_type(plot_string):
     return plot_type
     
 # FINAL RESULT
-def report(output_dir):
+def report(output_dir, relative_path_plots):
     global output_dir__
+    global relative_path_plots__
 
     # get all model metrics
     # analyze the output directory
@@ -566,6 +558,8 @@ def report(output_dir):
         output_dir__ = config.outpath + '/pkl/'
     else:
         output_dir__ = output_dir   
+
+    relative_path_plots__ = relative_path_plots
 
     files = os.listdir(output_dir__)
     if 'desktop.ini' in files:
@@ -774,8 +768,6 @@ def report(output_dir):
             skip_label_list = ['Time Profile Selection Plot']
             markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, skip_label_list=skip_label_list)
         
-            
-        
         ### BUILD THE VALIDATION REFERENCE
         vr_filename1 = config.referencepath + '/validation_reference_sheet_1.csv'
         vr_filename2 = config.referencepath + '/validation_reference_sheet_2.csv'
@@ -790,7 +782,3 @@ def report(output_dir):
         a.close()
 
         convert_markdown_to_html(markdown_filename)
-
-
-
-
