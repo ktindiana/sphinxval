@@ -378,9 +378,17 @@ def build_section(filename, model, sphinx_dataframe, metric_label_start, section
         text += add_collapsible_segment('Thresholds Applied', threshold_string)
         text += add_collapsible_segment('Validation Info', info_string)
         text += add_collapsible_segment('Metrics', metrics_string)
+        plot_counter = 1
+        last_plot_type = ''
         for j in range(0, len(plot_string_list)):
             plot_type = get_plot_type(plot_string_list[j])
-            text += add_collapsible_segment('Plot: ' + plot_type + ' ' + str(j + 1), plot_string_list[j])
+            if plot_type != last_plot_type:
+                plot_counter = 1
+            else:
+                plot_counter += 1
+            text += add_collapsible_segment('Plot: ' + plot_type + ' ' + str(plot_counter), plot_string_list[j])
+            last_plot_type = plot_type + ''
+            
         text += add_collapsible_segment_end()
     text += add_collapsible_segment_end()
     return text
@@ -762,7 +770,7 @@ def report(output_dir, relative_path_plots):
             metric_label_start = 'Linear Regression Slope'
             section_title = 'Time Profile'
             section_tag = 'time_profile'
-            metrics_description_string = "Metrics for Observed Time - Predicted Time are in hours.<br>Negative values indicate predicted time is later than observed.<br>Positive values indicate predicted time is earlier than observed.\n"
+            metrics_description_string = "Metrics for $log_{10}$(model) - $log_{10}$(Observations).<br>Positive values indicate model overprediction.<br>Negative values indicate model underprediction.<br>r_lin and r_log indicate the pearson's correlation coefficient calculated using values or $log_{10}$(values), respectively."
             section_filename = output_dir__ + section_tag + '_metrics.pkl'
             validation_text += '* ' + section_title + '\n'
             skip_label_list = ['Time Profile Selection Plot']
