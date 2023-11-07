@@ -762,7 +762,7 @@ def report(output_dir, relative_path_plots):
             metric_label_start = 'Linear Regression Slope'
             section_title = 'Time Profile'
             section_tag = 'time_profile'
-            metrics_description_string = "Metrics for Observed Time - Predicted Time are in hours.<br>Negative values indicate predicted time is later than observed.<br>Positive values indicate predicted time is earlier than observed.\n"
+            metrics_description_string = "Metrics for $log_{10}$(model) - $log_{10}$(Observations).<br>Positive values indicate model overprediction.<br>Negative values indicate model underprediction.<br>r_lin and r_log indicate the pearson's correlation coefficient calculated using values or $log_{10}$(values), respectively."
             section_filename = output_dir__ + section_tag + '_metrics.pkl'
             validation_text += '* ' + section_title + '\n'
             skip_label_list = ['Time Profile Selection Plot']
