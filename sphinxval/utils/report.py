@@ -378,9 +378,17 @@ def build_section(filename, model, sphinx_dataframe, metric_label_start, section
         text += add_collapsible_segment('Thresholds Applied', threshold_string)
         text += add_collapsible_segment('Validation Info', info_string)
         text += add_collapsible_segment('Metrics', metrics_string)
+        plot_counter = 1
+        last_plot_type = ''
         for j in range(0, len(plot_string_list)):
             plot_type = get_plot_type(plot_string_list[j])
-            text += add_collapsible_segment('Plot: ' + plot_type + ' ' + str(j + 1), plot_string_list[j])
+            if plot_type != last_plot_type:
+                plot_counter = 1
+            else:
+                plot_counter += 1
+            text += add_collapsible_segment('Plot: ' + plot_type + ' ' + str(plot_counter), plot_string_list[j])
+            last_plot_type = plot_type + ''
+            
         text += add_collapsible_segment_end()
     text += add_collapsible_segment_end()
     return text
