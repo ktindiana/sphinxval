@@ -1417,7 +1417,7 @@ def match_observed_onset_peak(sphinx, observation_obj, is_win_overlap,
             sphinx.peak_intensity_match_status = "No SEP Event"
         if is_eruption_in_range != None and not is_eruption_in_range:
             sphinx.peak_intensity_match_status = "Eruption Out of Range"
-        if not trigger_input_peak: #precedence
+        if trigger_input_peak != None and not trigger_input_peak: #precedence
             sphinx.peak_intensity_match_status = "Trigger/Input after Observed Phenomenon"
  
  
