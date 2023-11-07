@@ -209,8 +209,8 @@ def build_info_events_table(filename, sphinx_dataframe, subset_list, subset_repl
     n_events = len(data)
     return output, n_events
 
-def build_threshold_string(data, i):
-    energy_threshold_data = data.iloc[i]['Energy Channel']
+def build_threshold_string(data, k):
+    energy_threshold_data = data.iloc[k]['Energy Channel']
     if energy_threshold_data.count('MeV') > 1:
         energy_threshold_values = energy_threshold_data.split('_')
         energy_threshold = ''
@@ -236,8 +236,8 @@ def build_threshold_string(data, i):
         else:
             energy_threshold = energy_threshold_min + ' < E < ' + energy_threshold_max + ' MeV'
         mismatch_allowed_string = ''
-    obs_threshold = data.iloc[i]['Threshold'].split('.units.')[0].split('threshold.')[1] + ' pfu'
-    pred_threshold = data.iloc[i]['Prediction Threshold'].split('.units.')[0].split('threshold.')[1] + ' pfu'
+    obs_threshold = data.iloc[k]['Threshold'].split('.units.')[0].split('threshold.')[1] + ' pfu'
+    pred_threshold = data.iloc[k]['Prediction Threshold'].split('.units.')[0].split('threshold.')[1] + ' pfu'
     threshold_string = '* Energy Channel: ' + energy_threshold + '\n'
     threshold_string += '* Observation Threshold: ' + obs_threshold + '\n'
     threshold_string += '* Predictions Threshold: ' + pred_threshold + '\n'
@@ -254,6 +254,7 @@ def build_all_clear_skill_scores_section(filename, model, sphinx_dataframe):
     skill_score_start_index = 9
     skill_score_table_labels = list(column_labels[skill_score_start_index:])
     for i in range(0, number_rows):
+        print(data.iloc[i])
         threshold_string, energy_threshold, obs_threshold, pred_threshold, mismatch_allowed_string = build_threshold_string(data, i)
         hits = data.iloc[i]["All Clear 'True Positives' (Hits)"]
         false_alarms = data.iloc[i]["All Clear 'False Positives' (False Alarms)"]
@@ -586,7 +587,7 @@ def report(output_dir, relative_path_plots):
     
     for i in range(0, len(models)):
         model = models[i]
-   
+        print(model) 
         # check which sections to include
         all_clear = False
         peak_intensity = False
