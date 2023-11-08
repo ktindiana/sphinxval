@@ -76,10 +76,8 @@ def make_markdown_table(column_1, column_2, dataframe, width=50):
     table = '| ' + column_1 + ' ' * (width - 1 - len(column_1)) + ' | ' + column_2 + ' ' * (width - 1 - len(column_2)) + ' |\n'
     table += '|:' + (width - 1) * '-' + ':|:' + (width - 1) * '-' + ':|\n'
     for i in range(0, len(rows)):
+        rows[i] = rows[i].replace('|', '\|')
         table += '| ' + rows[i] + ' ' * (width - len(rows[i])) + '| ' + formatted_numbers[i] + ' ' * (width - len(formatted_numbers[i])) + '|\n'
-
-
-    print(table)
     return table
     
 def format_markdown_table(text, width=50):
