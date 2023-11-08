@@ -77,6 +77,9 @@ def make_markdown_table(column_1, column_2, dataframe, width=50):
     table += '|:' + (width - 1) * '-' + ':|:' + (width - 1) * '-' + ':|\n'
     for i in range(0, len(rows)):
         table += '| ' + rows[i] + ' ' * (width - len(rows[i])) + '| ' + formatted_numbers[i] + ' ' * (width - len(formatted_numbers[i])) + '|\n'
+
+
+    print(table)
     return table
     
 def format_markdown_table(text, width=50):
@@ -593,6 +596,7 @@ def report(output_dir, relative_path_plots):
         peak_intensity = False
         peak_intensity_max = False
         peak_intensity_time = False
+        peak_intensity_max_time = False
         threshold_crossing = False
         fluence = False
         max_flux_in_pred_win = False
@@ -612,8 +616,11 @@ def report(output_dir, relative_path_plots):
             if ('peak_intensity_max_selections_' + model) in files[j]:
                 peak_intensity_max = True
                 continue
-            if ('peak_intensity_max_time_selections_' + model) in files[j]:
+            if ('peak_intensity_time_selections_' + model) in files[j]:
                 peak_intensity_time = True
+                continue
+            if ('peak_intensity_max_time_selections_' + model) in files[j]:
+                peak_intensity_max_time = True
                 continue
             if ('threshold_crossing_time_selections_' + model) in files[j]:
                 threshold_crossing = True
@@ -687,7 +694,17 @@ def report(output_dir, relative_path_plots):
             section_filename = output_dir__ + section_tag + '_metrics.pkl'
             validation_text += '* ' + section_title + '\n'
             markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string)
-        
+       
+        if peak_intensity_max_time:
+            ### build the peak intensity max time metrics
+            metric_label_start = 'Mean Error (pred - obs)'
+            section_title = 'Peak Intensity Max Time'
+            section_tag = 'peak_intensity_max_time'
+            metrics_description_string = "Metrics for Observed Time - Predicted Time are in hours.<br>Negative values indicate predicted time is later than observed.<br>Positive values indicate predicted time is earlier than observed.\n"
+            section_filename = output_dir__ + section_tag + '_metrics.pkl'
+            validation_text += '* ' + section_title + '\n'
+            markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string)
+ 
         if threshold_crossing:
             ### build the threshold crossing metrics
             metric_label_start = 'Mean Error (pred - obs)'
