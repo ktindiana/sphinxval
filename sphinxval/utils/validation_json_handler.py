@@ -403,6 +403,8 @@ def check_forecast_json(full_json, energy_channel):
                     ek = objh.energy_channel_to_key(energy_channel)
                     if ek == cfg.mm_obs_ek:
                         dataD = extract_block(jsonD, cfg.mm_pred_energy_channel)
+                        if dataD == None:
+                            dataD = {}
                 
         else:
 #            print("check_forecast_json: forecast block not "
