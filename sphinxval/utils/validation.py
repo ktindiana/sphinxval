@@ -752,7 +752,7 @@ def all_clear_intuitive_metrics(df, dict, model, energy_key, thresh_key):
     return sub
 
 
-def probabilty_intuitive_metrics(df, dict, model, energy_key, thresh_key):
+def probability_intuitive_metrics(df, dict, model, energy_key, thresh_key):
     """ Extract the appropriate predictions and calculate metrics
         Probability
 
@@ -2018,7 +2018,7 @@ def calculate_intuitive_metrics(df, model_names, all_energy_channels,
     for model in model_names:
         for ek in all_energy_channels:
             for tk in all_observed_thresholds[ek]:
-                probabilty_intuitive_metrics(df, probability_dict,model,ek,tk)
+                probability_intuitive_metrics(df, probability_dict,model,ek,tk)
                 peak_intensity_intuitive_metrics(df, peak_intensity_dict,
                     model,ek,tk)
                 peak_intensity_max_intuitive_metrics(df,
