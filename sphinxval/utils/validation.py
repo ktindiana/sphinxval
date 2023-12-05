@@ -464,7 +464,8 @@ def fill_tp_dataframe(df, all_energy_channels):
     
     return tpdf
     
-    
+
+
 
 ##################### METRICS #####################
 def initialize_flux_dict():
@@ -520,16 +521,63 @@ def initialize_time_dict():
     
     
 def initialize_awt_dict():
-    """ Metrics for Adanced Warning Time.
-    
+    """ Metrics for Adanced Warning Time to SEP start, SEP peak, SEP end.
+        The "Forecasted Value" field indicates which forecasted quantity
+        was used to calculate the AWT.
     """
     dict = {"Model": [],
             "Energy Channel": [],
             "Threshold": [],
             "Prediction Energy Channel": [],
             "Prediction Threshold": [],
-            "Mean AWT (observed start - issue time)": [],
-            "Median AWT (observed start - issue time)": [],
+            
+            #All Clear Forecasts
+            "Mean AWT for Predicted SEP All Clear to Observed SEP Threshold Crossing Time": [],
+            "Median AWT for Predicted SEP All Clear to Observed SEP Threshold Crossing Time": [],
+            "Mean AWT for Predicted SEP All Clear to Observed SEP Start Time": [],
+            "Median AWT for Predicted SEP All Clear to Observed SEP Start Time": [],
+
+#            #Probability Forecasts - cannot without an explicit threshold
+#            "Mean AWT for Probability to Observed Threshold Crossing Time": [],
+#            "Median AWT for Probability to Observed Threshold Crossing Time": [],
+#            "Mean AWT for Probability to Observed Start Time": [],
+#            "Median AWT for Probability to Observed Start Time": [],
+
+            #Threshold Crossing Time Forecasts
+            "Mean AWT for Predicted SEP Threshold Crossing Time to Observed SEP Threshold Crossing Time": [],
+            "Median AWT for Predicted SEP Threshold Crossing Time to Observed SEP Threshold Crossing Time": [],
+            "Mean AWT for Predicted SEP Threshold Crossing Time to Observed SEP Start Time": [],
+            "Median AWT for Predicted SEP Threshold Crossing Time to Observed SEP Start Time": [],
+
+            #Start Time Forecasts
+            "Mean AWT for Predicted SEP Start Time to Observed SEP Threshold Crossing Time": [],
+            "Median AWT for Predicted SEP Start Time to Observed SEP Threshold Crossing Time": [],
+            "Mean AWT for Predicted SEP Start Time to Observed SEP Start Time": [],
+            "Median AWT for Predicted SEP Start Time to Observed SEP Start Time": [],
+            
+            #Peak Intensity Forecasts
+            "Mean AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Threshold Crossing Time": [],
+            "Median AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Threshold Crossing Time": [],
+            "Mean AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Start Time": [],
+            "Median AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Start Time": [],
+            "Mean AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Peak Intensity (Onset Peak) Time": [],
+            "Median AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Peak Intensity (Onset Peak) Time": [],
+
+            #Peak Intensity Max Forecasts
+            "Mean AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Threshold Crossing Time": [],
+            "Median AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Threshold Crossing Time": [],
+            "Mean AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Start Time": [],
+            "Median AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Start Time": [],
+            "Mean AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Peak Intensity Max (Max Flux) Time": [],
+            "Median AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Peak Intensity Max (Max Flux) Time": [],
+
+            #End Time Forecasts
+            "Mean AWT for Predicted SEP End Time to Observed SEP Threshold Crossing Time": [],
+            "Median AWT for Predicted SEP End Time to Observed SEP Threshold Crossing Time": [],
+            "Mean AWT for Predicted SEP End Time to Observed SEP Start Time": [],
+            "Median AWT for Predicted SEP End Time to Observed SEP Start Time": [],
+            "Mean AWT Predicted SEP End Time to Observed SEP End Time": [],
+            "Median AWT for Predicted SEP End Time to Observed SEP End Time": []
             }
             
     return dict
@@ -1938,45 +1986,300 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
 
 
 
-#def AWT_metrics(df, dict, model, energy_key, thresh_key):
-#    """ Metrics for Advanced Warning Time.
-#        Find the first forecast ahead of SEP events and calculate AWT
-#        for a given model, energy channel, and threshold.
-#    
-#    """
-#
-#    sub = df.loc[(df['Model'] == model) & (df['Energy Channel Key'] == energy_key)
-#                & (df['Threshold Key'] == thresh_key)]
-#
-#    sub = sub[['Model','Energy Channel Key', 'Threshold Key', 'Issue Time', 'Prediction Window Start', 'Prediction Window End', 'Observed SEP Start Time', 'Predicted SEP All Clear', 'All Clear Match Status', 'Predicted Probability', 'Probability Match Status', 'Predicted SEP Threshold Crossing Time', 'Threshold Crossing Time Match Status', 'Predicted SEP Start Time', 'Start Time Match Status', 'Predicted SEP End Time', 'End Time Match Status', 'Predicted SEP Duration', 'Duration Match Status', 'Predicted SEP Peak Intensity (Onset Peak) Time', 'Peak Intensity Match Status', 'Predicted SEP Peak Intensity Max (Max Flux) Time', 'Peak Intensity Max Match Status']]
-#
-#    #Identify all forecasts associated with observed SEP Events
-#    sub = sub.loc[(sub['All Clear Match Status'] == 'SEP Event')]
-#
-#    #Remove rows that don't have a forecast for at least one quantity.
-#    #We cannot check fluence only forecasts because there isn't a threshold
-#    #to apply to determine if an SEP event was forecasted or not.
-#    #We choose not to check a forecast for time profile only. Presumably, if
-#    #there is a forecast for a time profile, then all the other fields
-#    #will be filled in.
-#    sub = sub.loc[(sub['Predicted SEP All Clear'] == None
-#                    and sub['Predicted SEP Threshold Crossing Time' == None]
-#                    and sub['Predicted SEP Start Time'] == None
-#                    and sub['Predicted SEP End Time'] == None
-#                    and sub['Predicted SEP Duration'] == None
-#                    and sub['Predicted SEP Peak Intensity (Onset Peak)'] == None
-#                    and sub['Predicted SEP Peak Intensity Max (Max Flux)'] == None)
-#                    and sub['Predicted SEP Peak Intensity (Onset Peak) Time'] == None
-#                    and sub['Predicted SEP Peak Intensity Max (Max Flux) Time'] == None)]
-#
-#    #Remove rows with predicted peak intensity below threshold.
-#    threshold = objh.key_to_threshold(thresh_key)
-#    thresh = threshold['threshold']
-#    sub = sub.loc[(sub['Predicted SEP Peak Intensity (Onset Peak)'] != None
-#                    and (sub['Predicted SEP Peak Intensity (Onset Peak)'] >= thresh)))]
-#
-#    #Only rows with observed SEP events and some kind of forecast remains
+def identify_first_all_clear_forecast(df):
+    """ Finds the first forecast associated with an SEP event.
+        In the case of consecutive forecasts leading up to an SEP event,
+        the first forecast will be selected for a series of forecasts that ALL
+        predict an SEP event will occur.
+        
+        INPUT:
+        
+            :df: (pandas dataframe) forecasts for a single SEP event for a single
+                model, energy channel, and threshold
+
+        OUTPUT:
+        
+            :idx: index indicating row of df associated with first forecast
+        
+    """
+    all_clear = df['Predicted SEP All Clear'].to_list()
+    ac_idx = None
+    #Search in reverse order checking of forecast is False All Clear
+    #As soon as hit a True All Clear, exit
+    for i in range(len(all_clear)-1,-1,-1):
+        if all_clear[i] == False:
+            ac_idx = i
+        if all_clear[i] == True:
+            break
     
+    return ac_idx
+
+
+def identify_first_time_forecast(df, pred_key):
+    """ Finds the first forecast associated with an SEP event.
+        In the case of consecutive forecasts leading up to an SEP event,
+        the first forecast will be selected for a series of forecasts that ALL
+        predict an SEP event will occur.
+        
+        INPUT:
+        
+            :df: (pandas dataframe) forecasts for a single SEP event for a single
+                model, energy channel, and threshold
+            :pred_key: (string) indicates predicted time, e.g.
+                'Predicted SEP Threshold Crossing Time'
+                'Predicted SEP Start Time'
+                'Predicted SEP End Time'
+
+        OUTPUT:
+        
+            :idx: index indicating row of df associated with first forecast
+        
+    """
+    times = df[pred_key].to_list()
+    idx = None
+    for i in range(len(times)-1,-1,-1):
+        if times[i] != pd.NaT:
+            idx = i
+        else:
+            break
+
+    return idx
+
+
+def identify_first_flux_forecast(df, pred_key, thresh_key):
+    """ Finds the first forecast associated with an SEP event.
+        In the case of consecutive forecasts leading up to an SEP event,
+        the first forecast will be selected for a series of forecasts that ALL
+        predict an SEP event will occur.
+        
+        INPUT:
+        
+            :df: (pandas dataframe) forecasts for a single SEP event for a single
+                model, energy channel, and threshold
+            :pred_key: (string) indicates predicted time, e.g.
+                'Predicted SEP Peak Intensity (Onset Peak)'
+                'Predicted SEP Peak Intensity Max (Max Flux)'
+            :thresh_key: (string) threshold applied to flux to define SEP event
+
+        OUTPUT:
+        
+            :idx: index indicating row of df associated with first forecast
+        
+    """
+    threshold = objh.key_to_threshold(thresh_key)
+    thresh = threshold['threshold']
+    
+    fluxes = df[pred_key].to_list()
+    idx = None
+    for i in range(len(fluxes)-1,-1,-1):
+        if fluxes[i] >= thresh:
+            idx = i
+        else:
+            break
+
+    return idx
+
+
+
+
+def extract_awt_sub(df, model, energy_key, thresh_key, pred_key, match_key, obs_key=''):
+    """ Extracts the forecast to be used to calculate AWT. Compares issue
+        time to Observed SEP Threshold Crossing Time, Observed SEP Start Time.
+        
+        INPUT:
+        
+            :df: (pandas DataFrame) dataframe containing observed and
+                forecasted values
+            :pred_key: (string) indicating which forecasted value to use to identify
+                forecasts: 'Predicted SEP All Clear', 'Predicted SEP Start Time', etc
+            :match_key: (string) match status identifier associated with pred_ref
+                'All Clear Match Status', 'Start Time Match Status', etc
+            :obs_key: (string, optional) Additional reference time to calculate AWT
+                'Observed Peak Intensity (Onset Peak) Time'
+                
+        OUTPUT:
+            
+            :sub: (pandas DataFrame) dataframe containing
+
+            
+    """
+    sub = df.loc[(df['Model'] == model) & (df['Energy Channel Key'] == energy_key)
+                & (df['Threshold Key'] == thresh_key)]
+
+    if obs_key != '':
+        sub = sub[['Model','Energy Channel Key', 'Threshold Key', 'Mismatch Allowed',
+                'Prediction Energy Channel Key', 'Prediction Threshold Key',
+                'Forecast Source', 'Issue Time',
+                'Prediction Window Start', 'Prediction Window End',
+                'Observed SEP Threshold Crossing Time', 'Observed SEP Start Time',
+                obs_key, pred_key, match_key]]
+    else:
+        sub = sub[['Model','Energy Channel Key', 'Threshold Key', 'Mismatch Allowed',
+                'Prediction Energy Channel Key', 'Prediction Threshold Key',
+                'Forecast Source', 'Issue Time',
+                'Prediction Window Start', 'Prediction Window End',
+                'Observed SEP Threshold Crossing Time', 'Observed SEP Start Time',
+                pred_key, match_key]]
+
+    sub = sub.loc[sub[match_key] == "SEP Event"]
+
+    return sub
+
+
+def awt_metrics(df, dict, model, energy_key, thresh_key):
+    """ Metrics for Advanced Warning Time.
+        Find the first forecast ahead of SEP events and calculate AWT
+        for a given model, energy channel, and threshold.
+        
+        AWT is calculated by:
+        Observed Time - Issue Time
+        
+        Positive AWT indicates the issue time was BEFORE the observed time.
+        Negative AWT indicates that the issue time was AFTER the observed time.
+    
+        AWT with respect to following times depending on predicted quantity:
+            'Observed SEP Threshold Crossing Time'
+            'Observed SEP Start Time' (same as above)
+            'Observed SEP Peak Intensity (Onset Peak) Time'
+            'Observed SEP Peak Intensity Max (Max Flux) Time'
+            'Observed SEP End Time'
+    
+        Any type of forecast can be used to derive AWT except fluence only
+        (because no threshold to associate with) and probability only (because
+        no probability threshold to determine if probability considered an
+        event or not - may add user input probability threshold in the future).
+        As long as a quantity was forecasted indicating that there would be an
+        SEP event, that forecast qualifies to be used to calculate AWT.
+        
+        For models that forecast multiple times leading up to an SEP event,
+        the AWT will be calculated using the first forecasting in a CONTINUOUS
+        series of forecasts indicating that an SEP event will occur.
+    
+        The AWT will be calculated from forecasts for the various quantities:
+            All Clear
+            Threshold Crossing Time
+            Start Time
+            Peak Intensity (Onset Peak)
+            Peak Intensity Max (Max Flux)
+            End Time
+    
+    """
+
+    #AWT is always compared to Observed SEP Threshold Crossing Time and
+    #Observed SEP Start Time. obs_ref allows for the calculation of AWT wrt
+    #another observation time.
+    forecasts = [{'pred_key': 'Predicted SEP All Clear',
+                    'match_key': 'All Clear Match Status',
+                    'obs_key': ''},
+                 {'pred_key': 'Predicted SEP Threshold Crossing Time',
+                    'match_key': 'Threshold Crossing Time Match Status',
+                    'obs_key': ''},
+                 {'pred_key': 'Predicted SEP Start Time',
+                    'match_key': 'Start Time Match Status',
+                    'obs_key': ''},
+                 {'pred_key': 'Predicted SEP Peak Intensity (Onset Peak)',
+                    'match_key': 'Peak Intensity Match Status',
+                    'obs_key': 'Observed SEP Peak Intensity (Onset Peak) Time'},
+                 {'pred_key': 'Predicted SEP Peak Intensity Max (Max Flux)',
+                    'match_key': 'Peak Intensity Max Match Status',
+                    'obs_key': 'Observed SEP Peak Intensity Max (Max Flux) Time'},
+                 {'pred_key': 'Predicted SEP End Time',
+                    'match_key': 'End Time Match Status',
+                    'obs_key': 'Observed SEP End Time'}]
+
+    #Extract values in df relevant to each forecast
+    for ftype in forecasts:
+        #Extract relevant fields only for forecasts associated with SEP Events
+        sub = extract_awt_sub(df, model, energy_key, thresh_key, ftype['pred_key'],
+            ftype['match_key'], ftype['obs_key'])
+       
+       #Create an empty dataframe with the same columns plus AWT info
+       cols = sub.columns.to_list()
+       cols.append('AWT to Observed SEP Threshold Crossing Time')
+       cols.append('AWT to Observed SEP Start Time')
+       if ftype['obs_key'] != '':
+        cols.append('AWT to ' + ftype['obs_key'])
+       sel_df = pd.DataFrame(columns=cols) #Selected forecasts and AWT results
+       
+       
+        #Make a list of the unique SEP events in the df
+        sep_events = resume.identify_unique(sub, 'Observed SEP Threshold Crossing Time')
+        
+        #For each SEP event, identify the first forecast for that SEP event.
+        for sep in sep_events:
+            sep_sub = sub.loc[sub['Observed SEP Threshold Crossing Time'] == sep]
+            
+            idx = None
+            if 'All Clear' in ftype['pred_key']:
+                idx = identify_first_all_clear_forecast(sep_sub)
+        
+            if 'Time' in ftype['pred_key']:
+                idx = identify_first_time_forecast(sep_sub, ftype['pred_key'])
+                
+            if 'Peak' in ftype['pred_key']:
+                idx = identify_first_flux_forecast(sep_sub, ftype['pred_key'],
+                        thresh_key)
+
+            row = sep_sub.iloc[idx].to_list()
+            
+            #Calculate AWT
+            issue_time = sep_sub.iloc[idx]['Issue Time']
+            if issue_time == pd.NaT or issue_time == None:
+                continue
+            
+            tct = sep_sub.iloc[idx]['Observed SEP Threshold Crossing Time']
+            tc_awt = (tct - issue_time).dt.total_seconds()/(60.*60.) #hours
+            row.append(tc_awt)
+            
+            st = sep_sub.iloc[idx]['Observed SEP Start Time']
+            st_awt = (st - issue_time).dt.total_seconds()/(60.*60.)
+            row.append(st_awt)
+
+            if ftype['obs_key'] != '':
+                tm = sep_sub.iloc[idx][ftype['obs_key']]
+                obs_awt = (tm - issue_time).dt.total_seconds()/(60.*60.)
+                row.append(obs_awt)
+
+            #Insert value into dataframe to save AWT calculations for each SEP
+            sel_df.loc[len(sel_df)] = row
+
+        if sel_df.empty:
+            continue
+
+        #Have AWT values for all SEPs for a given model, energy channel, and
+        #threshold
+        #Write to file
+        thresh_fnm = make_thresh_fname(thresh_key)
+        fnm = "awt_selections_" + model + "_" + energy_key.strip() + "_" +\
+                thresh_fnm + "_" + ftype['pred_key']
+        if bool(sel_df.iloc[0]['Mismatch Allowed']):
+            fnm = fnm + "_mm"
+        write_df(sel_df, fnm)
+
+
+        #Fill in dictionary
+        dict['Model'].append(model)
+        dict['Energy Channel'].append(energy_key)
+        dict['Threshold'].append(thresh_key)
+        dict['Prediction Energy Channel'].append(sel_df.iloc[0]['Prediction Energy Channel'])
+        dict['Prediction Threshold'].append(sel_df.iloc[0]['Prediction Threshold'])
+
+        #Calculate metrics for AWT to different times
+        time_keys = ['Observed SEP Threshold Crossing Time','Observed SEP Start Time']
+        if ftype['obs_key'] != '':
+            time_keys = time_keys.append(ftype['obs_key'])
+        
+        for key in time_keys:
+            awts = sel_df["AWT to " + key].to_list()
+            mean_awt = math.mean(awts)
+            median_awt = math.median(awts)
+            
+            mean_key = "Mean AWT for " + ftype['pred_key'] + " to " + key
+            median_key = "Median AWT for " + ftype['pred_key'] + " to " + key
+            dict[mean_key].append(mean_awt)
+            dict[median_key].append(median_awt)
+
+    return
 
 
 def calculate_intuitive_metrics(df, model_names, all_energy_channels,
@@ -2007,9 +2310,9 @@ def calculate_intuitive_metrics(df, model_names, all_energy_channels,
     duration_dict = initialize_time_dict()
     peak_intensity_time_dict = initialize_time_dict()
     peak_intensity_max_time_dict = initialize_time_dict()
-    awt_dict = initialize_awt_dict()
+    awt_dict = initialize_awt_dict() #Advanced Warning Time
     max_dict = initialize_flux_dict() #max in prediction window
-
+    
     #A dataframe containing observed flux time profiles for all
     #energy channels and all observations matched to predictions
     tpdf = fill_tp_dataframe(df, all_energy_channels)
@@ -2037,6 +2340,7 @@ def calculate_intuitive_metrics(df, model_names, all_energy_channels,
                 all_clear_intuitive_metrics(df, all_clear_dict,model,ek,tk)
                 time_profile_intuitive_metrics(df, profile_dict,model,ek,tk)
                 max_flux_in_pred_win_metrics(df, tpdf, max_dict,model,ek,tk)
+                awt_metrics(df, awt_dict, model, ek, tk)
 
 
     print("calculate_intuitive_validation: Completed calculating all metrics: " + str(datetime.datetime.now()))
@@ -2054,7 +2358,7 @@ def calculate_intuitive_metrics(df, model_names, all_energy_channels,
     all_clear_metrics_df = pd.DataFrame(all_clear_dict)
     time_profile_metrics_df = pd.DataFrame(profile_dict)
     max_metrics_df = pd.DataFrame(max_dict)
-
+    awt_metrics_df = pd.DataFrame(awt_dict)
 
     if not prob_metrics_df.empty:
         write_df(prob_metrics_df, "probability_metrics")
@@ -2082,6 +2386,8 @@ def calculate_intuitive_metrics(df, model_names, all_energy_channels,
         write_df(time_profile_metrics_df, "time_profile_metrics")
     if not max_metrics_df.empty:
         write_df(max_metrics_df, "max_flux_in_pred_win_metrics")
+    if not awt_metrics_df.empty:
+        write_df(awt_metrics_df, "awt_metrics")
 
     print("calculate_intuitive_validation: Wrote out all metrics to file: " + str(datetime.datetime.now()))
 
