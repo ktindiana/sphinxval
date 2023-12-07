@@ -2109,14 +2109,14 @@ def extract_awt_sub(df, model, energy_key, thresh_key, pred_key, match_key, obs_
     if obs_key != '':
         sub = sub[['Model','Energy Channel Key', 'Threshold Key', 'Mismatch Allowed',
                 'Prediction Energy Channel Key', 'Prediction Threshold Key',
-                'Forecast Source', 'Issue Time',
+                'Forecast Source', 'Forecast Issue Time',
                 'Prediction Window Start', 'Prediction Window End',
                 'Observed SEP Threshold Crossing Time', 'Observed SEP Start Time',
                 obs_key, pred_key, match_key]]
     else:
         sub = sub[['Model','Energy Channel Key', 'Threshold Key', 'Mismatch Allowed',
                 'Prediction Energy Channel Key', 'Prediction Threshold Key',
-                'Forecast Source', 'Issue Time',
+                'Forecast Source', 'Forecast Issue Time',
                 'Prediction Window Start', 'Prediction Window End',
                 'Observed SEP Threshold Crossing Time', 'Observed SEP Start Time',
                 pred_key, match_key]]
@@ -2165,6 +2165,19 @@ def awt_metrics(df, dict, model, energy_key, thresh_key):
     
     """
 
+    sub = df.loc[(df['Model'] == model) & (df['Energy Channel Key'] == energy_key)
+                & (df['Threshold Key'] == thresh_key)]
+    if sub.empty:
+        return
+
+    #Fill in dictionary
+    dict['Model'].append(model)
+    dict['Energy Channel'].append(energy_key)
+    dict['Threshold'].append(thresh_key)
+    dict['Prediction Energy Channel'].append(sub.iloc[0]['Prediction Energy Channel Key'])
+    dict['Prediction Threshold'].append(sub.iloc[0]['Prediction Threshold Key'])
+
+
     #AWT is always compared to Observed SEP Threshold Crossing Time and
     #Observed SEP Start Time. obs_ref allows for the calculation of AWT wrt
     #another observation time.
@@ -2193,13 +2206,13 @@ def awt_metrics(df, dict, model, energy_key, thresh_key):
         sub = extract_awt_sub(df, model, energy_key, thresh_key, ftype['pred_key'],
             ftype['match_key'], ftype['obs_key'])
        
-       #Create an empty dataframe with the same columns plus AWT info
-       cols = sub.columns.to_list()
-       cols.append('AWT to Observed SEP Threshold Crossing Time')
-       cols.append('AWT to Observed SEP Start Time')
-       if ftype['obs_key'] != '':
-        cols.append('AWT to ' + ftype['obs_key'])
-       sel_df = pd.DataFrame(columns=cols) #Selected forecasts and AWT results
+        #Create an empty dataframe with the same columns plus AWT info
+        cols = sub.columns.to_list()
+        cols.append('AWT to Observed SEP Threshold Crossing Time')
+        cols.append('AWT to Observed SEP Start Time')
+        if ftype['obs_key'] != '':
+            cols.append('AWT to ' + ftype['obs_key'])
+        sel_df = pd.DataFrame(columns=cols) #Selected forecasts and AWT results
        
        
         #Make a list of the unique SEP events in the df
@@ -2219,25 +2232,39 @@ def awt_metrics(df, dict, model, energy_key, thresh_key):
             if 'Peak' in ftype['pred_key']:
                 idx = identify_first_flux_forecast(sep_sub, ftype['pred_key'],
                         thresh_key)
-
+            if idx == None:
+                continue
+            
             row = sep_sub.iloc[idx].to_list()
             
             #Calculate AWT
-            issue_time = sep_sub.iloc[idx]['Issue Time']
+            issue_time = sep_sub.iloc[idx]['Forecast Issue Time']
             if issue_time == pd.NaT or issue_time == None:
                 continue
             
             tct = sep_sub.iloc[idx]['Observed SEP Threshold Crossing Time']
-            tc_awt = (tct - issue_time).dt.total_seconds()/(60.*60.) #hours
+            tc_awt = (tct - issue_time).total_seconds()/(60.*60.) #hours
+            #If issue time is more than 7 days later than the threshold crossing time,
+            #the assume this is not a realistic issue time and ignore
+            if tc_awt < -7.*24.:
+                tc_awt = None
             row.append(tc_awt)
             
             st = sep_sub.iloc[idx]['Observed SEP Start Time']
-            st_awt = (st - issue_time).dt.total_seconds()/(60.*60.)
+            st_awt = (st - issue_time).total_seconds()/(60.*60.)
+            #If issue time is more than 7 days later than the start time,
+            #the assume this is not a realistic issue time and ignore
+            if st_awt < -7.*24.:
+                st_awt = None
             row.append(st_awt)
 
             if ftype['obs_key'] != '':
                 tm = sep_sub.iloc[idx][ftype['obs_key']]
-                obs_awt = (tm - issue_time).dt.total_seconds()/(60.*60.)
+                obs_awt = (tm - issue_time).total_seconds()/(60.*60.)
+                #If issue time is more than 7 days later than the observed time,
+                #the assume this is not a realistic issue time and ignore
+                if obs_awt < -7.*24.:
+                    obs_awt = None
                 row.append(obs_awt)
 
             #Insert value into dataframe to save AWT calculations for each SEP
@@ -2257,22 +2284,20 @@ def awt_metrics(df, dict, model, energy_key, thresh_key):
         write_df(sel_df, fnm)
 
 
-        #Fill in dictionary
-        dict['Model'].append(model)
-        dict['Energy Channel'].append(energy_key)
-        dict['Threshold'].append(thresh_key)
-        dict['Prediction Energy Channel'].append(sel_df.iloc[0]['Prediction Energy Channel'])
-        dict['Prediction Threshold'].append(sel_df.iloc[0]['Prediction Threshold'])
-
         #Calculate metrics for AWT to different times
         time_keys = ['Observed SEP Threshold Crossing Time','Observed SEP Start Time']
         if ftype['obs_key'] != '':
-            time_keys = time_keys.append(ftype['obs_key'])
+            time_keys.append(ftype['obs_key'])
         
         for key in time_keys:
             awts = sel_df["AWT to " + key].to_list()
-            mean_awt = math.mean(awts)
-            median_awt = math.median(awts)
+            awts = [x for x in awts if x != None]
+            if len(awts) >= 1:
+                mean_awt = statistics.mean(awts)
+                median_awt = statistics.median(awts)
+            else:
+                mean_awt = None
+                median_awt = None
             
             mean_key = "Mean AWT for " + ftype['pred_key'] + " to " + key
             median_key = "Median AWT for " + ftype['pred_key'] + " to " + key
@@ -2310,8 +2335,8 @@ def calculate_intuitive_metrics(df, model_names, all_energy_channels,
     duration_dict = initialize_time_dict()
     peak_intensity_time_dict = initialize_time_dict()
     peak_intensity_max_time_dict = initialize_time_dict()
-    awt_dict = initialize_awt_dict() #Advanced Warning Time
     max_dict = initialize_flux_dict() #max in prediction window
+    awt_dict = initialize_awt_dict() #Advanced Warning Time
     
     #A dataframe containing observed flux time profiles for all
     #energy channels and all observations matched to predictions
@@ -2358,6 +2383,13 @@ def calculate_intuitive_metrics(df, model_names, all_energy_channels,
     all_clear_metrics_df = pd.DataFrame(all_clear_dict)
     time_profile_metrics_df = pd.DataFrame(profile_dict)
     max_metrics_df = pd.DataFrame(max_dict)
+
+    #It is possible for awt_dict to have some empty fields. Remove them
+    #for writing to file.
+    awt_keys = list(awt_dict.keys())
+    for jj in range(len(awt_keys)-1,-1,-1):
+        if not awt_dict[awt_keys[jj]]:
+            del awt_dict[awt_keys[jj]]
     awt_metrics_df = pd.DataFrame(awt_dict)
 
     if not prob_metrics_df.empty:
