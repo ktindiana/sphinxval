@@ -931,7 +931,7 @@ def peak_intensity_intuitive_metrics(df, dict, model, energy_key, thresh_key):
     noneval = noneval.index.to_list()
     if len(noneval) > 0:
         for ix in noneval:
-            sub.drop(index=ix)
+            sub = sub.drop(index=ix)
       
     if sub.empty:
         return
@@ -1028,7 +1028,7 @@ def peak_intensity_max_intuitive_metrics(df, dict, model, energy_key,
     noneval = noneval.index.to_list()
     if len(noneval) > 0:
         for ix in noneval:
-            sub.drop(index=ix)
+            sub = sub.drop(index=ix)
       
       
     #Models may fill only the Peak Intensity field. It can be ambiguous whether
@@ -1058,7 +1058,7 @@ def peak_intensity_max_intuitive_metrics(df, dict, model, energy_key,
         noneval = noneval.index.to_list()
         if len(noneval) > 0:
             for ix in noneval:
-                sub.drop(index=ix)
+                sub = sub.drop(index=ix)
 
         if sub.empty:
             return
