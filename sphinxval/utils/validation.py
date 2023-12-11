@@ -576,7 +576,7 @@ def initialize_awt_dict():
             "Median AWT for Predicted SEP End Time to Observed SEP Threshold Crossing Time": [],
             "Mean AWT for Predicted SEP End Time to Observed SEP Start Time": [],
             "Median AWT for Predicted SEP End Time to Observed SEP Start Time": [],
-            "Mean AWT Predicted SEP End Time to Observed SEP End Time": [],
+            "Mean AWT for Predicted SEP End Time to Observed SEP End Time": [],
             "Median AWT for Predicted SEP End Time to Observed SEP End Time": []
             }
             
@@ -922,7 +922,16 @@ def peak_intensity_intuitive_metrics(df, dict, model, energy_key, thresh_key):
             'Predicted SEP Peak Intensity (Onset Peak) Units',
             'Peak Intensity Match Status']]
     sub = sub.loc[(sub['Peak Intensity Match Status'] == 'SEP Event')]
-    sub = sub.dropna() #drop rows containing None
+    
+    #Find predicted None values
+    noneval = pd.isna(sub['Predicted SEP Peak Intensity (Onset Peak)'])
+    #Extract only indices for Nones
+    #True indicates that peak intensity was a None value
+    noneval = noneval.loc[noneval == True]
+    noneval = noneval.index.to_list()
+    if len(noneval) > 0:
+        for ix in noneval:
+            sub.drop(index=ix)
       
     if sub.empty:
         return
@@ -1010,7 +1019,16 @@ def peak_intensity_max_intuitive_metrics(df, dict, model, energy_key,
             'Predicted SEP Peak Intensity Max (Max Flux) Units',
             'Peak Intensity Max Match Status']]
     sub = sub.loc[(sub['Peak Intensity Max Match Status'] == 'SEP Event')]
-    sub = sub.dropna() #drop rows containing None
+
+    #Find predicted None values
+    noneval = pd.isna(sub['Predicted SEP Peak Intensity Max (Max Flux)'])
+    #Extract only indices for Nones
+    #True indicates that peak intensity was a None value
+    noneval = noneval.loc[noneval == True]
+    noneval = noneval.index.to_list()
+    if len(noneval) > 0:
+        for ix in noneval:
+            sub.drop(index=ix)
       
       
     #Models may fill only the Peak Intensity field. It can be ambiguous whether
@@ -1031,7 +1049,17 @@ def peak_intensity_max_intuitive_metrics(df, dict, model, energy_key,
             'Predicted SEP Peak Intensity (Onset Peak) Units',
             'Peak Intensity Match Status']]
         sub = sub.loc[(sub['Peak Intensity Match Status'] == 'SEP Event')]
-        sub = sub.dropna() #drop rows containing None
+
+        #Find predicted None values
+        noneval = pd.isna(sub['Predicted SEP Peak Intensity (Onset Peak)'])
+        #Extract only indices for Nones
+        #True indicates that peak intensity was a None value
+        noneval = noneval.loc[noneval == True]
+        noneval = noneval.index.to_list()
+        if len(noneval) > 0:
+            for ix in noneval:
+                sub.drop(index=ix)
+
         if sub.empty:
             return
         peak_key = 'Predicted SEP Peak Intensity (Onset Peak)'
