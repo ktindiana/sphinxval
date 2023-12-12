@@ -1540,6 +1540,15 @@ def match_all_clear(sphinx, observation_obj, is_win_overlap,
     if sphinx.observed_all_clear.all_clear_boolean == False:
         return None
     
+    #If already matched to an ongoing SEP event, ensure that a second
+    #event in the prediction window doesn't overwrite the previous
+    #match status
+    if sphinx.all_clear_match_status == "Ongoing SEP Event":
+        if is_eruption_in_range != None:
+            #If there's an eruption and it's not associated
+            if not is_eruption_in_range:
+                return None #nothing to be done
+    
     #Save thresholds in All_Clear object
     ac = cl.All_Clear(None,observation_obj.all_clear.threshold,
         observation_obj.all_clear.threshold_units,
@@ -1734,19 +1743,19 @@ def match_sep_quantities(sphinx, observation_obj, thresh, is_win_overlap,
         sphinx.observed_match_sep_source[thresh_key] = observation_obj.source
         sphinx.observed_start_time[thresh_key] = event.start_time
 
-    fluence = None
-    for fl in observation_obj.fluences:
-        if fl.threshold != thresh['threshold']:
-            continue
-        sphinx.observed_fluence[thresh_key] = fl
-
-
-    #Fluence spectra
-    spectrum = None
-    for flsp in observation_obj.fluence_spectra:
-        if flsp.threshold_start != thresh['threshold']:
-            continue
-        sphinx.observed_fluence_spectrum[thresh_key] = flsp
+#    fluence = None
+#    for fl in observation_obj.fluences:
+#        if fl.threshold != thresh['threshold']:
+#            continue
+#        sphinx.observed_fluence[thresh_key] = fl
+#
+#
+#    #Fluence spectra
+#    spectrum = None
+#    for flsp in observation_obj.fluence_spectra:
+#        if flsp.threshold_start != thresh['threshold']:
+#            continue
+#        sphinx.observed_fluence_spectrum[thresh_key] = flsp
 
     return sep_status
 
@@ -1837,102 +1846,119 @@ def match_sep_end_time(sphinx, observation_obj, thresh, is_win_overlap,
         sphinx.observed_match_sep_source[thresh_key] = observation_obj.source
         sphinx.observed_event_length[thresh_key] = event
         sphinx.observed_end_time[thresh_key] = event.end_time
-
- #   print(sphinx.observed_end_times)
-
-    return end_status
-
-
-
-def match_time_profile(sphinx, observation_obj, thresh, is_win_overlap,
-    is_eruption_in_range, trigger_input_end, is_pred_sep_overlap):
-    """ Apply criteria to determine if a forecast occurs prior to SEP
-        end time and extract the predicted time profile. If the forecast
-        is before the SEP end time, then compare the time profile.
-               
-       Matching:
-        - Prediction window overlaps with observation
-        - There is a threshold crossing in the prediction window OR
-            there is an ongoing SEP event at the start of the prediction window
-        - Last eruption within 48 hrs - 15 mins before threshold crossing
-        - The last trigger/input time if before the end time
-
-    Input:
-        
-        :sphinx: (SPHINX object) will be updated
-        :observation_obj: A single observation object
-        :thresh: (dict) threshold being tested
-        
-        The rest are the ith entry for the various boolean arrays
-        that are the length of all of the observations read into the code.
-
-    Output:
-    
-        :sep_status: (bool) a single boolean (or None) indicating the
-            whether SEP info was saved to the SPHINX object
-            True - SEP quantities added to SPHINX
-            False - no SEP event observed or an SEP is already ongoing
-            None - the observation isn't associated with the forecast
-        
-        The SPHINX object is updated with observed values if the value is
-        found to be True or False. Otherwise, values of None will be skipped
-        because it means that this particular observation doesn't match
-        
-    """
-    thresh_key = objh.threshold_to_key(thresh)
-
-    #If it was already found that end time had a matched
-    #observation and the sep match status was set to True, don't overwrite
-    #with another observation later in the prediction window
-    #Mainly relevant for long prediction windows > 24 - 48 hours
-    if sphinx.end_time_match_status[thresh_key] == "SEP Event":
-        return None
-
-    end_status = None
-    
-    #Prediction and observation windows must overlap
-    if not is_win_overlap:
-        end_status = None
-        sphinx.end_time_match_status[thresh_key] = "No Matched Observation"
-        return end_status
-        
-    #The prediction window must overlap with an SEP event
-    if not is_pred_sep_overlap:
-        end_status = False #no SEP event, no values
-        sphinx.end_time_match_status[thresh_key] = "No SEP Event"
-        return end_status
-
-    #If there is an SEP event, the eruption must occur in the right time range
-    if is_eruption_in_range != None:
-        if not is_eruption_in_range:
-            sep_status = None
-            sphinx.end_time_match_status[thresh_key] = "Eruption Out of Range"
-            return sep_status
-    #The triggers and inputs must all be before threshold crossing
-    if trigger_input_end:
-        end_status = True
-        sphinx.end_time_match_status[thresh_key] = "SEP Event"
-    else:
-        end_status = None
-        sphinx.end_time_match_status[thresh_key] = "Trigger/Input after Observed Phenomenon"
-        return end_status
-    
-    #Matched End Time
-#    print("Observed SEP end time matched:")
-#    print("  " + observation_obj.source)
- 
-    #Start time and channel fluence
-    time_prof = None
-    for i in range(len(observation_obj.event_lengths)):
-        event = observation_obj.event_lengths[i]
-        if event.threshold != thresh['threshold']:
-            continue
-        sphinx.observed_match_sep_source[thresh_key] = observation_obj.source
         sphinx.observed_time_profile[thresh_key] = observation_obj.source
 
+
+    fluence = None
+    for fl in observation_obj.fluences:
+        if fl.threshold != thresh['threshold']:
+            continue
+        sphinx.observed_fluence[thresh_key] = fl
+
+
+    #Fluence spectra
+    spectrum = None
+    for flsp in observation_obj.fluence_spectra:
+        if flsp.threshold_start != thresh['threshold']:
+            continue
+        sphinx.observed_fluence_spectrum[thresh_key] = flsp
+
+
  #   print(sphinx.observed_end_times)
 
     return end_status
+
+
+
+#def match_time_profile(sphinx, observation_obj, thresh, is_win_overlap,
+#    is_eruption_in_range, trigger_input_end, is_pred_sep_overlap):
+#    """ Apply criteria to determine if a forecast occurs prior to SEP
+#        end time and extract the predicted time profile. If the forecast
+#        is before the SEP end time, then compare the time profile.
+#               
+#       Matching:
+#        - Prediction window overlaps with observation
+#        - There is a threshold crossing in the prediction window OR
+#            there is an ongoing SEP event at the start of the prediction window
+#        - Last eruption within 48 hrs - 15 mins before threshold crossing
+#        - The last trigger/input time if before the end time
+#
+#    Input:
+#        
+#        :sphinx: (SPHINX object) will be updated
+#        :observation_obj: A single observation object
+#        :thresh: (dict) threshold being tested
+#        
+#        The rest are the ith entry for the various boolean arrays
+#        that are the length of all of the observations read into the code.
+#
+#    Output:
+#    
+#        :sep_status: (bool) a single boolean (or None) indicating the
+#            whether SEP info was saved to the SPHINX object
+#            True - SEP quantities added to SPHINX
+#            False - no SEP event observed or an SEP is already ongoing
+#            None - the observation isn't associated with the forecast
+#        
+#        The SPHINX object is updated with observed values if the value is
+#        found to be True or False. Otherwise, values of None will be skipped
+#        because it means that this particular observation doesn't match
+#        
+#    """
+#    thresh_key = objh.threshold_to_key(thresh)
+#
+#    #If it was already found that end time had a matched
+#    #observation and the sep match status was set to True, don't overwrite
+#    #with another observation later in the prediction window
+#    #Mainly relevant for long prediction windows > 24 - 48 hours
+#    if sphinx.end_time_match_status[thresh_key] == "SEP Event":
+#        return None
+#
+#    end_status = None
+#    
+#    #Prediction and observation windows must overlap
+#    if not is_win_overlap:
+#        end_status = None
+#        sphinx.end_time_match_status[thresh_key] = "No Matched Observation"
+#        return end_status
+#        
+#    #The prediction window must overlap with an SEP event
+#    if not is_pred_sep_overlap:
+#        end_status = False #no SEP event, no values
+#        sphinx.end_time_match_status[thresh_key] = "No SEP Event"
+#        return end_status
+#
+#    #If there is an SEP event, the eruption must occur in the right time range
+#    if is_eruption_in_range != None:
+#        if not is_eruption_in_range:
+#            sep_status = None
+#            sphinx.end_time_match_status[thresh_key] = "Eruption Out of Range"
+#            return sep_status
+#    #The triggers and inputs must all be before the end of the event
+#    if trigger_input_end:
+#        end_status = True
+#        sphinx.end_time_match_status[thresh_key] = "SEP Event"
+#    else:
+#        end_status = None
+#        sphinx.end_time_match_status[thresh_key] = "Trigger/Input after Observed Phenomenon"
+#        return end_status
+#    
+#    #Matched End Time
+##    print("Observed SEP end time matched:")
+##    print("  " + observation_obj.source)
+# 
+#    #Start time and channel fluence
+#    time_prof = None
+#    for i in range(len(observation_obj.event_lengths)):
+#        event = observation_obj.event_lengths[i]
+#        if event.threshold != thresh['threshold']:
+#            continue
+#        sphinx.observed_match_sep_source[thresh_key] = observation_obj.source
+#        sphinx.observed_time_profile[thresh_key] = observation_obj.source
+#
+# #   print(sphinx.observed_end_times)
+#
+#    return end_status
 
 
 

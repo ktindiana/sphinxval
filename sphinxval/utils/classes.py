@@ -2219,7 +2219,7 @@ class SPHINX:
                 match_status = "No Matching Threshold"
                 continue
 
-            match_status = self.sep_match_status[tk]
+            match_status = self.end_time_match_status[tk]
             predicted = obj.fluence
 
             pred_units = obj.units
@@ -2276,7 +2276,7 @@ class SPHINX:
                 continue
 
 
-            match_status = self.sep_match_status[tk]
+            match_status = self.end_time_match_status[tk]
             predicted = obj.fluence_spectrum
 
             obs_units = self.observed_fluence_spectrum[tk].fluence_units
