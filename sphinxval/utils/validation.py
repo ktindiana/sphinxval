@@ -349,7 +349,7 @@ def fill_dict_row(sphinx, dict, energy_key, thresh_key):
     dict["Predicted Time Profile"].append(pred_time_profile)
     dict["Time Profile Match Status"].append(tp_match_status)
     
-    dict["Duration Match Status"].append(st_match_status)
+    dict["Duration Match Status"].append(et_match_status)
     try:
         pred_duration = (pred_end_time - \
             pred_start_time).total_seconds()/(60.*60.)
@@ -1385,8 +1385,16 @@ def fluence_intuitive_metrics(df, dict, model, energy_key,
             'Predicted SEP Fluence Units',
             'Fluence Match Status']]
     sub = sub.loc[(sub['Fluence Match Status'] == 'SEP Event')]
-    sub = sub.dropna() #drop rows containing None
-      
+
+    #Find predicted None values
+    noneval = pd.isna(sub['Predicted SEP Fluence'])
+    #Extract only indices for Nones
+    #True indicates that peak intensity was a None value
+    noneval = noneval.loc[noneval == True]
+    noneval = noneval.index.to_list()
+    if len(noneval) > 0:
+        for ix in noneval:
+            sub = sub.drop(index=ix)
     if sub.empty:
         return
 
@@ -1676,8 +1684,16 @@ def peak_intensity_time_intuitive_metrics(df, dict, model, energy_key,
             'Predicted SEP Peak Intensity (Onset Peak) Time',
             'Peak Intensity Match Status']]
     sub = sub.loc[(sub['Peak Intensity Match Status'] == 'SEP Event')]
-    sub = sub.dropna() #drop rows containing None
-      
+
+    #Find predicted None values
+    noneval = pd.isna(sub['Predicted SEP Peak Intensity (Onset Peak) Time'])
+    #Extract only indices for Nones
+    #True indicates that peak intensity was a None value
+    noneval = noneval.loc[noneval == True]
+    noneval = noneval.index.to_list()
+    if len(noneval) > 0:
+        for ix in noneval:
+            sub = sub.drop(index=ix)
     if sub.empty:
         return
 
@@ -1746,8 +1762,15 @@ def peak_intensity_max_time_intuitive_metrics(df, dict, model, energy_key,
             'Predicted SEP Peak Intensity Max (Max Flux) Time',
             'Peak Intensity Max Match Status']]
     sub = sub.loc[(sub['Peak Intensity Max Match Status'] == 'SEP Event')]
-    sub = sub.dropna() #drop rows containing None
-      
+    #Find predicted None values
+    noneval = pd.isna(sub['Predicted SEP Peak Intensity Max (Max Flux) Time'])
+    #Extract only indices for Nones
+    #True indicates that peak intensity was a None value
+    noneval = noneval.loc[noneval == True]
+    noneval = noneval.index.to_list()
+    if len(noneval) > 0:
+        for ix in noneval:
+            sub = sub.drop(index=ix)
     if sub.empty:
         return
 
@@ -1803,11 +1826,20 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
             'Predicted Time Profile',
             'Time Profile Match Status']]
     sub = sub.loc[(sub['Time Profile Match Status'] == 'SEP Event')]
-    sub = sub.dropna() #drop rows containing None
-      
+
+    #Find predicted None values
+    noneval = pd.isna(sub['Predicted Time Profile'])
+    #Extract only indices for Nones
+    #True indicates that peak intensity was a None value
+    noneval = noneval.loc[noneval == True]
+    noneval = noneval.index.to_list()
+    if len(noneval) > 0:
+        for ix in noneval:
+            sub = sub.drop(index=ix)
     if sub.empty:
         return
-
+        
+    
     mismatch = bool(sub.iloc[0]['Mismatch Allowed'])
     pred_energy_key = str(sub.iloc[0]['Prediction Energy Channel Key'])
     pred_thresh_key = str(sub.iloc[0]['Prediction Threshold Key'])
