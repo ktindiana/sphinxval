@@ -1680,20 +1680,20 @@ def match_sep_quantities(sphinx, observation_obj, thresh, is_win_overlap,
         #Save the SEP event threshold crossing for reference in the
         #Case of an Ongoing SEP Event
         #Threshold Crossing
-        threshold_crossing_time = None
-        for th in observation_obj.threshold_crossings:
-            if th.threshold != thresh['threshold']:
-                continue
-            sphinx.observed_match_sep_source[thresh_key] = observation_obj.source
-            sphinx.observed_threshold_crossing[thresh_key] = th
-        #Start time and channel fluence
-        start_time = None
-        for event in observation_obj.event_lengths:
-            if event.threshold != thresh['threshold']:
-                continue
-            sphinx.observed_match_sep_source[thresh_key] = observation_obj.source
-            sphinx.observed_start_time[thresh_key] = event.start_time
-        
+#        threshold_crossing_time = None
+#        for th in observation_obj.threshold_crossings:
+#            if th.threshold != thresh['threshold']:
+#                continue
+#            sphinx.observed_match_sep_source[thresh_key] = observation_obj.source
+#            sphinx.observed_threshold_crossing[thresh_key] = th
+#        #Start time and channel fluence
+#        start_time = None
+#        for event in observation_obj.event_lengths:
+#            if event.threshold != thresh['threshold']:
+#                continue
+#            sphinx.observed_match_sep_source[thresh_key] = observation_obj.source
+#            sphinx.observed_start_time[thresh_key] = event.start_time
+#        
         return sep_status
     
     #No threshold crossing in prediction window, no SEP event
@@ -2079,6 +2079,7 @@ def revise_eruption_matches(matched_sphinx, all_energy_channels, obs_values,
                 for sep in obs_sep:
                     obs_thresh_cross =\
                         spx_df['observed_threshold_crossing_time'].tolist()
+
 
                     idx_event = [ix for ix in range(len(obs_thresh_cross)) if obs_thresh_cross[ix] == pd.Timestamp(sep)]
                     
