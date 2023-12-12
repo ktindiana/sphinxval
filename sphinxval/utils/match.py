@@ -1676,6 +1676,24 @@ def match_sep_quantities(sphinx, observation_obj, thresh, is_win_overlap,
         sphinx.observed_probability_source[thresh_key] =\
             observation_obj.source
         sphinx.sep_match_status[thresh_key] = "Ongoing SEP Event"
+        
+        #Save the SEP event threshold crossing for reference in the
+        #Case of an Ongoing SEP Event
+        #Threshold Crossing
+        threshold_crossing_time = None
+        for th in observation_obj.threshold_crossings:
+            if th.threshold != thresh['threshold']:
+                continue
+            sphinx.observed_match_sep_source[thresh_key] = observation_obj.source
+            sphinx.observed_threshold_crossing[thresh_key] = th
+        #Start time and channel fluence
+        start_time = None
+        for event in observation_obj.event_lengths:
+            if event.threshold != thresh['threshold']:
+                continue
+            sphinx.observed_match_sep_source[thresh_key] = observation_obj.source
+            sphinx.observed_start_time[thresh_key] = event.start_time
+        
         return sep_status
     
     #No threshold crossing in prediction window, no SEP event
@@ -1726,6 +1744,7 @@ def match_sep_quantities(sphinx, observation_obj, thresh, is_win_overlap,
 #    print("Observed SEP event matched:")
 #    print("  " + observation_obj.source)
     
+    #FOR IDENTIFIED SEP EVENTS;  match status = "SEP Event"
     #Threshold Crossing
     threshold_crossing_time = None
     for th in observation_obj.threshold_crossings:
@@ -1742,20 +1761,6 @@ def match_sep_quantities(sphinx, observation_obj, thresh, is_win_overlap,
             continue
         sphinx.observed_match_sep_source[thresh_key] = observation_obj.source
         sphinx.observed_start_time[thresh_key] = event.start_time
-
-#    fluence = None
-#    for fl in observation_obj.fluences:
-#        if fl.threshold != thresh['threshold']:
-#            continue
-#        sphinx.observed_fluence[thresh_key] = fl
-#
-#
-#    #Fluence spectra
-#    spectrum = None
-#    for flsp in observation_obj.fluence_spectra:
-#        if flsp.threshold_start != thresh['threshold']:
-#            continue
-#        sphinx.observed_fluence_spectrum[thresh_key] = flsp
 
     return sep_status
 
