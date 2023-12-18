@@ -313,23 +313,23 @@ class All_Clear:
         return
 
 
-class Peak_Intensity:
-    def __init__(self, intensity, units, uncertainty, uncertainty_low,
+class Flux_Intensity:
+    def __init__(self, label, intensity, units, uncertainty, uncertainty_low,
         uncertainty_high, time):
         """
         Input:
-            :self: (object) Peak_Instensity object
-            :intensity: (float) onset peak intensity value
+            :self: (object) Peak_Intensity object
+            :intensity: (float) intensity value
             :units: (astropy) units
             :uncertainty: (float)
             :uncertainty_low: (float)
             :uncertainty_high: (float)
             :time: (datetime)
         
-        Output: a Peak_Intensity object
+        Output: a Flux_Intensity object
         
         """
-        self.label = 'peak_intensity'
+        self.label = label
         self.intensity = intensity
         self.units = units
         self.uncertainty = uncertainty
@@ -339,31 +339,6 @@ class Peak_Intensity:
         
         return
 
-class Peak_Intensity_Max:
-    def __init__(self, intensity, units, uncertainty, uncertainty_low,
-        uncertainty_high, time):
-        """
-        Input:
-            :self: (object) Peak_Instensity object
-            :intensity: (float) onset peak intensity value
-            :units: (astropy) units
-            :uncertainty: (float)
-            :uncertainty_low: (float)
-            :uncertainty_high: (float)
-            :time: (datetime)
-        
-        Output: a Peak_Intensity object
-        
-        """
-        self.label = 'peak_intensity_max'
-        self.intensity = intensity
-        self.units = units
-        self.uncertainty = uncertainty
-        self.uncertainty_low = uncertainty_low
-        self.uncertainty_high = uncertainty_high
-        self.time = time
-        
-        return
 
 
 class Event_Length:
@@ -528,8 +503,9 @@ class Forecast():
                         #JSON filename or perhaps database in future
         self.path = None #Path to JSON file
         self.all_clear = All_Clear(None, None, None, None) #All_Clear object
-        self.peak_intensity = Peak_Intensity(None, None, None, None, None, None) #Peak_Intensity object
-        self.peak_intensity_max = Peak_Intensity_Max(None, None, None, None, None, None) #Peak_Intensity object
+        self.point_intensity = Flux_Intensity('point_intensity', None, None, None, None, None, None)
+        self.peak_intensity = Flux_Intensity('peak_intensity', None, None, None, None, None, None) #Flux_Intensity object
+        self.peak_intensity_max = Flux_Intensity('peak_intensity_max', None, None, None, None, None, None) #Flux_Intensity object
         self.event_lengths = []
         self.fluences = []
         self.fluence_spectra = []
@@ -705,12 +681,6 @@ class Forecast():
                     vjson.zulu_to_time(self.prediction_window_end)
 
         
-            #####MODIFICATION FOR REleASE######
-            if "REleASE" in self.short_name:
-                if self.prediction_window_start == self.prediction_window_end:
-                    self.prediction_window_start = self.prediction_window_start - datetime.timedelta(minutes=15)
-                    self.prediction_window_end = self.prediction_window_end + datetime.timedelta(minutes=15)
-        
         #Only add objects of the predicted values are present in the json
         #Load All Clear
         all_clear, threshold, threshold_units, probability_threshold = \
@@ -719,18 +689,26 @@ class Forecast():
             self.all_clear = All_Clear(all_clear, threshold, threshold_units,
                 probability_threshold)
 
+        #Load Point Intensity
+        intensity, units, uncertainty, uncertainty_low, uncertainty_high,\
+            time = vjson.dict_to_flux_intensity('point_intensity', dataD)
+        if intensity != None:
+            self.point_intensity = Flux_Intensity('point_intensity', intensity, units,
+                uncertainty, uncertainty_low, uncertainty_high, time)
+
+
         #Load (Onset) Peak Intensity
         intensity, units, uncertainty, uncertainty_low, uncertainty_high,\
-            time = vjson.dict_to_peak_intensity('peak_intensity', dataD)
+            time = vjson.dict_to_flux_intensity('peak_intensity', dataD)
         if intensity != None:
-            self.peak_intensity = Peak_Intensity(intensity, units,
+            self.peak_intensity = Flux_Intensity('peak_intensity', intensity, units,
                 uncertainty, uncertainty_low, uncertainty_high, time)
             
         #Load Max Intensity
         intensity, units, uncertainty, uncertainty_low, uncertainty_high,\
-            time = vjson.dict_to_peak_intensity('peak_intensity_max', dataD)
+            time = vjson.dict_to_flux_intensity('peak_intensity_max', dataD)
         if intensity != None:
-            self.peak_intensity_max = Peak_Intensity_Max(intensity, units,
+            self.peak_intensity_max = Flux_Intensity('peak_intensity_max', intensity, units,
                 uncertainty, uncertainty_low, uncertainty_high, time)
         
         #Load Event Lengths
@@ -1111,6 +1089,7 @@ class Forecast():
                 print(vars(corona))
      
         print(vars(self.all_clear))
+        print(vars(self.point_intensity))
         print(vars(self.peak_intensity))
         print(vars(self.peak_intensity_max))
         if self.event_lengths != []:
@@ -1152,10 +1131,10 @@ class Observation():
         self.observation_window_end = None
         
         
-        #Forecasts
+        #Observed Values
         self.all_clear = All_Clear(None, None, None, None) #All_Clear object
-        self.peak_intensity = Peak_Intensity(None, None, None, None, None, None) #Peak_Intensity object
-        self.peak_intensity_max = Peak_Intensity_Max(None, None, None, None, None, None)#Peak_Intensity object
+        self.peak_intensity = Flux_Intensity('peak_intensity', None, None, None, None, None, None) #Flux_Intensity object
+        self.peak_intensity_max = Flux_Intensity('peak_intensity_max', None, None, None, None, None, None)#Flux_Intensity object
         self.event_lengths = []
         self.fluences = []
         self.fluence_spectra = []
@@ -1241,14 +1220,14 @@ class Observation():
 
         #Load (Onset) Peak Intensity
         intensity, units, uncertainty, uncertainty_low, uncertainty_high,\
-            time = vjson.dict_to_peak_intensity('peak_intensity', dataD)
-        self.peak_intensity = Peak_Intensity(intensity, units, uncertainty,
-            uncertainty_low, uncertainty_high, time)
+            time = vjson.dict_to_flux_intensity('peak_intensity', dataD)
+        self.peak_intensity = Flux_Intensity('peak_intensity', intensity, units,
+            uncertainty, uncertainty_low, uncertainty_high, time)
             
         #Load Max Intensity
         intensity, units, uncertainty, uncertainty_low, uncertainty_high,\
-            time = vjson.dict_to_peak_intensity('peak_intensity_max', dataD)
-        self.peak_intensity_max = Peak_Intensity_Max(intensity, units,
+            time = vjson.dict_to_flux_intensity('peak_intensity_max', dataD)
+        self.peak_intensity_max = Flux_Intensity('peak_intensity_max', intensity, units,
             uncertainty, uncertainty_low, uncertainty_high, time)
         
         #Load Event Lengths
@@ -1471,22 +1450,35 @@ class SPHINX:
         #Each observed value is selected using an individual set of criteria
         #for that specific quantity.
         #These criteria are specified in match.py/match_all_forecasts()
+        #Point Intensity
+        self.observed_point_intensity = Flux_Intensity('point_intensity', None, None, None, None, None, None) #Derived quantity
+        self.observed_match_peak_intensity_source = None
+
+        #Peak Intensity
         self.observed_match_peak_intensity_source = None
         self.peak_intensity_match_status = ""
-        self.observed_peak_intensity = Peak_Intensity(None, None, None, None, None, None) #Peak Intensity Obj
+        self.observed_peak_intensity = Flux_Intensity('peak_intensity', None, None, None, None, None, None) #Peak Intensity Obj
+
+        #Peak Intensity Max
         self.observed_match_peak_intensity_max_source = None
         self.peak_intensity_max_match_status = ""
-        self.observed_peak_intensity_max = Peak_Intensity(None, None, None, None, None, None) #Peak Intensity Max Obj
+        self.observed_peak_intensity_max = Flux_Intensity('peak_intensity_max', None, None, None, None, None, None) #Peak Intensity Max Obj
+
+        #Max Flux in Prediction Window
+        self.observed_max_flux_in_prediction_window = Flux_Intensity('max_flux_in_prediction_window', None, None, None, None, None, None) #Derived quantity
+ 
         #Only one All Clear status allowed per energy channel
         self.observed_match_all_clear_source = None
         self.all_clear_match_status = ""
         self.observed_all_clear = All_Clear(None, None, None, None)  #All Clear Object
+
         #Uses thresholds from self.thresholds as keys
         self.observed_match_sep_source = {}
         self.sep_match_status = {}
         self.observed_threshold_crossing = {} #Threshold Crossing objects
         self.observed_event_length = {} #Event Length objects
         self.observed_start_time = {} #datetime
+        self.observed_duration = {} #Derived quantity
         self.observed_fluence = {} #Fluence objects
         self.observed_fluence_spectrum = {} #Fluence spectrum objects
 
@@ -1535,12 +1527,14 @@ class SPHINX:
         self.observed_threshold_crossing.update({key:Threshold_Crossing(None, None, None, None)})
         self.observed_event_length.update({key: Event_Length(None, None, None, None)})
         self.observed_start_time.update({key:None})
-        self.observed_fluence.update({key:Fluence("id",None, None, None, None, None, None)})
         self.observed_fluence_spectrum.update({key:Fluence_Spectrum(None, None, None, None, None, None, None)})
 
         self.end_time_match_status.update({key:""})
         self.observed_end_time.update({key:None})
-        
+        self.observed_duration.update({key: None})
+        self.observed_fluence.update({key:Fluence("id",None, None, None, None, None, None)})
+ 
+ 
         self.time_profile_match_status.update({key:""})
         self.observed_time_profile.update({key:None})
         
@@ -1554,7 +1548,8 @@ class SPHINX:
     def match_criteria():
         """ Print matching criteria to match up observations to
             each predicted quantity.
-
+            This subroutine is not complete.
+            
         """
         print("\n")
         print("====== Matching Criteria =======")
@@ -1813,6 +1808,18 @@ class SPHINX:
             + str(self.observed_all_clear.threshold_units))
 
         print("-------------------------------------------------------------")
+        print("Observed Point Flux (point_intensity), Derived Quantity")
+        print("None = no SEP event or no match with an observation")
+        print("Note that matching with an SEP event does not affect the ")
+        print("calculation of the metrics.")
+        print("-------------------------------------------------------------")
+        print("  Derived from observations: " +
+            str(self.observed_sep_profiles))
+        print("  Intensity: " + str(self.observed_point_intensity.intensity))
+        print("  Units: " + str(self.observed_point_intensity.units))
+        print("  Time: " + str(self.observed_point_intensity.time))
+
+        print("-------------------------------------------------------------")
         print("Observed Onset Peak (peak_intensity)")
         print("None = no SEP event or no match with an observation")
         print("-------------------------------------------------------------")
@@ -1833,6 +1840,19 @@ class SPHINX:
         print("  Intensity: " + str(self.observed_peak_intensity_max.intensity))
         print("  Units: " + str(self.observed_peak_intensity_max.units))
         print("  Time: " + str(self.observed_peak_intensity_max.time))
+        
+        print("-------------------------------------------------------------")
+        print("Observed Max Flux in the Prediction Window ")
+        print("(peak_intensity_max), Derived Quantity")
+        print("None = no SEP event or no match with an observation")
+        print("Note that matching with an SEP event does not affect the ")
+        print("calculation of the metrics.")
+        print("-------------------------------------------------------------")
+        print("  Derived from observations: " +
+            str(self.observed_sep_profiles))
+        print("  Intensity: " + str(self.observed_max_flux_in_prediction_window.intensity))
+        print("  Units: " + str(self.observed_max_flux_in_prediction_window.units))
+        print("  Time: " + str(self.observed_max_flux_in_prediction_window.time))
 
         print("-------------------------------------------------------------")
         print("Observed SEP Event Probability: ")
@@ -1851,7 +1871,7 @@ class SPHINX:
             + str(self.observed_probability[thresh_key].probability_value))
 
         print("-------------------------------------------------------------")
-        print("Observed SEP Event Characteristics: ")
+        print("Observed SEP Event Start Time: ")
         print("None = no SEP event or no match with an observation")
         print("NaT = no SEP event or no match with an observation")
         print("-------------------------------------------------------------")
@@ -1863,11 +1883,10 @@ class SPHINX:
             print("  Threshold crossing time: "
                 + str(self.observed_threshold_crossing[thresh_key].crossing_time))
             print("  Start time: " + str(self.observed_start_time[thresh_key]))
-            print("  Channel fluence: " + str(self.observed_fluence[thresh_key].fluence))
-            print("  Fluence Spectrum: " + str(self.observed_fluence_spectrum[thresh_key].fluence_spectrum))
+
 
         print("-------------------------------------------------------------")
-        print("Observed SEP Event End Times: ")
+        print("Observed SEP Event End Times and Event Characteristics: ")
         print("NaT = no SEP event or no match with an observation")
         print("-------------------------------------------------------------")
         for thresh in self.thresholds:
@@ -1876,7 +1895,11 @@ class SPHINX:
             print("  Match Status: " + self.end_time_match_status[thresh_key])
             print("  Matched observation: " + str(self.observed_match_sep_source[thresh_key]))
             print("  End time: " + str(self.observed_end_time[thresh_key]))
-            
+            print("  Duration in hours (derived): " + str(self.observed_duration[thresh_key]))
+            print("  Channel fluence: " + str(self.observed_fluence[thresh_key].fluence))
+            print("  Fluence Spectrum: " + str(self.observed_fluence_spectrum[thresh_key].fluence_spectrum))
+
+
         print("-------------------------------------------------------------")
         print("Observed SEP Time Profile: ")
         print("None = no SEP event or no match with an observation")
@@ -1922,10 +1945,10 @@ class SPHINX:
         #These criteria are specified in match.py/match_all_forecasts()
         self.peak_intensity_match_status = "Unmatched"
         self.observed_match_peak_intensity_source = None
-        self.observed_peak_intensity = Peak_Intensity(None, None, None, None, None, None)
+        self.observed_peak_intensity = Flux_Intensity('peak_intensity', None, None, None, None, None, None)
         self.peak_intensity_max_match_status = "Unmatched"
         self.observed_match_peak_intensity_max_source = None
-        self.observed_peak_intensity_max = Peak_Intensity_Max(None, None, None, None, None, None)
+        self.observed_peak_intensity_max = Flux_Intensity('peak_intensity_max', None, None, None, None, None, None)
         
         #Only one All Clear status allowed per energy channel
         self.all_clear_match_status = "Unmatched"
@@ -1938,6 +1961,7 @@ class SPHINX:
         self.observed_event_length[thresh_key] = Event_Length(None, None, None, None)
         self.observed_start_time[thresh_key] = None
         self.observed_end_time[thresh_key] = None
+        self.observed_duration[thresh_key] = None
         self.observed_fluence[thresh_key] = Fluence("id",None, None, None, None, None, None)
         self.observed_fluence_spectrum[thresh_key] = Fluence_Spectrum(None, None, None, None, None, None, None)
         
@@ -2121,6 +2145,42 @@ class SPHINX:
         return predicted, match_status
 
 
+    def return_predicted_duration(self, thresh_key):
+        """ Pull out the predicted value for the requested threshold.
+            
+            None is returned if threshold isn't found or model
+            doesn't make prediction.
+            
+        """
+        predicted = None
+        match_status = ""
+        
+        #Check if a forecast exists for probability
+        if self.prediction.event_lengths == []:
+            return predicted, match_status
+
+        #Check each forecast for probability
+        for obj in self.prediction.event_lengths:
+            pred_thresh = {'threshold': obj.threshold,
+                'threshold_units': obj.threshold_units}
+            tk = objh.threshold_to_key(pred_thresh)
+            #Check that predicted threshold was applied in the observations
+            if obj.threshold == None:
+                continue
+
+            #Check that predicted threshold was applied in the observations
+            #If mismatch allowed, will make a new tk that matches observations
+            if self.mismatch:
+                tk = self.mismatch_thresh_key(pred_thresh)
+
+            if tk != thresh_key:
+                match_status = "No Matching Threshold"
+                continue
+
+            predicted = (obj.end_time - obj.start_time).total_seconds()/(60.*60.)
+            match_status = self.sep_match_status[tk]
+
+        return predicted, match_status
 
 
     def return_predicted_end_time(self, thresh_key):
@@ -2288,6 +2348,28 @@ class SPHINX:
 
         return predicted, pred_units, match_status
 
+
+    def return_predicted_point_intensity(self):
+        """ Pull out the predicted value.
+            
+        """
+        #Check if prediction exists
+        predicted = self.prediction.point_intensity.intensity
+        pred_units = self.prediction.point_intensity.units
+        pred_time = self.prediction.point_intensity.time
+
+        #Check units
+        obs_units = self.observed_point_intensity.units
+        if obs_units != None and pred_units != None:
+            if obs_units != pred_units:
+                #Find a conversion factor from the prediction units
+                #to the observation units
+                conv = vunits.calc_conversion_factor(obs_units, pred_units)
+                if conv != None:
+                    predicted = predicted * conv
+                    pred_units = obs_units
+
+        return predicted, pred_units, pred_time
 
 
     def return_predicted_peak_intensity(self):
