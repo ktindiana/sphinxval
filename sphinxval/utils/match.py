@@ -2,10 +2,12 @@ from . import validation_json_handler as vjson
 from . import object_handler as objh
 from . import config as cfg
 from . import classes as cl
+from . import time_profile as profile
 import sys
 import pandas as pd
 import numpy as np
 import datetime
+
 
 __version__ = "0.1"
 __author__ = "Katie Whitman"
@@ -1493,10 +1495,6 @@ def match_observed_max_flux(sphinx, observation_obj, is_win_overlap,
             sphinx.peak_intensity_max_match_status = "Trigger/Input after Observed Phenomenon"
 
     if max_criteria:
-#        print("Observed peak_intensity_max matched:")
-#        print(observation_obj.source)
-#        print(observation_obj.peak_intensity_max.intensity)
-#        print(observation_obj.peak_intensity_max.time)
         sphinx.observed_match_peak_intensity_max_source =\
             observation_obj.source
         sphinx.observed_peak_intensity_max = observation_obj.peak_intensity_max
@@ -1677,6 +1675,8 @@ def match_sep_quantities(sphinx, observation_obj, thresh, is_win_overlap,
             observation_obj.source
         sphinx.sep_match_status[thresh_key] = "Ongoing SEP Event"
         
+        #THIS BLOCK OF CODE INTERFERED WITH THE AWT CALCULATION
+        #WILL NEED TO CONSIDER THAT IF WANT TO USE THIS
         #Save the SEP event threshold crossing for reference in the
         #Case of an Ongoing SEP Event
         #Threshold Crossing
@@ -1754,7 +1754,7 @@ def match_sep_quantities(sphinx, observation_obj, thresh, is_win_overlap,
         sphinx.observed_threshold_crossing[thresh_key] = th
  
  
-    #Start time and channel fluence
+    #Start time
     start_time = None
     for event in observation_obj.event_lengths:
         if event.threshold != thresh['threshold']:
@@ -1842,7 +1842,7 @@ def match_sep_end_time(sphinx, observation_obj, thresh, is_win_overlap,
 #    print("Observed SEP end time matched:")
 #    print("  " + observation_obj.source)
  
-    #Start time and channel fluence
+    #Start time and channel fluence and duraction
     end_time = None
     for i in range(len(observation_obj.event_lengths)):
         event = observation_obj.event_lengths[i]
@@ -1852,6 +1852,8 @@ def match_sep_end_time(sphinx, observation_obj, thresh, is_win_overlap,
         sphinx.observed_event_length[thresh_key] = event
         sphinx.observed_end_time[thresh_key] = event.end_time
         sphinx.observed_time_profile[thresh_key] = observation_obj.source
+        sphinx.observed_duration[thresh_key] =\
+            (event.end_time - event.start_time).total_seconds()/(60.*60.)
 
 
     fluence = None
@@ -1868,103 +1870,186 @@ def match_sep_end_time(sphinx, observation_obj, thresh, is_win_overlap,
             continue
         sphinx.observed_fluence_spectrum[thresh_key] = flsp
 
-
- #   print(sphinx.observed_end_times)
-
     return end_status
 
 
 
-#def match_time_profile(sphinx, observation_obj, thresh, is_win_overlap,
-#    is_eruption_in_range, trigger_input_end, is_pred_sep_overlap):
-#    """ Apply criteria to determine if a forecast occurs prior to SEP
-#        end time and extract the predicted time profile. If the forecast
-#        is before the SEP end time, then compare the time profile.
-#               
-#       Matching:
-#        - Prediction window overlaps with observation
-#        - There is a threshold crossing in the prediction window OR
-#            there is an ongoing SEP event at the start of the prediction window
-#        - Last eruption within 48 hrs - 15 mins before threshold crossing
-#        - The last trigger/input time if before the end time
-#
-#    Input:
-#        
-#        :sphinx: (SPHINX object) will be updated
-#        :observation_obj: A single observation object
-#        :thresh: (dict) threshold being tested
-#        
-#        The rest are the ith entry for the various boolean arrays
-#        that are the length of all of the observations read into the code.
-#
-#    Output:
-#    
-#        :sep_status: (bool) a single boolean (or None) indicating the
-#            whether SEP info was saved to the SPHINX object
-#            True - SEP quantities added to SPHINX
-#            False - no SEP event observed or an SEP is already ongoing
-#            None - the observation isn't associated with the forecast
-#        
-#        The SPHINX object is updated with observed values if the value is
-#        found to be True or False. Otherwise, values of None will be skipped
-#        because it means that this particular observation doesn't match
-#        
-#    """
-#    thresh_key = objh.threshold_to_key(thresh)
-#
-#    #If it was already found that end time had a matched
-#    #observation and the sep match status was set to True, don't overwrite
-#    #with another observation later in the prediction window
-#    #Mainly relevant for long prediction windows > 24 - 48 hours
-#    if sphinx.end_time_match_status[thresh_key] == "SEP Event":
-#        return None
-#
-#    end_status = None
-#    
-#    #Prediction and observation windows must overlap
-#    if not is_win_overlap:
-#        end_status = None
-#        sphinx.end_time_match_status[thresh_key] = "No Matched Observation"
-#        return end_status
-#        
-#    #The prediction window must overlap with an SEP event
-#    if not is_pred_sep_overlap:
-#        end_status = False #no SEP event, no values
-#        sphinx.end_time_match_status[thresh_key] = "No SEP Event"
-#        return end_status
-#
-#    #If there is an SEP event, the eruption must occur in the right time range
-#    if is_eruption_in_range != None:
-#        if not is_eruption_in_range:
-#            sep_status = None
-#            sphinx.end_time_match_status[thresh_key] = "Eruption Out of Range"
-#            return sep_status
-#    #The triggers and inputs must all be before the end of the event
-#    if trigger_input_end:
-#        end_status = True
-#        sphinx.end_time_match_status[thresh_key] = "SEP Event"
-#    else:
-#        end_status = None
-#        sphinx.end_time_match_status[thresh_key] = "Trigger/Input after Observed Phenomenon"
-#        return end_status
-#    
-#    #Matched End Time
-##    print("Observed SEP end time matched:")
-##    print("  " + observation_obj.source)
-# 
-#    #Start time and channel fluence
-#    time_prof = None
-#    for i in range(len(observation_obj.event_lengths)):
-#        event = observation_obj.event_lengths[i]
-#        if event.threshold != thresh['threshold']:
-#            continue
-#        sphinx.observed_match_sep_source[thresh_key] = observation_obj.source
-#        sphinx.observed_time_profile[thresh_key] = observation_obj.source
-#
-# #   print(sphinx.observed_end_times)
-#
-#    return end_status
+######## DERIVED QUANTITIES ########
+def read_in_time_profiles(sphinx):
+    """ Read in the time profiles matched in the sphinx object.
+        Return as a dataframe.
+        
+    """
+    obs_time_profiles = sphinx.observed_sep_profiles
+    all_dates = []
+    all_fluxes = []
+    for tp in obs_time_profiles: #Can be multiple obs files
+        tp = tp.strip().split(",")
+        for fnm in tp:
+            dt, flx = profile.read_single_time_profile(fnm)
+            if dt == []: continue
+            all_dates.append(dt)
+            all_fluxes.append(flx)
 
+    #Sort all of the fluxes in time order
+    first_dates = [all_dates[k][0] for k in range(len(all_dates))]
+    sortidx = sorted(range(len(first_dates)),
+                    key = lambda k: first_dates[k])
+    dict = {"Time": [], "Flux": []}
+    for idx in sortidx:
+        dict["Time"].extend(all_dates[idx])
+        dict["Flux"].extend(all_fluxes[idx])
+        
+    tpdf = pd.DataFrame(dict)
+    
+    return tpdf
+
+
+def get_max_in_pw(tpdf, pw_st, pw_end):
+    """ Check the flux inside the prediction window and pull out
+        the maximum value.
+        
+        INPUT:
+        
+            :tpdf: (pandas DataFrame) dataframe containing time and flux
+                columns for each observed energy channel.
+            :ek: (string) energy channel key
+            :pw_st: (pandas datetime) prediction window start time
+            :pw_end: (pandas datetime) prediction window end time
+            
+        OUTPUT:
+        
+            :max_flux: (float) maximum flux
+            :max_flux_time: (pandas datetime) time of max flux
+        
+    """
+    sub = tpdf
+    sub = sub.loc[(sub["Time"] < pw_end) & (sub["Time"] >= pw_st)]
+    if sub.empty: return None, pd.NaT
+    
+    max_flux = sub["Flux"].max()
+    times = sub.loc[(sub["Flux"] == max_flux)]
+    times = times["Time"].to_list()
+    max_flux_time = times[0]
+    
+    return max_flux, max_flux_time
+
+
+def get_flux_at_point(tpdf, pw_st, pw_end, time):
+    """ Check the flux inside the prediction window and calculate
+        the observed flux at a specific point in time. Interpolate
+        if necessary.
+        
+        INPUT:
+        
+            :tpdf: (pandas DataFrame) dataframe containing time and flux
+                columns for each observed energy channel.
+            :ek: (string) energy channel key
+            :pw_st: (pandas datetime) prediction window start time
+            :pw_end: (pandas datetime) prediction window end time
+            :time: (pandas datetime) time to get observed flux
+            
+        OUTPUT:
+        
+            :obs_flux: (float) observed flux at time
+        
+    """
+    obs_flux = None
+    
+    if pw_st == pw_end: ###HACK FOR NOW
+        pw_st = pw_st - datetime.timedelta(minutes=15)
+        pw_end = pw_end + datetime.timedelta(minutes=15)
+        
+    sub = tpdf
+    sub = sub.loc[(sub["Time"] < pw_end) & (sub["Time"] >= pw_st)]
+    if sub.empty: return None
+    
+    dates = sub["Time"].to_list()
+    fluxes = sub["Flux"].to_list()
+    
+    f_interp = profile.interp_timeseries(dates, fluxes, "log", [time])
+    if f_interp:
+        obs_flux = f_interp[0]
+
+    return obs_flux
+
+
+
+def calculate_derived_quantities(sphinx):
+    """ Calculate observed quantities that are derived for comparison
+        to forecasts.
+            Max flux in prediction window
+            Point intensity (observed flux at a specific point in time
+                specified by the forecast)
+                
+        **This subroutine can only be called after the SPHINX object
+        has been completely filled in with all forecasts and observations.
+               
+       Matching:
+        - Matching doesn't play a role in these values, but the
+            match status will be associated with the end time
+            match status to indicate what is going on in the environment
+
+    Input:
+        
+        :sphinx: (SPHINX object) will be updated
+
+    Output:
+    
+        :status: (bool) a single boolean (or None) indicating the
+            whether info was saved to the SPHINX object
+            True - quantities added to SPHINX
+            None - the observation isn't associated with the forecast
+        
+        The SPHINX object is updated with observed values if the value is
+        found to be True or False. Otherwise, values of None will be skipped
+        because it means that this particular observation doesn't match
+        
+    """
+    status = None
+    
+    #Check if there are forecasts associated with these derived values
+    pred_point_intensity = sphinx.prediction.point_intensity.intensity
+    pred_peak_intensity = sphinx.prediction.peak_intensity.intensity
+    pred_peak_intensity_max = sphinx.prediction.peak_intensity_max.intensity
+
+    if pred_point_intensity == None and pred_peak_intensity == None\
+        and pred_peak_intensity_max == None:
+        return status
+    
+    pw_st = sphinx.prediction.prediction_window_start
+    pw_end = sphinx.prediction.prediction_window_end
+    if pw_st == None or pw_end == None:
+        return status
+    
+    #Predicted values to compare to, so continue
+    status = True
+
+    #Read in the observed time profiles into arrays
+    tpdf = read_in_time_profiles(sphinx)
+
+    #Max flux in prediction window
+    max_flux, max_flux_time = get_max_in_pw(tpdf, pw_st, pw_end)
+    sphinx.observed_max_flux_in_prediction_window.intensity = max_flux
+    sphinx.observed_max_flux_in_prediction_window.time = max_flux_time
+    sphinx.max_flux_in_prediction_window_match_status =\
+        sphinx.end_time_match_status
+    if pred_peak_intensity != None:
+        sphinx.observed_max_flux_in_prediction_window.units = sphinx.prediction.peak_intensity.units
+    if pred_peak_intensity_max != None:
+        sphinx.observed_max_flux_in_prediction_window.units = sphinx.prediction.peak_intensity_max.units
+
+    if pred_point_intensity == None:
+        return status
+        
+    point_time = sphinx.prediction.point_intensity.time
+    obs_point_flux = get_flux_at_point(tpdf, pw_st, pw_end, point_time)
+    sphinx.observed_point_intensity.intensity = obs_point_flux
+    sphinx.observed_point_intensity.time = point_time
+    sphinx.observed_point_intensity.units =\
+        sphinx.prediction.point_intensity.units
+    
+    return status
 
 
 
@@ -2247,7 +2332,8 @@ def match_all_forecasts(all_energy_channels, model_names, obs_objs,
             #If this is a set of predictions and observations that are
             #allowed to have a set of mismatched energy channels and
             #thresholds
-            if cfg.do_mismatch and energy_key == cfg.mm_energy_key:
+            if cfg.do_mismatch and energy_key == cfg.mm_energy_key\
+                and cfg.mm_model in fcast.short_name:
                 sphinx.mismatch = True
                 print("Mismatched channel allowed.")
 
@@ -2430,11 +2516,10 @@ def match_all_forecasts(all_energy_channels, model_names, obs_objs,
                     
                     ###ONSET PEAK & MAX FLUX
                     #Prediction window overlaps with observation
-                    #Last eruption within 48 hrs - 15 mins before
+                    #Last eruption within appropriate time range before
                     #threshold crossing
                     #The prediction window overlaps with an SEP event in any
                     #threshold - only a comparison when SEP event
-                    ####NEED TO ADD IN COMPARISON WHEN NO SEP EVENT
                     #The last trigger/input time if before the observed peak
                     #intensity
                     #ONSET PEAK
@@ -2482,6 +2567,7 @@ def match_all_forecasts(all_energy_channels, model_names, obs_objs,
                         is_eruption_in_range, trigger_input_end,
                         is_pred_sep_overlap[i])
 
+                    derived_status = calculate_derived_quantities(sphinx)
 
             #Save the SPHINX object with all of the forecasted and matched
             #observation values to a dictionary organized by energy channel

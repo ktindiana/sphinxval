@@ -410,7 +410,7 @@ def plot_time_profile(date, values, labels, dy=None, dyl=None, dyh=None,
         #values[i] = [None if x==np.inf else x for x in values[i]]
         if dy==None:
             if "REleASE" in labels[i]:
-                ax.plot(date[i], values[i], label=labels[i], marker=".", linestyle=":")
+                ax.plot(date[i], values[i], ".", label=labels[i])
             #elif "GOES" in labels[i]:
             #    ax.plot(date[i], values[i], label=labels[i], color="k")
             elif len(date[i]) == 1:
@@ -418,7 +418,7 @@ def plot_time_profile(date, values, labels, dy=None, dyl=None, dyh=None,
             elif "ASPECS" in labels[i]:
                 ax.plot(date[i], values[i], label=labels[i], linestyle="dashed")
             else:
-                ax.plot(date[i], values[i], label=labels[i])
+                ax.plot(date[i], values[i], label=labels[i], marker=".")
         else:
             if "REleASE" in labels[i]:
                 ax.errorbar(date[i], values[i], label=labels[i], yerr=dy[i], marker=".", linestyle=":", elinewidth=2)
