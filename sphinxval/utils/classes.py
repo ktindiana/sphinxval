@@ -1989,19 +1989,15 @@ class SPHINX:
             doesn't make prediction.
             
         """
-        match_status = ""
-        
         #Check if forecast for all clear
         predicted = self.prediction.all_clear.all_clear_boolean
-        if predicted == None:
-            return predicted, match_status
+        match_status = self.all_clear_match_status
 
         pred_threshold = {'threshold': self.prediction.all_clear.threshold,
             'threshold_units': self.prediction.all_clear.threshold_units}
         obs_threshold = {'threshold': self.observed_all_clear.threshold,
             'threshold_units': self.observed_all_clear.threshold_units}
-        match_status = self.all_clear_match_status
-        
+
         #If allow mismatching energy channels and thresholds
         if self.mismatch:
             if self.allowed_thresh_mismatch(pred_threshold, obs_threshold):
@@ -2021,6 +2017,8 @@ class SPHINX:
         """ Check if predicted threshold should be matched up with a
             different observed threshold. Make a new thresh key.
             
+            Returns observed threshold key, tk
+            
         """
         tk = objh.threshold_to_key(pred_thresh)
         if pred_thresh not in self.thresholds:
@@ -2033,6 +2031,18 @@ class SPHINX:
         return tk
 
 
+#    def mismatch_thresh_key(self, obs_thresh_key):
+#        """ Check if observed threshold should be matched up with a
+#            different predicted threshold. Make a new thresh key.
+#            
+#        """
+#        if cfg.do_mismatch and cfg.mm_model in self.prediction.short_name:
+#            if obs_thresh_key == cfg.mm_obs_tk:
+#                tk = cfg.mm_pred_tk
+#                        
+#        return tk
+
+
     def return_predicted_probability(self, thresh_key):
         """ Pull out the predicted value for the requested threshold.
             Performs units checking with observed values.
@@ -2042,7 +2052,7 @@ class SPHINX:
             
         """
         pred_prob = None
-        match_status = ""
+        match_status = self.sep_match_status[thresh_key]
         
         #Check if a forecast exists for probability
         if self.prediction.probabilities == []:
@@ -2056,15 +2066,16 @@ class SPHINX:
             
             #Check that predicted threshold was applied in the observations
             #If mismatch allowed, will make a new tk that matches observations
+            #Observed and predicted values were organized in match.py
+            #to be saved in the sphinx objects according to observed threshold
+            #if mismatch was allowed.
             if self.mismatch:
                 tk = self.mismatch_thresh_key(pred_thresh)
             
             if tk != thresh_key:
-                match_status = "No Matching Threshold"
                 continue
             
             pred_prob = prob_obj.probability_value
-            match_status = self.sep_match_status[tk]
 
         return pred_prob, match_status
 
@@ -2079,7 +2090,7 @@ class SPHINX:
         """
         
         predicted = None
-        match_status = ""
+        match_status = self.sep_match_status[thresh_key]
         
         #Check if a forecast exists for probability
         if self.prediction.threshold_crossings == []:
@@ -2097,11 +2108,9 @@ class SPHINX:
                 tk = self.mismatch_thresh_key(pred_thresh)
             
             if tk != thresh_key:
-                match_status = "No Matching Threshold"
                 continue
  
             predicted = obj.crossing_time
-            match_status = self.sep_match_status[tk]
 
         return predicted, match_status
 
@@ -2115,7 +2124,7 @@ class SPHINX:
             
         """
         predicted = None
-        match_status = ""
+        match_status = self.sep_match_status[thresh_key]
         
         #Check if a forecast exists for probability
         if self.prediction.event_lengths == []:
@@ -2136,11 +2145,9 @@ class SPHINX:
                 tk = self.mismatch_thresh_key(pred_thresh)
 
             if tk != thresh_key:
-                match_status = "No Matching Threshold"
                 continue
 
             predicted = obj.start_time
-            match_status = self.sep_match_status[tk]
 
         return predicted, match_status
 
@@ -2153,7 +2160,7 @@ class SPHINX:
             
         """
         predicted = None
-        match_status = ""
+        match_status = self.sep_match_status[thresh_key]
         
         #Check if a forecast exists for probability
         if self.prediction.event_lengths == []:
@@ -2174,11 +2181,9 @@ class SPHINX:
                 tk = self.mismatch_thresh_key(pred_thresh)
 
             if tk != thresh_key:
-                match_status = "No Matching Threshold"
                 continue
 
             predicted = (obj.end_time - obj.start_time).total_seconds()/(60.*60.)
-            match_status = self.sep_match_status[tk]
 
         return predicted, match_status
 
@@ -2191,7 +2196,7 @@ class SPHINX:
             
         """
         predicted = None
-        match_status = ""
+        match_status = self.end_time_match_status[thresh_key]
         
         #Check if a forecast exists for probability
         if self.prediction.event_lengths == []:
@@ -2214,11 +2219,9 @@ class SPHINX:
                 tk = self.mismatch_thresh_key(pred_thresh)
             
             if tk != thresh_key:
-                match_status = "No Matching Threshold"
                 continue
 
             predicted = obj.end_time
-            match_status = self.end_time_match_status[tk]
 
         return predicted, match_status
 
@@ -2254,7 +2257,7 @@ class SPHINX:
         """
         predicted = None
         pred_units = None
-        match_status = ""
+        match_status = self.end_time_match_status[thresh_key]
 
         #Check if a forecast exists for probability
         if self.prediction.fluences == []:
@@ -2276,10 +2279,8 @@ class SPHINX:
                 tk = self.mismatch_thresh_key(pred_thresh)
                 
             if tk != thresh_key:
-                match_status = "No Matching Threshold"
                 continue
 
-            match_status = self.end_time_match_status[tk]
             predicted = obj.fluence
 
             pred_units = obj.units
@@ -2309,7 +2310,7 @@ class SPHINX:
         """
         predicted = None
         pred_units = None
-        match_status = ""
+        match_status = self.end_time_match_status[thresh_key]
 
         #Check if a forecast exists for probability
         if self.prediction.fluence_spectra == []:
@@ -2332,11 +2333,9 @@ class SPHINX:
                 tk = self.mismatch_thresh_key(pred_thresh)
 
             if tk != thresh_key:
-                match_status = "No Matching Threshold"
                 continue
 
 
-            match_status = self.end_time_match_status[tk]
             predicted = obj.fluence_spectrum
 
             obs_units = self.observed_fluence_spectrum[tk].fluence_units
@@ -2381,9 +2380,7 @@ class SPHINX:
         pred_units = self.prediction.peak_intensity.units
         pred_time = self.prediction.peak_intensity.time
         
-        match_status = ""
-        if predicted != None:
-            match_status = self.peak_intensity_match_status
+        match_status = self.peak_intensity_match_status
 
         #Check units
         obs_units = self.observed_peak_intensity.units
@@ -2409,9 +2406,7 @@ class SPHINX:
         pred_units = self.prediction.peak_intensity_max.units
         pred_time = self.prediction.peak_intensity_max.time
         
-        match_status = None
-        if predicted != None:
-            match_status = self.peak_intensity_max_match_status
+        match_status = self.peak_intensity_max_match_status
 
         #Observed units
         obs_units = self.observed_peak_intensity_max.units

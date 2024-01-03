@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+#To change between point_intensity and peak_intensity for testing:
+#find model/REleASE/* -type f -name "*.json" -exec sed -i '' 's/point_intensity/peak_intensity/g' {} +
+
 import os.path
 import argparse
 import json
