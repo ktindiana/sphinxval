@@ -2127,9 +2127,7 @@ def identify_first_all_clear_forecast_strict(df):
             :idx: index indicating row of df associated with first forecast
         
     """
-    print("AWT df for All Clear")
     all_clear = df['Predicted SEP All Clear'].to_list()
-    print(all_clear)
     idx = None
     #Search in reverse order checking of forecast is False All Clear
     #As soon as hit a True All Clear, exit
@@ -2164,9 +2162,7 @@ def identify_first_time_forecast_strict(df, pred_key):
             :idx: index indicating row of df associated with first forecast
         
     """
-    print("AWT df for " + pred_key)
     times = df[pred_key].to_list()
-    print(times)
     idx = None
     for i in range(len(times)-1,-1,-1):
         if pd.isnull(times[i]):
@@ -2197,12 +2193,10 @@ def identify_first_flux_forecast_strict(df, pred_key, thresh_key):
             :idx: index indicating row of df associated with first forecast
         
     """
-    print("AWT df for " + pred_key + " with threshold " + thresh_key)
     threshold = objh.key_to_threshold(thresh_key)
     thresh = threshold['threshold']
     
     fluxes = df[pred_key].to_list()
-    print(fluxes)
     idx = None
     for i in range(len(fluxes)-1,-1,-1):
         if fluxes[i] == None:
@@ -2362,7 +2356,6 @@ def awt_metrics(df, dict, model, energy_key, thresh_key):
         
         #For each SEP event, identify the first forecast for that SEP event.
         for sep in sep_events:
-            print("AWT SEP Event: " + str(sep))
             sep_sub = sub.loc[sub['Observed SEP Threshold Crossing Time'] == sep]
             
             idx = None
@@ -2376,13 +2369,10 @@ def awt_metrics(df, dict, model, energy_key, thresh_key):
                 idx = identify_first_flux_forecast_strict(sep_sub, ftype['pred_key'],
                         thresh_key)
             
-            print("AWT for " + ftype['pred_key'] +", idx is " + str(idx))
-            
             if idx == None:
                 continue
             
             row = sep_sub.iloc[idx].to_list()
-            print(row)
             
             #Calculate AWT
             issue_time = sep_sub.iloc[idx]['Forecast Issue Time']
