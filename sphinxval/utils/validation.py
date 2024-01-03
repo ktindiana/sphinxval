@@ -13,6 +13,7 @@ import sys
 import os.path
 import pandas as pd
 import datetime
+from pandas.api.types import is_datetime64_any_dtype as is_datetime
 
 __version__ = "0.1"
 __author__ = "Katie Whitman"
@@ -429,6 +430,9 @@ def fill_df(matched_sphinx, model_names, all_energy_channels,
                 
     
     df = pd.DataFrame(dict)
+    #Sort by prediction window start so in time order for AWT, etc
+    df = df.sort_values(by=["Model","Energy Channel Key","Threshold Key","Prediction Window Start"],ascending=[True, True, True, True])
+    
     if not DoResume: write_df(df, "SPHINX_dataframe")
     return df
 
@@ -1221,9 +1225,6 @@ def peak_intensity_max_intuitive_metrics(df, dict, model, energy_key,
     units = sub.iloc[0]['Observed SEP Peak Intensity Max (Max Flux) Units']
     pred = sub[peak_key].to_list()
  
-    print("peak_intensity_max obs, pred")
-    print(obs)
-    print(pred)
  
     if len(obs) > 1:
         #PEARSON CORRELATION
@@ -1299,14 +1300,32 @@ def max_flux_in_pred_win_metrics(df, dict, model, energy_key,
             'Observed Max Flux in Prediction Window Units',
             'Predicted SEP Peak Intensity Max (Max Flux)',
             'Predicted SEP Peak Intensity Max (Max Flux) Units']]
-    sub_test = sub['Predicted SEP Peak Intensity Max (Max Flux)'].dropna()
+
     #drop rows containing None
-      
+    noneval = pd.isna(sub['Predicted SEP Peak Intensity Max (Max Flux)'])
+    #Extract only indices for Nones
+    #True indicates that peak intensity was a None value
+    noneval = noneval.loc[noneval == True]
+    noneval = noneval.index.to_list()
+    if len(noneval) > 0:
+        for ix in noneval:
+            sub = sub.drop(index=ix)
+
+    if not sub.empty:
+        #Find predicted None values
+        noneval = pd.isna(sub['Observed Max Flux in Prediction Window'])
+        #Extract only indices for Nones
+        #True indicates that peak intensity was a None value
+        noneval = noneval.loc[noneval == True]
+        noneval = noneval.index.to_list()
+        if len(noneval) > 0:
+            for ix in noneval:
+                sub = sub.drop(index=ix)
       
     #Models may fill only the Peak Intensity field. It can be ambiguous whether
     #the prediction is intended as onset peak or max flux. If no max flux field
     #found, then compare Peak Intensity to observed Max Flux.
-    if sub_test.empty:
+    if sub.empty:
         sub = df.loc[(df['Model'] == model) & (df['Energy Channel Key'] ==
             energy_key) & (df['Threshold Key'] == thresh_key)]
 
@@ -1320,9 +1339,28 @@ def max_flux_in_pred_win_metrics(df, dict, model, energy_key,
             'Observed Max Flux in Prediction Window Units',
             'Predicted SEP Peak Intensity (Onset Peak)',
             'Predicted SEP Peak Intensity (Onset Peak) Units']]
-        sub_test = sub['Predicted SEP Peak Intensity (Onset Peak)'].dropna()
-        #drop rows containing None
-        if sub_test.empty:
+
+        #Find predicted None values
+        noneval = pd.isna(sub['Predicted SEP Peak Intensity (Onset Peak)'])
+        #Extract only indices for Nones
+        #True indicates that peak intensity was a None value
+        noneval = noneval.loc[noneval == True]
+        noneval = noneval.index.to_list()
+        if len(noneval) > 0:
+            for ix in noneval:
+                sub = sub.drop(index=ix)
+
+        #Find predicted None values
+        noneval = pd.isna(sub['Observed Max Flux in Prediction Window'])
+        #Extract only indices for Nones
+        #True indicates that peak intensity was a None value
+        noneval = noneval.loc[noneval == True]
+        noneval = noneval.index.to_list()
+        if len(noneval) > 0:
+            for ix in noneval:
+                sub = sub.drop(index=ix)
+
+        if sub.empty:
             return
  
         peak_key = 'Predicted SEP Peak Intensity (Onset Peak)'
@@ -1332,19 +1370,19 @@ def max_flux_in_pred_win_metrics(df, dict, model, energy_key,
             "observed max flux in the prediction window.")
 
 
-
-    mismatch = bool(sub_test.iloc[0]['Mismatch Allowed'])
-    pred_energy_key = str(sub_test.iloc[0]['Prediction Energy Channel Key'])
-    pred_thresh_key = str(sub_test.iloc[0]['Prediction Threshold Key'])
+    mismatch = bool(sub.iloc[0]['Mismatch Allowed'])
+    pred_energy_key = str(sub.iloc[0]['Prediction Energy Channel Key'])
+    pred_thresh_key = str(sub.iloc[0]['Prediction Threshold Key'])
 
     thresh_fnm = make_thresh_fname(thresh_key)
     fnm = "max_flux_in_pred_win_selections_" + model + "_" + energy_key.strip() + "_" + thresh_fnm
     if mismatch:
         fnm = fnm + "_mm"
-    write_df(sub_test, fnm)
+    write_df(sub, fnm)
 
-    obs = sub_test['Observed Max Flux in Prediction Window']
-    pred = sub_test[peak_key]
+    obs = sub['Observed Max Flux in Prediction Window']
+    units = sub.iloc[0]['Observed Max Flux in Prediction Window Units']
+    pred = sub[peak_key]
  
     if len(obs) > 1:
         #PEARSON CORRELATION
@@ -2073,7 +2111,7 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
 
 
 
-def identify_first_all_clear_forecast(df):
+def identify_first_all_clear_forecast_strict(df):
     """ Finds the first forecast associated with an SEP event.
         In the case of consecutive forecasts leading up to an SEP event,
         the first forecast will be selected for a series of forecasts that ALL
@@ -2089,20 +2127,24 @@ def identify_first_all_clear_forecast(df):
             :idx: index indicating row of df associated with first forecast
         
     """
+    print("AWT df for All Clear")
     all_clear = df['Predicted SEP All Clear'].to_list()
-    ac_idx = None
+    print(all_clear)
+    idx = None
     #Search in reverse order checking of forecast is False All Clear
     #As soon as hit a True All Clear, exit
     for i in range(len(all_clear)-1,-1,-1):
+        if all_clear[i] == None:
+            break
         if all_clear[i] == False:
-            ac_idx = i
+            idx = i
         if all_clear[i] == True:
             break
     
-    return ac_idx
+    return idx
 
 
-def identify_first_time_forecast(df, pred_key):
+def identify_first_time_forecast_strict(df, pred_key):
     """ Finds the first forecast associated with an SEP event.
         In the case of consecutive forecasts leading up to an SEP event,
         the first forecast will be selected for a series of forecasts that ALL
@@ -2122,18 +2164,20 @@ def identify_first_time_forecast(df, pred_key):
             :idx: index indicating row of df associated with first forecast
         
     """
+    print("AWT df for " + pred_key)
     times = df[pred_key].to_list()
+    print(times)
     idx = None
     for i in range(len(times)-1,-1,-1):
-        if times[i] != pd.NaT:
-            idx = i
-        else:
+        if pd.isnull(times[i]):
             break
+        else:
+            idx = i
 
     return idx
 
 
-def identify_first_flux_forecast(df, pred_key, thresh_key):
+def identify_first_flux_forecast_strict(df, pred_key, thresh_key):
     """ Finds the first forecast associated with an SEP event.
         In the case of consecutive forecasts leading up to an SEP event,
         the first forecast will be selected for a series of forecasts that ALL
@@ -2153,13 +2197,17 @@ def identify_first_flux_forecast(df, pred_key, thresh_key):
             :idx: index indicating row of df associated with first forecast
         
     """
+    print("AWT df for " + pred_key + " with threshold " + thresh_key)
     threshold = objh.key_to_threshold(thresh_key)
     thresh = threshold['threshold']
     
     fluxes = df[pred_key].to_list()
+    print(fluxes)
     idx = None
     for i in range(len(fluxes)-1,-1,-1):
-        if fluxes[i] >= thresh:
+        if fluxes[i] == None:
+            break
+        elif fluxes[i] >= thresh:
             idx = i
         else:
             break
@@ -2314,22 +2362,27 @@ def awt_metrics(df, dict, model, energy_key, thresh_key):
         
         #For each SEP event, identify the first forecast for that SEP event.
         for sep in sep_events:
+            print("AWT SEP Event: " + str(sep))
             sep_sub = sub.loc[sub['Observed SEP Threshold Crossing Time'] == sep]
             
             idx = None
             if 'All Clear' in ftype['pred_key']:
-                idx = identify_first_all_clear_forecast(sep_sub)
+                idx = identify_first_all_clear_forecast_strict(sep_sub)
         
             if 'Time' in ftype['pred_key']:
-                idx = identify_first_time_forecast(sep_sub, ftype['pred_key'])
+                idx = identify_first_time_forecast_strict(sep_sub, ftype['pred_key'])
                 
             if 'Peak' in ftype['pred_key'] or 'Point' in ftype['pred_key']:
-                idx = identify_first_flux_forecast(sep_sub, ftype['pred_key'],
+                idx = identify_first_flux_forecast_strict(sep_sub, ftype['pred_key'],
                         thresh_key)
+            
+            print("AWT for " + ftype['pred_key'] +", idx is " + str(idx))
+            
             if idx == None:
                 continue
             
             row = sep_sub.iloc[idx].to_list()
+            print(row)
             
             #Calculate AWT
             issue_time = sep_sub.iloc[idx]['Forecast Issue Time']
