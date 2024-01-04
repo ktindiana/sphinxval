@@ -2052,7 +2052,11 @@ class SPHINX:
             
         """
         pred_prob = None
-        match_status = self.sep_match_status[thresh_key]
+        match_status = None
+        try:
+            match_status = self.sep_match_status[thresh_key]
+        except:
+            pass
         
         #Check if a forecast exists for probability
         if self.prediction.probabilities == []:
@@ -2090,7 +2094,11 @@ class SPHINX:
         """
         
         predicted = None
-        match_status = self.sep_match_status[thresh_key]
+        match_status = None
+        try:
+            match_status = self.sep_match_status[thresh_key]
+        except:
+            pass
         
         #Check if a forecast exists for probability
         if self.prediction.threshold_crossings == []:
@@ -2124,7 +2132,11 @@ class SPHINX:
             
         """
         predicted = None
-        match_status = self.sep_match_status[thresh_key]
+        match_status = None
+        try:
+            match_status = self.sep_match_status[thresh_key]
+        except:
+            pass
         
         #Check if a forecast exists for probability
         if self.prediction.event_lengths == []:
@@ -2160,7 +2172,11 @@ class SPHINX:
             
         """
         predicted = None
-        match_status = self.sep_match_status[thresh_key]
+        match_status = None
+        try:
+            match_status = self.sep_match_status[thresh_key]
+        except:
+            pass
         
         #Check if a forecast exists for probability
         if self.prediction.event_lengths == []:
@@ -2196,7 +2212,11 @@ class SPHINX:
             
         """
         predicted = None
-        match_status = self.end_time_match_status[thresh_key]
+        match_status = None
+        try:
+            match_status = self.end_time_match_status[thresh_key]
+        except:
+            pass
         
         #Check if a forecast exists for probability
         if self.prediction.event_lengths == []:
@@ -2257,7 +2277,11 @@ class SPHINX:
         """
         predicted = None
         pred_units = None
-        match_status = self.end_time_match_status[thresh_key]
+        match_status = None
+        try:
+            match_status = self.end_time_match_status[thresh_key]
+        except:
+            pass
 
         #Check if a forecast exists for probability
         if self.prediction.fluences == []:
@@ -2310,7 +2334,11 @@ class SPHINX:
         """
         predicted = None
         pred_units = None
-        match_status = self.end_time_match_status[thresh_key]
+        match_status = None
+        try:
+            match_status = self.end_time_match_status[thresh_key]
+        except:
+            pass
 
         #Check if a forecast exists for probability
         if self.prediction.fluence_spectra == []:
