@@ -525,11 +525,11 @@ def initialize_awt_dict():
             "Mean AWT for Predicted SEP Start Time to Observed SEP Start Time": [],
             "Median AWT for Predicted SEP Start Time to Observed SEP Start Time": [],
  
-             #Point Intensity Forecasts
-            "Mean AWT for Predicted Point Intensity to Observed SEP Threshold Crossing Time": [],
-            "Median AWT for Predicted Point Intensity to Observed SEP Threshold Crossing Time": [],
-            "Mean AWT for Predicted Point Intensity to Observed SEP Start Time": [],
-            "Median AWT for Predicted Point Intensity to Observed SEP Start Time": [],
+#             #Point Intensity Forecasts
+#            "Mean AWT for Predicted Point Intensity to Observed SEP Threshold Crossing Time": [],
+#            "Median AWT for Predicted Point Intensity to Observed SEP Threshold Crossing Time": [],
+#            "Mean AWT for Predicted Point Intensity to Observed SEP Start Time": [],
+#            "Median AWT for Predicted Point Intensity to Observed SEP Start Time": [],
  
  
             #Peak Intensity Forecasts
@@ -1264,7 +1264,19 @@ def probability_intuitive_metrics(df, dict, model, energy_key, thresh_key,
     if len(noneval) > 0:
         for ix in noneval:
             sub = sub.drop(index=ix)
-      
+
+    if not sub.empty:
+        #Find predicted None values
+        noneval = pd.isna(sub['Observed SEP Probability'])
+        #Extract only indices for Nones
+        #True indicates that peak intensity was a None value
+        noneval = noneval.loc[noneval == True]
+        noneval = noneval.index.to_list()
+        if len(noneval) > 0:
+            for ix in noneval:
+                sub = sub.drop(index=ix)
+
+
     if sub.empty:
         return
 
@@ -1535,6 +1547,17 @@ def peak_intensity_intuitive_metrics(df, dict, model, energy_key, thresh_key,
         for ix in noneval:
             sub = sub.drop(index=ix)
       
+    if not sub.empty:
+        #Find observed None values
+        noneval = pd.isna(sub['Observed SEP Peak Intensity (Onset Peak)'])
+        #Extract only indices for Nones
+        #True indicates that peak intensity was a None value
+        noneval = noneval.loc[noneval == True]
+        noneval = noneval.index.to_list()
+        if len(noneval) > 0:
+            for ix in noneval:
+                sub = sub.drop(index=ix)
+
     if sub.empty:
         return
 
@@ -1966,6 +1989,18 @@ def fluence_intuitive_metrics(df, dict, model, energy_key,
     if len(noneval) > 0:
         for ix in noneval:
             sub = sub.drop(index=ix)
+
+    if not sub.empty:
+        #Find observed None values
+        noneval = pd.isna(sub['Observed SEP Fluence'])
+        #Extract only indices for Nones
+        #True indicates that peak intensity was a None value
+        noneval = noneval.loc[noneval == True]
+        noneval = noneval.index.to_list()
+        if len(noneval) > 0:
+            for ix in noneval:
+                sub = sub.drop(index=ix)
+
     if sub.empty:
         return
 
@@ -2065,6 +2100,19 @@ def threshold_crossing_intuitive_metrics(df, dict, model, energy_key,
     if len(noneval) > 0:
         for ix in noneval:
             sub = sub.drop(index=ix)
+
+    if not sub.empty:
+        #Find observed None values
+        noneval = pd.isna(sub['Observed SEP Threshold Crossing Time'])
+        #Extract only indices for Nones
+        #True indicates that peak intensity was a None value
+        noneval = noneval.loc[noneval == True]
+        noneval = noneval.index.to_list()
+        if len(noneval) > 0:
+            for ix in noneval:
+                sub = sub.drop(index=ix)
+
+
     if sub.empty:
         return
 
@@ -2132,6 +2180,18 @@ def start_time_intuitive_metrics(df, dict, model, energy_key, thresh_key,
     if len(noneval) > 0:
         for ix in noneval:
             sub = sub.drop(index=ix)
+
+    if not sub.empty:
+        #Find predicted None values
+        noneval = pd.isna(sub['Observed SEP Start Time'])
+        #Extract only indices for Nones
+        #True indicates that peak intensity was a None value
+        noneval = noneval.loc[noneval == True]
+        noneval = noneval.index.to_list()
+        if len(noneval) > 0:
+            for ix in noneval:
+                sub = sub.drop(index=ix)
+
     if sub.empty:
         return
 
@@ -2199,6 +2259,18 @@ def end_time_intuitive_metrics(df, dict, model, energy_key,
     if len(noneval) > 0:
         for ix in noneval:
             sub = sub.drop(index=ix)
+
+    if not sub.empty:
+        #Find observed None values
+        noneval = pd.isna(sub['Observed SEP End Time'])
+        #Extract only indices for Nones
+        #True indicates that peak intensity was a None value
+        noneval = noneval.loc[noneval == True]
+        noneval = noneval.index.to_list()
+        if len(noneval) > 0:
+            for ix in noneval:
+                sub = sub.drop(index=ix)
+
     if sub.empty:
         return
 
@@ -2252,6 +2324,7 @@ def duration_intuitive_metrics(df, dict, model, energy_key, thresh_key,
             'Forecast Source',
             'Prediction Window Start', 'Prediction Window End',
             'Observed SEP Threshold Crossing Time',
+            'Observed SEP End Time',
             'Observed SEP Duration',
             'Predicted SEP Duration',
             'Duration Match Status',
@@ -2267,6 +2340,19 @@ def duration_intuitive_metrics(df, dict, model, energy_key, thresh_key,
     if len(noneval) > 0:
         for ix in noneval:
             sub = sub.drop(index=ix)
+
+    if not sub.empty:
+        #Find observed None values
+        noneval = pd.isna(sub['Observed SEP Duration'])
+        #Extract only indices for Nones
+        #True indicates that peak intensity was a None value
+        noneval = noneval.loc[noneval == True]
+        noneval = noneval.index.to_list()
+        if len(noneval) > 0:
+            for ix in noneval:
+                sub = sub.drop(index=ix)
+
+
     if sub.empty:
         return
 
@@ -2336,6 +2422,18 @@ def peak_intensity_time_intuitive_metrics(df, dict, model, energy_key,
     if len(noneval) > 0:
         for ix in noneval:
             sub = sub.drop(index=ix)
+
+    if not sub.empty:
+        #Find observed None values
+        noneval = pd.isna(sub['Observed SEP Peak Intensity (Onset Peak) Time'])
+        #Extract only indices for Nones
+        #True indicates that peak intensity was a None value
+        noneval = noneval.loc[noneval == True]
+        noneval = noneval.index.to_list()
+        if len(noneval) > 0:
+            for ix in noneval:
+                sub = sub.drop(index=ix)
+
     if sub.empty:
         return
 
@@ -2425,6 +2523,18 @@ def peak_intensity_max_time_intuitive_metrics(df, dict, model, energy_key,
     if len(noneval) > 0:
         for ix in noneval:
             sub = sub.drop(index=ix)
+
+    if not sub.empty:
+        #Find predicted None values
+        noneval = pd.isna(sub['Observed SEP Peak Intensity Max (Max Flux) Time'])
+        #Extract only indices for Nones
+        #True indicates that peak intensity was a None value
+        noneval = noneval.loc[noneval == True]
+        noneval = noneval.index.to_list()
+        if len(noneval) > 0:
+            for ix in noneval:
+                sub = sub.drop(index=ix)
+
     if sub.empty:
         return
 
@@ -2434,6 +2544,8 @@ def peak_intensity_max_time_intuitive_metrics(df, dict, model, energy_key,
     if validation_type == "Max":
         sub = extract_flux_forecast_type(sub, thresh_key, 'Predicted SEP Peak Intensity Max (Max Flux)', 'Observed SEP Peak Intensity Max (Max Flux) Time', validation_type)
 
+    if sub.empty:
+        return
 
     mismatch = bool(sub.iloc[0]['Mismatch Allowed'])
     pred_energy_key = str(sub.iloc[0]['Prediction Energy Channel Key'])
@@ -2502,6 +2614,19 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
     if len(noneval) > 0:
         for ix in noneval:
             sub = sub.drop(index=ix)
+
+    if not sub.empty:
+        #Find predicted None values
+        noneval = pd.isna(sub['Observed Time Profile'])
+        #Extract only indices for Nones
+        #True indicates that peak intensity was a None value
+        noneval = noneval.loc[noneval == True]
+        noneval = noneval.index.to_list()
+        if len(noneval) > 0:
+            for ix in noneval:
+                sub = sub.drop(index=ix)
+
+
     if sub.empty:
         return
         
@@ -2536,6 +2661,8 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
 #    sepMdSA = None
 
     tp_plotnames = ""
+    figname = ""
+    tpfigname = ""
     for i in range(len(obs_profs)):
         print("Time profile of " + pred_profs[i] + " compared to observations.")
         all_obs_dates = []
@@ -2555,6 +2682,11 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
             + pred_profs[i])
         if pred_flux == []:
             return
+        
+        #If all the flux values are zero, then will make the zip lines crash.
+        test = [i for i in range(len(pred_flux)) if pred_flux[i] == 0]
+        if len(test) == len(pred_flux):
+            continue
         
         #Remove zeros
         obs_flux, obs_dates = zip(*filter(lambda x:x[0]>0.0, zip(obs_flux,
@@ -2933,9 +3065,9 @@ def awt_metrics(df, dict, model, energy_key, thresh_key, validation_type):
                  {'pred_key': 'Predicted SEP Peak Intensity Max (Max Flux)',
                     'match_key': 'Peak Intensity Max Match Status',
                     'obs_key': 'Observed SEP Peak Intensity Max (Max Flux) Time'},
-                {'pred_key': 'Predicted Point Intensity',
-                    'match_key': 'All Clear Match Status',
-                    'obs_key': ''},
+#                {'pred_key': 'Predicted Point Intensity',
+#                    'match_key': 'All Clear Match Status',
+#                    'obs_key': ''},
                  {'pred_key': 'Predicted SEP End Time',
                     'match_key': 'End Time Match Status',
                     'obs_key': 'Observed SEP End Time'}]
@@ -3021,6 +3153,17 @@ def awt_metrics(df, dict, model, energy_key, thresh_key, validation_type):
             sel_df.loc[len(sel_df)] = row
 
         if sel_df.empty:
+            #No forecasts for this particular quantity
+            #Fill this set of fields in the AWT dict with None
+            time_keys = ['Observed SEP Threshold Crossing Time','Observed SEP Start Time']
+            if ftype['obs_key'] != '':
+                time_keys.append(ftype['obs_key'])
+            for key in time_keys:
+                mean_key = "Mean AWT for " + ftype['pred_key'] + " to " + key
+                median_key = "Median AWT for " + ftype['pred_key'] + " to " + key
+                dict[mean_key].append(None)
+                dict[median_key].append(None)
+
             continue
 
         #Have AWT values for all SEPs for a given model, energy channel, and
@@ -3057,6 +3200,16 @@ def awt_metrics(df, dict, model, energy_key, thresh_key, validation_type):
             dict[median_key].append(median_awt)
 
     return
+
+
+
+def pretty(d, indent=0):
+   for key, value in d.items():
+      print('\t' * indent + str(key))
+      if isinstance(value, dict):
+         pretty(value, indent+1)
+      else:
+         print('\t' * (indent+1) + str(value))
 
 
 def calculate_intuitive_metrics(df, model_names, all_energy_channels,
@@ -3159,10 +3312,11 @@ def calculate_intuitive_metrics(df, model_names, all_energy_channels,
 
     #It is possible for awt_dict to have some empty fields. Remove them
     #for writing to file.
-    awt_keys = list(awt_dict.keys())
-    for jj in range(len(awt_keys)-1,-1,-1):
-        if not awt_dict[awt_keys[jj]]:
-            del awt_dict[awt_keys[jj]]
+#    awt_keys = list(awt_dict.keys())
+#    for jj in range(len(awt_keys)-1,-1,-1):
+#        if not awt_dict[awt_keys[jj]]:
+#            del awt_dict[awt_keys[jj]]
+#    pretty(awt_dict)
     awt_metrics_df = pd.DataFrame(awt_dict)
 
     valtype = ""
