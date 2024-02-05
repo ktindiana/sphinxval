@@ -4,6 +4,7 @@ from sklearn.utils.validation import check_consistent_length
 from sklearn.utils.validation import check_array
 from sklearn.metrics import brier_score_loss
 from scipy.stats import pearsonr
+from scipy.stats import spearmanr
 import math
 
 __version__ = "0.7"
@@ -67,6 +68,10 @@ def switch_error_func(metric, y_true, y_pred):
         'SPLE': calc_SPLE,
         'SAPLE': calc_SAPLE,
         'r': calc_pearson,
+        'MAR': calc_MAR,
+        'MdSA': calc_MdSA,
+        'spearman': calc_spearman,
+        'brier': calc_brier
         }.get(metric)
 
     if not callable(func):
@@ -741,10 +746,13 @@ def calc_pearson(y_true, y_pred):
 
 def calc_brier(y_true, y_pred):
     """
-    Calculates the Brier Skill Score from probability predictions.
+    Calculates the Brier Score from probability predictions.
     Mean squared difference between the predicted probability
     and actual outcome. It can be composed into the sum of
     refinement loss and calibration loss.
+    Brier score and Brier Skill Score are different metrics,
+    the skill score requires a climatological/reference forecast to 
+    compare to.
 
     Parameters
     ----------
@@ -756,7 +764,7 @@ def calc_brier(y_true, y_pred):
 
     Returns
     -------
-    Brier Skill Score
+    Brier Score
     """
 
     check_consistent_length(y_true, y_pred)
@@ -777,6 +785,137 @@ def calc_brier(y_true, y_pred):
     return score
 
 
+
+#CA
+def calc_MAR(y_true, y_pred):
+    """
+    Calculates Mean Accuracy Ratio
+
+    Best value is 0 (probably)
+    Range is [0.0, inf)
+
+    Note: 
+
+    Parameters
+    ----------
+    y_true : array-like
+        Observed (true) values
+
+    y_pred : array-like
+        Forecasted (estimated) values
+
+    Returns
+    -------
+    MAR: float
+    
+    """
+
+    check_consistent_length(y_true, y_pred)
+
+    y_true = check_array(y_true, force_all_finite=True, ensure_2d=False)
+    y_pred = check_array(y_pred, force_all_finite=True, ensure_2d=False)
+
+    if (y_true < 0).any() or (y_pred < 0).any():
+        raise ValueError("Mean Accuracy Ratio cannot be used when "
+                         "targets contain negative values.")
+
+
+    return np.mean(y_pred / y_true)
+
+
+
+# CA
+def calc_MdSA(y_true, y_pred):
+    """
+    Calculates median symmetric accuracy based on eqn 11 in:
+    Morley, S. K., Brito, T. V., & Welling, D. T. (2018). 
+    Measures of model performance based on the log accuracy ratio.
+    Space Weather, 16, 69–88. https://doi.org/10.1002/2017SW001669
+
+    Best value is 1
+    Range is [0.0, inf)
+
+    Note: 
+
+    Parameters
+    ----------
+    y_true : array-like
+        Observed (true) values
+
+    y_pred : array-like
+        Forecasted (estimated) values
+
+    Returns
+    -------
+    MSA: float
+    
+    """
+
+    check_consistent_length(y_true, y_pred)
+
+    y_true = check_array(y_true, force_all_finite=True, ensure_2d=False)
+    y_pred = check_array(y_pred, force_all_finite=True, ensure_2d=False)
+
+    if (y_true < 0).any() or (y_pred < 0).any():
+        raise ValueError("Median symmetric accuracy cannot be used when "
+                         "targets contain negative values.")
+
+    #Using the natural log as in the definition of this metric in eqn 11 of the Morley paper
+    return 100*(np.exp(np.median(np.abs(np.log(y_true / y_pred)))) - 1.0) 
+
+
+#CA
+def calc_spearman(y_true, y_pred):
+    """
+    Calculates the spearman coefficient while considering the scale
+
+    Parameters
+    ----------
+    y_true : array-like
+        Observed (true) values
+
+    y_pred : array-like
+        Forecasted (estimated) values
+
+    Returns
+    -------
+    SciPy's spearmanr function returns an object with two attributes:
+    statistic: float or ndarray
+        Spearman correlation matrix or correlation coefficient
+        (if only 2 variables are given as parameters). Correlation 
+        matrix is square with length equal to total number of 
+        variables (columns or rows) in a and b combined.
+    pvalue: float
+        The p-value for a hypothesis test whose null hypothesis 
+        is that two samples have no ordinal correlation.
+
+    I only return the statistic attribute back to the rest of the code
+
+    Spearman coefficients can range from [-1,1] with 0 representing no
+    correlation. 
+    """
+
+    check_consistent_length(y_true, y_pred)
+
+    y_true = check_array(y_true, force_all_finite=True, ensure_2d=False)
+    y_pred = check_array(y_pred, force_all_finite=True, ensure_2d=False)
+
+    # calculating the spearman correlation coefficient
+    try:
+        s_log = spearmanr(np.log10(y_true), np.log10(y_pred)).statistic
+    except:
+        s_log = np.nan
+
+    try:
+        s_lin = spearmanr(y_true, y_pred).statistic
+    except:
+        s_lin = np.nan
+    # s_cc = spearmanr(y_true, y_pred).statistic
+
+    return s_lin, s_log
+
+
+
 def check_GSS(h, f, m, n):
     """check h+m/n first"""
     chk = check_div((h+m),n)
@@ -784,6 +923,7 @@ def check_GSS(h, f, m, n):
         return chk
     else:
        return check_div((h-(h+f)*(h+m)/n), (h+f+m-(h+f)*(h+m)/n))
+
 
 
 def calc_contingency(y_true, y_pred, thresh):
@@ -822,51 +962,54 @@ def calc_contingency(y_true, y_pred, thresh):
     y_true = check_array(y_true, force_all_finite=True, ensure_2d=False)
     y_pred = check_array(y_pred, force_all_finite=True, ensure_2d=False)
 
-    matrix = pd.crosstab(y_true>=thresh, y_pred>=thresh)
+    scores = calc_contingency_bool(y_true, y_pred)
+    
+    # matrix = pd.crosstab(y_true>=thresh, y_pred>=thresh)
 
-    # if any of the table items are empty, make 0 instead
-    try:
-        h = matrix[1][1]
-    except:
-        h = 0
-    try:
-        m = matrix[0][1]
-    except:
-        m = 0
-    try:
-        f = matrix[1][0]
-    except:
-        f = 0
-    try:
-        c = matrix[0][0]
-    except:
-        c = 0
+    # # if any of the table items are empty, make 0 instead
+    # try:
+    #     h = matrix[1][1]
+    # except:
+    #     h = 0
+    # try:
+    #     m = matrix[0][1]
+    # except:
+    #     m = 0
+    # try:
+    #     f = matrix[1][0]
+    # except:
+    #     f = 0
+    # try:
+    #     c = matrix[0][0]
+    # except:
+    #     c = 0
 
-    n = h+m+f+c
+    # n = h+m+f+c
 
-    # all scores while checking for dividing by zero
-    scores = {
-    'TP': h,
-    'FN': m,
-    'FP': f,
-    'TN': c,
-    'PC': check_div(h+c, n),
-    'B': check_div(h+f, h+m),
-    'H': check_div(h, h+m),
-    'FAR': check_div(f, h+f),
-    'F': check_div(f, f+c),
-    'FOH': check_div(h, h+f),
-    'FOM': check_div(m, h+m),
-    'POCN': check_div(c, f+c),
-    'DFR': check_div(m, m+c),
-    'FOCN': check_div(c, m+c),
-    'TS': check_div(h, h+f+m),
-    'OR': check_div(h*c, f*m),
-    'GSS': check_GSS(h, f, m, n), #check_div((h-(h+f)*(h+m)/n), (h+f+m-(h+f)*(h+m)/n)),
-    'TSS': check_div(h, h+m) - check_div(f, f+c),
-    'HSS': check_div(2.0 * (h*c - f*m), ((h+m) * (m+c) + (h+f) * (f+c))),
-    'ORSS': check_div((h*c - m*f), (h*c + m*f))
-    }
+    # # all scores while checking for dividing by zero
+    # scores = {
+    # 'TP': h,
+    # 'FN': m,
+    # 'FP': f,
+    # 'TN': c,
+    # 'PC': check_div(h+c, n),
+    # 'B': check_div(h+f, h+m),
+    # 'H': check_div(h, h+m),
+    # 'FAR': check_div(f, h+f),
+    # 'F': check_div(f, f+c),
+    # 'FOH': check_div(h, h+f),
+    # 'FOM': check_div(m, h+m),
+    # 'POCN': check_div(c, f+c),
+    # 'DFR': check_div(m, m+c),
+    # 'FOCN': check_div(c, m+c),
+    # 'TS': check_div(h, h+f+m),
+    # 'OR': check_div(h*c, f*m),
+    # 'GSS': check_GSS(h, f, m, n), #check_div((h-(h+f)*(h+m)/n), (h+f+m-(h+f)*(h+m)/n)),
+    # 'TSS': check_div(h, h+m) - check_div(f, f+c),
+    # 'HSS': check_div(2.0 * (h*c - f*m), ((h+m) * (m+c) + (h+f) * (f+c))),
+    # 'ORSS': check_div((h*c - m*f), (h*c + m*f)),
+    # 'SEDS': ((np.log(check_div((h+f), n))+(np.log(check_div((h+m),n))))/np.log(check_div(h,n)))-1 
+    # }
     return scores
 
 
@@ -959,8 +1102,9 @@ def calc_contingency_bool(y_true, y_pred):
     'OR': check_div(h*c, f*m),
     'GSS': check_GSS(h, f, m, n), #check_div((h-(h+f)*(h+m)/n), (h+f+m-(h+f)*(h+m)/n)),
     'TSS': check_div(h, h+m) - check_div(f, f+c),
-    'HSS': check_div(2.0 * (h*c + f*m), ((h+m) * (m+c) + (h+f) * (f+c))),
-    'ORSS': check_div((h*c - m*f), (h*c + m*f))
+    'HSS': check_div(2.0 * (h*c - f*m), ((h+m) * (m+c) + (h+f) * (f+c))),
+    'ORSS': check_div((h*c - m*f), (h*c + m*f)),
+    'SEDS': ((np.log(check_div(h+f, n))+(np.log(check_div(h+m,n))))/np.log(check_div(h,n)))-1
     }
     return scores
 

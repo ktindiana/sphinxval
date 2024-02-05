@@ -1347,10 +1347,10 @@ def calc_all_flux_metrics(obs, pred):
         MALE = statistics.mean(metrics.switch_error_func('ALE',obs,pred))
         MedALE = statistics.median(metrics.switch_error_func('ALE',obs,pred))
         MAPE = statistics.mean(metrics.switch_error_func('APE',obs,pred))
-        MAR = None #Mean Accuracy Ratio
+        MAR = metrics.switch_error_func('MAR',obs,pred) #Mean Accuracy Ratio
         RMSE = metrics.switch_error_func('RMSE',obs,pred)
         RMSLE = metrics.switch_error_func('RMSLE',obs,pred)
-        MdSA = None
+        MdSA = metrics.switch_error_func('MdSA',obs,pred)
 
     return ME, MedE, MAE, MedAE, MLE, MedLE, MALE, MedALE, MAPE, MAR, RMSE,\
         RMSLE, MdSA
@@ -1536,7 +1536,7 @@ def peak_intensity_intuitive_metrics(df, dict, model, energy_key, thresh_key,
             'Predicted SEP Peak Intensity (Onset Peak) Units',
             'Peak Intensity Match Status']]
     sub = sub.loc[(sub['Peak Intensity Match Status'] == 'SEP Event')]
-    
+
     #Find predicted None values
     noneval = pd.isna(sub['Predicted SEP Peak Intensity (Onset Peak)'])
     #Extract only indices for Nones
@@ -1585,8 +1585,8 @@ def peak_intensity_intuitive_metrics(df, dict, model, energy_key, thresh_key,
     if len(obs) > 1:
         #PEARSON CORRELATION
         r_lin, r_log = metrics.switch_error_func('r',obs,pred)
-        s_lin = None
-        s_log = None
+        s_lin, s_log = metrics.switch_error_func('spearman',obs,pred)
+        # s_log = None
         
         #LINEAR REGRESSION
         obs_np = np.array(obs)
@@ -2655,10 +2655,10 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
     sepLE = []
     sepALE = []
     sepAPE = []
-#    sepMAR = None #Mean Accuracy Ratio
+    sepMAR = [] #Mean Accuracy Ratio
     sepRMSE = []
     sepRMSLE = []
-#    sepMdSA = None
+    sepMdSA = []
 
     tp_plotnames = ""
     figname = ""
@@ -2744,20 +2744,20 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
             LE1 = statistics.mean(metrics.switch_error_func('LE',obs,pred))
             ALE1 = statistics.mean(metrics.switch_error_func('ALE',obs,pred))
             APE1 = statistics.mean(metrics.switch_error_func('APE',obs,pred))
-    #        MAR1 = None #Mean Accuracy Ratio
+            MAR1 =  statistics.mean(metrics.switch_error_func('APE',obs,pred))#Mean Accuracy Ratio
             RMSE1 = metrics.switch_error_func('RMSE',obs,pred)
             RMSLE1 = metrics.switch_error_func('RMSLE',obs,pred)
-    #        MdSA1 = None
+            MdSA1 = metrics.switch_error_func('MdSA',obs,pred)
 
             sepE.append(E1)
             sepAE.append(AE1)
             sepLE.append(LE1)
             sepALE.append(ALE1)
             sepAPE.append(APE1)
-        #    sepMAR = None #Mean Accuracy Ratio
+            sepMAR.append(MAR1) #Mean Accuracy Ratio
             sepRMSE.append(RMSE1)
             sepRMSLE.append(RMSLE1)
-        #    sepMdSA = None
+            sepMdSA.append(MdSA1)
 
             if len(obs) > 1:
                 #PEARSON CORRELATION
@@ -2795,10 +2795,10 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
         MALE = statistics.mean(sepALE)
         MedALE = statistics.median(sepALE)
         MAPE = statistics.mean(sepAPE)
-        MAR = None #Mean Accuracy Ratio
+        MAR = statistics.mean(sepMAR) #Mean Accuracy Ratio
         RMSE = statistics.mean(sepRMSE)
         RMSLE = statistics.mean(sepRMSLE)
-        MdSA = None
+        MdSA = statistics.mean(sepMdSA)
         
     elif len(sepE) == 1:
         ME = sepE[0]
@@ -2810,10 +2810,10 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
         MALE = sepALE[0]
         MedALE = sepALE[0]
         MAPE = sepAPE[0]
-        MAR = None #Mean Accuracy Ratio
+        MAR = sepMAR[0] #Mean Accuracy Ratio
         RMSE = sepRMSE[0]
         RMSLE = sepRMSLE[0]
-        MdSA = None
+        MdSA = sepMdSA[0]
     else:
         ME = None
         MedE = None
