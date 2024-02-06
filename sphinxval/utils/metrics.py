@@ -26,7 +26,6 @@ __email__ = "kathryn.whitman@nasa.gov"
     Updated 2022-02-07.
 '''
 
-
 def switch_error_func(metric, y_true, y_pred):
     """
     Switch statement for ease of use
@@ -954,13 +953,21 @@ def calc_contingency(y_true, y_pred, thresh):
     # such that it always counts as a miss
     # operational_sep_quantities.py will output the maximum flux in a time
     # period even if no thresholds are crossed.
-    y_true = [0.1*thresh if x==None else x for x in y_true]
-    y_pred = [0.1*thresh if x==None else x for x in y_pred]
+#    y_true = [0.1*thresh if x==None else x for x in y_true]
+#    y_pred = [0.1*thresh if x==None else x for x in y_pred]
 
+    #Applying logic that does not count None forecasts as a miss.
+    y_true, y_pred = remove_none(y_true, y_pred)
+    
     check_consistent_length(y_true, y_pred)
 
     y_true = check_array(y_true, force_all_finite=True, ensure_2d=False)
     y_pred = check_array(y_pred, force_all_finite=True, ensure_2d=False)
+
+    #Convert to boolean values to include in calc_contingency_bool
+    #True = event, False = no event
+    y_true = [x>=thresh for x in y_true]
+    y_pred = [x>=thresh for x in y_pred]
 
     scores = calc_contingency_bool(y_true, y_pred)
     
@@ -1045,13 +1052,9 @@ def calc_contingency_bool(y_true, y_pred):
     #   switch the booleans to match how event/no event are interpreted here.
 
 
-    # Although it shouldn't happen, if None exists
-    # in the observations, remove the model-obs pair
-    # from the arrays.
-    for i in range(len(y_true)-1,-1,-1):
-        if y_true[i] == None:
-            y_true.pop(i)
-            y_pred.pop(i)
+    # Remove None values from the observation and forecast pairs
+    # None forecasts are not penalized, simply not counted
+    y_true, y_pred = remove_none(y_true, y_pred)
 
     check_consistent_length(y_true, y_pred)
 
@@ -1139,3 +1142,61 @@ def check_div(n, d):
             return np.nan
     else:
         return n/d
+
+
+def remove_none(obs, model):
+    '''Remove None values from corresponding observations and model lists.
+        Only values that are real in both lists are kept.
+        obs is a single list of observations
+        model is a single list of model forecasts
+    '''
+    #Error checking
+    if len(obs) != len(model):
+        sys.exit('remove_none: Both input arrays must be the same length! '
+                'Exiting.')
+    #Clean None values from observations and remove correponding entries in
+    #the model
+    bad_index = [bad for bad, value in enumerate(obs) if value == None]
+    obs_clean = list(obs)
+    model_clean = list(model)
+    for bad in sorted(bad_index, reverse=True):
+        del obs_clean[bad]
+        del model_clean[bad]
+
+    #Clean None values from the model and remove correponding entries in
+    #the observations
+    bad_index = [bad for bad, value in enumerate(model_clean) if value == None]
+    for bad in sorted(bad_index, reverse=True):
+        del obs_clean[bad]
+        del model_clean[bad]
+
+    return obs_clean, model_clean
+    
+    
+def remove_zero(obs, model):
+    '''Remove None values from corresponding observations and model lists.
+        Only values that are real in both lists are kept.
+        obs is a single list of observations
+        model is a single list of model forecasts
+    '''
+    #Error checking
+    if len(obs) != len(model):
+        sys.exit('remove_zero: Both input arrays must be the same length! '
+                'Exiting.')
+    #Clean None values from observations and remove correponding entries in
+    #the model
+    bad_index = [bad for bad, value in enumerate(obs) if value == 0.]
+    obs_clean = list(obs)
+    model_clean = list(model)
+    for bad in sorted(bad_index, reverse=True):
+        del obs_clean[bad]
+        del model_clean[bad]
+
+    #Clean None values from the model and remove correponding entries in
+    #the observations
+    bad_index = [bad for bad, value in enumerate(model_clean) if value == 0.]
+    for bad in sorted(bad_index, reverse=True):
+        del obs_clean[bad]
+        del model_clean[bad]
+
+    return obs_clean, model_clean

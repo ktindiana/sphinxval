@@ -1498,8 +1498,8 @@ def point_intensity_intuitive_metrics(df, dict, model, energy_key, thresh_key,
         figname = ""
 
 
-    obs, pred = profile.remove_none(obs,pred)
-    obs, pred = profile.remove_zero(obs, pred)
+    obs, pred = metrics.remove_none(obs,pred)
+    obs, pred = metrics.remove_zero(obs, pred)
     if obs == [] or pred == []: return
     
     ME, MedE, MAE, MedAE, MLE, MedLE, MALE, MedALE, MAPE, MAR, RMSE,\
@@ -2733,8 +2733,8 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
         
         #Check for None and Zero values and remove
         if trim_pred_flux == [] or trim_obs_flux == []: continue
-        obs, pred = profile.remove_none(trim_obs_flux,trim_pred_flux)
-        obs, pred = profile.remove_zero(obs, pred)
+        obs, pred = metrics.remove_none(trim_obs_flux,trim_pred_flux)
+        obs, pred = metrics.remove_zero(obs, pred)
         if obs == [] or pred == []: continue
         
         #Calculate a mean metric across an individual time profile
