@@ -60,12 +60,12 @@ def switch_error_func(metric, y_true, y_pred):
         'RMSLE': calc_RMSLE,
         'PE': calc_PE,
         'APE': calc_APE,
-        'PLE': calc_PLE,
-        'APLE': calc_APLE,
+#        'PLE': calc_PLE,
+#        'APLE': calc_APLE,
         'SPE': calc_SPE,
         'SAPE': calc_SAPE,
-        'SPLE': calc_SPLE,
-        'SAPLE': calc_SAPLE,
+#        'SPLE': calc_SPLE,
+ #       'SAPLE': calc_SAPLE,
         'r': calc_pearson,
         'MAR': calc_MAR,
         'MdSA': calc_MdSA,
@@ -424,7 +424,7 @@ def calc_PE(y_true, y_pred):
         raise ValueError("Percent Error cannot be used when "
                          "targets contain values of zero.")
 
-    return (y_pred - y_true) / y_true
+    return 100.*(y_pred - y_true) / y_true
 
 
 def calc_APE(y_true, y_pred):
@@ -461,89 +461,89 @@ def calc_APE(y_true, y_pred):
         raise ValueError("Absolute Percent Error cannot be used when "
                          "targets contain values of zero.")
 
-    return np.abs(y_pred - y_true) / y_true
+    return 100.*np.abs((y_pred - y_true) / y_true)
 
 
-def calc_PLE(y_true, y_pred):
-    """
-    Calculates percent log (base 10) error
-
-    Best value is 0.0
-    Range is (-inf,inf)
-    Asymptote at y_true = 1
-
-    Note: Defined in the non-standard way as error = y_pred - y_true
-        so that a negative error means the model is underforecasting
-
-    Parameters
-    ----------
-    y_true : array-like
-        Observed (true) values
-
-    y_pred : array-like
-        Forecasted (estimated) values
-
-    Returns
-    -------
-    error : array-like
-        Error between forecast and observation
-    """
-
-    check_consistent_length(y_true, y_pred)
-
-    y_true = check_array(y_true, force_all_finite=True, ensure_2d=False)
-    y_pred = check_array(y_pred, force_all_finite=True, ensure_2d=False)
-
-    if (y_true < 0).any() or (y_pred < 0).any():
-        raise ValueError("Percent Logarithmic Error cannot be used when "
-                         "targets contain negative values.")
-
-    if (y_true == 1).any():
-        raise ValueError("Percent Logarithmic Error cannot be used when "
-                         "targets contain values of 1.")
-
-    return (np.log10(y_pred) - np.log10(y_true)) / np.log10(y_true)
-
-
-def calc_APLE(y_true, y_pred):
-    """
-    Calculates absolute percent log (base 10) error
-
-    Best value is 0.0
-    Range is [0.0,inf)
-    Asymptote at y_true = 1
-
-    Note: Defined in the non-standard way as error = y_pred - y_true
-        so that a negative error means the model is underforecasting
-
-    Parameters
-    ----------
-    y_true : array-like
-        Observed (true) values
-
-    y_pred : array-like
-        Forecasted (estimated) values
-
-    Returns
-    -------
-    error : array-like
-        Error between forecast and observation
-    """
-
-    check_consistent_length(y_true, y_pred)
-
-    y_true = check_array(y_true, force_all_finite=True, ensure_2d=False)
-    y_pred = check_array(y_pred, force_all_finite=True, ensure_2d=False)
-
-    if (y_true < 0).any() or (y_pred < 0).any():
-        raise ValueError("Absolute Percent Logarithmic Error cannot be used when "
-                         "targets contain negative values.")
-
-    if (y_true == 1).any():
-        raise ValueError("Absolute Percent Logarithmic Error cannot be used when "
-                         "targets contain values of 1.")
-
-    return np.abs(np.log10(y_pred) - np.log10(y_true)) / np.abs(np.log10(y_true))
+#def calc_PLE(y_true, y_pred):
+#    """
+#    Calculates percent log (base 10) error
+#
+#    Best value is 0.0
+#    Range is (-inf,inf)
+#    Asymptote at y_true = 1
+#
+#    Note: Defined in the non-standard way as error = y_pred - y_true
+#        so that a negative error means the model is underforecasting
+#
+#    Parameters
+#    ----------
+#    y_true : array-like
+#        Observed (true) values
+#
+#    y_pred : array-like
+#        Forecasted (estimated) values
+#
+#    Returns
+#    -------
+#    error : array-like
+#        Error between forecast and observation
+#    """
+#
+#    check_consistent_length(y_true, y_pred)
+#
+#    y_true = check_array(y_true, force_all_finite=True, ensure_2d=False)
+#    y_pred = check_array(y_pred, force_all_finite=True, ensure_2d=False)
+#
+#    if (y_true < 0).any() or (y_pred < 0).any():
+#        raise ValueError("Percent Logarithmic Error cannot be used when "
+#                         "targets contain negative values.")
+#
+#    if (y_true == 1).any():
+#        raise ValueError("Percent Logarithmic Error cannot be used when "
+#                         "targets contain values of 1.")
+#
+#    return (np.log10(y_pred) - np.log10(y_true)) / np.log10(y_true)
+#
+#
+#def calc_APLE(y_true, y_pred):
+#    """
+#    Calculates absolute percent log (base 10) error
+#
+#    Best value is 0.0
+#    Range is [0.0,inf)
+#    Asymptote at y_true = 1
+#
+#    Note: Defined in the non-standard way as error = y_pred - y_true
+#        so that a negative error means the model is underforecasting
+#
+#    Parameters
+#    ----------
+#    y_true : array-like
+#        Observed (true) values
+#
+#    y_pred : array-like
+#        Forecasted (estimated) values
+#
+#    Returns
+#    -------
+#    error : array-like
+#        Error between forecast and observation
+#    """
+#
+#    check_consistent_length(y_true, y_pred)
+#
+#    y_true = check_array(y_true, force_all_finite=True, ensure_2d=False)
+#    y_pred = check_array(y_pred, force_all_finite=True, ensure_2d=False)
+#
+#    if (y_true < 0).any() or (y_pred < 0).any():
+#        raise ValueError("Absolute Percent Logarithmic Error cannot be used when "
+#                         "targets contain negative values.")
+#
+#    if (y_true == 1).any():
+#        raise ValueError("Absolute Percent Logarithmic Error cannot be used when "
+#                         "targets contain values of 1.")
+#
+#    return np.abs(np.log10(y_pred) - np.log10(y_true)) / np.abs(np.log10(y_true))
 
 
 def calc_SPE(y_true, y_pred):
@@ -617,89 +617,90 @@ def calc_SAPE(y_true, y_pred):
         raise ValueError("Symmetric Absolute Percent Error cannot be used when "
                          "predicted targets and true targets sum to zero.")
 
-    return 2.0 * np.abs(y_pred - y_true) / (np.abs(y_pred) + np.abs(y_true))
+    return 100. * 2.0 * np.abs(y_pred - y_true) / (np.abs(y_pred) + np.abs(y_true))
 
-
-def calc_SPLE(y_true, y_pred):
-    """
-    Calculates symmetric percent log (base 10) error
-
-    Best value is 0.0
-    Range is (-inf,inf)
-    Asymptote at log(y_pred) + log(y_true) = 0
-
-    Note: Defined in the non-standard way as error = y_pred - y_true
-        so that a negative error means the model is underforecasting
-
-    Parameters
-    ----------
-    y_true : array-like
-        Observed (true) values
-
-    y_pred : array-like
-        Forecasted (estimated) values
-
-    Returns
-    -------
-    error : array-like
-        error between forecast and observation
-    """
-
-    check_consistent_length(y_true, y_pred)
-
-    y_true = check_array(y_true, force_all_finite=True, ensure_2d=False)
-    y_pred = check_array(y_pred, force_all_finite=True, ensure_2d=False)
-
-    if (y_true < 0).any() or (y_pred < 0).any():
-        raise ValueError("Symmetric Percent Logarithmic Error cannot be used when "
-                         "targets contain negative values.")
-
-    if (np.log10(y_true) + np.log10(y_pred) == 0).any():
-        raise ValueError("Symmetric Percent Logarithmic Error cannot be used when "
-                         "predicted targets and true targets sum to zero.")
-
-    return 2.0 * (np.log10(y_pred) - np.log10(y_true)) / (np.log10(y_pred) + np.log10(y_true))
-
-
-def calc_SAPLE(y_true, y_pred):
-    """
-    Calculates symmetric absolute percent log (base 10) error
-
-    Best value is 0.0
-    Range is [0.0,inf)
-    Asymptote at |log(y_pred)| + |log(y_true)| = 0
-
-    Note: Defined in the non-standard way as error = y_pred - y_true
-        so that a negative error means the model is underforecasting
-
-    Parameters
-    ----------
-    y_true : array-like
-        Observed (true) values
-
-    y_pred : array-like
-        Forecasted (estimated) values
-
-    Returns
-    -------
-    error : array-like
-        error between forecast and observation
-    """
-
-    check_consistent_length(y_true, y_pred)
-
-    y_true = check_array(y_true, force_all_finite=True, ensure_2d=False)
-    y_pred = check_array(y_pred, force_all_finite=True, ensure_2d=False)
-
-    if (y_true < 0).any() or (y_pred < 0).any():
-        raise ValueError("Symmetric Absolute Percent Logarithmic Error cannot be used when "
-                         "targets contain negative values.")
-
-    if (np.abs(np.log10(y_true)) + np.abs(np.log10(y_pred)) == 0).any():
-        raise ValueError("Symmetric Absolute Percent Logarithmic Error cannot be used when "
-                         "predicted targets and true targets sum to zero.")
-
-    return 2.0 * np.abs(np.log10(y_pred) - np.log10(y_true)) / (np.abs(np.log10(y_pred)) + np.abs(np.log10(y_true)))
+###Commenting for now because I don't think SPLE and SAPLE are mathematically
+###correct expressions.
+#def calc_SPLE(y_true, y_pred):
+#    """
+#    Calculates symmetric percent log (base 10) error
+#
+#    Best value is 0.0
+#    Range is (-inf,inf)
+#    Asymptote at log(y_pred) + log(y_true) = 0
+#
+#    Note: Defined in the non-standard way as error = y_pred - y_true
+#        so that a negative error means the model is underforecasting
+#
+#    Parameters
+#    ----------
+#    y_true : array-like
+#        Observed (true) values
+#
+#    y_pred : array-like
+#        Forecasted (estimated) values
+#
+#    Returns
+#    -------
+#    error : array-like
+#        error between forecast and observation
+#    """
+#
+#    check_consistent_length(y_true, y_pred)
+#
+#    y_true = check_array(y_true, force_all_finite=True, ensure_2d=False)
+#    y_pred = check_array(y_pred, force_all_finite=True, ensure_2d=False)
+#
+#    if (y_true < 0).any() or (y_pred < 0).any():
+#        raise ValueError("Symmetric Percent Logarithmic Error cannot be used when "
+#                         "targets contain negative values.")
+#
+#    if (np.log10(y_true) + np.log10(y_pred) == 0).any():
+#        raise ValueError("Symmetric Percent Logarithmic Error cannot be used when "
+#                         "predicted targets and true targets sum to zero.")
+#
+#    return 2.0 * (np.log10(y_pred) - np.log10(y_true)) / (np.log10(y_pred) + np.log10(y_true))
+#
+#
+#def calc_SAPLE(y_true, y_pred):
+#    """
+#    Calculates symmetric absolute percent log (base 10) error
+#
+#    Best value is 0.0
+#    Range is [0.0,inf)
+#    Asymptote at |log(y_pred)| + |log(y_true)| = 0
+#
+#    Note: Defined in the non-standard way as error = y_pred - y_true
+#        so that a negative error means the model is underforecasting
+#
+#    Parameters
+#    ----------
+#    y_true : array-like
+#        Observed (true) values
+#
+#    y_pred : array-like
+#        Forecasted (estimated) values
+#
+#    Returns
+#    -------
+#    error : array-like
+#        error between forecast and observation
+#    """
+#
+#    check_consistent_length(y_true, y_pred)
+#
+#    y_true = check_array(y_true, force_all_finite=True, ensure_2d=False)
+#    y_pred = check_array(y_pred, force_all_finite=True, ensure_2d=False)
+#
+#    if (y_true < 0).any() or (y_pred < 0).any():
+#        raise ValueError("Symmetric Absolute Percent Logarithmic Error cannot be used when "
+#                         "targets contain negative values.")
+#
+#    if (np.abs(np.log10(y_true)) + np.abs(np.log10(y_pred)) == 0).any():
+#        raise ValueError("Symmetric Absolute Percent Logarithmic Error cannot be used when "
+#                         "predicted targets and true targets sum to zero.")
+#
+#    return 2.0 * np.abs(np.log10(y_pred) - np.log10(y_true)) / (np.abs(np.log10(y_pred)) + np.abs(np.log10(y_true)))
 
 
 def calc_pearson(y_true, y_pred):

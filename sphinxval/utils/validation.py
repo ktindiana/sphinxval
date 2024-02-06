@@ -462,8 +462,15 @@ def initialize_flux_dict():
             "Median Absolute Error (MedAE)": [],
             "Mean Absolute Log Error (MALE)": [],
             "Median Absolute Log Error (MedALE)": [],
-            "Mean Absolute Percentage Error (MAPE)": [],
-            "Mean Accuracy Ratio": [],
+            "Mean Percent Error (MPE)": [],
+            "Mean Absolute Percent Error (MAPE)": [],
+            "Mean Percent Log Error (MPLE)": [],
+            "Mean Absolute Percent Log Error (MAPLE)": [],
+            "Mean Symmetric Percent Error (MSPE)": [],
+            "Mean Symmetric Absolute Percent Error (SMAPE)": [],
+            "Mean Symmetric Percent Log Error (MSPLE)": [],
+            "Mean Symmetric Absolute Percent Log Error (MSAPLE)": [],
+            "Mean Accuracy Ratio (MAR)": [],
             "Root Mean Square Error (RMSE)": [],
             "Root Mean Square Log Error (RMSLE)": [],
             "Median Symmetric Accuracy (MdSA)": []
@@ -590,6 +597,7 @@ def initialize_all_clear_dict():
             "True Skill Statistic": [],
             "Heidke Skill Score": [],
             "Odds Ratio Skill Score": [],
+            "Symmetric Extreme Dependency Score": []
 #            "Mean Percentage Error": [],
 #            "Mean Absolute Percentage Error": []
             }
@@ -620,7 +628,8 @@ def initialize_probability_dict():
 def fill_flux_metrics_dict(dict, model, energy_key, thresh_key,
     pred_energy_key, pred_thresh_key, figname,
     slope, yint, r_lin, r_log, s_lin, s_log, ME, MedE, MLE, MedLE, MAE,
-    MedAE, MALE, MedALE, MAPE, MAR, RMSE, RMSLE, MdSA,timeprofplot=None):
+    MedAE, MALE, MedALE, MPE, MAPE, MSPE, SMAPE,
+    MAR, RMSE, RMSLE, MdSA,timeprofplot=None):
     """ Put flux-related metrics into metrics dictionary.
     
     """
@@ -644,12 +653,16 @@ def fill_flux_metrics_dict(dict, model, energy_key, thresh_key,
     dict["Median Absolute Error (MedAE)"].append(MedAE)
     dict["Mean Absolute Log Error (MALE)"].append(MALE)
     dict["Median Absolute Log Error (MedALE)"].append(MedALE)
-    dict["Mean Absolute Percentage Error (MAPE)"].append(MAPE)
-    dict["Mean Accuracy Ratio"].append(MAR)
+    dict["Mean Percent Error (MPE)"].append(MPE)
+    dict["Mean Absolute Percent Error (MAPE)"].append(MAPE)
+    dict["Mean Symmetric Percent Error (MSPE)"].append(MSPE)
+    dict["Mean Symmetric Absolute Percent Error (SMAPE)"].append(SMAPE)
+    dict["Mean Accuracy Ratio (MAR)"].append(MAR)
     dict["Root Mean Square Error (RMSE)"].append(RMSE)
     dict["Root Mean Square Log Error (RMSLE)"].append(RMSLE)
     dict["Median Symmetric Accuracy (MdSA)"].append(MdSA)
-        
+
+
     if timeprofplot != None:
         if "Time Profile Selection Plot" not in dict.keys():
             dict.update({"Time Profile Selection Plot": [timeprofplot]})
@@ -706,6 +719,7 @@ def fill_all_clear_dict(dict, model, energy_key, thresh_key, pred_energy_key,
             #discriminant (true skill statistic, Peirce's skill score)
     dict["Heidke Skill Score"].append(scores['HSS'])
     dict["Odds Ratio Skill Score"].append(scores['ORSS'])
+    dict["Symmetric Extreme Dependency Score"].append(scores['SEDS'])
 #    dict["Mean Percentage Error"].append(scores[])
 #    dict["Mean Absolute Percentage Error"].append(scores[])
 
@@ -1331,7 +1345,10 @@ def calc_all_flux_metrics(obs, pred):
     MedLE = None
     MALE = None
     MedALE = None
+    MPE = None
     MAPE = None
+    MSPE = None
+    SMAPE = None
     MAR = None #Mean Accuracy Ratio
     RMSE = None
     RMSLE = None
@@ -1346,14 +1363,17 @@ def calc_all_flux_metrics(obs, pred):
         MedLE = statistics.median(metrics.switch_error_func('LE',obs,pred))
         MALE = statistics.mean(metrics.switch_error_func('ALE',obs,pred))
         MedALE = statistics.median(metrics.switch_error_func('ALE',obs,pred))
+        MPE = statistics.mean(metrics.switch_error_func('PE',obs,pred))
         MAPE = statistics.mean(metrics.switch_error_func('APE',obs,pred))
+        MSPE = statistics.mean(metrics.switch_error_func('SPE',obs,pred))
+        SMAPE = statistics.mean(metrics.switch_error_func('SAPE',obs,pred))
         MAR = metrics.switch_error_func('MAR',obs,pred) #Mean Accuracy Ratio
         RMSE = metrics.switch_error_func('RMSE',obs,pred)
         RMSLE = metrics.switch_error_func('RMSLE',obs,pred)
         MdSA = metrics.switch_error_func('MdSA',obs,pred)
 
-    return ME, MedE, MAE, MedAE, MLE, MedLE, MALE, MedALE, MAPE, MAR, RMSE,\
-        RMSLE, MdSA
+    return ME, MedE, MAE, MedAE, MLE, MedLE, MALE, MedALE, MPE, MAPE, \
+            MSPE, SMAPE, MAR, RMSE, RMSLE, MdSA
 
 
 
@@ -1502,15 +1522,15 @@ def point_intensity_intuitive_metrics(df, dict, model, energy_key, thresh_key,
     obs, pred = metrics.remove_zero(obs, pred)
     if obs == [] or pred == []: return
     
-    ME, MedE, MAE, MedAE, MLE, MedLE, MALE, MedALE, MAPE, MAR, RMSE,\
-        RMSLE, MdSA = calc_all_flux_metrics(obs, pred)
+    ME, MedE, MAE, MedAE, MLE, MedLE, MALE, MedALE, MPE, MAPE, MSPE, SMAPE,\
+    MAR, RMSE, RMSLE, MdSA = calc_all_flux_metrics(obs, pred)
 
     ####METRICS
     fill_flux_metrics_dict(dict, model, energy_key, thresh_key,
-    pred_energy_key, pred_thresh_key, figname,
-    slope, yint, r_lin, r_log, s_lin, s_log, ME, MedE, MLE, MedLE, MAE,
-    MedAE, MALE, MedALE, MAPE, MAR, RMSE, RMSLE, MdSA, tp_plotnames)
-
+        pred_energy_key, pred_thresh_key, figname,
+        slope, yint, r_lin, r_log, s_lin, s_log, ME, MedE, MLE, MedLE, MAE,
+        MedAE, MALE, MedALE, MPE, MAPE, MSPE, SMAPE,
+        MAR, RMSE, RMSLE, MdSA, tp_plotnames)
 
 
 
