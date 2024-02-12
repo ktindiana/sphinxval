@@ -1483,8 +1483,8 @@ def point_intensity_intuitive_metrics(df, dict, model, energy_key, thresh_key,
         s_lin, s_log = metrics.switch_error_func('spearman',obs,pred)
         
         #LINEAR REGRESSION
-        obs_np = np.array(obs)
-        pred_np = np.array(pred)
+        obs_np = np.log10(np.array(obs))
+        pred_np = np.log10(np.array(pred))
         slope, yint = np.polyfit(obs_np, pred_np, 1)
 
         #Correlation Plot
@@ -2057,8 +2057,8 @@ def fluence_intuitive_metrics(df, dict, model, energy_key,
         s_lin, s_log = metrics.switch_error_func('spearman',obs,pred)
         
         #LINEAR REGRESSION
-        obs_np = np.array(obs)
-        pred_np = np.array(pred)
+        obs_np = np.log10(np.array(obs))
+        pred_np = np.log10(np.array(pred))
         slope, yint = np.polyfit(obs_np, pred_np, 1)
 
         #Correlation Plot
@@ -2819,8 +2819,8 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
                 sepSlog.append(s_log)
                 
                 #LINEAR REGRESSION
-                obs_np = np.array(obs)
-                pred_np = np.array(pred)
+                obs_np = np.log10(np.array(obs))
+                pred_np = np.log10(np.array(pred))
                 slope, yint = np.polyfit(obs_np, pred_np, 1)
 
                 #Correlation Plot
