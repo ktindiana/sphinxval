@@ -902,15 +902,15 @@ def calc_spearman(y_true, y_pred):
 
     # calculating the spearman correlation coefficient
     try:
-        s_log = spearmanr(np.log10(y_true), np.log10(y_pred)).statistic
+        s_log = spearmanr(np.log10(y_true), np.log10(y_pred)).correlation
     except:
         s_log = np.nan
 
     try:
-        s_lin = spearmanr(y_true, y_pred).statistic
+        s_lin = spearmanr(y_true, y_pred).correlation
     except:
         s_lin = np.nan
-    # s_cc = spearmanr(y_true, y_pred).statistic
+    # s_p = spearmanr(y_true, y_pred).pvalue
 
     return s_lin, s_log
 
@@ -923,6 +923,32 @@ def check_GSS(h, f, m, n):
         return chk
     else:
        return check_div((h-(h+f)*(h+m)/n), (h+f+m-(h+f)*(h+m)/n))
+
+
+def check_SEDS(h, f, m, n):
+    """check zero values and division
+        h - hits
+        m - misses
+        f - false alarms
+        c - correct negatives
+        n = h + m + f + c
+ 
+        From Liemohn et al. 2021, RSME is not enough, JASTP Sec 3.2.5 "Extremes"
+        SEDS = [ln( (a+b) / N ) + ln( (a+c) / N)] / ln( a/N ) -1
+        where a = Hits, b = False Alarms, c = Misses, d = Correct Negatives,
+        N = a + b + c + d
+ 
+    """
+    #Zero values in numerator or denominator that will cause mathematical errors
+    if h+f == 0 or h+m == 0 or h == 0 or n == 0:
+        return np.nan
+
+    chk = check_div(np.log((h+f)/n)+np.log((h+m)/n),np.log(h/n))
+    if math.isinf(chk) or math.isnan(chk):
+        return chk
+    else:
+        seds = chk - 1
+        return seds
 
 
 
@@ -972,52 +998,6 @@ def calc_contingency(y_true, y_pred, thresh):
 
     scores = calc_contingency_bool(y_true, y_pred)
     
-    # matrix = pd.crosstab(y_true>=thresh, y_pred>=thresh)
-
-    # # if any of the table items are empty, make 0 instead
-    # try:
-    #     h = matrix[1][1]
-    # except:
-    #     h = 0
-    # try:
-    #     m = matrix[0][1]
-    # except:
-    #     m = 0
-    # try:
-    #     f = matrix[1][0]
-    # except:
-    #     f = 0
-    # try:
-    #     c = matrix[0][0]
-    # except:
-    #     c = 0
-
-    # n = h+m+f+c
-
-    # # all scores while checking for dividing by zero
-    # scores = {
-    # 'TP': h,
-    # 'FN': m,
-    # 'FP': f,
-    # 'TN': c,
-    # 'PC': check_div(h+c, n),
-    # 'B': check_div(h+f, h+m),
-    # 'H': check_div(h, h+m),
-    # 'FAR': check_div(f, h+f),
-    # 'F': check_div(f, f+c),
-    # 'FOH': check_div(h, h+f),
-    # 'FOM': check_div(m, h+m),
-    # 'POCN': check_div(c, f+c),
-    # 'DFR': check_div(m, m+c),
-    # 'FOCN': check_div(c, m+c),
-    # 'TS': check_div(h, h+f+m),
-    # 'OR': check_div(h*c, f*m),
-    # 'GSS': check_GSS(h, f, m, n), #check_div((h-(h+f)*(h+m)/n), (h+f+m-(h+f)*(h+m)/n)),
-    # 'TSS': check_div(h, h+m) - check_div(f, f+c),
-    # 'HSS': check_div(2.0 * (h*c - f*m), ((h+m) * (m+c) + (h+f) * (f+c))),
-    # 'ORSS': check_div((h*c - m*f), (h*c + m*f)),
-    # 'SEDS': ((np.log(check_div((h+f), n))+(np.log(check_div((h+m),n))))/np.log(check_div(h,n)))-1 
-    # }
     return scores
 
 
@@ -1108,7 +1088,7 @@ def calc_contingency_bool(y_true, y_pred):
     'TSS': check_div(h, h+m) - check_div(f, f+c),
     'HSS': check_div(2.0 * (h*c - f*m), ((h+m) * (m+c) + (h+f) * (f+c))),
     'ORSS': check_div((h*c - m*f), (h*c + m*f)),
-    'SEDS': ((np.log(check_div(h+f, n))+(np.log(check_div(h+m,n))))/np.log(check_div(h,n)))-1
+    'SEDS': check_SEDS(h, f, m, n)#((np.log((h+f)/n)+np.log((h+m)/n))/np.log(h/n))-1
     }
     return scores
 

@@ -464,12 +464,8 @@ def initialize_flux_dict():
             "Median Absolute Log Error (MedALE)": [],
             "Mean Percent Error (MPE)": [],
             "Mean Absolute Percent Error (MAPE)": [],
-            "Mean Percent Log Error (MPLE)": [],
-            "Mean Absolute Percent Log Error (MAPLE)": [],
             "Mean Symmetric Percent Error (MSPE)": [],
             "Mean Symmetric Absolute Percent Error (SMAPE)": [],
-            "Mean Symmetric Percent Log Error (MSPLE)": [],
-            "Mean Symmetric Absolute Percent Log Error (MSAPLE)": [],
             "Mean Accuracy Ratio (MAR)": [],
             "Root Mean Square Error (RMSE)": [],
             "Root Mean Square Log Error (RMSLE)": [],
@@ -1484,8 +1480,7 @@ def point_intensity_intuitive_metrics(df, dict, model, energy_key, thresh_key,
     
         #PEARSON CORRELATION
         r_lin, r_log = metrics.switch_error_func('r',obs,pred)
-        s_lin = None
-        s_log = None
+        s_lin, s_log = metrics.switch_error_func('spearman',obs,pred)
         
         #LINEAR REGRESSION
         obs_np = np.array(obs)
@@ -1606,11 +1601,11 @@ def peak_intensity_intuitive_metrics(df, dict, model, energy_key, thresh_key,
         #PEARSON CORRELATION
         r_lin, r_log = metrics.switch_error_func('r',obs,pred)
         s_lin, s_log = metrics.switch_error_func('spearman',obs,pred)
-        # s_log = None
+
         
         #LINEAR REGRESSION
-        obs_np = np.array(obs)
-        pred_np = np.array(pred)
+        obs_np = np.log10(np.array(obs))
+        pred_np = np.log10(np.array(pred))
         slope, yint = np.polyfit(obs_np, pred_np, 1)
 
         #Correlation Plot
@@ -1636,14 +1631,16 @@ def peak_intensity_intuitive_metrics(df, dict, model, energy_key, thresh_key,
         figname = ""
 
 
-    ME, MedE, MAE, MedAE, MLE, MedLE, MALE, MedALE, MAPE, MAR, RMSE,\
-        RMSLE, MdSA = calc_all_flux_metrics(obs, pred)
+    ME, MedE, MAE, MedAE, MLE, MedLE, MALE, MedALE, MPE, MAPE, MSPE, SMAPE,\
+    MAR, RMSE, RMSLE, MdSA = calc_all_flux_metrics(obs, pred)
+
 
     ####METRICS
     fill_flux_metrics_dict(dict, model, energy_key, thresh_key,
-    pred_energy_key, pred_thresh_key, figname,
-    slope, yint, r_lin, r_log, s_lin, s_log, ME, MedE, MLE, MedLE, MAE,
-    MedAE, MALE, MedALE, MAPE, MAR, RMSE, RMSLE, MdSA)
+        pred_energy_key, pred_thresh_key, figname,
+        slope, yint, r_lin, r_log, s_lin, s_log, ME, MedE, MLE, MedLE, MAE,
+        MedAE, MALE, MedALE, MPE, MAPE, MSPE, SMAPE,
+        MAR, RMSE, RMSLE, MdSA)
 
 
 
@@ -1768,16 +1765,19 @@ def peak_intensity_max_intuitive_metrics(df, dict, model, energy_key,
     units = sub.iloc[0]['Observed SEP Peak Intensity Max (Max Flux) Units']
     pred = sub[peak_key].to_list()
  
+    #There may be cases where the maximum flux was predicted to be zero,
+    #particularly by the time profile models. Excluding these cases from the
+    #peak intensity max prediction. They will be caught in the All Clear metrics.
+    obs,pred = metrics.remove_zero(obs,pred)
  
     if len(obs) > 1:
         #PEARSON CORRELATION
         r_lin, r_log = metrics.switch_error_func('r',obs,pred)
-        s_lin = None
-        s_log = None
+        s_lin, s_log = metrics.switch_error_func('spearman',obs,pred)
         
         #LINEAR REGRESSION
-        obs_np = np.array(obs)
-        pred_np = np.array(pred)
+        obs_np = np.log10(np.array(obs))
+        pred_np = np.log10(np.array(pred))
         slope, yint = np.polyfit(obs_np, pred_np, 1)
 
         #Correlation Plot
@@ -1805,14 +1805,15 @@ def peak_intensity_max_intuitive_metrics(df, dict, model, energy_key,
         figname = ""
 
 
-    ME, MedE, MAE, MedAE, MLE, MedLE, MALE, MedALE, MAPE, MAR, RMSE,\
-        RMSLE, MdSA = calc_all_flux_metrics(obs, pred)
+    ME, MedE, MAE, MedAE, MLE, MedLE, MALE, MedALE, MPE, MAPE, MSPE, SMAPE,\
+    MAR, RMSE, RMSLE, MdSA = calc_all_flux_metrics(obs, pred)
 
     ####METRICS
     fill_flux_metrics_dict(dict, model, energy_key, thresh_key,
-    pred_energy_key, pred_thresh_key, figname,
-    slope, yint, r_lin, r_log, s_lin, s_log, ME, MedE, MLE, MedLE, MAE,
-    MedAE, MALE, MedALE, MAPE, MAR, RMSE, RMSLE, MdSA)
+        pred_energy_key, pred_thresh_key, figname,
+        slope, yint, r_lin, r_log, s_lin, s_log, ME, MedE, MLE, MedLE, MAE,
+        MedAE, MALE, MedALE, MPE, MAPE, MSPE, SMAPE,
+        MAR, RMSE, RMSLE, MdSA)
 
 
 
@@ -1932,15 +1933,19 @@ def max_flux_in_pred_win_metrics(df, dict, model, energy_key,
     units = sub.iloc[0]['Observed Max Flux in Prediction Window Units']
     pred = sub[peak_key]
  
+    #Some predictions may have zero values, particularly time profile
+    #models. Remove zero values so that the log metrics may be used.
+    obs, pred = metrics.remove_zero(obs,pred)
+ 
+ 
     if len(obs) > 1:
         #PEARSON CORRELATION
         r_lin, r_log = metrics.switch_error_func('r',obs,pred)
-        s_lin = None
-        s_log = None
+        s_lin, s_log = metrics.switch_error_func('spearman',obs,pred)
         
         #LINEAR REGRESSION
-        obs_np = np.array(obs)
-        pred_np = np.array(pred)
+        obs_np = np.log10(np.array(obs))
+        pred_np = np.log10(np.array(pred))
         slope, yint = np.polyfit(obs_np, pred_np, 1)
 
         #Correlation Plot
@@ -1965,14 +1970,15 @@ def max_flux_in_pred_win_metrics(df, dict, model, energy_key,
         figname = ""
 
 
-    ME, MedE, MAE, MedAE, MLE, MedLE, MALE, MedALE, MAPE, MAR, RMSE,\
-        RMSLE, MdSA = calc_all_flux_metrics(obs, pred)
+    ME, MedE, MAE, MedAE, MLE, MedLE, MALE, MedALE, MPE, MAPE, MSPE, SMAPE,\
+    MAR, RMSE, RMSLE, MdSA = calc_all_flux_metrics(obs, pred)
 
     ####METRICS
     fill_flux_metrics_dict(dict, model, energy_key, thresh_key,
-    pred_energy_key, pred_thresh_key, figname,
-    slope, yint, r_lin, r_log, s_lin, s_log, ME, MedE, MLE, MedLE, MAE,
-    MedAE, MALE, MedALE, MAPE, MAR, RMSE, RMSLE, MdSA)
+        pred_energy_key, pred_thresh_key, figname,
+        slope, yint, r_lin, r_log, s_lin, s_log, ME, MedE, MLE, MedLE, MAE,
+        MedAE, MALE, MedALE, MPE, MAPE, MSPE, SMAPE,
+        MAR, RMSE, RMSLE, MdSA)
 
 
 
@@ -2048,8 +2054,7 @@ def fluence_intuitive_metrics(df, dict, model, energy_key,
     if len(obs) > 1:
         #PEARSON CORRELATION
         r_lin, r_log = metrics.switch_error_func('r',obs,pred)
-        s_lin = None
-        s_log = None
+        s_lin, s_log = metrics.switch_error_func('spearman',obs,pred)
         
         #LINEAR REGRESSION
         obs_np = np.array(obs)
@@ -2080,14 +2085,15 @@ def fluence_intuitive_metrics(df, dict, model, energy_key,
         figname = ""
 
 
-    ME, MedE, MAE, MedAE, MLE, MedLE, MALE, MedALE, MAPE, MAR, RMSE,\
-        RMSLE, MdSA = calc_all_flux_metrics(obs, pred)
+    ME, MedE, MAE, MedAE, MLE, MedLE, MALE, MedALE, MPE, MAPE, MSPE, SMAPE,\
+    MAR, RMSE, RMSLE, MdSA = calc_all_flux_metrics(obs, pred)
 
     ####METRICS
     fill_flux_metrics_dict(dict, model, energy_key, thresh_key,
-    pred_energy_key, pred_thresh_key, figname,
-    slope, yint, r_lin, r_log, s_lin, s_log, ME, MedE, MLE, MedLE, MAE,
-    MedAE, MALE, MedALE, MAPE, MAR, RMSE, RMSLE, MdSA)
+        pred_energy_key, pred_thresh_key, figname,
+        slope, yint, r_lin, r_log, s_lin, s_log, ME, MedE, MLE, MedLE, MAE,
+        MedAE, MALE, MedALE, MPE, MAPE, MSPE, SMAPE,
+        MAR, RMSE, RMSLE, MdSA)
 
 
 
@@ -2679,6 +2685,14 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
     sepRMSE = []
     sepRMSLE = []
     sepMdSA = []
+    sepPE = []
+    sepSPE = []
+    sepSAPE = []
+    sepRlin = []
+    sepRlog= []
+    sepSlin = []
+    sepSlog = []
+    
 
     tp_plotnames = ""
     figname = ""
@@ -2768,6 +2782,9 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
             RMSE1 = metrics.switch_error_func('RMSE',obs,pred)
             RMSLE1 = metrics.switch_error_func('RMSLE',obs,pred)
             MdSA1 = metrics.switch_error_func('MdSA',obs,pred)
+            PE1 = statistics.mean(metrics.switch_error_func('PE',obs,pred))
+            SPE1 = statistics.mean(metrics.switch_error_func('SPE',obs,pred))
+            SAPE1 = statistics.mean(metrics.switch_error_func('SAPE',obs,pred))
 
             sepE.append(E1)
             sepAE.append(AE1)
@@ -2778,12 +2795,28 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
             sepRMSE.append(RMSE1)
             sepRMSLE.append(RMSLE1)
             sepMdSA.append(MdSA1)
+            sepPE.append(PE1)
+            sepSPE.append(SPE1)
+            sepSAPE.append(SAPE1)
 
-            if len(obs) > 1:
+
+            #In some cases, the predicted time profile can be constant, i.e.
+            #all the same value. This will not allow an appropriate calculation
+            #of correlation coefficients
+            is_const = False
+            indices = [k for k, x in enumerate(pred) if x == pred[0]]
+            if len(indices) == len(pred):
+                is_const = True
+            
+            if len(obs) > 1 and not is_const:
                 #PEARSON CORRELATION
                 r_lin, r_log = metrics.switch_error_func('r',obs,pred)
-                s_lin = None
-                s_log = None
+                s_lin, s_log = metrics.switch_error_func('spearman',obs,pred)
+                
+                sepRlin.append(r_lin)
+                sepRlog.append(r_log)
+                sepSlin.append(s_lin)
+                sepSlog.append(s_log)
                 
                 #LINEAR REGRESSION
                 obs_np = np.array(obs)
@@ -2819,7 +2852,14 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
         RMSE = statistics.mean(sepRMSE)
         RMSLE = statistics.mean(sepRMSLE)
         MdSA = statistics.mean(sepMdSA)
-        
+        MPE = statistics.mean(sepPE)
+        MSPE = statistics.mean(sepSPE)
+        SMAPE = statistics.mean(sepSAPE)
+        Rlin = statistics.mean(sepRlin)
+        Rlog = statistics.mean(sepRlog)
+        Slin = statistics.mean(sepSlin)
+        Slog = statistics.mean(sepSlog)
+
     elif len(sepE) == 1:
         ME = sepE[0]
         MedE = sepE[0]
@@ -2834,6 +2874,13 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
         RMSE = sepRMSE[0]
         RMSLE = sepRMSLE[0]
         MdSA = sepMdSA[0]
+        MPE = sepPE[0]
+        MSPE = sepSPE[0]
+        SMAPE = sepSAPE[0]
+        Rlin = sepRlin[0]
+        Rlog = sepRlog[0]
+        Slin = sepSlin[0]
+        Slog = sepSlog[0]
     else:
         ME = None
         MedE = None
@@ -2848,19 +2895,23 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
         RMSE = None
         RMSLE = None
         MdSA = None
+        MPE = None
+        MSPE = None
+        SMAPE = None
+        Rlin = None
+        Rlog = None
+        Slin = None
+        Slog = None
 
-    r_lin = None
-    r_log = None
-    s_lin = None
-    s_log = None
     slope = None
     yint = None
 
     ####METRICS
     fill_flux_metrics_dict(dict, model, energy_key, thresh_key,
-    pred_energy_key, pred_thresh_key, figname,
-    slope, yint, r_lin, r_log, s_lin, s_log, ME, MedE, MLE, MedLE, MAE,
-    MedAE, MALE, MedALE, MAPE, MAR, RMSE, RMSLE, MdSA, tp_plotnames)
+        pred_energy_key, pred_thresh_key, figname,
+        slope, yint, Rlin, Rlog, Slin, Slog, ME, MedE, MLE, MedLE, MAE,
+        MedAE, MALE, MedALE, MPE, MAPE, MSPE, SMAPE,
+        MAR, RMSE, RMSLE, MdSA, tp_plotnames)
 
 
 
@@ -3239,7 +3290,7 @@ def calculate_intuitive_metrics(df, model_names, all_energy_channels,
             
     Input:
     
-        :df: (pandas DataFrame) containes matched observations and predictions
+        :df: (pandas DataFrame) contains matched observations and predictions
         :model_names: (array of strings) all models read into code
         :all_energy_channels: (array of strings) all energy channel keys associated
             with observations and predictions, passed from match.py
@@ -3462,7 +3513,7 @@ def intuitive_validation(matched_sphinx, model_names, all_energy_channels,
     print("intuitive_validation: Calculating metrics from dataframe: " + str(datetime.datetime.now()))
  
  
-    validation_type = ["All", "First", "Last", "Max", "Mean"]
+    validation_type = ["All"] #, "First", "Last", "Max", "Mean"]
     for type in validation_type:
         calculate_intuitive_metrics(df, model_names, all_energy_channels,
                 all_observed_thresholds, type)
