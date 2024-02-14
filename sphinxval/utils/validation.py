@@ -593,7 +593,11 @@ def initialize_all_clear_dict():
             "True Skill Statistic": [],
             "Heidke Skill Score": [],
             "Odds Ratio Skill Score": [],
-            "Symmetric Extreme Dependency Score": []
+            "Symmetric Extreme Dependency Score": [],
+            "Number SEP Events Correctly Predicted": [],
+            "Number SEP Events Missed": [],
+            "Predicted SEP Events": [], #date string
+            "Missed SEP Events": [] #date string
 #            "Mean Percentage Error": [],
 #            "Mean Absolute Percentage Error": []
             }
@@ -684,7 +688,7 @@ def fill_time_metrics_dict(dict, model, energy_key, thresh_key, pred_energy_key,
 
 
 def fill_all_clear_dict(dict, model, energy_key, thresh_key, pred_energy_key,
-    pred_thresh_key, scores):
+    pred_thresh_key, scores, n_caught, sep_caught_str, n_miss, sep_miss_str):
     """ Fill the all clear metrics dictionary with metrics for each model.
     
     """
@@ -716,6 +720,10 @@ def fill_all_clear_dict(dict, model, energy_key, thresh_key, pred_energy_key,
     dict["Heidke Skill Score"].append(scores['HSS'])
     dict["Odds Ratio Skill Score"].append(scores['ORSS'])
     dict["Symmetric Extreme Dependency Score"].append(scores['SEDS'])
+    dict["Number SEP Events Correctly Predicted"].append(n_caught)
+    dict["Number SEP Events Missed"].append(n_miss)
+    dict["Predicted SEP Events"].append(sep_caught_str)
+    dict["Missed SEP Events"].append(sep_miss_str)
 #    dict["Mean Percentage Error"].append(scores[])
 #    dict["Mean Absolute Percentage Error"].append(scores[])
 
@@ -780,6 +788,7 @@ def identify_not_clear_forecast(df, validation_type):
     return []
 
 
+#SIMPLIFY EXPECTING ORGANIZED IN TIME ORDER
 def identify_flux_forecast(df, thresh_key, pred_key, validation_type):
     """ Identify the row of the appropriate flux forecast
         of False for a given SEP event.
@@ -918,13 +927,15 @@ def calculate_mean_forecast(df, pred_key):
                 desired forecast
         
     """
-    cols = df.columns.to_list()
+    cols = df.columns.to_list() #Can I do this without going to lists?
     pred_pos = cols.index(pred_key) #index in row where predicted value is stored
     
     #All the SEP-related observed values should be repeats in every entry
     #since this is a df for a single SEP event. So extract the observed
     #values from the 0th row. Will eventually replace the predicted one with
     #the Mean prediction
+    #NEED TO ADD: Modified prediction window that extends over the full range
+    #of forecasts; Forecast source - compile all into a big string
     all_values = df.iloc[0].to_list()
     
     values = df[pred_key].to_list()
@@ -1078,6 +1089,12 @@ def extract_flux_forecast_type(df, thresh_key, pred_key, time_key, validation_ty
     #Extract all unique SEP events
     sep_events = resume.identify_unique(df, time_key)
    
+    #Check if the number of forecasts is equal to the number of SEP
+    #events, indicating that there is one forecast per SEP event.
+    #If so, then no need to run First, Last, Max, Mean
+    if len(sep_events) == len(df.index):
+        return sel_df #empty
+    
     #For each SEP event, identify the desired forecast for that SEP event.
     for sep in sep_events:
         sep_sub = df.loc[df[time_key] == sep]
@@ -1133,6 +1150,11 @@ def extract_time_forecast_type(df, pred_key, validation_type):
     #Extract all unique SEP events
     time_key = pred_key.replace("Predicted", "Observed")
     sep_events = resume.identify_unique(df, time_key)
+    
+    #If same number of forecasts as SEP events, then only one forecast
+    #per SEP event and no need to do First, Last
+    if len(sep_events) == len(df.index):
+        return sel_df #empty
    
     #For each SEP event, identify the desired forecast for that SEP event.
     for sep in sep_events:
@@ -1160,11 +1182,15 @@ def all_clear_intuitive_metrics(df, dict, model, energy_key, thresh_key,
         If mismatch = True, will extract only the predictions where
         the Mismatch Allowed field is True.
         
+        The metrics will be calculated for All Clear using all forecasts.
+        The "First" forecasts mode will be used within the subroutine to
+        determine whether a model "caught" or completely missed an SEP
+        event.
+        
     """
-    if validation_type == "Last" or validation_type == "Max" \
-        or validation_type == "Mean":
+    val_type = ["", "All"]
+    if validation_type not in val_type:
         return
-    
     
     #Select rows to calculate metrics
     sub = df.loc[(df['Model'] == model) & (df['Energy Channel Key'] ==
@@ -1190,12 +1216,6 @@ def all_clear_intuitive_metrics(df, dict, model, energy_key, thresh_key,
         for ix in noneval:
             sub = sub.drop(index=ix)
       
-    if sub.empty:
-        return
-
-    #Extract First if selected; This results in a data set that contains
-    #the results for observed SEP events only.
-    sub = extract_all_clear_forecast_type(sub, validation_type)
     if sub.empty:
         return
 
@@ -1228,8 +1248,43 @@ def all_clear_intuitive_metrics(df, dict, model, energy_key, thresh_key,
     opposite_pred = [not x for x in pred]
     
     scores = metrics.calc_contingency_bool(opposite_obs, opposite_pred)
+    
+    #Now extract whether an SEP event was "caught" or missed using the
+    #"First" forecast validation type.
+    #Contains one line per SEP event and only forecasts associated with SEPs.
+    #In the case of a correctly predicted SEP event, contains the first
+    #forecast that predicted False all clear (regardless of whether following
+    #forecasts switched back to True all clear).
+    #In the case of a missed SEP event, contains the first True all clear
+    #forecast where the prediction window contained the threshold crossing.
+    sub_first = extract_all_clear_forecast_type(sub, "First")
+    sub_caught = sub_first.loc[(sub_first['Predicted SEP All Clear'] == False)]
+    sep_caught = sub_caught['Observed SEP Threshold Crossing Time'].to_list()
+    n_caught = len(sep_caught)
+    sep_caught_str = ""
+    if n_caught == 0:
+        sep_caught_str = "None"
+    else:
+        sep_caught_str = str(sep_caught[0])
+        for jj in range(1,n_caught,1):
+            sep_caught_str += ";" + str(sep_caught[jj])
+    
+    
+    sub_miss = sub_first.loc[(sub_first['Predicted SEP All Clear'] == True)]
+    sep_miss = sub_miss['Observed SEP Threshold Crossing Time'].to_list()
+    n_miss = len(sep_miss)
+    sep_miss_str = ""
+    if n_miss == 0:
+        sep_miss_str = "None"
+    else:
+        sep_miss_str = str(sep_miss[0])
+        for jj in range(1,n_miss,1):
+            sep_miss_str += ";" + str(sep_miss[jj])
+    
+    
     fill_all_clear_dict(dict, model, energy_key, thresh_key, pred_energy_key,
-        pred_thresh_key, scores)
+        pred_thresh_key, scores, n_caught, sep_caught_str, n_miss, sep_miss_str)
+
 
     return sub
 
@@ -1250,6 +1305,11 @@ def probability_intuitive_metrics(df, dict, model, energy_key, thresh_key,
             }
 
     """
+    #Only calculate probability metrics for ALL forecasts
+    val_type = ["", "All"]
+    if validation_type not in val_type:
+        return
+    
     #Select rows to calculate metrics
     sub = df.loc[(df['Model'] == model) & (df['Energy Channel Key'] ==
         energy_key) & (df['Threshold Key'] == thresh_key)]
@@ -1384,8 +1444,9 @@ def point_intensity_intuitive_metrics(df, dict, model, energy_key, thresh_key,
         a warning threshold.
         
     """
-    
-    if validation_type != "" and validation_type != "All":
+    #Only calculate point intensity metrics for All forecasts
+    val_type = ["", "All"]
+    if validation_type not in val_type:
         return
     
     #Select rows to calculate metrics
@@ -1535,6 +1596,10 @@ def peak_intensity_intuitive_metrics(df, dict, model, energy_key, thresh_key,
         Peak intensity
 
     """
+    val_type = ["", "All", "First", "Last", "Max", "Mean"]
+    if validation_type not in val_type:
+        return
+    
     #Select rows to calculate metrics
     sub = df.loc[(df['Model'] == model) & (df['Energy Channel Key'] ==
         energy_key) & (df['Threshold Key'] == thresh_key)]
@@ -1651,6 +1716,11 @@ def peak_intensity_max_intuitive_metrics(df, dict, model, energy_key,
         Peak intensity
 
     """
+    val_type = ["", "All", "First", "Last", "Max", "Mean"]
+    if validation_type not in val_type:
+        return
+    
+    
     peak_key = 'Predicted SEP Peak Intensity Max (Max Flux)'
     time_key = 'Observed SEP Peak Intensity Max (Max Flux) Time'
 
@@ -1830,7 +1900,8 @@ def max_flux_in_pred_win_metrics(df, dict, model, energy_key,
         the prediction, then will compare the peak_intensity.
 
     """
-    if validation_type != "" and validation_type != "All":
+    val_type = ["", "All"]
+    if validation_type not in val_type:
         return
 
     peak_key = 'Predicted SEP Peak Intensity Max (Max Flux)'
@@ -1988,6 +2059,10 @@ def fluence_intuitive_metrics(df, dict, model, energy_key,
         Fluence
 
     """
+    val_type = ["", "All", "First", "Last", "Max", "Mean"]
+    if validation_type not in val_type:
+        return
+    
     #Select rows to calculate metrics
     sub = df.loc[(df['Model'] == model) & (df['Energy Channel Key'] ==
         energy_key) & (df['Threshold Key'] == thresh_key)]
@@ -2103,6 +2178,10 @@ def threshold_crossing_intuitive_metrics(df, dict, model, energy_key,
         Threshold Crossing
 
     """
+    val_type = ["", "All", "First", "Last"]
+    if validation_type not in val_type:
+        return
+    
     #Select rows to calculate metrics
     sub = df.loc[(df['Model'] == model) & (df['Energy Channel Key'] ==
         energy_key) & (df['Threshold Key'] == thresh_key)]
@@ -2182,6 +2261,10 @@ def start_time_intuitive_metrics(df, dict, model, energy_key, thresh_key,
         Start Time
 
     """
+    val_type = ["", "All", "First", "Last"]
+    if validation_type not in val_type:
+        return
+    
     #Select rows to calculate metrics
     sub = df.loc[(df['Model'] == model) & (df['Energy Channel Key'] ==
         energy_key) & (df['Threshold Key'] == thresh_key)]
@@ -2261,6 +2344,10 @@ def end_time_intuitive_metrics(df, dict, model, energy_key,
         End Time
 
     """
+    val_type = ["", "All", "First", "Last"]
+    if validation_type not in val_type:
+        return
+    
     #Select rows to calculate metrics
     sub = df.loc[(df['Model'] == model) & (df['Energy Channel Key'] ==
         energy_key) & (df['Threshold Key'] == thresh_key)]
@@ -2340,6 +2427,10 @@ def duration_intuitive_metrics(df, dict, model, energy_key, thresh_key,
         Start Time
 
     """
+    val_type = ["", "All", "First", "Last"]
+    if validation_type not in val_type:
+        return
+    
     #Select rows to calculate metrics
     sub = df.loc[(df['Model'] == model) & (df['Energy Channel Key'] ==
         energy_key) & (df['Threshold Key'] == thresh_key)]
@@ -2423,6 +2514,10 @@ def peak_intensity_time_intuitive_metrics(df, dict, model, energy_key,
         Peak Intensity Time
 
     """
+    val_type = ["", "All", "First", "Last"]
+    if validation_type not in val_type:
+        return
+    
     #Select rows to calculate metrics
     sub = df.loc[(df['Model'] == model) & (df['Energy Channel Key'] ==
         energy_key) & (df['Threshold Key'] == thresh_key)]
@@ -2525,6 +2620,10 @@ def peak_intensity_max_time_intuitive_metrics(df, dict, model, energy_key,
         Peak Intensity Max Time
 
     """
+    val_type = ["", "All", "First", "Last"]
+    if validation_type not in val_type:
+        return
+    
     #Select rows to calculate metrics
     sub = df.loc[(df['Model'] == model) & (df['Energy Channel Key'] ==
         energy_key) & (df['Threshold Key'] == thresh_key)]
@@ -2609,7 +2708,8 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
         Time Profile
 
     """
-    if validation_type != "" and validation_type != "All":
+    val_type = ["", "All"]#, "First", "Last"]
+    if validation_type not in val_type: #not implemented in this subroutine
         return
     
     #Select rows to calculate metrics
@@ -3100,9 +3200,16 @@ def awt_metrics(df, dict, model, energy_key, thresh_key, validation_type):
             Peak Intensity Max (Max Flux)
             End Time
     
+        Using the "First" mode with AWT will calculate the warning from
+        the very first forecast that predicted the SEP event will occur,
+        regardless of whether the forecast switched back to "clear" in
+        subsequent forecasts. This may be appropriate for some types of
+        forecasts (e.g. peak intensity) and misleading for others (e.g.
+        probability or all clear). Use with care.
+    
     """
-    if validation_type == "Max" or validation_type == "Mean" \
-        or validation_type == "Last":
+    val_type = ["", "All", "First"]
+    if validation_type not in val_type:
         return
 
     sub = df.loc[(df['Model'] == model) & (df['Energy Channel Key'] == energy_key)
@@ -3116,7 +3223,6 @@ def awt_metrics(df, dict, model, energy_key, thresh_key, validation_type):
     dict['Threshold'].append(thresh_key)
     dict['Prediction Energy Channel'].append(sub.iloc[0]['Prediction Energy Channel Key'])
     dict['Prediction Threshold'].append(sub.iloc[0]['Prediction Threshold Key'])
-
 
     #AWT is always compared to Observed SEP Threshold Crossing Time and
     #Observed SEP Start Time. obs_ref allows for the calculation of AWT wrt
@@ -3143,7 +3249,7 @@ def awt_metrics(df, dict, model, energy_key, thresh_key, validation_type):
                     'match_key': 'End Time Match Status',
                     'obs_key': 'Observed SEP End Time'}]
 
-    #Extract values in df relevant to each forecast
+
     for ftype in forecasts:
         #Extract relevant fields only for forecasts associated with SEP Events
         sub = extract_awt_sub(df, model, energy_key, thresh_key, ftype['pred_key'],
@@ -3160,6 +3266,23 @@ def awt_metrics(df, dict, model, energy_key, thresh_key, validation_type):
        
         #Make a list of the unique SEP events in the df
         sep_events = resume.identify_unique(sub, 'Observed SEP Threshold Crossing Time')
+        
+        #If only one forecast per SEP event, then no need to do First
+        #calculation.
+        if validation_type == "First":
+            if len(sep_events) == len(sel_df.index):
+                #No forecasts for this particular quantity
+                #Fill this set of fields in the AWT dict with None
+                time_keys = ['Observed SEP Threshold Crossing Time','Observed SEP Start Time']
+                if ftype['obs_key'] != '':
+                    time_keys.append(ftype['obs_key'])
+                for key in time_keys:
+                    mean_key = "Mean AWT for " + ftype['pred_key'] + " to " + key
+                    median_key = "Median AWT for " + ftype['pred_key'] + " to " + key
+                    dict[mean_key].append(None)
+                    dict[median_key].append(None)
+                
+                continue
         
         #For each SEP event, identify the first forecast for that SEP event.
         for sep in sep_events:
@@ -3237,24 +3360,32 @@ def awt_metrics(df, dict, model, energy_key, thresh_key, validation_type):
 
             continue
 
-        #Have AWT values for all SEPs for a given model, energy channel, and
-        #threshold
-        #Write to file
-        thresh_fnm = make_thresh_fname(thresh_key)
-        fnm = "awt_selections_" + model + "_" + energy_key.strip() + "_" +\
-                thresh_fnm + "_" + ftype['pred_key']
-        if bool(sel_df.iloc[0]['Mismatch Allowed']):
-            fnm = fnm + "_mm"
-        if validation_type != "" and validation_type != "All":
-            fnm = fnm + "_" + validation_type
-        write_df(sel_df, fnm)
-
-
-        #Calculate metrics for AWT to different times
+        #May be the case that none of the forecasts had a valid AWT
+        #calculation. If every single AWT value is None, then do not
+        #output a file or proceed with AWT calculation.
         time_keys = ['Observed SEP Threshold Crossing Time','Observed SEP Start Time']
         if ftype['obs_key'] != '':
             time_keys.append(ftype['obs_key'])
-        
+        chk_awts = []
+        for key in time_keys:
+            chk = sel_df["AWT to " + key].to_list()
+            chk_awts.extend([x for x in chk if x != None])
+
+        #Have AWT values for all SEPs for a given model, energy channel, and
+        #threshold
+        #Write to file if more than None values
+        if len(chk_awts) >= 1:
+            thresh_fnm = make_thresh_fname(thresh_key)
+            fnm = "awt_selections_" + model + "_" + energy_key.strip() + "_" +\
+                    thresh_fnm + "_" + ftype['pred_key']
+            if bool(sel_df.iloc[0]['Mismatch Allowed']):
+                fnm = fnm + "_mm"
+            if validation_type != "" and validation_type != "All":
+                fnm = fnm + "_" + validation_type
+            write_df(sel_df, fnm)
+
+
+        #Calculate metrics for AWT to different times
         for key in time_keys:
             awts = sel_df["AWT to " + key].to_list()
             awts = [x for x in awts if x != None]
@@ -3284,7 +3415,7 @@ def pretty(d, indent=0):
 
 
 def calculate_intuitive_metrics(df, model_names, all_energy_channels,
-    all_observed_thresholds, validation_type=""):
+    all_observed_thresholds, validation_type="All"):
     """ Calculate metrics appropriate to each quantity and
         store in dataframes.
             
@@ -3319,48 +3450,58 @@ def calculate_intuitive_metrics(df, model_names, all_energy_channels,
         Metrics pandas dataframes
     
     """
-    if validation_type == "All":
+    #Check accepted validation types
+    #Remove reference to ""
+    if validation_type == "All" or validation_type == "all":
         validation_type = ""
     
-    all_clear_dict = initialize_all_clear_dict()
-    probability_dict = initialize_probability_dict()
-    point_intensity_dict = initialize_flux_dict()
-    peak_intensity_dict = initialize_flux_dict()
-    peak_intensity_max_dict = initialize_flux_dict()
-    fluence_dict = initialize_flux_dict()
-    profile_dict = initialize_flux_dict()
-    thresh_cross_dict = initialize_time_dict()
-    start_time_dict = initialize_time_dict()
-    end_time_dict = initialize_time_dict()
-    duration_dict = initialize_time_dict()
-    peak_intensity_time_dict = initialize_time_dict()
-    peak_intensity_max_time_dict = initialize_time_dict()
-    max_dict = initialize_flux_dict() #max in prediction window
-    awt_dict = initialize_awt_dict() #Advanced Warning Time
+    all_clear_dict = initialize_all_clear_dict() #All only
+    probability_dict = initialize_probability_dict() #All only
+    point_intensity_dict = initialize_flux_dict() #All only
+    peak_intensity_dict = initialize_flux_dict() #All, First, Last, Max, Mean
+    peak_intensity_max_dict = initialize_flux_dict() #All, First, Last, Max, Mean
+    fluence_dict = initialize_flux_dict() #All, First, Last, Max, Mean
+    profile_dict = initialize_flux_dict() #All, First, Last
+    thresh_cross_dict = initialize_time_dict() #All, First, Last
+    start_time_dict = initialize_time_dict() #All, First, Last
+    end_time_dict = initialize_time_dict() #All, First, Last
+    duration_dict = initialize_time_dict() #All, First, Last
+    peak_intensity_time_dict = initialize_time_dict() #All, First, Last
+    peak_intensity_max_time_dict = initialize_time_dict() #All, First, Last
+    max_dict = initialize_flux_dict() #max in prediction window #All only
+    awt_dict = initialize_awt_dict() #Advanced Warning Time #All, First
     
     for model in model_names:
         for ek in all_energy_channels:
             for tk in all_observed_thresholds[ek]:
-                probability_intuitive_metrics(df, probability_dict,model,ek,tk, validation_type)
-                point_intensity_intuitive_metrics(df, point_intensity_dict, model, ek, tk, validation_type)
+                probability_intuitive_metrics(df, probability_dict,model,ek,tk,
+                    validation_type)
+                point_intensity_intuitive_metrics(df, point_intensity_dict,
+                    model, ek, tk, validation_type)
                 peak_intensity_intuitive_metrics(df, peak_intensity_dict,
                     model,ek,tk, validation_type)
                 peak_intensity_max_intuitive_metrics(df,
                     peak_intensity_max_dict,model,ek,tk, validation_type)
-                fluence_intuitive_metrics(df,fluence_dict, model,ek,tk, validation_type)
+                fluence_intuitive_metrics(df,fluence_dict, model,ek,tk,
+                    validation_type)
                 threshold_crossing_intuitive_metrics(df, thresh_cross_dict,
                     model,ek,tk, validation_type)
                 start_time_intuitive_metrics(df, start_time_dict,
                     model,ek,tk, validation_type)
-                end_time_intuitive_metrics(df, end_time_dict,model,ek,tk, validation_type)
-                duration_intuitive_metrics(df, duration_dict,model,ek,tk, validation_type)
+                end_time_intuitive_metrics(df, end_time_dict,model,ek,tk,
+                    validation_type)
+                duration_intuitive_metrics(df, duration_dict,model,ek,tk,
+                    validation_type)
                 peak_intensity_time_intuitive_metrics(df,
                     peak_intensity_time_dict,model,ek,tk, validation_type)
                 peak_intensity_max_time_intuitive_metrics(df,
                     peak_intensity_max_time_dict,model,ek,tk, validation_type)
-                all_clear_intuitive_metrics(df, all_clear_dict,model,ek,tk, validation_type)
-                time_profile_intuitive_metrics(df, profile_dict,model,ek,tk, validation_type)
-                max_flux_in_pred_win_metrics(df, max_dict, model,ek,tk, validation_type)
+                all_clear_intuitive_metrics(df, all_clear_dict,model,ek,tk,
+                    validation_type)
+                time_profile_intuitive_metrics(df, profile_dict,model,ek,tk,
+                    validation_type)
+                max_flux_in_pred_win_metrics(df, max_dict, model,ek,tk,
+                    validation_type)
                 awt_metrics(df, awt_dict, model, ek, tk, validation_type)
 
 
@@ -3380,14 +3521,6 @@ def calculate_intuitive_metrics(df, model_names, all_energy_channels,
     all_clear_metrics_df = pd.DataFrame(all_clear_dict)
     time_profile_metrics_df = pd.DataFrame(profile_dict)
     max_metrics_df = pd.DataFrame(max_dict)
-
-    #It is possible for awt_dict to have some empty fields. Remove them
-    #for writing to file.
-#    awt_keys = list(awt_dict.keys())
-#    for jj in range(len(awt_keys)-1,-1,-1):
-#        if not awt_dict[awt_keys[jj]]:
-#            del awt_dict[awt_keys[jj]]
-#    pretty(awt_dict)
     awt_metrics_df = pd.DataFrame(awt_dict)
 
     valtype = ""
@@ -3513,7 +3646,7 @@ def intuitive_validation(matched_sphinx, model_names, all_energy_channels,
     print("intuitive_validation: Calculating metrics from dataframe: " + str(datetime.datetime.now()))
  
  
-    validation_type = ["All"] #, "First", "Last", "Max", "Mean"]
+    validation_type = ["All", "First", "Last", "Max", "Mean"]
     for type in validation_type:
         calculate_intuitive_metrics(df, model_names, all_energy_channels,
                 all_observed_thresholds, type)

@@ -424,7 +424,7 @@ def calc_PE(y_true, y_pred):
         raise ValueError("Percent Error cannot be used when "
                          "targets contain values of zero.")
 
-    return 100.*(y_pred - y_true) / y_true
+    return (y_pred - y_true) / y_true
 
 
 def calc_APE(y_true, y_pred):
@@ -461,7 +461,7 @@ def calc_APE(y_true, y_pred):
         raise ValueError("Absolute Percent Error cannot be used when "
                          "targets contain values of zero.")
 
-    return 100.*np.abs((y_pred - y_true) / y_true)
+    return np.abs((y_pred - y_true) / y_true)
 
 
 #def calc_PLE(y_true, y_pred):
@@ -617,7 +617,7 @@ def calc_SAPE(y_true, y_pred):
         raise ValueError("Symmetric Absolute Percent Error cannot be used when "
                          "predicted targets and true targets sum to zero.")
 
-    return 100. * 2.0 * np.abs(y_pred - y_true) / (np.abs(y_pred) + np.abs(y_true))
+    return 2.0 * np.abs(y_pred - y_true) / (np.abs(y_pred) + np.abs(y_true))
 
 ###Commenting for now because I don't think SPLE and SAPLE are mathematically
 ###correct expressions.
