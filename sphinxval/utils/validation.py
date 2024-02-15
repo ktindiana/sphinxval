@@ -2450,6 +2450,10 @@ def calculate_intuitive_metrics(df, model_names, all_energy_channels,
     for jj in range(len(awt_keys)-1,-1,-1):
         if not awt_dict[awt_keys[jj]]:
             del awt_dict[awt_keys[jj]]
+    
+    for key, value in awt_dict.items():
+        print(key, len(awt_dict[key]))
+    
     awt_metrics_df = pd.DataFrame(awt_dict)
 
     if not prob_metrics_df.empty:
