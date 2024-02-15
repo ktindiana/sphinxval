@@ -321,17 +321,20 @@ def build_plot_string_list(data, current_index):
     if 'Time Profile Selection Plot' in data.columns:
         time_profile_plot_string = data.iloc[current_index]['Time Profile Selection Plot']
         time_profile_plot_string_list = time_profile_plot_string.split(';')
-        for i in range(0, len(time_profile_plot_string_list)):
-            if relative_path_plots__:
-                plot_string = os.path.relpath(time_profile_plot_string_list[i], 'reports/')
-                plot_file_string = os.path.relpath(time_profile_plot_string_list[i], '.')
-            else:
-                plot_string = os.path.abspath(time_profile_plot_string_list[i])
-                plot_file_string = plot_string + ''
-            plot_string = replace_backslash_with_forward_slash(plot_string)
-            plot_file_string = replace_backslash_with_forward_slash(plot_file_string)
-            plot_string_list.append('![](' +  plot_string + ')\n\n')
-            plot_file_string_list.append(plot_file_string)
+        if time_profile_plot_string == '':
+            pass
+        else:
+            for i in range(0, len(time_profile_plot_string_list)):
+                if relative_path_plots__:
+                    plot_string = os.path.relpath(time_profile_plot_string_list[i], 'reports/')
+                    plot_file_string = os.path.relpath(time_profile_plot_string_list[i], '.')
+                else:
+                    plot_string = os.path.abspath(time_profile_plot_string_list[i])
+                    plot_file_string = plot_string + ''
+                plot_string = replace_backslash_with_forward_slash(plot_string)
+                plot_file_string = replace_backslash_with_forward_slash(plot_file_string)
+                plot_string_list.append('![](' +  plot_string + ')\n\n')
+                plot_file_string_list.append(plot_file_string)
     return plot_string_list, plot_file_string_list
 
 def append_subset_list(selections_filename, subset_list, include_after, exclusion_pattern=None):
