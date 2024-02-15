@@ -2938,6 +2938,29 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
                 corr_plot.close()
 
     #Calculate mean of metrics for all time profiles
+    ME = None
+    MedE = None
+    MAE = None
+    MedAE = None
+    MLE = None
+    MedLE = None
+    MALE = None
+    MedALE = None
+    MAPE = None
+    MAR = None #Mean Accuracy Ratio
+    RMSE = None
+    RMSLE = None
+    MdSA = None
+    MPE = None
+    MSPE = None
+    SMAPE = None
+    Rlin = None
+    Rlog = None
+    Slin = None
+    Slog = None
+    slope = None
+    yint = None
+    
     if len(sepE) > 1:
         ME = statistics.mean(sepE)
         MedE = statistics.median(sepE)
@@ -2955,12 +2978,8 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
         MPE = statistics.mean(sepPE)
         MSPE = statistics.mean(sepSPE)
         SMAPE = statistics.mean(sepSAPE)
-        Rlin = statistics.mean(sepRlin)
-        Rlog = statistics.mean(sepRlog)
-        Slin = statistics.mean(sepSlin)
-        Slog = statistics.mean(sepSlog)
 
-    elif len(sepE) == 1:
+    if len(sepE) == 1:
         ME = sepE[0]
         MedE = sepE[0]
         MAE = sepAE[0]
@@ -2977,34 +2996,18 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
         MPE = sepPE[0]
         MSPE = sepSPE[0]
         SMAPE = sepSAPE[0]
+
+    if len(sepRlin) > 1:
+        Rlin = statistics.mean(sepRlin)
+        Rlog = statistics.mean(sepRlog)
+        Slin = statistics.mean(sepSlin)
+        Slog = statistics.mean(sepSlog)
+        
+    if len(sepRlin) == 1:
         Rlin = sepRlin[0]
         Rlog = sepRlog[0]
         Slin = sepSlin[0]
         Slog = sepSlog[0]
-    else:
-        ME = None
-        MedE = None
-        MAE = None
-        MedAE = None
-        MLE = None
-        MedLE = None
-        MALE = None
-        MedALE = None
-        MAPE = None
-        MAR = None #Mean Accuracy Ratio
-        RMSE = None
-        RMSLE = None
-        MdSA = None
-        MPE = None
-        MSPE = None
-        SMAPE = None
-        Rlin = None
-        Rlog = None
-        Slin = None
-        Slog = None
-
-    slope = None
-    yint = None
 
     ####METRICS
     fill_flux_metrics_dict(dict, model, energy_key, thresh_key,
