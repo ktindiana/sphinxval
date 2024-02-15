@@ -577,9 +577,7 @@ def report(output_dir, relative_path_plots):
     files.sort()
     
     # obtain sphinx dataframe
-    a = open(output_dir__ + 'sphinx_dataframe.pkl', 'rb')
-    sphinx_dataframe = pickle.load(a)
-    a.close()
+    sphinx_dataframe = pd.read_pickle(output_dir__ + 'SPHINX_dataframe.pkl')
 
     # grab all models
     models = list(set(sphinx_dataframe['Model']))
