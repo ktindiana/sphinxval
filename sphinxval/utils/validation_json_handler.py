@@ -399,12 +399,6 @@ def check_forecast_json(full_json, energy_channel):
 #                    + full_json['filename'] +
 #                    ". Initializing all to None.")
                 dataD = {}
-                if cfg.do_mismatch:
-                    ek = objh.energy_channel_to_key(energy_channel)
-                    if ek == cfg.mm_obs_ek:
-                        dataD = extract_block(jsonD, cfg.mm_pred_energy_channel)
-                        if dataD == None:
-                            dataD = {}
                 
         else:
 #            print("check_forecast_json: forecast block not "
@@ -924,12 +918,13 @@ def dict_to_all_clear(dataD):
     return all_clear, threshold, threshold_units, probability_threshold
 
 
-def dict_to_peak_intensity(key, dataD):
+def dict_to_flux_intensity(key, dataD):
     """ Extract peak_intensity values from dictionary
         dataD = forecast_json['sep_forecast_submission']['forecasts'][0]
         
     Input:
-        :key: (str) 'peak_intensity', 'peak_intensity_max', 'peak_intensity_esp'
+        :key: (str) 'peak_intensity', 'peak_intensity_max', 'peak_intensity_esp',
+            'point_intensity'
         :dataD: dictionary containing a forecast or observation for
             a single energy channel
             

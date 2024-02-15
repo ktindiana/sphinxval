@@ -1,3 +1,4 @@
+from . import metrics
 import numpy as np
 import matplotlib.pylab as plt
 import seaborn as sns
@@ -410,7 +411,7 @@ def plot_time_profile(date, values, labels, dy=None, dyl=None, dyh=None,
         #values[i] = [None if x==np.inf else x for x in values[i]]
         if dy==None:
             if "REleASE" in labels[i]:
-                ax.plot(date[i], values[i], label=labels[i], marker=".", linestyle=":")
+                ax.plot(date[i], values[i], ".", label=labels[i])
             #elif "GOES" in labels[i]:
             #    ax.plot(date[i], values[i], label=labels[i], color="k")
             elif len(date[i]) == 1:
@@ -418,7 +419,7 @@ def plot_time_profile(date, values, labels, dy=None, dyl=None, dyh=None,
             elif "ASPECS" in labels[i]:
                 ax.plot(date[i], values[i], label=labels[i], linestyle="dashed")
             else:
-                ax.plot(date[i], values[i], label=labels[i])
+                ax.plot(date[i], values[i], label=labels[i], marker=".")
         else:
             if "REleASE" in labels[i]:
                 ax.errorbar(date[i], values[i], label=labels[i], yerr=dy[i], marker=".", linestyle=":", elinewidth=2)
@@ -481,62 +482,7 @@ def plot_time_profile(date, values, labels, dy=None, dyl=None, dyh=None,
     return fig, figname
 
 
-def remove_none(obs, model):
-    '''Remove None values from corresponding observations and model lists.
-        Only values that are real in both lists are kept.
-        obs is a single list of observations
-        model is a single list of model forecasts
-    '''
-    #Error checking
-    if len(obs) != len(model):
-        sys.exit('remove_none: Both input arrays must be the same length! '
-                'Exiting.')
-    #Clean None values from observations and remove correponding entries in
-    #the model
-    bad_index = [bad for bad, value in enumerate(obs) if value == None]
-    obs_clean = list(obs)
-    model_clean = list(model)
-    for bad in sorted(bad_index, reverse=True):
-        del obs_clean[bad]
-        del model_clean[bad]
 
-    #Clean None values from the model and remove correponding entries in
-    #the observations
-    bad_index = [bad for bad, value in enumerate(model_clean) if value == None]
-    for bad in sorted(bad_index, reverse=True):
-        del obs_clean[bad]
-        del model_clean[bad]
-
-    return obs_clean, model_clean
-    
-    
-def remove_zero(obs, model):
-    '''Remove None values from corresponding observations and model lists.
-        Only values that are real in both lists are kept.
-        obs is a single list of observations
-        model is a single list of model forecasts
-    '''
-    #Error checking
-    if len(obs) != len(model):
-        sys.exit('remove_zero: Both input arrays must be the same length! '
-                'Exiting.')
-    #Clean None values from observations and remove correponding entries in
-    #the model
-    bad_index = [bad for bad, value in enumerate(obs) if value == 0.]
-    obs_clean = list(obs)
-    model_clean = list(model)
-    for bad in sorted(bad_index, reverse=True):
-        del obs_clean[bad]
-        del model_clean[bad]
-
-    #Clean None values from the model and remove correponding entries in
-    #the observations
-    bad_index = [bad for bad, value in enumerate(model_clean) if value == 0.]
-    for bad in sorted(bad_index, reverse=True):
-        del obs_clean[bad]
-        del model_clean[bad]
-
-    return obs_clean, model_clean
 
 
 
@@ -563,11 +509,11 @@ def correlation_plot(obs_values, model_values, plot_title,
     slope = 0
     yint = 0
     
-    obs_clean, model_clean = remove_none(obs_values, model_values)
+    obs_clean, model_clean = metrics.remove_none(obs_values, model_values)
     
     ##If there are zero values and want to use log
     if use_log or use_logx or use_logy:
-        obs_clean, model_clean = remove_zero(obs_clean, model_clean)
+        obs_clean, model_clean = metrics.remove_zero(obs_clean, model_clean)
 
 
     obs_np = np.array(obs_clean)
