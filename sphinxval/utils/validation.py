@@ -1387,7 +1387,7 @@ def probability_intuitive_metrics(df, dict, model, energy_key, thresh_key,
 
     #Calculate metrics
     brier_score = metrics.calc_brier(obs, pred)
-    brier_skill = None
+    brier_skill = metrics.calc_brier_skill(obs, pred)
     lin_corr_coeff = None
     rank_corr_coeff = None
     
