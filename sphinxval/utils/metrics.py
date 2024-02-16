@@ -5,6 +5,7 @@ from sklearn.utils.validation import check_array
 from sklearn.metrics import brier_score_loss
 from scipy.stats import pearsonr
 from scipy.stats import spearmanr
+from sklearn.metrics import brier_score_loss
 import math
 
 __version__ = "0.7"
@@ -913,6 +914,23 @@ def calc_spearman(y_true, y_pred):
     # s_p = spearmanr(y_true, y_pred).pvalue
 
     return s_lin, s_log
+
+
+#CA
+def calc_brier_skill(y_true, y_pred):
+    """
+    Calculates the Brier Skill score using Hazel Bain's
+    climatology probability from SC24 which is 0.033
+    """
+    check_consistent_length(y_true, y_pred)
+    clim = np.ndarray(np.size(y_pred))
+    hb_clim = 0.033 #Hazel's climatology (Bain et al. 2021)
+    clim.fill(hb_clim)
+ 
+    score = brier_score_loss(y_true, y_pred)
+    clim_score = brier_score_loss(y_true, clim)
+    BSS = 1 - (score / clim_score)
+    return BSS
 
 
 
