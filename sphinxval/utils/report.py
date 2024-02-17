@@ -9,6 +9,7 @@ import pickle
 
 import markdown
 import PyPDF2 as pdf
+import glob
 
 from . import config 
 
@@ -45,7 +46,15 @@ def transpose_markdown(text):
     output = output.rstrip('|||\n') + '|\n'
     output = format_markdown_table(output)
     return output
-    
+
+'''
+def drop_empty_rows(df, pivot_column_name):
+    pivot_column_index = list(df.columns).index(pivot_column_name)
+    df = df.dropna(subset=df.columns[pivot_column_index+1:], how='all')
+    df = df.reset_index(drop=True)
+    return df
+'''
+ 
 def make_markdown_table(column_1, column_2, dataframe, width=50):
     # INPUT MUST BE TWO COLUMN MATRIX; FIRST COLUMN LABELS, SECOND COLUMN DATA
     zero_to_one_metric_name = ['Percent Correct', 'Hit rate', 
@@ -357,6 +366,58 @@ def append_subset_list(selections_filename, subset_list, include_after, exclusio
             include = True
     return subset_list
 
+def get_awt_filename(data, i, output_dir, section_tag, model, obs_threshold, pred_threshold, mismatch_allowed_string, awt_string):
+    selections_filename = output_dir + section_tag + '_selections_' + model + '_' + data.iloc[i]['Energy Channel'] + '_threshold_' + obs_threshold.rstrip(' pfu') + mismatch_allowed_string + '_' + awt_string + '.pkl'
+    return selections_filename
+
+def build_section_awt(filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, skip_label_list=[], rename_dict={}):
+    data = pd.read_pickle(filename)
+    data = data[data.Model == model]
+    column_labels = data.columns    
+    metric_index_start = list(column_labels).index(metric_label_start)
+    text = ''
+    number_rows = data.shape[0]
+    awt_index = 0
+    if number_rows > 0:
+        text += add_collapsible_segment_start(section_title + ' Metrics', '')
+
+    awt_string_list = ['Predicted SEP All Clear', 'Predicted SEP Peak Intensity (Onset Peak)']
+    for i in range(0, number_rows):
+        threshold_string, energy_threshold, obs_threshold, pred_threshold, mismatch_allowed_string = build_threshold_string(data, i)
+        metrics_string = metrics_description_string + '' 
+        metrics_string_, plot_string_list, plot_file_string_list = build_metrics_table(data, i, metric_index_start, skip_label_list)
+        metrics_string += metrics_string_
+        text += add_collapsible_segment_start(energy_threshold, '')
+        text += add_collapsible_segment('Thresholds Applied', threshold_string)
+        for j in range(0, len(awt_string_list)):
+            awt_string = awt_string_list[j]
+            selections_filename = get_awt_filename(data, i, output_dir__, section_tag, model, obs_threshold, pred_threshold, mismatch_allowed_string, awt_string)
+            subset_list = ['Prediction Window Start', 'Prediction Window End']
+            if os.path.exists(selections_filename):            
+                subset_list = append_subset_list(selections_filename, subset_list, 'Prediction Window End', 'Units')
+                info_string_, n_events = build_info_events_table(selections_filename, sphinx_dataframe, subset_list, rename_dict)
+                info_string = 'Instruments and SEP events used in validation<br>'
+                info_string += 'N = ' + str(n_events) + '<br>'
+                info_string += '...\n' # need to complete
+                info_string += info_string_
+                text += add_collapsible_segment('Validation Info - ' + awt_string, info_string)
+        text += add_collapsible_segment('Metrics', metrics_string)
+        plot_counter = 1
+        last_plot_type = ''
+        for j in range(0, len(plot_string_list)):
+            plot_type = get_plot_type(plot_string_list[j])
+            if plot_type != last_plot_type:
+                plot_counter = 1
+            else:
+                plot_counter += 1
+            text += add_collapsible_segment('Plot: ' + plot_type + ' ' + str(plot_counter), plot_string_list[j])
+            last_plot_type = plot_type + ''
+            
+        text += add_collapsible_segment_end()
+        
+    text += add_collapsible_segment_end()
+    return text
+
 def build_section(filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, skip_label_list=[], rename_dict={}):
     data = pd.read_pickle(filename)
     data = data[data.Model == model]
@@ -364,6 +425,7 @@ def build_section(filename, model, sphinx_dataframe, metric_label_start, section
     metric_index_start = list(column_labels).index(metric_label_start)
     text = ''
     number_rows = data.shape[0]
+    awt_index = 0
     if number_rows > 0:
         text += add_collapsible_segment_start(section_title + ' Metrics', '')
     for i in range(0, number_rows):
@@ -393,7 +455,6 @@ def build_section(filename, model, sphinx_dataframe, metric_label_start, section
                 plot_counter += 1
             text += add_collapsible_segment('Plot: ' + plot_type + ' ' + str(plot_counter), plot_string_list[j])
             last_plot_type = plot_type + ''
-            
         text += add_collapsible_segment_end()
     text += add_collapsible_segment_end()
     return text
@@ -586,12 +647,13 @@ def report(output_dir, relative_path_plots):
     models = list(set(sphinx_dataframe['Model']))
     models.sort()
             
-    
     for i in range(0, len(models)):
         model = models[i]
         print(model) 
         # check which sections to include
         all_clear = False
+        awt = False
+        duration = False
         peak_intensity = False
         peak_intensity_max = False
         peak_intensity_time = False
@@ -608,6 +670,12 @@ def report(output_dir, relative_path_plots):
         for j in range(0, len(files)):
             if ('all_clear_selections_' + model) in files[j]:
                 all_clear = True
+                continue
+            if ('awt_selections_' + model) in files[j]:
+                awt = True
+                continue
+            if ('duration_selections_' + model) in files[j]:
+                duration = True
                 continue
             if ('peak_intensity_selections_' + model) in files[j]:
                 peak_intensity = True
@@ -636,9 +704,6 @@ def report(output_dir, relative_path_plots):
             if ('start_time_selections_' + model) in files[j]:
                 start_time = True
                 continue
-            if ('duration_selections_' + model) in files[j]:
-                duration = True
-                continue
             if ('end_time_selections_' + model) in files[j]:
                 end_time = True
                 continue
@@ -657,6 +722,7 @@ def report(output_dir, relative_path_plots):
         validation_header = 'Validated Quantities'
         validation_text = 'This model was validated for the following quantities. If the model does not make predictions for any of these quantities, they will not be included in the report.\n\n'
         
+        section_filename = ''
         markdown_text = ''
         if all_clear:
             ### build the all clear skill scores
@@ -664,6 +730,16 @@ def report(output_dir, relative_path_plots):
             validation_text += '* All Clear\n'
             markdown_text += build_all_clear_skill_scores_section(all_clear_filename, model, sphinx_dataframe)
 
+        if awt:
+            ### build the advanced warning time (AWT) metrics
+            metric_label_start = 'Mean AWT for Predicted SEP All Clear to Observed SEP Threshold Crossing Time'
+            section_title = 'Advanced Warning Time'
+            section_tag = 'awt'
+            metrics_description_string = 'N/A'
+            section_filename = output_dir__ + section_tag + '_metrics.pkl'  
+            validation_text += '* ' + section_title + '\n'
+            markdown_text += build_section_awt(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string)
+            
         if peak_intensity:
             ### build the peak intensity metrics
             metric_label_start = 'Linear Regression Slope'
@@ -715,7 +791,6 @@ def report(output_dir, relative_path_plots):
             validation_text += '* ' + section_title + '\n'
             markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string)
         
-
         if fluence:
             ### build the fluence metrics
             metric_label_start = 'Linear Regression Slope'
@@ -759,7 +834,6 @@ def report(output_dir, relative_path_plots):
             validation_text += '* ' + section_title + '\n'
             markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string)
         
-        
         if duration:
             ### build the duration metrics
             metric_label_start = 'Mean Error (pred - obs)'
@@ -769,8 +843,7 @@ def report(output_dir, relative_path_plots):
             section_filename = output_dir__ + section_tag + '_metrics.pkl'
             validation_text += '* ' + section_title + '\n'
             markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string)
-        
-            
+          
         if end_time:
             ### build the end time metrics
             metric_label_start = 'Mean Error (pred - obs)'
@@ -781,17 +854,16 @@ def report(output_dir, relative_path_plots):
             validation_text += '* ' + section_title + '\n'
             markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string)
         
-        
         if time_profile:
             ### build the time profile metrics
             metric_label_start = 'Linear Regression Slope'
             section_title = 'Time Profile'
-            section_tag = 'time_profile'
+            section_tag = 'time_profile'            
             metrics_description_string = "Metrics for $log_{10}$(model) - $log_{10}$(Observations).<br>Positive values indicate model overprediction.<br>Negative values indicate model underprediction.<br>r_lin and r_log indicate the pearson's correlation coefficient calculated using values or $log_{10}$(values), respectively."
             section_filename = output_dir__ + section_tag + '_metrics.pkl'
             validation_text += '* ' + section_title + '\n'
             skip_label_list = ['Time Profile Selection Plot']
-            markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, skip_label_list=skip_label_list)
+            markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, skip_label_list=skip_label_list)        
         
         ### BUILD THE VALIDATION REFERENCE
         vr_filename1 = config.referencepath + '/validation_reference_sheet_1.csv'
@@ -807,3 +879,4 @@ def report(output_dir, relative_path_plots):
         a.close()
 
         convert_markdown_to_html(markdown_filename)
+
