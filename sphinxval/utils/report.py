@@ -253,7 +253,7 @@ def build_threshold_string(data, k):
     threshold_string += '* Predictions Threshold: ' + pred_threshold + '\n'
     return threshold_string, energy_threshold, obs_threshold, pred_threshold, mismatch_allowed_string
 
-def build_all_clear_skill_scores_section(filename, model, sphinx_dataframe):
+def build_all_clear_skill_scores_section(filename, model, sphinx_dataframe, appendage=''):
     data = pd.read_pickle(filename)
     data = data[data.Model == model]
     column_labels = data.columns
@@ -276,7 +276,7 @@ def build_all_clear_skill_scores_section(filename, model, sphinx_dataframe):
         info_string += 'N = ' + str(sum(contingency_table_values)) + '<br>'
         info_string += '...\n' # need to complete
         
-        selections_filename = output_dir__ + 'all_clear_selections_' + model + '_' + data.iloc[i]['Energy Channel'] + '_threshold_' + obs_threshold.rstrip(' pfu') + mismatch_allowed_string + '.pkl'
+        selections_filename = output_dir__ + 'all_clear_selections_' + model + '_' + data.iloc[i]['Energy Channel'] + '_threshold_' + obs_threshold.rstrip(' pfu') + mismatch_allowed_string + appendage + '.pkl'
         subset_list = ['Prediction Window Start', 'Prediction Window End']
         subset_list = append_subset_list(selections_filename, subset_list, 'Prediction Window End', 'Units')
         info_string_, n_events = build_info_events_table(selections_filename, sphinx_dataframe, subset_list, {})
@@ -366,11 +366,11 @@ def append_subset_list(selections_filename, subset_list, include_after, exclusio
             include = True
     return subset_list
 
-def get_awt_filename(data, i, output_dir, section_tag, model, obs_threshold, pred_threshold, mismatch_allowed_string, awt_string):
-    selections_filename = output_dir + section_tag + '_selections_' + model + '_' + data.iloc[i]['Energy Channel'] + '_threshold_' + obs_threshold.rstrip(' pfu') + mismatch_allowed_string + '_' + awt_string + '.pkl'
+def get_awt_filename(data, i, output_dir, section_tag, model, obs_threshold, pred_threshold, mismatch_allowed_string, awt_string, appendage=''):
+    selections_filename = output_dir + section_tag + '_selections_' + model + '_' + data.iloc[i]['Energy Channel'] + '_threshold_' + obs_threshold.rstrip(' pfu') + mismatch_allowed_string + '_' + awt_string + appendage + '.pkl'
     return selections_filename
 
-def build_section_awt(filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, skip_label_list=[], rename_dict={}):
+def build_section_awt(filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, skip_label_list=[], rename_dict={}, appendage=''):
     data = pd.read_pickle(filename)
     data = data[data.Model == model]
     column_labels = data.columns    
@@ -381,7 +381,7 @@ def build_section_awt(filename, model, sphinx_dataframe, metric_label_start, sec
     if number_rows > 0:
         text += add_collapsible_segment_start(section_title + ' Metrics', '')
 
-    awt_string_list = ['Predicted SEP All Clear', 'Predicted SEP Peak Intensity (Onset Peak)']
+    awt_string_list = ['Predicted SEP All Clear', 'Predicted SEP Peak Intensity (Onset Peak)', 'Predicted SEP Peak Intensity Max (Max Flux)']
     for i in range(0, number_rows):
         threshold_string, energy_threshold, obs_threshold, pred_threshold, mismatch_allowed_string = build_threshold_string(data, i)
         metrics_string = metrics_description_string + '' 
@@ -418,7 +418,7 @@ def build_section_awt(filename, model, sphinx_dataframe, metric_label_start, sec
     text += add_collapsible_segment_end()
     return text
 
-def build_section(filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, skip_label_list=[], rename_dict={}):
+def build_section(filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, skip_label_list=[], rename_dict={}, appendage=''):
     data = pd.read_pickle(filename)
     data = data[data.Model == model]
     column_labels = data.columns    
@@ -430,7 +430,7 @@ def build_section(filename, model, sphinx_dataframe, metric_label_start, section
         text += add_collapsible_segment_start(section_title + ' Metrics', '')
     for i in range(0, number_rows):
         threshold_string, energy_threshold, obs_threshold, pred_threshold, mismatch_allowed_string = build_threshold_string(data, i)
-        selections_filename = output_dir__ + section_tag + '_selections_' + model + '_' + data.iloc[i]['Energy Channel'] + '_threshold_' + obs_threshold.rstrip(' pfu') + mismatch_allowed_string + '.pkl'
+        selections_filename = output_dir__ + section_tag + '_selections_' + model + '_' + data.iloc[i]['Energy Channel'] + '_threshold_' + obs_threshold.rstrip(' pfu') + mismatch_allowed_string + appendage + '.pkl'
         subset_list = ['Prediction Window Start', 'Prediction Window End']
         subset_list = append_subset_list(selections_filename, subset_list, 'Prediction Window End', 'Units')
         info_string_, n_events = build_info_events_table(selections_filename, sphinx_dataframe, subset_list, rename_dict)
@@ -622,7 +622,7 @@ def get_plot_type(plot_string):
     return plot_type
     
 # FINAL RESULT
-def report(output_dir, relative_path_plots):
+def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
     global output_dir__
     global relative_path_plots__
 
@@ -646,237 +646,272 @@ def report(output_dir, relative_path_plots):
     # grab all models
     models = list(set(sphinx_dataframe['Model']))
     models.sort()
-            
+    
+    # define appendages (First, Last, Mean, Max, ...)
+    appendages = ['', '_First', '_Last', '_Mean', '_Max']
     for i in range(0, len(models)):
         model = models[i]
-        print(model) 
-        # check which sections to include
-        all_clear = False
-        awt = False
-        duration = False
-        peak_intensity = False
-        peak_intensity_max = False
-        peak_intensity_time = False
-        peak_intensity_max_time = False
-        threshold_crossing = False
-        fluence = False
-        max_flux_in_pred_win = False
-        probability = False
-        start_time = False
-        duration = False
-        end_time = False
-        time_profile = False
+        for j in range(0, len(appendages)):
         
-        for j in range(0, len(files)):
-            if ('all_clear_selections_' + model) in files[j]:
-                all_clear = True
-                continue
-            if ('awt_selections_' + model) in files[j]:
-                awt = True
-                continue
-            if ('duration_selections_' + model) in files[j]:
-                duration = True
-                continue
-            if ('peak_intensity_selections_' + model) in files[j]:
-                peak_intensity = True
-                continue
-            if ('peak_intensity_max_selections_' + model) in files[j]:
-                peak_intensity_max = True
-                continue
-            if ('peak_intensity_time_selections_' + model) in files[j]:
-                peak_intensity_time = True
-                continue
-            if ('peak_intensity_max_time_selections_' + model) in files[j]:
-                peak_intensity_max_time = True
-                continue
-            if ('threshold_crossing_time_selections_' + model) in files[j]:
-                threshold_crossing = True
-                continue       
-            if ('fluence_selections_' + model) in files[j]:
-                fluence = True
-                continue
-            if ('max_flux_in_pred_win_selections_' + model) in files[j]:
-                max_flux_in_pred_win = True
-                continue
-            if ('probability_selections_' + model) in files[j]:
-                probability = True
-                continue
-            if ('start_time_selections_' + model) in files[j]:
-                start_time = True
-                continue
-            if ('end_time_selections_' + model) in files[j]:
-                end_time = True
-                continue
-            if ('time_profile_selections_' + model) in files[j]:
-                time_profile = True
-                continue
- 
-        # preamble -- define colors and font and whatnot
-        info_header = 'Report Information'
-        info_text = 'Date of Report: ' + datetime.datetime.today().strftime('%Y-%m-%d' + 't' + '%H:%M:%S') + '<br>'
-        info_text += 'Report generated by sep-validation > validation.py<br>'
-        info_text += 'This code may be publicly accessed at: ' + '[https://github.com/ktindiana/sphinxval](https://github.com/ktindiana/sphinxval)\n'
-        title = model + ' Validation Report'
-        info_text = '# ' + title + '\n\n' + define_colors() + add_collapsible_segment(info_header, info_text)
-        
-        validation_header = 'Validated Quantities'
-        validation_text = 'This model was validated for the following quantities. If the model does not make predictions for any of these quantities, they will not be included in the report.\n\n'
-        
-        section_filename = ''
-        markdown_text = ''
-        if all_clear:
-            ### build the all clear skill scores
-            all_clear_filename = output_dir__ + 'all_clear_metrics.pkl'
-            validation_text += '* All Clear\n'
-            markdown_text += build_all_clear_skill_scores_section(all_clear_filename, model, sphinx_dataframe)
-
-        if awt:
-            ### build the advanced warning time (AWT) metrics
-            metric_label_start = 'Mean AWT for Predicted SEP All Clear to Observed SEP Threshold Crossing Time'
-            section_title = 'Advanced Warning Time'
-            section_tag = 'awt'
-            metrics_description_string = 'N/A'
-            section_filename = output_dir__ + section_tag + '_metrics.pkl'  
-            validation_text += '* ' + section_title + '\n'
-            markdown_text += build_section_awt(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string)
+            # check which sections to include
+            all_clear = False
+            awt = False
+            duration = False
+            peak_intensity = False
+            peak_intensity_max = False
+            peak_intensity_time = False
+            peak_intensity_max_time = False
+            threshold_crossing = False
+            fluence = False
+            max_flux_in_pred_win = False
+            probability = False
+            start_time = False
+            duration = False
+            end_time = False
+            time_profile = False
             
-        if peak_intensity:
-            ### build the peak intensity metrics
-            metric_label_start = 'Linear Regression Slope'
-            section_title = 'Peak Intensity'
-            section_tag = 'peak_intensity'
-            metrics_description_string = "Metrics for $log_{10}$(model) - $log_{10}$(Observations).<br>Positive values indicate model overprediction.<br>Negative values indicate model underprediction.<br>r_lin and r_log indicate the pearson's correlation coefficient calculated using values or $log_{10}$(values), respectively."
-            section_filename = output_dir__ + section_tag + '_metrics.pkl'
-            validation_text += '* ' + section_title + '\n'
-            markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string)
-            
-        if peak_intensity_max:
-            ### build the peak intensity max metrics
-            metric_label_start = 'Linear Regression Slope'
-            section_title = 'Peak Intensity Max'
-            section_tag = 'peak_intensity_max'
-            metrics_description_string = "Metrics for $log_{10}$(model) - $log_{10}$(Observations).<br>Positive values indicate model overprediction.<br>Negative values indicate model underprediction.<br>r_lin and r_log indicate the pearson's correlation coefficient calculated using values or $log_{10}$(values), respectively."
-            section_filename = output_dir__ + section_tag + '_metrics.pkl'
-            validation_text += '* ' + section_title + '\n'
-            markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string)
-            
-        if peak_intensity_time:
-            ### build the peak intensity time metrics
-            metric_label_start = 'Mean Error (pred - obs)'
-            section_title = 'Peak Intensity Time'
-            section_tag = 'peak_intensity_time'
-            metrics_description_string = "Metrics for Observed Time - Predicted Time are in hours.<br>Negative values indicate predicted time is later than observed.<br>Positive values indicate predicted time is earlier than observed.\n"
-            section_filename = output_dir__ + section_tag + '_metrics.pkl'
-            validation_text += '* ' + section_title + '\n'
-            markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string)
-       
-        if peak_intensity_max_time:
-            ### build the peak intensity max time metrics
-            metric_label_start = 'Mean Error (pred - obs)'
-            section_title = 'Peak Intensity Max Time'
-            section_tag = 'peak_intensity_max_time'
-            metrics_description_string = "Metrics for Observed Time - Predicted Time are in hours.<br>Negative values indicate predicted time is later than observed.<br>Positive values indicate predicted time is earlier than observed.\n"
-            section_filename = output_dir__ + section_tag + '_metrics.pkl'
-            validation_text += '* ' + section_title + '\n'
-            markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string)
- 
-        if threshold_crossing:
-            ### build the threshold crossing metrics
-            metric_label_start = 'Mean Error (pred - obs)'
-            section_title = 'Threshold Crossing Time'
-            section_tag = 'threshold_crossing_time'
-            alt_section_tag = 'threshold_crossing'
-            metrics_description_string = "Metrics for Observed Time - Predicted Time are in hours.<br>Negative values indicate predicted time is later than observed.<br>Positive values indicate predicted time is earlier than observed.\n"
-            section_filename = output_dir__ + alt_section_tag + '_metrics.pkl'
-            validation_text += '* ' + section_title + '\n'
-            markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string)
-        
-        if fluence:
-            ### build the fluence metrics
-            metric_label_start = 'Linear Regression Slope'
-            section_title = 'Fluence'
-            section_tag = 'fluence'
-            metrics_description_string = "Metrics for $log_{10}$(model) - $log_{10}$(Observations).<br>Positive values indicate model overprediction.<br>Negative values indicate model underprediction.<br>r_lin and r_log indicate the pearson's correlation coefficient calculated using values or $log_{10}$(values), respectively."
-            section_filename = output_dir__ + section_tag + '_metrics.pkl'
-            validation_text += '* ' + section_title + '\n'
-            markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string)
-        
-        
-        if max_flux_in_pred_win:
-            ### build the maximum flux in prediction window metrics
-            metric_label_start = 'Linear Regression Slope'
-            section_title = 'Max Flux in Prediction Window'
-            section_tag = 'max_flux_in_pred_win'
-            metrics_description_string = "Metrics for $log_{10}$(model) - $log_{10}$(Observations).<br>Positive values indicate model overprediction.<br>Negative values indicate model underprediction.<br>r_lin and r_log indicate the pearson's correlation coefficient calculated using values or $log_{10}$(values), respectively."
-            section_filename = output_dir__ + section_tag + '_metrics.pkl'
-            validation_text += '* ' + section_title + '\n'
-            markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string)
-        
+            for k in range(0, len(files)):
+                if appendages[j] in files[k]:
+                    if ('all_clear_selections_' + model) in files[k]:
+                        all_clear = True
+                        continue
+                    if ('awt_selections_' + model) in files[k]:
+                        awt = True
+                        continue
+                    if ('duration_selections_' + model) in files[k]:
+                        duration = True
+                        continue
+                    if ('peak_intensity_selections_' + model) in files[k]:
+                        peak_intensity = True
+                        continue
+                    if ('peak_intensity_max_selections_' + model) in files[k]:
+                        peak_intensity_max = True
+                        continue
+                    if ('peak_intensity_time_selections_' + model) in files[k]:
+                        peak_intensity_time = True
+                        continue
+                    if ('peak_intensity_max_time_selections_' + model) in files[k]:
+                        peak_intensity_max_time = True
+                        continue
+                    if ('threshold_crossing_time_selections_' + model) in files[k]:
+                        threshold_crossing = True
+                        continue       
+                    if ('fluence_selections_' + model) in files[k]:
+                        fluence = True
+                        continue
+                    if ('max_flux_in_pred_win_selections_' + model) in files[k]:
+                        max_flux_in_pred_win = True
+                        continue
+                    if ('probability_selections_' + model) in files[k]:
+                        probability = True
+                        continue
+                    if ('start_time_selections_' + model) in files[k]:
+                        start_time = True
+                        continue
+                    if ('end_time_selections_' + model) in files[k]:
+                        end_time = True
+                        continue
+                    if ('time_profile_selections_' + model) in files[k]:
+                        time_profile = True
+                        continue
 
-        if probability:    
-            ### build the probability metrics
-            metric_label_start = 'Brier Score'
-            section_title = 'Probability'
-            section_tag = 'probability'
-            metrics_description_string = "Metrics for $log_{10}$(Model) - $log_{10}$(Observations).<br>Positive values indicate model overprediction.<br>Negative values indicate model underprediction.<br>r_lin and r_log indicate the pearson's correlation coefficient calculated using values or $log_{10}$(values), respectively."
-            section_filename = output_dir__ + section_tag + '_metrics.pkl'
-            validation_text += '* ' + section_title + '\n'
-            markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string)
-        
-        
-        if start_time:
-            ### build the start time metrics
-            metric_label_start = 'Mean Error (pred - obs)'
-            section_title = 'Start Time'
-            section_tag = 'start_time'
-            metrics_description_string = "Metrics for Observed Time - Predicted Time are in hours.<br>Negative values indicate predicted time is later than observed.<br>Positive values indicate predicted time is earlier than observed.\n"
-            section_filename = output_dir__ + section_tag + '_metrics.pkl'
-            validation_text += '* ' + section_title + '\n'
-            markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string)
-        
-        if duration:
-            ### build the duration metrics
-            metric_label_start = 'Mean Error (pred - obs)'
-            section_title = 'Duration'
-            section_tag = 'duration'
-            metrics_description_string = "Metrics for Observed Time - Predicted Time are in hours.<br>Negative values indicate predicted time is later than observed.<br>Positive values indicate predicted time is earlier than observed.\n"
-            section_filename = output_dir__ + section_tag + '_metrics.pkl'
-            validation_text += '* ' + section_title + '\n'
-            markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string)
-          
-        if end_time:
-            ### build the end time metrics
-            metric_label_start = 'Mean Error (pred - obs)'
-            section_title = 'End Time'
-            section_tag = 'end_time'
-            metrics_description_string = "Metrics for Observed Time - Predicted Time are in hours.<br>Negative values indicate predicted time is later than observed.<br>Positive values indicate predicted time is earlier than observed.\n"
-            section_filename = output_dir__ + section_tag + '_metrics.pkl'
-            validation_text += '* ' + section_title + '\n'
-            markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string)
-        
-        if time_profile:
-            ### build the time profile metrics
-            metric_label_start = 'Linear Regression Slope'
-            section_title = 'Time Profile'
-            section_tag = 'time_profile'            
-            metrics_description_string = "Metrics for $log_{10}$(model) - $log_{10}$(Observations).<br>Positive values indicate model overprediction.<br>Negative values indicate model underprediction.<br>r_lin and r_log indicate the pearson's correlation coefficient calculated using values or $log_{10}$(values), respectively."
-            section_filename = output_dir__ + section_tag + '_metrics.pkl'
-            validation_text += '* ' + section_title + '\n'
-            skip_label_list = ['Time Profile Selection Plot']
-            markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, skip_label_list=skip_label_list)        
-        
-        ### BUILD THE VALIDATION REFERENCE
-        vr_filename1 = config.referencepath + '/validation_reference_sheet_1.csv'
-        vr_filename2 = config.referencepath + '/validation_reference_sheet_2.csv'
-        markdown_text += build_validation_reference_section(vr_filename1, vr_filename2)
-        
-        # FINALIZE
-        validation_text = add_collapsible_segment(validation_header, validation_text)
-        markdown_text = info_text + validation_text + markdown_text
-        markdown_filename = config.reportpath + '/' + model + '_report.md'
-        a = open(markdown_filename, 'w')
-        a.write(markdown_text)
-        a.close()
+            # preamble -- define colors and font and whatnot
+            info_header = 'Report Information'
+            info_text = 'Date of Report: ' + datetime.datetime.today().strftime('%Y-%m-%d' + 't' + '%H:%M:%S') + '<br>'
+            info_text += 'Report generated by sep-validation > validation.py<br>'
+            info_text += 'This code may be publicly accessed at: ' + '[https://github.com/ktindiana/sphinxval](https://github.com/ktindiana/sphinxval)\n'
+            if appendages[j] == '':
+                title = model + ' Validation Report'
+            else:
+                title = model + ' ' + appendages[j].lstrip('_') + ' Validation Report'
+            info_text = '# ' + title + '\n\n' + define_colors() + add_collapsible_segment(info_header, info_text)
+            
+            validation_header = 'Validated Quantities'
+            validation_text = 'This model was validated for the following quantities. If the model does not make predictions for any of these quantities, they will not be included in the report.\n\n'
+            
+            section_filename = ''
+            markdown_text = ''
+            report_exists = False
+            if all_clear:
+                ### build the all clear skill scores
+                all_clear_filename = output_dir__ + 'all_clear_metrics' + appendages[j] + '.pkl'
+                if os.path.exists(all_clear_filename):
+                    validation_text += '* All Clear\n'
+                    report_exists = True
+                    markdown_text += build_all_clear_skill_scores_section(all_clear_filename, model, sphinx_dataframe, appendage=appendages[j])
 
-        convert_markdown_to_html(markdown_filename)
+            if awt:
+                ### build the advanced warning time (AWT) metrics
+                metric_label_start = 'Mean AWT for Predicted SEP All Clear to Observed SEP Threshold Crossing Time'
+                section_title = 'Advanced Warning Time'
+                section_tag = 'awt'
+                metrics_description_string = 'N/A'
+                section_filename = output_dir__ + section_tag + '_metrics' + appendages[j] + '.pkl'
+                if os.path.exists(section_filename):
+                    validation_text += '* ' + section_title + '\n'
+                    report_exists = True
+                    markdown_text += build_section_awt(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
+                
+            if peak_intensity:
+                ### build the peak intensity metrics
+                metric_label_start = 'Linear Regression Slope'
+                section_title = 'Peak Intensity'
+                section_tag = 'peak_intensity'
+                metrics_description_string = "Metrics for $log_{10}$(model) - $log_{10}$(Observations).<br>Positive values indicate model overprediction.<br>Negative values indicate model underprediction.<br>r_lin and r_log indicate the pearson's correlation coefficient calculated using values or $log_{10}$(values), respectively."
+                section_filename = output_dir__ + section_tag + '_metrics' + appendages[j] + '.pkl'
+                if os.path.exists(section_filename):
+                    validation_text += '* ' + section_title + '\n'
+                    report_exists = True
+                    markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
+                
+            if peak_intensity_max:
+                ### build the peak intensity max metrics
+                metric_label_start = 'Linear Regression Slope'
+                section_title = 'Peak Intensity Max'
+                section_tag = 'peak_intensity_max'
+                metrics_description_string = "Metrics for $log_{10}$(model) - $log_{10}$(Observations).<br>Positive values indicate model overprediction.<br>Negative values indicate model underprediction.<br>r_lin and r_log indicate the pearson's correlation coefficient calculated using values or $log_{10}$(values), respectively."
+                section_filename = output_dir__ + section_tag + '_metrics' + appendages[j] + '.pkl'
+                if os.path.exists(section_filename):
+                    validation_text += '* ' + section_title + '\n'
+                    report_exists = True
+                    markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
+                
+            if peak_intensity_time:
+                ### build the peak intensity time metrics
+                metric_label_start = 'Mean Error (pred - obs)'
+                section_title = 'Peak Intensity Time'
+                section_tag = 'peak_intensity_time'
+                metrics_description_string = "Metrics for Observed Time - Predicted Time are in hours.<br>Negative values indicate predicted time is later than observed.<br>Positive values indicate predicted time is earlier than observed.\n"
+                section_filename = output_dir__ + section_tag + '_metrics' + appendages[j] + '.pkl'
+                if os.path.exists(section_filename):
+                    validation_text += '* ' + section_title + '\n'
+                    report_exists = True
+                    markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
+           
+            if peak_intensity_max_time:
+                ### build the peak intensity max time metrics
+                metric_label_start = 'Mean Error (pred - obs)'
+                section_title = 'Peak Intensity Max Time'
+                section_tag = 'peak_intensity_max_time'
+                metrics_description_string = "Metrics for Observed Time - Predicted Time are in hours.<br>Negative values indicate predicted time is later than observed.<br>Positive values indicate predicted time is earlier than observed.\n"
+                section_filename = output_dir__ + section_tag + '_metrics' + appendages[j] + '.pkl'
+                if os.path.exists(section_filename):
+                    validation_text += '* ' + section_title + '\n'
+                    report_exists = True
+                    markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
+     
+            if threshold_crossing:
+                ### build the threshold crossing metrics
+                metric_label_start = 'Mean Error (pred - obs)'
+                section_title = 'Threshold Crossing Time'
+                section_tag = 'threshold_crossing_time'
+                alt_section_tag = 'threshold_crossing'
+                metrics_description_string = "Metrics for Observed Time - Predicted Time are in hours.<br>Negative values indicate predicted time is later than observed.<br>Positive values indicate predicted time is earlier than observed.\n"
+                section_filename = output_dir__ + alt_section_tag + '_metrics' + appendages[j] + '.pkl'
+                if os.path.exists(section_filename):
+                    validation_text += '* ' + section_title + '\n'
+                    report_exists = True
+                    markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
+            
+            if fluence:
+                ### build the fluence metrics
+                metric_label_start = 'Linear Regression Slope'
+                section_title = 'Fluence'
+                section_tag = 'fluence'
+                metrics_description_string = "Metrics for $log_{10}$(model) - $log_{10}$(Observations).<br>Positive values indicate model overprediction.<br>Negative values indicate model underprediction.<br>r_lin and r_log indicate the pearson's correlation coefficient calculated using values or $log_{10}$(values), respectively."
+                section_filename = output_dir__ + section_tag + '_metrics' + appendages[j] + '.pkl'
+                if os.path.exists(section_filename):
+                    validation_text += '* ' + section_title + '\n'
+                    report_exists = True
+                    markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
+            
+            if max_flux_in_pred_win:
+                ### build the maximum flux in prediction window metrics
+                metric_label_start = 'Linear Regression Slope'
+                section_title = 'Max Flux in Prediction Window'
+                section_tag = 'max_flux_in_pred_win'
+                metrics_description_string = "Metrics for $log_{10}$(model) - $log_{10}$(Observations).<br>Positive values indicate model overprediction.<br>Negative values indicate model underprediction.<br>r_lin and r_log indicate the pearson's correlation coefficient calculated using values or $log_{10}$(values), respectively."
+                section_filename = output_dir__ + section_tag + '_metrics' + appendages[j] + '.pkl'
+                if os.path.exists(section_filename):
+                    validation_text += '* ' + section_title + '\n'
+                    report_exists = True
+                    markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
+            
+            if probability:    
+                ### build the probability metrics
+                metric_label_start = 'Brier Score'
+                section_title = 'Probability'
+                section_tag = 'probability'
+                metrics_description_string = "Metrics for $log_{10}$(Model) - $log_{10}$(Observations).<br>Positive values indicate model overprediction.<br>Negative values indicate model underprediction.<br>r_lin and r_log indicate the pearson's correlation coefficient calculated using values or $log_{10}$(values), respectively."
+                section_filename = output_dir__ + section_tag + '_metrics' + appendages[j] + '.pkl'
+                if os.path.exists(section_filename):
+                    validation_text += '* ' + section_title + '\n'
+                    report_exists = True
+                    markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
+            
+            
+            if start_time:
+                ### build the start time metrics
+                metric_label_start = 'Mean Error (pred - obs)'
+                section_title = 'Start Time'
+                section_tag = 'start_time'
+                metrics_description_string = "Metrics for Observed Time - Predicted Time are in hours.<br>Negative values indicate predicted time is later than observed.<br>Positive values indicate predicted time is earlier than observed.\n"
+                section_filename = output_dir__ + section_tag + '_metrics' + appendages[j] + '.pkl'
+                if os.path.exists(section_filename):
+                    validation_text += '* ' + section_title + '\n'
+                    report_exists = True
+                    markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
+            
+            if duration:
+                ### build the duration metrics
+                metric_label_start = 'Mean Error (pred - obs)'
+                section_title = 'Duration'
+                section_tag = 'duration'
+                metrics_description_string = "Metrics for Observed Time - Predicted Time are in hours.<br>Negative values indicate predicted time is later than observed.<br>Positive values indicate predicted time is earlier than observed.\n"
+                section_filename = output_dir__ + section_tag + '_metrics' + appendages[j] + '.pkl'
+                if os.path.exists(section_filename):
+                    validation_text += '* ' + section_title + '\n'
+                    report_exists = True
+                    markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
+              
+            if end_time:
+                ### build the end time metrics
+                metric_label_start = 'Mean Error (pred - obs)'
+                section_title = 'End Time'
+                section_tag = 'end_time'
+                metrics_description_string = "Metrics for Observed Time - Predicted Time are in hours.<br>Negative values indicate predicted time is later than observed.<br>Positive values indicate predicted time is earlier than observed.\n"
+                section_filename = output_dir__ + section_tag + '_metrics' + appendages[j] + '.pkl'
+                if os.path.exists(section_filename):
+                    validation_text += '* ' + section_title + '\n'
+                    report_exists = True
+                    markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
+            
+            if time_profile:
+                ### build the time profile metrics
+                metric_label_start = 'Linear Regression Slope'
+                section_title = 'Time Profile'
+                section_tag = 'time_profile'            
+                metrics_description_string = "Metrics for $log_{10}$(model) - $log_{10}$(Observations).<br>Positive values indicate model overprediction.<br>Negative values indicate model underprediction.<br>r_lin and r_log indicate the pearson's correlation coefficient calculated using values or $log_{10}$(values), respectively."
+                skip_label_list = ['Time Profile Selection Plot']
+                section_filename = output_dir__ + section_tag + '_metrics' + appendages[j] + '.pkl'
+                if os.path.exists(section_filename):
+                    validation_text += '* ' + section_title + '\n'
+                    report_exists = True
+                    markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, skip_label_list=skip_label_list, appendage=appendages[j])        
+            
+            ### BUILD THE VALIDATION REFERENCE
+            vr_filename1 = config.referencepath + '/validation_reference_sheet_1.csv'
+            vr_filename2 = config.referencepath + '/validation_reference_sheet_2.csv'
+            markdown_text += build_validation_reference_section(vr_filename1, vr_filename2)
+            
+            # FINALIZE
+            validation_text = add_collapsible_segment(validation_header, validation_text)
+            markdown_text = info_text + validation_text + markdown_text
+            markdown_filename = config.reportpath + '/' + model + '_report' + appendages[j] + '.md'
+            
+            if report_exists:
+                a = open(markdown_filename, 'w')
+                a.write(markdown_text)
+                a.close()
+                convert_markdown_to_html(markdown_filename)
 
