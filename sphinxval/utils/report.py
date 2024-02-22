@@ -179,6 +179,12 @@ def add_collapsible_segment_nest(header_list, text_list, depth=0):
             result.append((depth, header_list[i], text_list[i]))
     return result
 
+def build_info_string_header(value):
+    info_string = 'Instruments and observed values used in validation.<br>'
+    info_string += 'N = ' + str(value) + '<br>'
+    return info_string
+
+
 def define_colors():
     text = '<style>\n'
     text += '    .red {\n'
@@ -272,9 +278,7 @@ def build_all_clear_skill_scores_section(filename, model, sphinx_dataframe, appe
         misses = data.iloc[i]["All Clear 'False Negatives' (Misses)"]
         contingency_table_values = [hits, false_alarms, correct_negatives, misses]
         contingency_table_string = build_contingency_table(*contingency_table_values)
-        info_string = 'Instruments and observed values used in validation.<br>'
-        info_string += 'N = ' + str(sum(contingency_table_values)) + '<br>'
-        info_string += '...\n' # need to complete
+        info_string = build_info_string_header(sum(contingency_table_values))
         
         selections_filename = output_dir__ + 'all_clear_selections_' + model + '_' + data.iloc[i]['Energy Channel'] + '_threshold_' + obs_threshold.rstrip(' pfu') + mismatch_allowed_string + appendage + '.pkl'
         subset_list = ['Prediction Window Start', 'Prediction Window End']
@@ -396,9 +400,7 @@ def build_section_awt(filename, model, sphinx_dataframe, metric_label_start, sec
             if os.path.exists(selections_filename):            
                 subset_list = append_subset_list(selections_filename, subset_list, 'Prediction Window End', 'Units')
                 info_string_, n_events = build_info_events_table(selections_filename, sphinx_dataframe, subset_list, rename_dict)
-                info_string = 'Instruments and observed values used in validation.<br>'
-                info_string += 'N = ' + str(n_events) + '<br>'
-                info_string += '...\n' # need to complete
+                info_string = build_info_string_header(n_events)
                 info_string += info_string_
                 text += add_collapsible_segment('Validation Info - ' + awt_string, info_string)
         text += add_collapsible_segment('Metrics', metrics_string)
@@ -434,9 +436,7 @@ def build_section(filename, model, sphinx_dataframe, metric_label_start, section
         subset_list = ['Prediction Window Start', 'Prediction Window End']
         subset_list = append_subset_list(selections_filename, subset_list, 'Prediction Window End', 'Units')
         info_string_, n_events = build_info_events_table(selections_filename, sphinx_dataframe, subset_list, rename_dict)
-        info_string = 'Instruments and observed values used in validation.<br>'
-        info_string += 'N = ' + str(n_events) + '<br>'
-        info_string += '...\n' # need to complete
+        info_string = build_info_string_header(n_events)
         info_string += info_string_
         metrics_string = metrics_description_string + '' 
         metrics_string_, plot_string_list, plot_file_string_list = build_metrics_table(data, i, metric_index_start, skip_label_list)
