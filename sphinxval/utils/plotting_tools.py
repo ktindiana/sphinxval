@@ -515,22 +515,19 @@ def correlation_plot(obs_values, model_values, plot_title,
     if use_log or use_logx or use_logy:
         obs_clean, model_clean = metrics.remove_zero(obs_clean, model_clean)
 
+    if len(obs_clean) == 0 or len(model_clean) == 0:
+        return plt
 
     obs_np = np.array(obs_clean)
     model_np = np.array(model_clean)
 
-    if list(obs_values) == [] or list(model_np) == []:
-        return plt
-    
     
     if use_log or use_logx:
-        log_obs = [log10(val) for val in obs_clean]
-        obs_np = np.array(log_obs)
+        obs_np = np.log10(np.array(obs_clean))
 
     if use_log or use_logy:
         try:
-            log_model = [log10(val) for val in model_clean]
-            model_np = np.array(log_model)
+            model_np = np.log10(np.array(model_clean))
         except:
             print("Bad model value in log conversion for correlation plot is " + str(model_values) + "for plot titled " + plot_title)
             sys.exit()
@@ -542,11 +539,16 @@ def correlation_plot(obs_values, model_values, plot_title,
     #LINEAR REGRESSION
     slope, yint = np.polyfit(obs_np, model_np, 1)
 
+    #Make regression line
+    reg_line = slope*np.sort(obs_np) + yint
+    if use_log or use_logy:
+        reg_line = [10**x for x in reg_line]
+
     #1-to-1 Line
-    mx = max(np.amax(obs_np),np.amax(model_np))
-    mn = min(np.amin(obs_np), np.amin(model_np))
+    mx = max(np.amax(obs_clean),np.amax(model_clean))
+    mn = min(np.amin(obs_clean), np.amin(model_clean))
     if use_log or use_logx or use_logy:
-        mn = max(-4,mn)
+        mn = max(1e-6,mn)
     step = (mx - mn)/10.
     x1to1 = np.arange(mn, mx, step).tolist()
     y1to1 = x1to1
@@ -559,17 +561,22 @@ def correlation_plot(obs_values, model_values, plot_title,
     plt.title(plot_title)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
-#    ax.set_ylim([mn-0.1*abs(mn),mx+0.1*mx])
-#    ax.set_xlim([mn-0.1*abs(mn),mx+0.1*mx])
 
-    ax.plot(obs_np, model_np, 'bo', \
+
+    ax.plot(obs_clean, model_clean, 'bo', \
                 label=(f'Pearsons Correlation \nCoefficient: ' \
                         + ' {0:.3f}'.format(corr)))
-    ax.plot(np.sort(obs_np), slope*np.sort(obs_np) + yint,\
+    ax.plot(np.sort(obs_clean), reg_line,\
                 color='red', label=(f'Linear Regression \nSlope: '+ \
                 '{0:.3f} \ny-intercept: {1:.3f}'.format(slope, yint)))
     ax.plot(x1to1, y1to1, color='black', label="1:1 Line", linestyle="dashed")
+    
+    if use_log or use_logx:
+        plt.xscale('log')
+    if use_log or use_logy:
+        plt.yscale('log')
 
+    
     chartBox = ax.get_position()
     ax.set_position([chartBox.x0, chartBox.y0, chartBox.width*0.75,
                     chartBox.height])
