@@ -1063,22 +1063,22 @@ def calc_contingency_bool(y_true, y_pred):
     matrix = pd.crosstab(y_true, y_pred)
 
     # if any of the table items are empty, make 0 instead
-    #On one computer system, matrix[1][1] did not work and resulted in all values 0.
-    #Had to modify syntax to get correct values.
+    #On one computer system, matrix[1][1] syntax did not work and resulted
+    #in all values 0. Had to modify syntax to get correct values.
     try:
-        h = matrix[True][1] #h = matrix[1][1]
+        h = matrix[True][1] #hits = matrix[1][1]
     except:
         h = 0
     try:
-        m = matrix[False][1] #m = matrix[0][1]
+        m = matrix[False][1] #misses = matrix[0][1]
     except:
         m = 0
     try:
-        f = matrix[True][0] #f = matrix[1][0]
+        f = matrix[True][0] #false alarms = matrix[1][0]
     except:
         f = 0
     try:
-        c = matrix[False][0] #c = matrix[0][0]
+        c = matrix[False][0] #correct negatives = matrix[0][0]
     except:
         c = 0
 
