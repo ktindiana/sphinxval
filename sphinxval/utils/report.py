@@ -396,7 +396,7 @@ def build_section_awt(filename, model, sphinx_dataframe, metric_label_start, sec
             if os.path.exists(selections_filename):            
                 subset_list = append_subset_list(selections_filename, subset_list, 'Prediction Window End', 'Units')
                 info_string_, n_events = build_info_events_table(selections_filename, sphinx_dataframe, subset_list, rename_dict)
-                info_string = 'Instruments and SEP events used in validation<br>'
+                info_string = 'Instruments and observed values used in validation.<br>'
                 info_string += 'N = ' + str(n_events) + '<br>'
                 info_string += '...\n' # need to complete
                 info_string += info_string_
@@ -434,7 +434,7 @@ def build_section(filename, model, sphinx_dataframe, metric_label_start, section
         subset_list = ['Prediction Window Start', 'Prediction Window End']
         subset_list = append_subset_list(selections_filename, subset_list, 'Prediction Window End', 'Units')
         info_string_, n_events = build_info_events_table(selections_filename, sphinx_dataframe, subset_list, rename_dict)
-        info_string = 'Instruments and SEP events used in validation<br>'
+        info_string = 'Instruments and observed values used in validation.<br>'
         info_string += 'N = ' + str(n_events) + '<br>'
         info_string += '...\n' # need to complete
         info_string += info_string_
