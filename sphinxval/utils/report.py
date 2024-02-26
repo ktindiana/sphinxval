@@ -151,14 +151,14 @@ def format_markdown_table(text, width=50):
 def add_collapsible_segment(header, text):
     markdown = '<details>\n'
     markdown += '<summary>' + header + '</summary>\n\n'
-    markdown += text
+    markdown += text + '\n'
     markdown += '</details>\n'
     return markdown
 
 def add_collapsible_segment_start(header, text):
     markdown = '<details>\n'
     markdown += '<summary>' + header + '</summary>\n\n'
-    markdown += text
+    markdown += text + '\n'
     markdown += '<blockquote>\n\n'
     return markdown
 
@@ -178,6 +178,11 @@ def add_collapsible_segment_nest(header_list, text_list, depth=0):
         else:
             result.append((depth, header_list[i], text_list[i]))
     return result
+
+def build_info_string_header(value):
+    info_string = 'Instruments and observed values used in validation.<br>'
+    info_string += 'N = ' + str(value) + '<br>\n'
+    return info_string
 
 def define_colors():
     text = '<style>\n'
@@ -264,7 +269,6 @@ def build_all_clear_skill_scores_section(filename, model, sphinx_dataframe, appe
     skill_score_start_index = 9
     skill_score_table_labels = list(column_labels[skill_score_start_index:])
     for i in range(0, number_rows):
-        print(data.iloc[i])
         threshold_string, energy_threshold, obs_threshold, pred_threshold, mismatch_allowed_string = build_threshold_string(data, i)
         hits = data.iloc[i]["All Clear 'True Positives' (Hits)"]
         false_alarms = data.iloc[i]["All Clear 'False Positives' (False Alarms)"]
@@ -272,9 +276,7 @@ def build_all_clear_skill_scores_section(filename, model, sphinx_dataframe, appe
         misses = data.iloc[i]["All Clear 'False Negatives' (Misses)"]
         contingency_table_values = [hits, false_alarms, correct_negatives, misses]
         contingency_table_string = build_contingency_table(*contingency_table_values)
-        info_string = 'Instruments and observed values used in validation.<br>'
-        info_string += 'N = ' + str(sum(contingency_table_values)) + '<br>'
-        info_string += '...\n' # need to complete
+        info_string = build_info_string_header(sum(contingency_table_values))
         
         selections_filename = output_dir__ + 'all_clear_selections_' + model + '_' + data.iloc[i]['Energy Channel'] + '_threshold_' + obs_threshold.rstrip(' pfu') + mismatch_allowed_string + appendage + '.pkl'
         subset_list = ['Prediction Window Start', 'Prediction Window End']
@@ -384,7 +386,7 @@ def build_section_awt(filename, model, sphinx_dataframe, metric_label_start, sec
     awt_string_list = ['Predicted SEP All Clear', 'Predicted SEP Peak Intensity (Onset Peak)', 'Predicted SEP Peak Intensity Max (Max Flux)']
     for i in range(0, number_rows):
         threshold_string, energy_threshold, obs_threshold, pred_threshold, mismatch_allowed_string = build_threshold_string(data, i)
-        metrics_string = metrics_description_string + '' 
+        metrics_string = metrics_description_string + '\n' 
         metrics_string_, plot_string_list, plot_file_string_list = build_metrics_table(data, i, metric_index_start, skip_label_list)
         metrics_string += metrics_string_
         text += add_collapsible_segment_start(energy_threshold, '')
@@ -396,9 +398,7 @@ def build_section_awt(filename, model, sphinx_dataframe, metric_label_start, sec
             if os.path.exists(selections_filename):            
                 subset_list = append_subset_list(selections_filename, subset_list, 'Prediction Window End', 'Units')
                 info_string_, n_events = build_info_events_table(selections_filename, sphinx_dataframe, subset_list, rename_dict)
-                info_string = 'Instruments and observed values used in validation.<br>'
-                info_string += 'N = ' + str(n_events) + '<br>'
-                info_string += '...\n' # need to complete
+                info_string = build_info_string_header(n_events)
                 info_string += info_string_
                 text += add_collapsible_segment('Validation Info - ' + awt_string, info_string)
         text += add_collapsible_segment('Metrics', metrics_string)
@@ -434,9 +434,7 @@ def build_section(filename, model, sphinx_dataframe, metric_label_start, section
         subset_list = ['Prediction Window Start', 'Prediction Window End']
         subset_list = append_subset_list(selections_filename, subset_list, 'Prediction Window End', 'Units')
         info_string_, n_events = build_info_events_table(selections_filename, sphinx_dataframe, subset_list, rename_dict)
-        info_string = 'Instruments and observed values used in validation.<br>'
-        info_string += 'N = ' + str(n_events) + '<br>'
-        info_string += '...\n' # need to complete
+        info_string = build_info_string_header(n_events)
         info_string += info_string_
         metrics_string = metrics_description_string + '' 
         metrics_string_, plot_string_list, plot_file_string_list = build_metrics_table(data, i, metric_index_start, skip_label_list)
@@ -471,8 +469,6 @@ def build_validation_reference_section(filename1, filename2):
     text += add_collapsible_segment_end()
     return text
 
-
-
 ### CONVERT MARKDOWN TO HTML 
 def get_image_string(original_string):
     # COUNT NUMBER OF PARENTHESES
@@ -487,23 +483,29 @@ def get_image_string(original_string):
         left = original_string.split('![](')[1]
         result = left.split(')')[0]
     return result
-
+    
 def convert_tables_html(text):
     new_text = ''
     outside_table = True
+    first = False
     for i in range(0, len(text)):
         line = text[i]
-        if line[0] == '|' and outside_table:
-            outside_table = False
-            table = ''            
-        if line[0] != '|':
-            if (not outside_table):    
-                if 'table' in locals():
-                    table_html = markdown.markdown(table, extensions=['markdown.extensions.tables'])
-                    new_text += table_html + '\n'
+        if line == '' and outside_table: # NOT IN A TABLE
+            table = ''
             outside_table = True
-        if (not outside_table):
-            table += line   
+        if len(line) > 0:
+            if line[0] == '|':
+                outside_table = False
+                table += line + '\n'
+            else:
+                outside_table = True
+                first = True
+        if first:
+            if 'table' in list(locals().keys()):
+                table_html = markdown.markdown(table, extensions=['markdown.extensions.tables'])
+                new_text += table_html + '\n'
+                del table
+            first = False    
         if outside_table:
             new_text += line + '\n'
     new_text = new_text.split('\n')
@@ -557,60 +559,137 @@ def add_space_between_sections(text):
             text[i] = '<br></details>'
     return text
 
-def add_style(text):
-    text = '''<style>
-                table, th, td 
-                {
-                   border: 1px solid black;
-                   border-collapse: collapse;
-                }
-                html * 
-                {
-                    font-size: 16px;
-                    line-height: 1.25;
-                    color: #000000;
-                    font-family: Arial, sans-serif;
-                }
-              </style>''' + text
+def add_script(text):
+    text = '''<script>
+function openTab(evt, tabName) {
+  // Declare all variables
+  var i, tabcontent, tablinks;
+
+  // Get all elements with class="tabcontent" and hide them
+  tabcontent = document.getElementsByClassName("tabcontent");
+  for (i = 0; i < tabcontent.length; i++) {
+    tabcontent[i].style.display = "none";
+  }
+
+  // Get all elements with class="tablinks" and remove the class "active"
+  tablinks = document.getElementsByClassName("tablinks");
+  for (i = 0; i < tablinks.length; i++) {
+    tablinks[i].className = tablinks[i].className.replace(" active", "");
+  }
+
+  // Show the current tab, and add an "active" class to the button that opened the tab
+  document.getElementById(tabName).style.display = "block";
+  evt.currentTarget.className += " active";
+}
+</script>\n\n''' + text
     return text
 
-def convert_markdown_to_html(filename, size_limit=10**20):
-    
-    # CHECK HOW BIG THIS FILE IS
-    if os.path.getsize(filename) > size_limit:
-        print('This Markdown report is too big to convert to HTML: ', filename)
-    else:
-        print('Generating HTML report: ', filename.replace('.md', '.html'))
-        # CONVERT MARKDOWN TO HTML
-        a = open(filename, 'r')
-        text = a.readlines()
-        a.close()
-    
-        # REPLACE TABLES
-        text = convert_tables_html(text)
-    
-        # REPLACE IMAGES
-        text = convert_plots_html(text)
-    
-        # REPLACE BULLETS
-        text = convert_bullets_html(text)
-    
-        # ADD SPACE
-        text = add_space_between_sections(text)
+def add_style(text):
+    text = '''<style>
+table, th, td 
+{
+    border: 1px solid black;
+    border-collapse: collapse;
+}
+html * 
+{
+    font-size: 16px;
+    line-height: 1.25;
+    color: #000000;
+    font-family: Arial, sans-serif;
+}
+ 
+/* Style the tab */
+.tab {
+    overflow: hidden;
+    border: 1px solid #ccc;
+    background-color: #f1f1f1;
+}
 
-        # ADD STYLE
-        text = add_style(text)
+/* Style the buttons that are used to open the tab content */
+.tab button {
+    background-color: inherit;
+    float: left;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    padding: 14px 16px;
+    transition: 0.3s;
+}
 
-        # CONDENSE INTO ONE STRING
-        text_final = ''
-        for i in range(0, len(text)):
-            text_final += text[i]
+/* Change background color of buttons on hover */
+.tab button:hover {
+    background-color: #ddd;
+}
+
+/* Create an active/current tablink class */
+.tab button.active {
+    background-color: #ccc;
+}
+
+/* Style the tab content */
+.tabcontent {
+    display: none;
+    padding: 6px 12px;
+    border: 1px solid #ccc;
+    border-top: none;
+}
+	
+.red {
+    background-color: #fad5d2;
+}
+
+.green {
+    background-color: #89d99e;
+}
+</style>\n\n''' + text
+    return text
+
+def add_title(model):
+    return '<h1>' + model + ' Validation Report</h1>\n'
+
+def add_tab(appendage, markdown_text):
+    if appendage == '':
+        appendage = 'All'
+    text = '<div id="' + appendage + '" class="tabcontent">\n'
+    text += '    <h3>' + appendage + '</h3>\n'
+    text += '    ' + convert_markdown_to_html(markdown_text) + '\n'
+    text += '</div>\n'
+    return text
+
+def convert_markdown_to_html(text, size_limit=10**20):
     
-        html = markdown.markdown(text_final)
-        a = open(filename.replace('.md', '.html'), 'w')
-        a.write(html)
-        a.close()
-        print('    Complete')
+    print('Generating HTML report...')
+    text = text.split('\n')
+    
+    # REPLACE TABLES
+    text = convert_tables_html(text)
+    
+    # REPLACE IMAGES
+    text = convert_plots_html(text)
+        
+    # REPLACE BULLETS
+    text = convert_bullets_html(text)
+    
+    # ADD SPACE
+    text = add_space_between_sections(text)
+    
+    text_final = ''
+    for i in range(0, len(text)):
+        text_final += text[i]
+        
+    # FINALIZE
+    html = markdown.markdown(text_final)        
+    return html
+      
+
+
+def get_html_report_preamble(model):
+    text = add_script('')
+    text += add_style('')
+    text += add_title(model)
+    return text
+
 
 def get_plot_type(plot_string):
     if 'Time_Profile' in plot_string:
@@ -651,6 +730,9 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
     appendages = ['', '_First', '_Last', '_Mean', '_Max']
     for i in range(0, len(models)):
         model = models[i]
+        markdown_texts = {}
+        appendage_set_list = []
+        html_text = get_html_report_preamble(model)
         for j in range(0, len(appendages)):
         
             # check which sections to include
@@ -724,7 +806,7 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
                 title = model + ' Validation Report'
             else:
                 title = model + ' ' + appendages[j].lstrip('_') + ' Validation Report'
-            info_text = '# ' + title + '\n\n' + define_colors() + add_collapsible_segment(info_header, info_text)
+            # info_text = '# ' + title + '\n\n' + define_colors() + add_collapsible_segment(info_header, info_text)
             
             validation_header = 'Validated Quantities'
             validation_text = 'This model was validated for the following quantities.\n\n'
@@ -738,6 +820,7 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
                 if os.path.exists(all_clear_filename):
                     validation_text += '* All Clear\n'
                     report_exists = True
+                    appendage_set_list.append(appendages[j])
                     markdown_text += build_all_clear_skill_scores_section(all_clear_filename, model, sphinx_dataframe, appendage=appendages[j])
 
             if awt:
@@ -750,6 +833,7 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
                 if os.path.exists(section_filename):
                     validation_text += '* ' + section_title + '\n'
                     report_exists = True
+                    appendage_set_list.append(appendages[j])
                     markdown_text += build_section_awt(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
                 
             if peak_intensity:
@@ -762,6 +846,7 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
                 if os.path.exists(section_filename):
                     validation_text += '* ' + section_title + '\n'
                     report_exists = True
+                    appendage_set_list.append(appendages[j])
                     markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
                 
             if peak_intensity_max:
@@ -774,6 +859,7 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
                 if os.path.exists(section_filename):
                     validation_text += '* ' + section_title + '\n'
                     report_exists = True
+                    appendage_set_list.append(appendages[j])
                     markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
                 
             if peak_intensity_time:
@@ -786,6 +872,7 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
                 if os.path.exists(section_filename):
                     validation_text += '* ' + section_title + '\n'
                     report_exists = True
+                    appendage_set_list.append(appendages[j])
                     markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
            
             if peak_intensity_max_time:
@@ -798,6 +885,7 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
                 if os.path.exists(section_filename):
                     validation_text += '* ' + section_title + '\n'
                     report_exists = True
+                    appendage_set_list.append(appendages[j])
                     markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
      
             if threshold_crossing:
@@ -811,6 +899,7 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
                 if os.path.exists(section_filename):
                     validation_text += '* ' + section_title + '\n'
                     report_exists = True
+                    appendage_set_list.append(appendages[j])
                     markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
             
             if fluence:
@@ -823,6 +912,7 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
                 if os.path.exists(section_filename):
                     validation_text += '* ' + section_title + '\n'
                     report_exists = True
+                    appendage_set_list.append(appendages[j])
                     markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
             
             if max_flux_in_pred_win:
@@ -835,6 +925,7 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
                 if os.path.exists(section_filename):
                     validation_text += '* ' + section_title + '\n'
                     report_exists = True
+                    appendage_set_list.append(appendages[j])
                     markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
             
             if probability:    
@@ -847,6 +938,7 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
                 if os.path.exists(section_filename):
                     validation_text += '* ' + section_title + '\n'
                     report_exists = True
+                    appendage_set_list.append(appendages[j])
                     markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
             
             
@@ -860,6 +952,7 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
                 if os.path.exists(section_filename):
                     validation_text += '* ' + section_title + '\n'
                     report_exists = True
+                    appendage_set_list.append(appendages[j])
                     markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
             
             if duration:
@@ -872,6 +965,7 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
                 if os.path.exists(section_filename):
                     validation_text += '* ' + section_title + '\n'
                     report_exists = True
+                    appendage_set_list.append(appendages[j])
                     markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
               
             if end_time:
@@ -884,6 +978,7 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
                 if os.path.exists(section_filename):
                     validation_text += '* ' + section_title + '\n'
                     report_exists = True
+                    appendage_set_list.append(appendages[j])
                     markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
             
             if time_profile:
@@ -897,21 +992,48 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
                 if os.path.exists(section_filename):
                     validation_text += '* ' + section_title + '\n'
                     report_exists = True
+                    appendage_set_list.append(appendages[j])
                     markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, skip_label_list=skip_label_list, appendage=appendages[j])        
             
             ### BUILD THE VALIDATION REFERENCE
             vr_filename1 = config.referencepath + '/validation_reference_sheet_1.csv'
             vr_filename2 = config.referencepath + '/validation_reference_sheet_2.csv'
-            markdown_text += build_validation_reference_section(vr_filename1, vr_filename2)
+            validation_reference_text = build_validation_reference_section(vr_filename1, vr_filename2)
             
             # FINALIZE
             validation_text = add_collapsible_segment(validation_header, validation_text)
             markdown_text = info_text + validation_text + markdown_text
             markdown_filename = config.reportpath + '/' + model + '_report' + appendages[j] + '.md'
+            appendage_set_list = list(set(appendage_set_list))
             
             if report_exists:
                 a = open(markdown_filename, 'w')
-                a.write(markdown_text)
+                a.write(markdown_text + validation_reference_text)
                 a.close()
-                convert_markdown_to_html(markdown_filename)
-
+                markdown_texts[appendages[j]] = markdown_text
+        
+        
+        html_text += '<div class="tab">\n'
+        html_text += '    <button class="tablinks" onclick="openTab(event, \'All\')">All</button>\n'
+        for j in range(0, len(appendage_set_list)):
+            if appendage_set_list[j] == '':
+                None
+            else:
+                html_text += '    <button class="tablinks" onclick="openTab(event, \'' + appendage_set_list[j].replace('_', '') + '\')">' + appendage_set_list[j].replace('_', '') + '</button>\n'
+        html_text += '</div>\n'
+        
+        
+        for j in range(0, len(appendage_set_list)):
+            html_text += add_tab(appendage_set_list[j].replace('_', ''), markdown_texts[appendage_set_list[j]])
+        html_text += convert_markdown_to_html(validation_reference_text)
+        html_filename = config.reportpath + '/' + model + '_report.html'
+        a = open(html_filename, 'w')
+        a.write(html_text)
+        a.close()
+        print('    Complete')
+        
+        
+        
+            
+                
+        
