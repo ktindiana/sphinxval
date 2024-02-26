@@ -970,6 +970,35 @@ def check_SEDS(h, f, m, n):
 
 
 
+def arr_to_df(arr, keys):
+    """ Convert arrays into a dataframe.
+    
+    Parameters
+    ----------
+    arr : array of arrays
+        each sub-array will be converted into a column in the df
+        each sub-array must be the same length
+        
+    keys : arr of strings
+        each string is a column name for the corresponding sub-array in arr
+        
+    Returns
+    -------
+    df : pandas dataframe
+        sub-arrays as columns named as keys
+        
+    """
+
+    if len(arr) != len(keys):
+        sys.exit("metrics.py: arr_to_df: input arrays must be the same length. arr (column values) and keys (column names) must match.")
+
+    dict = {}
+    for i in range(len(keys)):
+        dict.update({keys[i]: arr[i]})
+        
+    return pd.DataFrame(dict)
+
+
 def calc_contingency(y_true, y_pred, thresh):
     """
     Calculates a contingency table and relevant
@@ -992,16 +1021,6 @@ def calc_contingency(y_true, y_pred, thresh):
         Ratios and skill scores
     """
 
-    # checking for None types in the predictions
-    # found when the model made no prediction
-    # replacing the Nones with 10% (abritrary) of the threshold
-    # such that it always counts as a miss
-    # operational_sep_quantities.py will output the maximum flux in a time
-    # period even if no thresholds are crossed.
-#    y_true = [0.1*thresh if x==None else x for x in y_true]
-#    y_pred = [0.1*thresh if x==None else x for x in y_pred]
-
-    #Applying logic that does not count None forecasts as a miss.
     y_true, y_pred = remove_none(y_true, y_pred)
     
     check_consistent_length(y_true, y_pred)
@@ -1009,80 +1028,66 @@ def calc_contingency(y_true, y_pred, thresh):
     y_true = check_array(y_true, force_all_finite=True, ensure_2d=False)
     y_pred = check_array(y_pred, force_all_finite=True, ensure_2d=False)
 
-    #Convert to boolean values to include in calc_contingency_bool
-    #True = event, False = no event
-    y_true = [x>=thresh for x in y_true]
-    y_pred = [x>=thresh for x in y_pred]
+    #Convert to boolean values to match All Clear state
+    #True = All Clear (no event), False = Not Clear (event)
+    y_true = [not x>=thresh for x in y_true]
+    y_pred = [not x>=thresh for x in y_pred]
+    
+    keys = ["Observed Peak Flux All Clear", "Predicted Peak Flux All Clear"]
+    df = arr_to_df([y_true, y_pred], keys)
 
-    scores = calc_contingency_bool(y_true, y_pred)
+    scores = calc_contingency_bool(df, keys[0], keys[1])
     
     return scores
 
 
 
-def calc_contingency_bool(y_true, y_pred):
+def calc_contingency_all_clear(df, obs_key, pred_key):
     """
     Calculates a contingency table and relevant
-    ratios and skill scores based on booleans
-    True = threshold crossed (event)
-    False = threshold not crossed (no event)
+    ratios and skill scores based on booleans that indicate
+    all clear. Note that all clear = False indicates that it
+    is NOT clear and that a threshold has been crossed.
+    
+    False = threshold crossed (event)
+    True = threshold not crossed (no event)
 
     Parameters
     ----------
-    y_true : array-like
-        Observed boolean values
+    df : pandas dataframe
+        contains observed and predicted all clear values
+        
+    obs_key : string
+        column name containing observed boolean values
 
-    y_pred : array-like
-        Forecasted boolean values
+    pred_key : string
+        column name containing forecasted boolean values
 
 
     Returns
     -------
     scores : dictionary
         Ratios and skill scores
+        
     """
-    # The pandas crosstab predicts booleans as follows:
-    #   True = event
-    #   False = no event
-    # ALL CLEAR booleans are as follows:
-    #   True = no event
-    #   False = event
-    # Prior to inputting all clear predictions into this code, need to
-    #   switch the booleans to match how event/no event are interpreted here.
+    
+    #HITS: obs = False, pred = False
+    result = (df[obs_key] == False) & (df[pred_key] == False)
+    h = result.sum(axis=0)
+    
+    #MISSES: obs = False, pred = True
+    result = (df[obs_key] == False) & (df[pred_key] == True)
+    m = result.sum(axis=0)
+    
+    #FALSE POSITIVE: obs = True, pred = False
+    result = (df[obs_key] == True) & (df[pred_key] == False)
+    f = result.sum(axis=0)
 
-
-    # Remove None values from the observation and forecast pairs
-    # None forecasts are not penalized, simply not counted
-    y_true, y_pred = remove_none(y_true, y_pred)
-
-    check_consistent_length(y_true, y_pred)
-
-    y_true = check_array(y_true, force_all_finite=True, ensure_2d=False)
-    y_pred = check_array(y_pred, force_all_finite=True, ensure_2d=False)
-
-    matrix = pd.crosstab(y_true, y_pred)
-
-    # if any of the table items are empty, make 0 instead
-    #On one computer system, matrix[1][1] syntax did not work and resulted
-    #in all values 0. Had to modify syntax to get correct values.
-    try:
-        h = matrix[True][1] #hits = matrix[1][1]
-    except:
-        h = 0
-    try:
-        m = matrix[False][1] #misses = matrix[0][1]
-    except:
-        m = 0
-    try:
-        f = matrix[True][0] #false alarms = matrix[1][0]
-    except:
-        f = 0
-    try:
-        c = matrix[False][0] #correct negatives = matrix[0][0]
-    except:
-        c = 0
-
-    n = h+m+f+c
+    #TRUE NEGATIVES: obs = True, pred = True
+    result = (df[obs_key] == True) & (df[pred_key] == True)
+    c = result.sum(axis=0)
+    
+    n = h + m + f + c
 
     # all scores while checking for dividing by zero
     scores = {
@@ -1109,6 +1114,99 @@ def calc_contingency_bool(y_true, y_pred):
     'SEDS': check_SEDS(h, f, m, n)#((np.log((h+f)/n)+np.log((h+m)/n))/np.log(h/n))-1
     }
     return scores
+
+
+
+
+#def calc_contingency_bool(y_true, y_pred):
+#    """
+#    Calculates a contingency table and relevant
+#    ratios and skill scores based on booleans
+#    True = threshold crossed (event)
+#    False = threshold not crossed (no event)
+#
+#    Parameters
+#    ----------
+#    y_true : array-like
+#        Observed boolean values
+#
+#    y_pred : array-like
+#        Forecasted boolean values
+#
+#
+#    Returns
+#    -------
+#    scores : dictionary
+#        Ratios and skill scores
+#    """
+#    # The pandas crosstab predicts booleans as follows:
+#    #   True = event
+#    #   False = no event
+#    # ALL CLEAR booleans are as follows:
+#    #   True = no event
+#    #   False = event
+#    # Prior to inputting all clear predictions into this code, need to
+#    #   switch the booleans to match how event/no event are interpreted here.
+#
+#
+#    # Remove None values from the observation and forecast pairs
+#    # None forecasts are not penalized, simply not counted
+#    y_true, y_pred = remove_none(y_true, y_pred)
+#
+#    check_consistent_length(y_true, y_pred)
+#
+#    y_true = check_array(y_true, force_all_finite=True, ensure_2d=False)
+#    y_pred = check_array(y_pred, force_all_finite=True, ensure_2d=False)
+#
+#    matrix = pd.crosstab(y_true, y_pred)
+#
+#    # if any of the table items are empty, make 0 instead
+#    #On one computer system, matrix[1][1] syntax did not work and resulted
+#    #in all values 0. Had to modify syntax to get correct values.
+#    try:
+#        h = matrix[True][True] #hits = matrix[1][1]
+#    except:
+#        h = 0
+#    try:
+#        m = matrix[False][True] #misses = matrix[0][1]
+#    except:
+#        m = 0
+#    try:
+#        f = matrix[True][False] #false alarms = matrix[1][0]
+#    except:
+#        f = 0
+#    try:
+#        c = matrix[False][False] #correct negatives = matrix[0][0]
+#    except:
+#        c = 0
+#
+#    n = h+m+f+c
+#
+#    # all scores while checking for dividing by zero
+#    scores = {
+#    'TP': h,
+#    'FN': m,
+#    'FP': f,
+#    'TN': c,
+#    'PC': check_div(h+c, n),
+#    'B': check_div(h+f, h+m),
+#    'H': check_div(h, h+m),
+#    'FAR': check_div(f, h+f), #False Alarm Ratio
+#    'F': check_div(f, f+c), #False Alarm Rate
+#    'FOH': check_div(h, h+f),
+#    'FOM': check_div(m, h+m),
+#    'POCN': check_div(c, f+c),
+#    'DFR': check_div(m, m+c),
+#    'FOCN': check_div(c, m+c),
+#    'TS': check_div(h, h+f+m),
+#    'OR': check_div(h*c, f*m),
+#    'GSS': check_GSS(h, f, m, n), #check_div((h-(h+f)*(h+m)/n), (h+f+m-(h+f)*(h+m)/n)),
+#    'TSS': check_div(h, h+m) - check_div(f, f+c),
+#    'HSS': check_div(2.0 * (h*c - f*m), ((h+m) * (m+c) + (h+f) * (f+c))),
+#    'ORSS': check_div((h*c - m*f), (h*c + m*f)),
+#    'SEDS': check_SEDS(h, f, m, n)#((np.log((h+f)/n)+np.log((h+m)/n))/np.log(h/n))-1
+#    }
+#    return scores
 
 
 
