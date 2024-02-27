@@ -651,7 +651,10 @@ def add_title(model):
 def add_tab(appendage, markdown_text):
     if appendage == '':
         appendage = 'All'
-    text = '<div id="' + appendage + '" class="tabcontent">\n'
+        default_string = 'style="display:block"'
+    else:
+        default_string = ''
+    text = '<div id="' + appendage + '" class="tabcontent"' + default_string + '>\n'
     text += '    <h3>' + appendage + '</h3>\n'
     text += '    ' + convert_markdown_to_html(markdown_text) + '\n'
     text += '</div>\n'
