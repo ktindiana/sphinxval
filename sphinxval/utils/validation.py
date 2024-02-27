@@ -1222,7 +1222,7 @@ def all_clear_intuitive_metrics(df, dict, model, energy_key, thresh_key,
     #Find predicted None values
     noneval = pd.isna(sub['Predicted SEP All Clear'])
     #Extract only indices for Nones
-    #True indicates that peak intensity was a None value
+    #True indicates that all clear was a None value
     noneval = noneval.loc[noneval == True]
     noneval = noneval.index.to_list()
     if len(noneval) > 0:
@@ -1231,6 +1231,7 @@ def all_clear_intuitive_metrics(df, dict, model, energy_key, thresh_key,
       
     if sub.empty:
         return
+
 
     mismatch = bool(sub.iloc[0]['Mismatch Allowed'])
     pred_energy_key = str(sub.iloc[0]['Prediction Energy Channel Key'])
@@ -1245,22 +1246,9 @@ def all_clear_intuitive_metrics(df, dict, model, energy_key, thresh_key,
         fnm = fnm + "_" + validation_type
     write_df(sub, fnm)
 
-    obs = sub['Observed SEP All Clear'].to_list()
-    pred = sub['Predicted SEP All Clear'].to_list()
-
-    #The metrics.py/calc_contingency_bool() routine needs the opposite boolean
-    # In calc_contingency_bool, the pandas crosstab predicts booleans as:
-    #   True = event
-    #   False = no event
-    # ALL CLEAR booleans are as follows:
-    #   True = no event
-    #   False = event
-    # Prior to inputting all clear predictions into this code, need to
-    #   switch the booleans
-    opposite_obs = [not x for x in obs]
-    opposite_pred = [not x for x in pred]
     
-    scores = metrics.calc_contingency_bool(opposite_obs, opposite_pred)
+    scores = metrics.calc_contingency_all_clear(sub, 'Observed SEP All Clear',
+                'Predicted SEP All Clear')
     
     #Now extract whether an SEP event was "caught" or missed using the
     #"First" forecast validation type.
