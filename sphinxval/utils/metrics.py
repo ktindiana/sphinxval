@@ -708,7 +708,7 @@ def calc_SAPE(y_true, y_pred):
 #    return 2.0 * np.abs(np.log10(y_pred) - np.log10(y_true)) / (np.abs(np.log10(y_pred)) + np.abs(np.log10(y_true)))
 
 
-def calc_pearson(y_true, y_pred):
+def calc_pearson(y_true, y_pred, type=""):
     """
     Calculates the pearson coefficient while considering the scale
 
@@ -719,6 +719,12 @@ def calc_pearson(y_true, y_pred):
 
     y_pred : array-like
         Forecasted (estimated) values
+        
+    type : string
+        may be log, linear, or empty. Empty indicates will attempt
+        to calculate both log and linear.
+        log - calculate only log coeff
+        linear - calculate only linear coeff
 
     Returns
     -------
@@ -733,17 +739,23 @@ def calc_pearson(y_true, y_pred):
 
     y_true = check_array(y_true, force_all_finite=True, ensure_2d=False)
     y_pred = check_array(y_pred, force_all_finite=True, ensure_2d=False)
+    
+    r_log = np.nan
+    r_lin = np.nan
 
+    
     # calculating r on log scale if possible
-    try:
-        r_log = pearsonr(np.log10(y_true), np.log10(y_pred))[0]
-    except:
-        r_log = np.nan
+    if type == "log" or type == "":
+        try:
+            r_log = pearsonr(np.log10(y_true), np.log10(y_pred))[0]
+        except:
+            r_log = np.nan
 
-    try:
-        r_lin = pearsonr(y_true, y_pred)[0]
-    except:
-        r_lin = np.nan
+    if type == "linear" or type == "":
+        try:
+            r_lin = pearsonr(y_true, y_pred)[0]
+        except:
+            r_lin = np.nan
 
     return r_lin, r_log
 
@@ -870,7 +882,7 @@ def calc_MdSA(y_true, y_pred):
 
 
 #CA
-def calc_spearman(y_true, y_pred):
+def calc_spearman(y_true, y_pred, type=""):
     """
     Calculates the spearman coefficient while considering the scale
 
@@ -881,6 +893,12 @@ def calc_spearman(y_true, y_pred):
 
     y_pred : array-like
         Forecasted (estimated) values
+
+    type : string
+        may be log, linear, or empty. Empty indicates will attempt
+        to calculate both log and linear.
+        log - calculate only log coeff
+        linear - calculate only linear coeff
 
     Returns
     -------
@@ -905,17 +923,21 @@ def calc_spearman(y_true, y_pred):
     y_true = check_array(y_true, force_all_finite=True, ensure_2d=False)
     y_pred = check_array(y_pred, force_all_finite=True, ensure_2d=False)
 
-    # calculating the spearman correlation coefficient
-    try:
-        s_log = spearmanr(np.log10(y_true), np.log10(y_pred)).correlation
-    except:
-        s_log = np.nan
+    s_log = np.nan
+    s_lin = np.nan
 
-    try:
-        s_lin = spearmanr(y_true, y_pred).correlation
-    except:
-        s_lin = np.nan
-    # s_p = spearmanr(y_true, y_pred).pvalue
+    # calculating the spearman correlation coefficient
+    if type == "log" or type == "":
+        try:
+            s_log = spearmanr(np.log10(y_true), np.log10(y_pred)).correlation
+        except:
+            s_log = np.nan
+
+    if type == "linear" or type == "":
+        try:
+            s_lin = spearmanr(y_true, y_pred).correlation
+        except:
+            s_lin = np.nan
 
     return s_lin, s_log
 

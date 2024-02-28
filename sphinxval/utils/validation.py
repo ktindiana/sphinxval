@@ -616,12 +616,11 @@ def initialize_probability_dict():
             "Threshold": [],
             "Prediction Energy Channel": [],
             "Prediction Threshold": [],
-            'ROC Curve Plot': [],
+            "ROC Curve Plot": [],
             "Brier Score": [],
             "Brier Skill Score": [],
-            "Linear Correlation Coefficient": [],
-            "Rank Order Correlation Coefficient": [],
-            'Area Under ROC Curve': []
+            "Spearman Correlation Coefficient": [],
+            "Area Under ROC Curve": []
             }
             
     return dict
@@ -1300,15 +1299,6 @@ def probability_intuitive_metrics(df, dict, model, energy_key, thresh_key,
     """ Extract the appropriate predictions and calculate metrics
         Probability
 
-    dict = {"Model": [],
-            "Energy Channel": [],
-            "Threshold": [],
-            "Brier Score": [],
-            "Brier Skill Score": [], #Need a reference to calculate
-            "Linear Correlation Coefficient": [],
-            "Rank Order Correlation Coefficient": [],
-            }
-
     """
     #Only calculate probability metrics for ALL forecasts
     val_type = ["", "All"]
@@ -1380,8 +1370,7 @@ def probability_intuitive_metrics(df, dict, model, energy_key, thresh_key,
     #Calculate metrics
     brier_score = metrics.calc_brier(obs, pred)
     brier_skill = metrics.calc_brier_skill(obs, pred)
-    lin_corr_coeff, _ = metrics.calc_pearson(obs, pred) 
-    rank_corr_coeff, _ = metrics.calc_spearman(obs, pred)  
+    rank_corr_coeff, _ = metrics.calc_spearman(obs, pred, "linear")
 
     roc_auc, roc_curve_plt = metrics.receiver_operator_characteristic(obs, pred, model)
     
@@ -1407,8 +1396,7 @@ def probability_intuitive_metrics(df, dict, model, energy_key, thresh_key,
     dict['ROC Curve Plot'].append(figname)
     dict['Brier Score'].append(brier_score)
     dict['Brier Skill Score'].append(brier_skill)
-    dict['Linear Correlation Coefficient'].append(lin_corr_coeff)
-    dict['Rank Order Correlation Coefficient'].append(rank_corr_coeff)
+    dict['Spearman Correlation Coefficient'].append(rank_corr_coeff)
     dict['Area Under ROC Curve'].append(roc_auc)
 
 
@@ -1504,7 +1492,6 @@ def point_intensity_intuitive_metrics(df, dict, model, energy_key, thresh_key,
     if validation_type != "" and validation_type != "All":
         fnm = fnm + "_" + validation_type
     write_df(sub, fnm)
-
 
 
     #Calculate observed values via interpolation in the time profiles
