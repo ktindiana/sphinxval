@@ -72,10 +72,12 @@ def make_markdown_table(column_1, column_2, dataframe, width=50):
     numbers = list(dataframe.to_numpy())
     
     # CHANGE RATIOS TO PERCENTAGES
+    '''
     for i in range(0, len(rows)):
          if 'percent' in rows[i].lower():
             numbers[i] *= 100.0
-            
+    '''
+     
     # CLEAN UP numbers
     formatted_numbers = []
     for i in range(0, len(rows)):
