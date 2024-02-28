@@ -1386,8 +1386,12 @@ def probability_intuitive_metrics(df, dict, model, energy_key, thresh_key,
     roc_auc, roc_curve_plt = metrics.receiver_operator_characteristic(obs, pred, model)
     
     roc_curve_plt.plot()
+    skill_line = np.linspace(0.0, 1.0, num=10) # Constructing a diagonal line that represents no skill/random guess
+    plt.plot(skill_line, skill_line, '--', label = 'Random Guess')
     figname = config.outpath + '/plots/ROC_curve_' \
             + model + "_" + energy_key.strip() + "_" + thresh_fnm
+    plt.legend(loc="lower right")
+    plt.show()
     roc_curve_plt.figure_.savefig(figname + ".pdf", dpi=300, bbox_inches='tight')
  
     plt.close(roc_curve_plt.figure_)
