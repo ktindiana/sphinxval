@@ -14,6 +14,8 @@ import os.path
 import pandas as pd
 import datetime
 from pandas.api.types import is_datetime64_any_dtype as is_datetime
+import sklearn.metrics as skl
+
 
 __version__ = "0.1"
 __author__ = "Katie Whitman"
@@ -614,10 +616,12 @@ def initialize_probability_dict():
             "Threshold": [],
             "Prediction Energy Channel": [],
             "Prediction Threshold": [],
+            'ROC Curve Plot': [],
             "Brier Score": [],
             "Brier Skill Score": [],
             "Linear Correlation Coefficient": [],
             "Rank Order Correlation Coefficient": [],
+            'Area Under ROC Curve': []
             }
             
     return dict
@@ -1376,8 +1380,21 @@ def probability_intuitive_metrics(df, dict, model, energy_key, thresh_key,
     #Calculate metrics
     brier_score = metrics.calc_brier(obs, pred)
     brier_skill = metrics.calc_brier_skill(obs, pred)
-    lin_corr_coeff = None
-    rank_corr_coeff = None
+    lin_corr_coeff, _ = metrics.calc_pearson(obs, pred) 
+    rank_corr_coeff, _ = metrics.calc_spearman(obs, pred)  
+
+    roc_auc, roc_curve_plt = metrics.receiver_operator_characteristic(obs, pred, model)
+    
+    roc_curve_plt.plot()
+    figname = config.outpath + '/plots/ROC_curve_' \
+            + model + "_" + energy_key.strip() + "_" + thresh_fnm
+    roc_curve_plt.figure_.savefig(figname + ".pdf", dpi=300, bbox_inches='tight')
+ 
+    plt.close(roc_curve_plt.figure_)
+    
+    # plt.plot(obs, pred, 'o')
+    # plt.show()
+    
     
     #Save to dict (ultimately dataframe)
     dict['Model'].append(model)
@@ -1385,10 +1402,12 @@ def probability_intuitive_metrics(df, dict, model, energy_key, thresh_key,
     dict['Threshold'].append(thresh_key)
     dict['Prediction Energy Channel'].append(pred_energy_key)
     dict['Prediction Threshold'].append(pred_thresh_key)
+    dict['ROC Curve Plot'].append(figname)
     dict['Brier Score'].append(brier_score)
     dict['Brier Skill Score'].append(brier_skill)
     dict['Linear Correlation Coefficient'].append(lin_corr_coeff)
     dict['Rank Order Correlation Coefficient'].append(rank_corr_coeff)
+    dict['Area Under ROC Curve'].append(roc_auc)
 
 
 def calc_all_flux_metrics(obs, pred):

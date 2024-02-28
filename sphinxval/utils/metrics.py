@@ -7,6 +7,8 @@ from scipy.stats import pearsonr
 from scipy.stats import spearmanr
 from sklearn.metrics import brier_score_loss
 import math
+import statistics
+import sklearn.metrics as skl
 
 __version__ = "0.7"
 __author__ = "Phil Quinn"
@@ -20,6 +22,8 @@ __email__ = "kathryn.whitman@nasa.gov"
 #2023-03-21, Changes in 0.6: Fixed HSS calculation in two places
 #2023-05-08, Changes in 0.7: Added in a try and except in calc_pearson and changed
 #   syntax in calc_contingency_bool as found was crashing on another system.
+#2024-02-28, Changes: added Brier skill score, SEDS, and ROC curve. Added
+#   comments defining metrics and their various names
 
 '''Contains functions for calculating various metrics used
     for comparing modeled forecast results to observations.
@@ -51,27 +55,27 @@ def switch_error_func(metric, y_true, y_pred):
     if len(y_true) < 1: return None
     
     func = {
-        'E': calc_E,
-        'AE': calc_AE,
-        'LE': calc_LE,
-        'ALE': calc_ALE,
-        'SE': calc_SE,
-        'SLE': calc_SLE,
-        'RMSE': calc_RMSE,
-        'RMSLE': calc_RMSLE,
-        'PE': calc_PE,
-        'APE': calc_APE,
-#        'PLE': calc_PLE,
-#        'APLE': calc_APLE,
-        'SPE': calc_SPE,
-        'SAPE': calc_SAPE,
-#        'SPLE': calc_SPLE,
- #       'SAPLE': calc_SAPLE,
-        'r': calc_pearson,
-        'MAR': calc_MAR,
-        'MdSA': calc_MdSA,
-        'spearman': calc_spearman,
-        'brier': calc_brier
+        'E': calc_E,                        # Error
+        'AE': calc_AE,                      # Absolute Error        
+        'LE': calc_LE,                      # Log Error
+        'ALE': calc_ALE,                    # Absolute Log Error
+        'SE': calc_SE,                      # Squared Error
+        'SLE': calc_SLE,                    # Squared Log Error
+        'RMSE': calc_RMSE,                  # Root Mean Squared Error
+        'RMSLE': calc_RMSLE,                # Root Mean Squared Log Error
+        'PE': calc_PE,                      # Percent Error
+        'APE': calc_APE,                    # Absolute Percent Error, absolute percentage deviation
+#        'PLE': calc_PLE,                   # Percent Log Error
+#        'APLE': calc_APLE,                 # Absolute Percent Log Error
+        'SPE': calc_SPE,                    # Symmetric Percent Error
+        'SAPE': calc_SAPE,                  # Symmetric Absolute Percent Error
+#        'SPLE': calc_SPLE,                 # Symmetric Percent Log Error
+ #       'SAPLE': calc_SAPLE,               # Symmetric Absolute Percent Log Error
+        'r': calc_pearson,                  # Pearson, linear correlation coefficient
+        'MAR': calc_MAR,                    # Mean Accuracy Ratio
+        'MdSA': calc_MdSA,                  # Median Symmetric  Accuracy
+        'spearman': calc_spearman,          # Spearman, rank order correlation coefficient
+        # 'brier': calc_brier   #Probably shouldn't be here since is a probability metric
         }.get(metric)
 
     if not callable(func):
@@ -1095,24 +1099,30 @@ def calc_contingency_all_clear(df, obs_key, pred_key):
     'FN': m,
     'FP': f,
     'TN': c,
-    'PC': check_div(h+c, n),
-    'B': check_div(h+f, h+m),
-    'H': check_div(h, h+m),
-    'FAR': check_div(f, h+f), #False Alarm Ratio
-    'F': check_div(f, f+c), #False Alarm Rate
-    'FOH': check_div(h, h+f),
-    'FOM': check_div(m, h+m),
-    'POCN': check_div(c, f+c),
-    'DFR': check_div(m, m+c),
-    'FOCN': check_div(c, m+c),
-    'TS': check_div(h, h+f+m),
-    'OR': check_div(h*c, f*m),
-    'GSS': check_GSS(h, f, m, n), #check_div((h-(h+f)*(h+m)/n), (h+f+m-(h+f)*(h+m)/n)),
-    'TSS': check_div(h, h+m) - check_div(f, f+c),
-    'HSS': check_div(2.0 * (h*c - f*m), ((h+m) * (m+c) + (h+f) * (f+c))),
-    'ORSS': check_div((h*c - m*f), (h*c + m*f)),
-    'SEDS': check_SEDS(h, f, m, n)#((np.log((h+f)/n)+np.log((h+m)/n))/np.log(h/n))-1
+    'PC': check_div(h+c, n),                           # Accuracy, Percent Correct
+    'B': check_div(h+f, h+m),                          # Bias, Precision
+    'H': check_div(h, h+m),                            # Hit Rate, Probability of Detection, Recall, Sensitivity
+    'FAR': check_div(f, h+f),                          # False Alarm Ratio
+    'F': check_div(f, f+c),                            # False Alarm Rate
+    'FOH': check_div(h, h+f),                          # Frequency of Hits
+    'FOM': check_div(m, h+m),                          # Frequency of Misses
+    'POCN': check_div(c, f+c),                         # Probability of Correct Negatives
+    'DFR': check_div(m, m+c),                          # Detection Failure Ratio
+    'FOCN': check_div(c, m+c),                         # Frequency of Correct Negatives
+    'TS': check_div(h, h+f+m),                         # Threat Score, Critical success index
+    'OR': check_div(h*c, f*m),                         # Odds Ratio
+    'GSS': check_GSS(h, f, m, n),                      # Gilbert SKill score check_div((h-(h+f)*(h+m)/n), (h+f+m-(h+f)*(h+m)/n)),
+    'TSS': check_div(h, h+m) - check_div(f, f+c),      # True Skill Score 
+    'HSS': check_div(2.0 * (h*c - f*m), ((h+m) * (m+c) + (h+f) * (f+c))),       # Heidke Skill Score
+    'ORSS': check_div((h*c - m*f), (h*c + m*f)),       # Odds Ratio Skill Score
+    'SEDS': check_SEDS(h, f, m, n)                     # Symmetric Extreme Dependency Score ((np.log((h+f)/n)+np.log((h+m)/n))/np.log(h/n))-1            
     }
+    #### Just doing some testing here with likelihood ratios, keep commented out for now
+    # print(df[obs_key], df[pred_key])
+    # clr_pos = check_div(h, h+m) / (1-check_div(c, c+f))
+    # clr_neg = (1-check_div(h, h+m)) / check_div(c, c+f)
+    # print(clr_pos, clr_neg)
+    # input()
     return scores
 
 
@@ -1269,7 +1279,23 @@ def remove_none(obs, model):
 
     return obs_clean, model_clean
     
+
+
+def receiver_operator_characteristic(obs, pred, model_name):
+    fpr, tpr, thresholds = skl.roc_curve(obs, pred) # fpr: false positive rate, tpr: true positive rate, thresholds: Decreasing thresholds on the decision function used to compute fpr and tpr. 
+    roc_auc = skl.auc(fpr, tpr) # Area under the curve 
+    roc_curve_plt = skl.RocCurveDisplay(fpr=fpr, tpr=tpr, roc_auc=roc_auc,estimator_name=model_name)
     
+    # plt.show()
+
+
+    
+
+
+    return roc_auc, roc_curve_plt
+
+
+
 def remove_zero(obs, model):
     '''Remove None values from corresponding observations and model lists.
         Only values that are real in both lists are kept.
