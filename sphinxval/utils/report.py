@@ -70,9 +70,12 @@ def make_markdown_table(column_1, column_2, dataframe, width=50):
                        'False Alarms (FP)', 'Correct Negatives (TN)']                   
     rows = dataframe.index.to_list()
     numbers = list(dataframe.to_numpy())
+    
+    # CHANGE RATIOS TO PERCENTAGES
     for i in range(0, len(rows)):
          if 'percent' in rows[i].lower():
             numbers[i] *= 100.0
+            
     # CLEAN UP numbers
     formatted_numbers = []
     for i in range(0, len(rows)):
@@ -313,7 +316,7 @@ def build_metrics_table(data, current_index, metric_index_start, skip_label_list
 def build_plot_string_list(data, current_index):
     plot_string_list = []
     plot_file_string_list = []
-    if 'Scatter Plot' in data.columns:    
+    if ('Scatter Plot' in data.columns):    
         plot_string_ = data.iloc[current_index]['Scatter Plot']
         if plot_string_ == '':
             plot_string = 'No image files found.\n\n'
@@ -331,7 +334,26 @@ def build_plot_string_list(data, current_index):
             plot_file_string = replace_backslash_with_forward_slash(plot_file_string) + '.pdf'
             plot_string_list.append('![](' +  plot_string + ')\n\n')
             plot_file_string_list.append(plot_file_string)
-        
+    
+    if ('ROC Curve Plot' in data.columns):
+        plot_string_ = data.iloc[current_index]['ROC Curve Plot']
+        if plot_string_ == '':
+            plot_string = 'No image files found.\n\n'
+            plot_file_string = ''
+            plot_string_list.append(plot_string)
+            plot_file_string_list.append(plot_file_string)
+        else:    
+            if relative_path_plots__:
+                plot_string = os.path.relpath(plot_string_, 'reports/')
+                plot_file_string = os.path.relpath(plot_string_, '.')
+            else:
+                plot_string = os.path.abspath(plot_string_)
+                plot_file_string = plot_string + ''
+            plot_string = replace_backslash_with_forward_slash(plot_string) + '.pdf'
+            plot_file_string = replace_backslash_with_forward_slash(plot_file_string) + '.pdf'
+            plot_string_list.append('![](' +  plot_string + ')\n\n')
+            plot_file_string_list.append(plot_file_string)
+ 
     if 'Time Profile Selection Plot' in data.columns:
         time_profile_plot_string = data.iloc[current_index]['Time Profile Selection Plot']
         time_profile_plot_string_list = time_profile_plot_string.split(';')
@@ -702,6 +724,8 @@ def get_plot_type(plot_string):
         plot_type = 'Time Profile'
     elif 'Correlation' in plot_string:
         plot_type = 'Correlation'
+    elif 'ROC' in plot_string:
+        plot_type = 'ROC Curve'
     else:
         plot_type = 'None'
     return plot_type
