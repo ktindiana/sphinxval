@@ -420,7 +420,7 @@ def build_section_awt(filename, model, sphinx_dataframe, metric_label_start, sec
         text += add_collapsible_segment('Thresholds Applied', threshold_string)
         for j in range(0, len(awt_string_list)):
             awt_string = awt_string_list[j]
-            selections_filename = get_awt_filename(data, i, output_dir__, section_tag, model, obs_threshold, pred_threshold, mismatch_allowed_string, awt_string)
+            selections_filename = get_awt_filename(data, i, output_dir__, section_tag, model, obs_threshold, pred_threshold, mismatch_allowed_string, awt_string, appendage)
             subset_list = ['Prediction Window Start', 'Prediction Window End']
             if os.path.exists(selections_filename):            
                 subset_list = append_subset_list(selections_filename, subset_list, 'Prediction Window End', 'Units')
