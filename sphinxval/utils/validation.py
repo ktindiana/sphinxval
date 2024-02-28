@@ -1390,15 +1390,13 @@ def probability_intuitive_metrics(df, dict, model, energy_key, thresh_key,
     plt.plot(skill_line, skill_line, '--', label = 'Random Guess')
     figname = config.outpath + '/plots/ROC_curve_' \
             + model + "_" + energy_key.strip() + "_" + thresh_fnm
+    if mismatch:
+            figname = figname + "_mm"
+    if validation_type != "" and validation_type != "All":
+            figname = figname + "_" + validation_type
     plt.legend(loc="lower right")
-    plt.show()
     roc_curve_plt.figure_.savefig(figname + ".pdf", dpi=300, bbox_inches='tight')
- 
     plt.close(roc_curve_plt.figure_)
-    
-    # plt.plot(obs, pred, 'o')
-    # plt.show()
-    
     
     #Save to dict (ultimately dataframe)
     dict['Model'].append(model)
