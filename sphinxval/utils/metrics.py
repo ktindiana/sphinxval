@@ -1285,13 +1285,6 @@ def receiver_operator_characteristic(obs, pred, model_name):
     fpr, tpr, thresholds = skl.roc_curve(obs, pred) # fpr: false positive rate, tpr: true positive rate, thresholds: Decreasing thresholds on the decision function used to compute fpr and tpr. 
     roc_auc = skl.auc(fpr, tpr) # Area under the curve 
     roc_curve_plt = skl.RocCurveDisplay(fpr=fpr, tpr=tpr, roc_auc=roc_auc,estimator_name=model_name)
-    
-    
-
-
-    
-
-
     return roc_auc, roc_curve_plt
 
 
