@@ -1286,7 +1286,7 @@ def receiver_operator_characteristic(obs, pred, model_name):
     roc_auc = skl.auc(fpr, tpr) # Area under the curve 
     roc_curve_plt = skl.RocCurveDisplay(fpr=fpr, tpr=tpr, roc_auc=roc_auc,estimator_name=model_name)
     
-    # plt.show()
+    
 
 
     
