@@ -708,7 +708,7 @@ def calc_SAPE(y_true, y_pred):
 #    return 2.0 * np.abs(np.log10(y_pred) - np.log10(y_true)) / (np.abs(np.log10(y_pred)) + np.abs(np.log10(y_true)))
 
 
-def calc_pearson(y_true, y_pred):
+def calc_pearson(y_true, y_pred, type=""):
     """
     Calculates the pearson coefficient while considering the scale
 
@@ -719,6 +719,12 @@ def calc_pearson(y_true, y_pred):
 
     y_pred : array-like
         Forecasted (estimated) values
+        
+    type : string
+        may be log, linear, or empty. Empty indicates will attempt
+        to calculate both log and linear.
+        log - calculate only log coeff
+        linear - calculate only linear coeff
 
     Returns
     -------
@@ -733,17 +739,23 @@ def calc_pearson(y_true, y_pred):
 
     y_true = check_array(y_true, force_all_finite=True, ensure_2d=False)
     y_pred = check_array(y_pred, force_all_finite=True, ensure_2d=False)
+    
+    r_log = np.nan
+    r_lin = np.nan
 
+    
     # calculating r on log scale if possible
-    try:
-        r_log = pearsonr(np.log10(y_true), np.log10(y_pred))[0]
-    except:
-        r_log = np.nan
+    if type == "log" or type == "":
+        try:
+            r_log = pearsonr(np.log10(y_true), np.log10(y_pred))[0]
+        except:
+            r_log = np.nan
 
-    try:
-        r_lin = pearsonr(y_true, y_pred)[0]
-    except:
-        r_lin = np.nan
+    if type == "linear" or type == "":
+        try:
+            r_lin = pearsonr(y_true, y_pred)[0]
+        except:
+            r_lin = np.nan
 
     return r_lin, r_log
 
@@ -870,7 +882,7 @@ def calc_MdSA(y_true, y_pred):
 
 
 #CA
-def calc_spearman(y_true, y_pred):
+def calc_spearman(y_true, y_pred, type=""):
     """
     Calculates the spearman coefficient while considering the scale
 
@@ -881,6 +893,12 @@ def calc_spearman(y_true, y_pred):
 
     y_pred : array-like
         Forecasted (estimated) values
+
+    type : string
+        may be log, linear, or empty. Empty indicates will attempt
+        to calculate both log and linear.
+        log - calculate only log coeff
+        linear - calculate only linear coeff
 
     Returns
     -------
@@ -905,17 +923,21 @@ def calc_spearman(y_true, y_pred):
     y_true = check_array(y_true, force_all_finite=True, ensure_2d=False)
     y_pred = check_array(y_pred, force_all_finite=True, ensure_2d=False)
 
-    # calculating the spearman correlation coefficient
-    try:
-        s_log = spearmanr(np.log10(y_true), np.log10(y_pred)).correlation
-    except:
-        s_log = np.nan
+    s_log = np.nan
+    s_lin = np.nan
 
-    try:
-        s_lin = spearmanr(y_true, y_pred).correlation
-    except:
-        s_lin = np.nan
-    # s_p = spearmanr(y_true, y_pred).pvalue
+    # calculating the spearman correlation coefficient
+    if type == "log" or type == "":
+        try:
+            s_log = spearmanr(np.log10(y_true), np.log10(y_pred)).correlation
+        except:
+            s_log = np.nan
+
+    if type == "linear" or type == "":
+        try:
+            s_lin = spearmanr(y_true, y_pred).correlation
+        except:
+            s_lin = np.nan
 
     return s_lin, s_log
 
@@ -1111,11 +1133,11 @@ def calc_contingency_all_clear(df, obs_key, pred_key):
     'FOCN': check_div(c, m+c),                         # Frequency of Correct Negatives
     'TS': check_div(h, h+f+m),                         # Threat Score, Critical success index
     'OR': check_div(h*c, f*m),                         # Odds Ratio
-    'GSS': check_GSS(h, f, m, n),                      # Gilbert SKill score check_div((h-(h+f)*(h+m)/n), (h+f+m-(h+f)*(h+m)/n)),
-    'TSS': check_div(h, h+m) - check_div(f, f+c),      # True Skill Score 
-    'HSS': check_div(2.0 * (h*c - f*m), ((h+m) * (m+c) + (h+f) * (f+c))),       # Heidke Skill Score
+    'GSS': check_GSS(h, f, m, n),                      # Gilbert Skill score
+    'TSS': check_div(h, h+m) - check_div(f, f+c),      # True Skill Score
+    'HSS': check_div(2.0 * (h*c - f*m), ((h+m) * (m+c) + (h+f) * (f+c))), # Heidke Skill Score
     'ORSS': check_div((h*c - m*f), (h*c + m*f)),       # Odds Ratio Skill Score
-    'SEDS': check_SEDS(h, f, m, n)                     # Symmetric Extreme Dependency Score ((np.log((h+f)/n)+np.log((h+m)/n))/np.log(h/n))-1            
+    'SEDS': check_SEDS(h, f, m, n)                     # Symmetric Extreme Dependency Score         
     }
     #### Just doing some testing here with likelihood ratios, keep commented out for now
     # print(df[obs_key], df[pred_key])
@@ -1124,100 +1146,6 @@ def calc_contingency_all_clear(df, obs_key, pred_key):
     # print(clr_pos, clr_neg)
     # input()
     return scores
-
-
-
-
-#def calc_contingency_bool(y_true, y_pred):
-#    """
-#    Calculates a contingency table and relevant
-#    ratios and skill scores based on booleans
-#    True = threshold crossed (event)
-#    False = threshold not crossed (no event)
-#
-#    Parameters
-#    ----------
-#    y_true : array-like
-#        Observed boolean values
-#
-#    y_pred : array-like
-#        Forecasted boolean values
-#
-#
-#    Returns
-#    -------
-#    scores : dictionary
-#        Ratios and skill scores
-#    """
-#    # The pandas crosstab predicts booleans as follows:
-#    #   True = event
-#    #   False = no event
-#    # ALL CLEAR booleans are as follows:
-#    #   True = no event
-#    #   False = event
-#    # Prior to inputting all clear predictions into this code, need to
-#    #   switch the booleans to match how event/no event are interpreted here.
-#
-#
-#    # Remove None values from the observation and forecast pairs
-#    # None forecasts are not penalized, simply not counted
-#    y_true, y_pred = remove_none(y_true, y_pred)
-#
-#    check_consistent_length(y_true, y_pred)
-#
-#    y_true = check_array(y_true, force_all_finite=True, ensure_2d=False)
-#    y_pred = check_array(y_pred, force_all_finite=True, ensure_2d=False)
-#
-#    matrix = pd.crosstab(y_true, y_pred)
-#
-#    # if any of the table items are empty, make 0 instead
-#    #On one computer system, matrix[1][1] syntax did not work and resulted
-#    #in all values 0. Had to modify syntax to get correct values.
-#    try:
-#        h = matrix[True][True] #hits = matrix[1][1]
-#    except:
-#        h = 0
-#    try:
-#        m = matrix[False][True] #misses = matrix[0][1]
-#    except:
-#        m = 0
-#    try:
-#        f = matrix[True][False] #false alarms = matrix[1][0]
-#    except:
-#        f = 0
-#    try:
-#        c = matrix[False][False] #correct negatives = matrix[0][0]
-#    except:
-#        c = 0
-#
-#    n = h+m+f+c
-#
-#    # all scores while checking for dividing by zero
-#    scores = {
-#    'TP': h,
-#    'FN': m,
-#    'FP': f,
-#    'TN': c,
-#    'PC': check_div(h+c, n),
-#    'B': check_div(h+f, h+m),
-#    'H': check_div(h, h+m),
-#    'FAR': check_div(f, h+f), #False Alarm Ratio
-#    'F': check_div(f, f+c), #False Alarm Rate
-#    'FOH': check_div(h, h+f),
-#    'FOM': check_div(m, h+m),
-#    'POCN': check_div(c, f+c),
-#    'DFR': check_div(m, m+c),
-#    'FOCN': check_div(c, m+c),
-#    'TS': check_div(h, h+f+m),
-#    'OR': check_div(h*c, f*m),
-#    'GSS': check_GSS(h, f, m, n), #check_div((h-(h+f)*(h+m)/n), (h+f+m-(h+f)*(h+m)/n)),
-#    'TSS': check_div(h, h+m) - check_div(f, f+c),
-#    'HSS': check_div(2.0 * (h*c - f*m), ((h+m) * (m+c) + (h+f) * (f+c))),
-#    'ORSS': check_div((h*c - m*f), (h*c + m*f)),
-#    'SEDS': check_SEDS(h, f, m, n)#((np.log((h+f)/n)+np.log((h+m)/n))/np.log(h/n))-1
-#    }
-#    return scores
-
 
 
 
