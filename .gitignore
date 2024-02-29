@@ -10,3 +10,10 @@ model/*
 output*/*
 plots/*
 reports/*
+validation_reports/*
+
+.DS_Store
+**/.DS_Store
+
+*tmp.txt
+**/*tmp.txt

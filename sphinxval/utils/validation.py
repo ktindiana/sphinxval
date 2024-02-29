@@ -830,7 +830,7 @@ def identify_flux_forecast(df, thresh_key, pred_key, validation_type):
         for i in range(len(df)-1,-1,-1):
             if df.iloc[i][pred_key] == None:
                 continue
-            if df.iloc[i][pred_key] <thresh:
+            if df.iloc[i][pred_key] < thresh:
                 continue
             if df.iloc[i][pred_key] >= thresh:
                 return df.iloc[i]
@@ -998,6 +998,9 @@ def extract_all_clear_forecast_type(df, validation_type):
     
     #Extract all unique SEP events
     sep_events = resume.identify_unique(df, 'Observed SEP Threshold Crossing Time')
+    
+    if len(sep_events) == len(df.index):
+        return df
    
     #For each SEP event, identify the desired forecast for that SEP event.
     for sep in sep_events:
@@ -1095,10 +1098,14 @@ def extract_flux_forecast_type(df, thresh_key, pred_key, time_key, validation_ty
             validation_type. Only one forecast per SEP event. ONLY
             forecasts related to observed SEP events.
         
+        :doType: (bool) True = do First, Last, Mean, Max (more than
+                    one forecast per SEP event)
+            False = one forecast per SEP event so no First, Last, Mean, Max
+        
     """
-    
+
     if validation_type == "All" or validation_type == "":
-        return df
+        return df, True
     
     #Create an empty dataframe with the same columns plus AWT info
     sel_df = pd.DataFrame(columns=df.columns) #Selected forecasts
@@ -1110,7 +1117,7 @@ def extract_flux_forecast_type(df, thresh_key, pred_key, time_key, validation_ty
     #events, indicating that there is one forecast per SEP event.
     #If so, then no need to run First, Last, Max, Mean
     if len(sep_events) == len(df.index):
-        return sel_df #empty
+        return df, False
     
     #For each SEP event, identify the desired forecast for that SEP event.
     for sep in sep_events:
@@ -1130,7 +1137,7 @@ def extract_flux_forecast_type(df, thresh_key, pred_key, time_key, validation_ty
 
         sel_df.loc[len(sel_df)] = row.values
 
-    return sel_df
+    return sel_df, True
 
 
 
@@ -1152,16 +1159,20 @@ def extract_time_forecast_type(df, pred_key, validation_type):
         :sub: (pandas DataFrame) probability forecasts relevant to the
             validation_type. Only one forecast per SEP event. ONLY
             forecasts related to observed SEP events.
+            
+        :doType: (bool) True = do First, Last, Mean, Max (more than
+                    one forecast per SEP event)
+            False = one forecast per SEP event so no First, Last, Mean, Max
         
     """
     if validation_type == "All" or validation_type == "":
-        return df
+        return df, True
     
     #Create an empty dataframe with the same columns plus AWT info
     sel_df = pd.DataFrame(columns=df.columns) #Selected forecasts
     
     if validation_type == "Max" or validation_type == "Mean":
-        return sel_df
+        return sel_df, False
     
     #Extract all unique SEP events
     time_key = pred_key.replace("Predicted", "Observed")
@@ -1170,7 +1181,7 @@ def extract_time_forecast_type(df, pred_key, validation_type):
     #If same number of forecasts as SEP events, then only one forecast
     #per SEP event and no need to do First, Last
     if len(sep_events) == len(df.index):
-        return sel_df #empty
+        return df, False
    
     #For each SEP event, identify the desired forecast for that SEP event.
     for sep in sep_events:
@@ -1184,7 +1195,8 @@ def extract_time_forecast_type(df, pred_key, validation_type):
 
         sel_df.loc[len(sel_df)] = row.values
 
-    return sel_df
+    return sel_df, True
+    
 ##### END FIRST, LAST, MEAN, MAX #####################
 
 
@@ -1650,8 +1662,8 @@ def peak_intensity_intuitive_metrics(df, dict, model, energy_key, thresh_key,
     if sub.empty:
         return
 
-    sub = extract_flux_forecast_type(sub, thresh_key, 'Predicted SEP Peak Intensity (Onset Peak)', 'Observed SEP Peak Intensity (Onset Peak) Time', validation_type)
-    if sub.empty:
+    sub, doType = extract_flux_forecast_type(sub, thresh_key, 'Predicted SEP Peak Intensity (Onset Peak)', 'Observed SEP Peak Intensity (Onset Peak) Time', validation_type)
+    if sub.empty or not doType:
         return
     
     mismatch = bool(sub.iloc[0]['Mismatch Allowed'])
@@ -1729,7 +1741,6 @@ def peak_intensity_max_intuitive_metrics(df, dict, model, energy_key,
     if validation_type not in val_type:
         return
     
-    
     peak_key = 'Predicted SEP Peak Intensity Max (Max Flux)'
     time_key = 'Observed SEP Peak Intensity Max (Max Flux) Time'
 
@@ -1772,7 +1783,7 @@ def peak_intensity_max_intuitive_metrics(df, dict, model, energy_key,
             for ix in noneval:
                 sub = sub.drop(index=ix)
 
-        sub = extract_flux_forecast_type(sub, thresh_key, peak_key, time_key, validation_type)
+        sub, doType = extract_flux_forecast_type(sub, thresh_key, peak_key, time_key, validation_type)
 
 
     #Models may fill only the Peak Intensity field. It can be ambiguous whether
@@ -1818,7 +1829,7 @@ def peak_intensity_max_intuitive_metrics(df, dict, model, energy_key,
         if sub.empty:
             return
         peak_key = 'Predicted SEP Peak Intensity (Onset Peak)'
-        sub = extract_flux_forecast_type(sub, thresh_key, peak_key, time_key, validation_type)
+        sub, doType = extract_flux_forecast_type(sub, thresh_key, peak_key, time_key, validation_type)
         if sub.empty:
             return
         
@@ -1826,6 +1837,9 @@ def peak_intensity_max_intuitive_metrics(df, dict, model, energy_key,
                 " did not explicitly "
                 "include a peak_intensity_max field. Comparing "
                 "peak_intensity to observed max flux.")
+
+    if not doType:
+        return
 
     mismatch = bool(sub.iloc[0]['Mismatch Allowed'])
     pred_energy_key = str(sub.iloc[0]['Prediction Energy Channel Key'])
@@ -2114,8 +2128,8 @@ def fluence_intuitive_metrics(df, dict, model, energy_key,
     if sub.empty:
         return
 
-    sub = extract_flux_forecast_type(sub, thresh_key, 'Predicted SEP Fluence', 'Observed SEP End Time', validation_type)
-    if sub.empty:
+    sub, doType = extract_flux_forecast_type(sub, thresh_key, 'Predicted SEP Fluence', 'Observed SEP End Time', validation_type)
+    if sub.empty or not doType:
         return
 
     mismatch = bool(sub.iloc[0]['Mismatch Allowed'])
@@ -2230,8 +2244,8 @@ def threshold_crossing_intuitive_metrics(df, dict, model, energy_key,
     if sub.empty:
         return
 
-    sub = extract_time_forecast_type(sub, 'Predicted SEP Threshold Crossing Time', validation_type)
-    if sub.empty:
+    sub, doType = extract_time_forecast_type(sub, 'Predicted SEP Threshold Crossing Time', validation_type)
+    if sub.empty or not doType:
         return
 
     mismatch = bool(sub.iloc[0]['Mismatch Allowed'])
@@ -2313,8 +2327,8 @@ def start_time_intuitive_metrics(df, dict, model, energy_key, thresh_key,
     if sub.empty:
         return
 
-    sub = extract_time_forecast_type(sub, 'Predicted SEP Start Time', validation_type)
-    if sub.empty:
+    sub, doType = extract_time_forecast_type(sub, 'Predicted SEP Start Time', validation_type)
+    if sub.empty or not doType:
         return
 
     mismatch = bool(sub.iloc[0]['Mismatch Allowed'])
@@ -2396,8 +2410,8 @@ def end_time_intuitive_metrics(df, dict, model, energy_key,
     if sub.empty:
         return
 
-    sub = extract_time_forecast_type(sub, 'Predicted SEP End Time', validation_type)
-    if sub.empty:
+    sub, doType = extract_time_forecast_type(sub, 'Predicted SEP End Time', validation_type)
+    if sub.empty or not doType:
         return
 
     mismatch = bool(sub.iloc[0]['Mismatch Allowed'])
@@ -2482,8 +2496,8 @@ def duration_intuitive_metrics(df, dict, model, energy_key, thresh_key,
     if sub.empty:
         return
 
-    sub = extract_time_forecast_type(sub, 'Predicted SEP End Time', validation_type)
-    if sub.empty:
+    sub, doType = extract_time_forecast_type(sub, 'Predicted SEP End Time', validation_type)
+    if sub.empty or not doType:
         return
 
     mismatch = bool(sub.iloc[0]['Mismatch Allowed'])
@@ -2569,11 +2583,11 @@ def peak_intensity_time_intuitive_metrics(df, dict, model, energy_key,
 
 
     if validation_type != "Max":
-        sub = extract_time_forecast_type(sub, 'Predicted SEP Peak Intensity (Onset Peak) Time', validation_type)
+        sub, doType = extract_time_forecast_type(sub, 'Predicted SEP Peak Intensity (Onset Peak) Time', validation_type)
     if validation_type == "Max":
-        sub = extract_flux_forecast_type(sub, thresh_key, 'Predicted SEP Peak Intensity (Onset Peak)', 'Observed SEP Peak Intensity (Onset Peak) Time', validation_type)
+        sub, doType = extract_flux_forecast_type(sub, thresh_key, 'Predicted SEP Peak Intensity (Onset Peak)', 'Observed SEP Peak Intensity (Onset Peak) Time', validation_type)
 
-    if sub.empty:
+    if sub.empty or not doType:
         return
 
     mismatch = bool(sub.iloc[0]['Mismatch Allowed'])
@@ -2674,11 +2688,11 @@ def peak_intensity_max_time_intuitive_metrics(df, dict, model, energy_key,
 
 
     if validation_type != "Max":
-        sub = extract_time_forecast_type(sub, 'Predicted SEP Peak Intensity Max (Max Flux) Time', validation_type)
+        sub, doType = extract_time_forecast_type(sub, 'Predicted SEP Peak Intensity Max (Max Flux) Time', validation_type)
     if validation_type == "Max":
-        sub = extract_flux_forecast_type(sub, thresh_key, 'Predicted SEP Peak Intensity Max (Max Flux)', 'Observed SEP Peak Intensity Max (Max Flux) Time', validation_type)
+        sub, doType = extract_flux_forecast_type(sub, thresh_key, 'Predicted SEP Peak Intensity Max (Max Flux)', 'Observed SEP Peak Intensity Max (Max Flux) Time', validation_type)
 
-    if sub.empty:
+    if sub.empty or not doType:
         return
 
     mismatch = bool(sub.iloc[0]['Mismatch Allowed'])
@@ -3283,7 +3297,6 @@ def awt_metrics(df, dict, model, energy_key, thresh_key, validation_type):
         #calculation.
         if validation_type == "First":
             if len(sep_events) == len(sel_df.index):
-                #No forecasts for this particular quantity
                 #Fill this set of fields in the AWT dict with None
                 time_keys = ['Observed SEP Threshold Crossing Time','Observed SEP Start Time']
                 if ftype['obs_key'] != '':
@@ -3304,23 +3317,25 @@ def awt_metrics(df, dict, model, energy_key, thresh_key, validation_type):
             if 'All Clear' in ftype['pred_key']:
                 if validation_type == "First":
                     sep_sub = extract_all_clear_forecast_type(sep_sub, validation_type)
-                
+ 
                 idx = identify_first_not_clear_forecast_strict(sep_sub)
         
             if 'Time' in ftype['pred_key']:
                 if validation_type == "First":
-                    sep_sub = extract_time_forecast_type(sep_sub, ftype['pred_key'], validation_type)
-                
+                    sep_sub, doType = extract_time_forecast_type(sep_sub, ftype['pred_key'], validation_type)
+
                 idx = identify_first_time_forecast_strict(sep_sub, ftype['pred_key'])
                 
             if 'Peak' in ftype['pred_key'] or 'Point' in ftype['pred_key']:
-                if validation_type == "First" and 'Peak' in ftype['pred_key']:
-                    sep_sub = extract_flux_forecast_type(sep_sub, thresh_key, ftype['pred_key'], ftype['obs_key'], validation_type)
+                if validation_type == "First":
+                    sep_sub, doType = extract_flux_forecast_type(sep_sub, thresh_key, ftype['pred_key'], ftype['obs_key'], validation_type)
 
                 idx = identify_first_flux_forecast_strict(sep_sub, ftype['pred_key'],
                         thresh_key)
             
             if idx == None:
+                continue
+            if sep_sub.empty:
                 continue
             
             row = sep_sub.iloc[idx].to_list()
