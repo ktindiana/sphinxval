@@ -485,6 +485,114 @@ def plot_time_profile(date, values, labels, dy=None, dyl=None, dyh=None,
 
 
 
+def plot_false_alarms(all_dates, fa_dates, labels, x_label="Date",
+    y_label="Value", date_format="year", title="False Alarms", showplot=False,
+    closeplot=False, saveplot=False, figname = "false_alarms.png"):
+    """
+    Plot all forecasts with time with false alarms highlighted.
+
+    Parameters
+    ----------
+    all_dates : array-like datetime objects, shape=(n dates)
+        Dates correspond to prediction window start times for all forecasts.
+        Datetimes
+        [dates1,dates2,dates3,...]
+
+    fa_dates : array-like datetime objects, shape=(n dates)
+        Dates correspond to prediction window start times for false alarms.
+        Datetimes
+        [dates1,dates2,dates3,...]
+
+    labels : array-like string, shape=(2)
+        Labels for the different time profiles
+
+    title : string
+        Title for plot
+        Optional
+
+    x_label : string
+        Label for x-axis
+        Optional. Defaults to "Date"
+        
+    y_label : string
+        Label for y-axis
+        Optional. Defaults to "Metric"
+        
+    date_format : string
+        May be "year" or "day" or "none"
+        Default year
+        Determines format of date on x-axis
+
+    showplot : boolean
+        Indicator for displaying the plot on screen or not
+        Optional. Defaults to False
+
+    closeplot : boolean
+        Indicator for clearing the figure from memory
+        Optional. Defaults to False
+
+    figname : string
+        Name to save figure (includes filetype)
+        Optional. Defaults to "false_alarms.png"
+
+    Returns
+    -------
+    fig, figname
+    """
+
+    register_matplotlib_converters()
+
+    #check_consistent_length(date, metric)
+
+    # checking if items in date are datetime objects
+    #if not all(isinstance(x, datetime.datetime) for x in date):
+    #    raise TypeError("Dates must be datetime objects.")
+
+    try:
+        plt.style.use('seaborn-whitegrid')
+    except OSError:
+        plt.style.use('seaborn-v0_8-whitegrid')
+
+    fig = plt.figure(figsize=(10,6))
+    ax = plt.subplot(111)
+    
+    #Create y-value arrays set to 1
+    all_fcasts = [1]*len(all_dates)
+    fa_fcasts = [1]*len(fa_dates)
+
+    ax.plot(all_dates, all_fcasts, "o", label=labels[0], color="black")
+    ax.plot(fa_dates, fa_fcasts, "o", label=labels[1], color="red", mfc='none')
+
+
+    ax.set(xlabel=x_label, ylabel=y_label)
+    if date_format == "year" or date_format == "Year":
+        ax.xaxis_date()
+        ax.xaxis.set_major_formatter(DateFormatter('%Y-%m-%d'))
+    if date_format == "day" or date_format == "Day":
+        ax.xaxis_date()
+        ax.xaxis.set_major_formatter(DateFormatter('%m-%d\n%H:%M'))
+    
+    plt.setp(ax.get_xticklabels(), rotation = 15)
+    ax.set_title(title)
+    ax.set_ylim(0, 2)
+    
+    chartBox = ax.get_position()
+    ax.set_position([chartBox.x0, chartBox.y0, chartBox.width*0.87,
+                    chartBox.height])
+    ax.legend(loc='upper right', bbox_to_anchor=(1.3, 0.95), fontsize='9', \
+              framealpha=0.5)
+        
+
+    if showplot: plt.show()
+    if saveplot:
+        fig.savefig(figname, dpi=300, bbox_inches='tight')
+
+    if closeplot: plt.close(fig)
+
+    return fig, figname
+
+
+
 
 def correlation_plot(obs_values, model_values, plot_title,
     xlabel="Observations", ylabel="Model",  value="Value",
@@ -688,8 +796,7 @@ def box_plot(values, labels, x_label="Model", y_label="Metric", \
              title=None, save="boxes", uselog=False, showplot=False, \
              closeplot=False):
     """
-    Plots ratio or skill score for vary thresholds
-    and for each model subtype
+    Plots ratio or skill score for each model subtype
 
     Parameters
     ----------
@@ -773,3 +880,100 @@ def box_plot(values, labels, x_label="Model", y_label="Metric", \
     #fig.savefig(save+'.png', dpi=300, bbox_inches='tight')
 
     if closeplot: plt.close(fig)
+
+
+def box_plot_metrics(values, labels, models, x_label="Metric", y_label="Value", \
+             title=None, save="boxes", uselog=False, showplot=False, \
+             saveplot=False, closeplot=False):
+    """
+    Summary plots of final metrics for multiple models.
+
+    Parameters
+    ----------
+    values : array-like float, shape=(m metric subtypes, n metric values)
+        Values to plot for each model subtype
+
+    labels : array-like string, shape=(m metric labels)
+        Labels of the metrics
+        
+    models : array-like string, shape=(n models)
+        Labels of the metrics
+
+    x_label : string
+        Label for x-axis
+        Optional. Defaults to "Metric"
+
+    y_label : string
+        Label for y-axis
+        Optional. Defaults to "Value"
+
+    title : string
+        Title for plot
+        Optional
+
+    save : string
+        Name to save PNG as (should not include ".png")
+        Optional. Defaults to "boxes"
+
+    showplot : boolean
+        Indicator for displaying the plot on screen or not
+        Optional. Defaults to False
+
+    closeplot : boolean
+        Indicator for clearing the figure from memory
+        Optional. Defaults to False
+
+    Returns
+    -------
+    None
+    """
+    if len(values) <= 4:
+        fig = plt.figure(figsize=(9, 6))
+    if len(values) > 4 and len(values) <= 7:
+        fig = plt.figure(figsize=(12, 6))
+    if len(values) > 7:
+        fig = plt.figure(figsize=(16, 6))
+    ax = fig.add_subplot(111)
+
+    sns.boxplot(data=values, fliersize=0, meanline=True, showmeans=True, \
+                medianprops = {'color': 'w', 'linewidth': 1},
+                meanprops = {'color': 'k', 'linewidth': 1})
+
+    means = [np.mean(list) for list in values]
+    medians = [np.median(list) for list in values]
+
+    for i in range(len(values)):
+        if means[i] == max(means[i], medians[i]):
+            vmean = 'bottom'
+            vmed = 'top'
+        else:
+            vmean = 'top'
+            vmed = 'bottom'
+        ax.text(i, means[i], "\u03BC=" + str(np.round(means[i], 2)), size='large', \
+                color='k', weight='semibold', horizontalalignment='center', \
+                verticalalignment=vmean)
+        ax.text(i, medians[i], "M=" + str(np.round(medians[i], 2)), size='large', \
+                color='b', weight='semibold', horizontalalignment='center', \
+                verticalalignment=vmed)
+
+    sns.stripplot(data=values, linewidth=0.5)
+
+    ax.set_title(title)
+    #ax.set_xlabel(x_label)
+    ax.set_ylabel(y_label)
+    
+    wrapped_labels = [ label.replace(' ', '\n') for label in labels ]
+    ax.set_xticklabels(wrapped_labels, rotation=0)
+    plt.tight_layout()
+
+    if uselog:
+        ax.set_yscale('log')
+
+    if showplot: plt.show()
+
+    if saveplot:
+        fig.savefig(save+'.png', dpi=300, bbox_inches='tight')
+
+    if closeplot: plt.close(fig)
+
+    return fig
