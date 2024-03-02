@@ -1,6 +1,5 @@
 import sys
 import datetime
-from . import object_handler as objh
 import pandas as pd
 import pickle
 
@@ -62,7 +61,8 @@ def identify_unique(df, value):
     return unique
 
 
-def identify_thresholds_per_energy_channel(df):
+def identify_thresholds_per_energy_channel(df, ek_name='Energy Channel Key',
+    tk_name='Threshold Key'):
     """ Identify all of the thresholds applied to a given energy
         channel. Put in the format of a dictionary:
             all_thresholds.update({energy_key: [thresh_key1, thresh_key2]})
@@ -74,13 +74,13 @@ def identify_thresholds_per_energy_channel(df):
         in calculate_intuitive_metrics in validation.py
 
     """
-    all_energy_channels = identify_unique(df, 'Energy Channel Key')
+    all_energy_channels = identify_unique(df, ek_name)
     all_thresholds = {}
     for ek in all_energy_channels:
         all_thresholds.update({ek: []})
 
-        sub = df.loc[(df['Energy Channel Key'] == ek)]
-        thresh = identify_unique(df, 'Threshold Key')
+        sub = df.loc[(df[ek_name] == ek)]
+        thresh = identify_unique(sub, tk_name)
         for tk in thresh:
             all_thresholds[ek].append(tk)
 
