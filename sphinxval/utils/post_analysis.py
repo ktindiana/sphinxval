@@ -8,10 +8,12 @@ import sys
 from . import plotting_tools as plt_tools
 from . import resume
 import pickle
+import pandas as pd
 
 #Columns to exclude from box plots
 exclude = ["N (Total Number of Forecasts)", "Predicted SEP Events",
-        "Missed SEP Events", "Scatter Plot", "Linear Regression y-intercept"]
+        "Missed SEP Events", "Scatter Plot", "Linear Regression y-intercept",
+        "ROC Curve Plot"]
 
 
 
@@ -127,7 +129,7 @@ def read_in_metrics(path, quantity):
     """
     
     prefix = get_file_prefix(quantity)
-    fname = path + "/pkl/" + prefix + "_metrics.pkl"
+    fname = path + "/output/pkl/" + prefix + "_metrics.pkl"
     
     df = resume.read_in_df(fname)
     
@@ -148,7 +150,7 @@ def plot_groups(quantity):
                 be plotted together
                 
     """
-
+    #ALL CLEAR
     if quantity == "All Clear":
         groups = [  ["All Clear 'True Positives' (Hits)",
                     "All Clear 'False Positives' (False Alarms)",
@@ -156,14 +158,54 @@ def plot_groups(quantity):
                     "All Clear 'False Negatives' (Misses)"],
                     ["Percent Correct", "Bias", "Hit Rate", "False Alarm Rate",
                     "Frequency of Misses", "Frequency of Hits"],
-                    ["Probability of Correct Negatives", "Frequency of Correct Negatives",
-                    "False Alarm Ratio", "Detection Failure Ratio", "Threat Score"],
+                    ["Probability of Correct Negatives",
+                    "Frequency of Correct Negatives", "False Alarm Ratio",
+                    "Detection Failure Ratio", "Threat Score"],
                     ["Odds Ratio"],
-                    ["Gilbert Skill Score", "True Skill Statistic", "Heidke Skill Score",
-                    "Odds Ratio Skill Score", "Symmetric Extreme Dependency Score"],
-                    ["Number SEP Events Correctly Predicted", "Number SEP Events Missed"]
+                    ["Gilbert Skill Score", "True Skill Statistic",
+                    "Heidke Skill Score", "Odds Ratio Skill Score",
+                    "Symmetric Extreme Dependency Score"],
+                    ["Number SEP Events Correctly Predicted",
+                    "Number SEP Events Missed"]
                 ]
-                
+
+    #PROBABILITY
+    if quantity == "Probability":
+        groups = [ ["Brier Score", "Brier Skill Score",
+                    "Spearman Correlation Coefficient", "Area Under ROC Curve"]
+                ]
+
+    #FLUX METRICS
+    flux_types = ["Onset Peak", "Max Flux", "Fluence",
+                "Max Flux in Prediction Window", "Time Profile"]
+    if quantity in flux_types:
+        groups = [ ["Linear Regression Slope",
+                    "Pearson Correlation Coefficient (Linear)",
+                    "Pearson Correlation Coefficient (Log)",
+                    "Spearman Correlation Coefficient (Linear)",
+                    "Spearman Correlation Coefficient (Log)"],
+                    ["Mean Error (ME)", "Median Error (MedE)"],
+                    ["Mean Absolute Error (MAE)",
+                    "Median Absolute Error (MedAE)"],
+                    ["Root Mean Square Error (RMSE)"],
+                    ["Mean Log Error (MLE)", "Median Log Error (MedLE)"],
+                    ["Mean Absolute Log Error (MALE)",
+                    "Median Absolute Log Error (MedALE)",
+                    "Root Mean Square Log Error (RMSLE)"],
+                    ["Mean Percent Error (MPE)",
+                    "Mean Absolute Percent Error (MAPE)",
+                    "Mean Accuracy Ratio (MAR)"],
+                    ["Mean Symmetric Percent Error (MSPE)",
+                    "Mean Symmetric Absolute Percent Error (SMAPE)"],
+                    ["Median Symmetric Accuracy (MdSA)"]
+                ]
+
+    #TIME METRICS
+    time_types = ["Threshold Crossing Time", "Start Time", "End Time",
+                "Onset Peak Time", "Max Flux Time"]
+    if quantity in time_types:
+        groups = []
+
     return groups
 
 
@@ -207,21 +249,44 @@ def make_box_plots(df, path, quantity, anonymous, highlight):
             print(ek + ", " + tk)
             sub = df.loc[(df['Energy Channel'] == ek) &
                     (df['Threshold'] == tk)]
+
             
-            models = resume.identify_unique(sub,'Model')
             
             grp = 0
             for group in groups:
                 grp += 1
-                metrics = []
-                for metric in group:
-                    arr = sub[metric].to_list()
-                    metrics.append(arr)
-            
+                values = []
+                metric_names = []
+                model_names = []
+                for metric_col in group:
+                    vals = sub[metric_col].to_list()
+                    values.extend(vals)
+                    metric_names.extend([metric_col]*len(vals))
+                    model_list = sub['Model'].to_list()
+                    
+                    if anonymous and highlight == '':
+                        for j in range(len(model_list)):
+                            model_list[j] = "Model " + str(j)
+                    
+                    if highlight != '':
+                        for j in range(len(model_list)):
+                            if highlight in model_list[j]:
+                                continue
+                            else:
+                                model_list[j] = "Models"
+                    
+                    model_names.extend(model_list)
+ 
+                
+                dict = {"Metrics": metric_names, "Models":model_names,
+                        "Values":values}
+                metrics_df = pd.DataFrame(dict)
+                
+          
                 title = quantity + " Group " + str(grp) + " (" + ek + ", " + tk + ")"
                 figname = path + "/output/plots/" + quantity + "_" + ek + "_" + tk \
                         + "_boxes_Group" + str(grp)
-                plt_tools.box_plot_metrics(metrics, group, models,
+                plt_tools.box_plot_metrics(metrics_df, group, highlight,
                     x_label="Metric", y_label="Value", title=title,
                     save=figname, uselog=False, showplot=True, \
                     closeplot=False)

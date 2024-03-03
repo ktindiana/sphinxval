@@ -882,7 +882,8 @@ def box_plot(values, labels, x_label="Model", y_label="Metric", \
     if closeplot: plt.close(fig)
 
 
-def box_plot_metrics(values, labels, models, x_label="Metric", y_label="Value", \
+def box_plot_metrics(df, metric_names, highlight,
+             x_label="Metric", y_label="Value", \
              title=None, save="boxes", uselog=False, showplot=False, \
              saveplot=False, closeplot=False):
     """
@@ -927,47 +928,76 @@ def box_plot_metrics(values, labels, models, x_label="Metric", y_label="Value", 
     -------
     None
     """
-    if len(values) <= 4:
-        fig = plt.figure(figsize=(9, 6))
-    if len(values) > 4 and len(values) <= 7:
-        fig = plt.figure(figsize=(12, 6))
-    if len(values) > 7:
-        fig = plt.figure(figsize=(16, 6))
+
+    df.replace([np.inf, -np.inf, np.nan], None, inplace=True)
+    df = df.dropna()
+    if df.empty:
+        return
+
+    fig = plt.figure(figsize=(12, 6))
     ax = fig.add_subplot(111)
 
-    sns.boxplot(data=values, fliersize=0, meanline=True, showmeans=True, \
-                medianprops = {'color': 'w', 'linewidth': 1},
-                meanprops = {'color': 'k', 'linewidth': 1})
+    PROPS = {
+        'boxprops':{'facecolor':'lightgray', 'edgecolor':'black'},
+        'medianprops':{'color':'blue'},
+        'meanprops':{'color':'black'},
+        'whiskerprops':{'color':'black'},
+        'capprops':{'color':'black'}
+    }
 
-    means = [np.mean(list) for list in values]
-    medians = [np.median(list) for list in values]
 
-    for i in range(len(values)):
+    sns.boxplot(data=df, x='Metrics', y='Values',
+                fliersize=0, meanline=True, showmeans=True,
+                linewidth=1.5, **PROPS)
+                #medianprops = {'color': 'b', 'linewidth': 1},
+                #meanprops = {'color': 'k', 'linewidth': 1})
+
+    if highlight == '':
+        sns.stripplot(data=df, x='Metrics', y='Values', hue='Models',
+                legend=True, linewidth=0.5, size=8, palette='tab20')
+    else:
+        sns.stripplot(data=df, x='Metrics', y='Values', hue='Models',
+                legend=True, linewidth=0.5, size=8, palette='Dark2')
+
+    means = []
+    medians = []
+    values = []
+    for name in metric_names:
+        sub = df.loc[(df['Metrics'] == name)]
+        vals = sub['Values'].to_list()
+        values.append(vals)
+        means.append(np.mean(vals))
+        medians.append(np.median(vals))
+
+    for i in range(len(metric_names)):
         if means[i] == max(means[i], medians[i]):
             vmean = 'bottom'
             vmed = 'top'
         else:
             vmean = 'top'
             vmed = 'bottom'
-        ax.text(i, means[i], "\u03BC=" + str(np.round(means[i], 2)), size='large', \
+        ax.text(i, means[i], "\u03BC=" + str(np.round(means[i], 2)), size='large',\
                 color='k', weight='semibold', horizontalalignment='center', \
                 verticalalignment=vmean)
         ax.text(i, medians[i], "M=" + str(np.round(medians[i], 2)), size='large', \
                 color='b', weight='semibold', horizontalalignment='center', \
                 verticalalignment=vmed)
 
-    sns.stripplot(data=values, linewidth=0.5)
 
     ax.set_title(title)
     #ax.set_xlabel(x_label)
     ax.set_ylabel(y_label)
-    
-    wrapped_labels = [ label.replace(' ', '\n') for label in labels ]
+    labels = ax.get_xticklabels()
+    wrapped_labels = [ label.get_text().replace(' ', '\n') for label in labels]
     ax.set_xticklabels(wrapped_labels, rotation=0)
+    ax.legend(bbox_to_anchor=(1, 1), title='Models')
     plt.tight_layout()
 
-    if uselog:
-        ax.set_yscale('log')
+    maxvals = [max(vals) for vals in values]
+    nonzero = [min(vals) > 0 for vals in values]
+    if False not in nonzero:
+        if max(maxvals) > 500:
+            ax.set_yscale('log')
 
     if showplot: plt.show()
 
