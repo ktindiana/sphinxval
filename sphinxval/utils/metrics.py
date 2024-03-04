@@ -882,7 +882,7 @@ def calc_MdSA(y_true, y_pred):
 
 
 #CA
-def calc_spearman(y_true, y_pred, type=""):
+def calc_spearman(y_true, y_pred):
     """
     Calculates the spearman coefficient while considering the scale
 
@@ -893,12 +893,6 @@ def calc_spearman(y_true, y_pred, type=""):
 
     y_pred : array-like
         Forecasted (estimated) values
-
-    type : string
-        may be log, linear, or empty. Empty indicates will attempt
-        to calculate both log and linear.
-        log - calculate only log coeff
-        linear - calculate only linear coeff
 
     Returns
     -------
@@ -923,23 +917,15 @@ def calc_spearman(y_true, y_pred, type=""):
     y_true = check_array(y_true, force_all_finite=True, ensure_2d=False)
     y_pred = check_array(y_pred, force_all_finite=True, ensure_2d=False)
 
-    s_log = np.nan
     s_lin = np.nan
 
     # calculating the spearman correlation coefficient
-    if type == "log" or type == "":
-        try:
-            s_log = spearmanr(np.log10(y_true), np.log10(y_pred)).correlation
-        except:
-            s_log = np.nan
+    try:
+        s_lin = spearmanr(y_true, y_pred).correlation
+    except:
+        s_lin = np.nan
 
-    if type == "linear" or type == "":
-        try:
-            s_lin = spearmanr(y_true, y_pred).correlation
-        except:
-            s_lin = np.nan
-
-    return s_lin, s_log
+    return s_lin
 
 
 #CA

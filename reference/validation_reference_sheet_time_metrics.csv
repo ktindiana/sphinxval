@@ -1,0 +1,4 @@
+﻿Metrics,,,
+Name,Attribute,Range,Perfect Score
+Spearman Correlation Coefficient,Rank Order Correlation Coefficient,-1 to 1,1
+Area Under ROC Curve,Performance,0 to 1,1

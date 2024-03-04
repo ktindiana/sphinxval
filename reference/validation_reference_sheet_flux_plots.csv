@@ -1,0 +1,4 @@
+﻿Plots,
+Plot Type,Description,Comments
+Time Profile,Plots true positive rate versus false positive rate for varying probability thresholds,'[https://en.wikipedia.org/wiki/Receiver_operating_characteristic](https://en.wikipedia.org/wiki/Receiver_operating_characteristic)\n'
+Correlation Plots,Stuff,Stuff
