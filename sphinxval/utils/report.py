@@ -485,7 +485,6 @@ def build_section(filename, model, sphinx_dataframe, metric_label_start, section
     return text
     
 def build_validation_reference_section(text, filename1, filename2, filename3=None):
-    
     data = pd.read_csv(filename1, skiprows=1)
     table = '\n' + data.to_markdown(index=False) + '\n'
     text += add_collapsible_segment('Metrics', table)
@@ -497,8 +496,17 @@ def build_validation_reference_section(text, filename1, filename2, filename3=Non
         data = pd.read_csv(filename3, skiprows=1)
         table = '\n' + data.to_markdown(index=False) + '\n'
         text += add_collapsible_segment('Plots', table)
-        text += add_collapsible_segment_end()
+    # text += add_collapsible_segment_end()
     return text
+
+def construct_validation_reference_sheet(vr_subtext, vr_flag_dict, vr_flag, vr_filename_1, vr_filename_2=None, vr_filename_3=None):
+    if vr_flag_dict[vr_flag]:
+        vr_subtext += add_collapsible_segment_start(vr_flag, '')
+        vr_subtext += build_validation_reference_section('', vr_filename_1, vr_filename_2, vr_filename_3)
+        vr_subtext += add_collapsible_segment_end()
+        vr_flag_dict[vr_flag] = False
+    return vr_subtext, vr_flag_dict
+
 
 ### CONVERT MARKDOWN TO HTML 
 def get_image_string(original_string):
@@ -716,14 +724,11 @@ def convert_markdown_to_html(text, size_limit=10**20):
     html = markdown.markdown(text_final)        
     return html
       
-
-
 def get_html_report_preamble(model):
     text = add_script('')
     text += add_style('')
     text += add_title(model)
     return text
-
 
 def get_plot_type(plot_string):
     if 'Time_Profile' in plot_string:
@@ -769,6 +774,15 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
         markdown_texts = {}
         appendage_set_list = []
         html_text = get_html_report_preamble(model)
+        validation_reference_subtext_html = ''
+        # define on/off flags for validation reference tables
+        validation_reference_flag_dict = {'All Clear' : True,
+                                          'AWT' : True,
+                                          'Duration' : True,
+                                          'Flux' : True,
+                                          'Time' : True,
+                                          'Probability' : True,
+                                         }
         for j in range(0, len(appendages)):
         
             # check which sections to include
@@ -787,53 +801,54 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
             duration = False
             end_time = False
             time_profile = False
-            print(files)
-            input()
             
+            validation_reference_subtext = ''
             for k in range(0, len(files)):
                 if appendages[j] in files[k]:
-                    if ('all_clear_selections_' + model) in files[k]:
-                        all_clear = True
-                        continue
-                    if ('awt_selections_' + model) in files[k]:
-                        awt = True
-                        continue
-                    if ('duration_selections_' + model) in files[k]:
-                        duration = True
-                        continue
-                    if ('peak_intensity_selections_' + model) in files[k]:
-                        peak_intensity = True
-                        continue
-                    if ('peak_intensity_max_selections_' + model) in files[k]:
-                        peak_intensity_max = True
-                        continue
-                    if ('peak_intensity_time_selections_' + model) in files[k]:
-                        peak_intensity_time = True
-                        continue
-                    if ('peak_intensity_max_time_selections_' + model) in files[k]:
-                        peak_intensity_max_time = True
-                        continue
-                    if ('threshold_crossing_time_selections_' + model) in files[k]:
-                        threshold_crossing = True
-                        continue       
-                    if ('fluence_selections_' + model) in files[k]:
-                        fluence = True
-                        continue
-                    if ('max_flux_in_pred_win_selections_' + model) in files[k]:
-                        max_flux_in_pred_win = True
-                        continue
-                    if ('probability_selections_' + model) in files[k]:
-                        probability = True
-                        continue
-                    if ('start_time_selections_' + model) in files[k]:
-                        start_time = True
-                        continue
-                    if ('end_time_selections_' + model) in files[k]:
-                        end_time = True
-                        continue
-                    if ('time_profile_selections_' + model) in files[k]:
-                        time_profile = True
-                        continue
+                    file_no_extension = files[k].rstrip('.pkl')
+                    if file_no_extension[:-len(appendages[j])] == appendages[j]:
+                        if ('all_clear_selections_' + model) in files[k]:
+                            all_clear = True
+                            continue
+                        if ('awt_selections_' + model) in files[k]:
+                            awt = True
+                            continue
+                        if ('duration_selections_' + model) in files[k]:
+                            duration = True
+                            continue
+                        if ('peak_intensity_selections_' + model) in files[k]:
+                            peak_intensity = True
+                            continue
+                        if ('peak_intensity_max_selections_' + model) in files[k]:
+                            peak_intensity_max = True
+                            continue
+                        if ('peak_intensity_time_selections_' + model) in files[k]:
+                            peak_intensity_time = True
+                            continue
+                        if ('peak_intensity_max_time_selections_' + model) in files[k]:
+                            peak_intensity_max_time = True
+                            continue
+                        if ('threshold_crossing_time_selections_' + model) in files[k]:
+                            threshold_crossing = True
+                            continue       
+                        if ('fluence_selections_' + model) in files[k]:
+                            fluence = True
+                            continue
+                        if ('max_flux_in_pred_win_selections_' + model) in files[k]:
+                            max_flux_in_pred_win = True
+                            continue
+                        if ('probability_selections_' + model) in files[k]:
+                            probability = True
+                            continue
+                        if ('start_time_selections_' + model) in files[k]:
+                            start_time = True
+                            continue
+                        if ('end_time_selections_' + model) in files[k]:
+                            end_time = True
+                            continue
+                        if ('time_profile_selections_' + model) in files[k]:
+                            time_profile = True
+                            continue
 
             # preamble -- define colors and font and whatnot
             info_header = 'Report Information'
@@ -860,10 +875,11 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
                     report_exists = True
                     appendage_set_list.append(appendages[j])
                     markdown_text += build_all_clear_skill_scores_section(all_clear_filename, model, sphinx_dataframe, appendage=appendages[j])
-                vr_filename1_cont = config.referencepath + '/validation_reference_sheet_contigency_metrics.csv'
-                vr_filename2_cont = config.referencepath + '/validation_reference_sheet_contigency_skills.csv'
-                vr_filename3_cont = None
-                
+                validation_reference_subtext_string, validation_reference_flag_dict = construct_validation_reference_sheet(validation_reference_subtext, validation_reference_flag_dict, 'All Clear', 
+                                                                                                                           config.referencepath + '/validation_reference_sheet_contingency_metrics.csv',
+                                                                                                                           config.referencepath + '/validation_reference_sheet_contingency_skills.csv',
+                                                                                                                           None)
+                validation_reference_subtext = validation_reference_subtext_string
 
             if awt:
                 ### build the advanced warning time (AWT) metrics
@@ -877,9 +893,11 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
                     report_exists = True
                     appendage_set_list.append(appendages[j])
                     markdown_text += build_section_awt(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
-                vr_filename1_awt = config.referencepath + '/validation_reference_sheet_awt_metrics.csv'
-                vr_filename2_awt = config.referencepath + '/validation_reference_sheet_awt_skills.csv'
-                vr_filename3_awt = None  
+                validation_reference_subtext_string, validation_reference_flag_dict = construct_validation_reference_sheet(validation_reference_subtext, validation_reference_flag_dict, 'AWT', 
+                                                                                                                           config.referencepath + '/validation_reference_sheet_awt_metrics.csv',
+                                                                                                                           config.referencepath + '/validation_reference_sheet_awt_skills.csv',
+                                                                                                                           None)
+                validation_reference_subtext += validation_reference_subtext_string
                 
             if peak_intensity:
                 ### build the peak intensity metrics
@@ -893,9 +911,11 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
                     report_exists = True
                     appendage_set_list.append(appendages[j])
                     markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
-                vr_filename1_flux = config.referencepath + '/validation_reference_sheet_flux_metrics.csv'
-                vr_filename2_flux = config.referencepath + '/validation_reference_sheet_flux_skills.csv'
-                vr_filename3_flux = config.referencepath + '/validation_reference_sheet_flux_plots.csv'
+                validation_reference_subtext_string, validation_reference_flag_dict = construct_validation_reference_sheet(validation_reference_subtext, validation_reference_flag_dict, 'Flux', 
+                                                                                                                           config.referencepath + '/validation_reference_sheet_flux_metrics.csv',
+                                                                                                                           config.referencepath + '/validation_reference_sheet_flux_skills.csv',
+                                                                                                                           config.referencepath + '/validation_reference_sheet_flux_plots.csv')
+                validation_reference_subtext = validation_reference_subtext_string
                 
             if peak_intensity_max:
                 ### build the peak intensity max metrics
@@ -909,9 +929,11 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
                     report_exists = True
                     appendage_set_list.append(appendages[j])
                     markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
-                vr_filename1_flux = config.referencepath + '/validation_reference_sheet_flux_metrics.csv'
-                vr_filename2_flux = config.referencepath + '/validation_reference_sheet_flux_skills.csv'
-                vr_filename3_flux = config.referencepath + '/validation_reference_sheet_flux_plots.csv'
+                validation_reference_subtext_string, validation_reference_flag_dict = construct_validation_reference_sheet(validation_reference_subtext, validation_reference_flag_dict, 'Flux', 
+                                                                                                                           config.referencepath + '/validation_reference_sheet_flux_metrics.csv',
+                                                                                                                           config.referencepath + '/validation_reference_sheet_flux_skills.csv',
+                                                                                                                           config.referencepath + '/validation_reference_sheet_flux_plots.csv')
+                validation_reference_subtext = validation_reference_subtext_string
                 
             if peak_intensity_time:
                 ### build the peak intensity time metrics
@@ -925,9 +947,11 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
                     report_exists = True
                     appendage_set_list.append(appendages[j])
                     markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
-                vr_filename1_time = config.referencepath + '/validation_reference_sheet_time_metrics.csv'
-                vr_filename2_time = config.referencepath + '/validation_reference_sheet_time_skills.csv'
-                vr_filename3_time = config.referencepath + '/validation_reference_sheet_time_plots.csv'
+                validation_reference_subtext_string, validation_reference_flag_dict = construct_validation_reference_sheet(validation_reference_subtext, validation_reference_flag_dict, 'Time', 
+                                                                                                                           config.referencepath + '/validation_reference_sheet_time_metrics.csv',
+                                                                                                                           config.referencepath + '/validation_reference_sheet_time_skills.csv',
+                                                                                                                           config.referencepath + '/validation_reference_sheet_time_plots.csv')
+                validation_reference_subtext = validation_reference_subtext_string
            
             if peak_intensity_max_time:
                 ### build the peak intensity max time metrics
@@ -941,10 +965,12 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
                     report_exists = True
                     appendage_set_list.append(appendages[j])
                     markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
-                vr_filename1_time = config.referencepath + '/validation_reference_sheet_time_metrics.csv'
-                vr_filename2_time = config.referencepath + '/validation_reference_sheet_time_skills.csv'
-                vr_filename3_time = config.referencepath + '/validation_reference_sheet_time_plots.csv'
-     
+                validation_reference_subtext_string, validation_reference_flag_dict = construct_validation_reference_sheet(validation_reference_subtext, validation_reference_flag_dict, 'Time', 
+                                                                                                                           config.referencepath + '/validation_reference_sheet_time_metrics.csv',
+                                                                                                                           config.referencepath + '/validation_reference_sheet_time_skills.csv',
+                                                                                                                           config.referencepath + '/validation_reference_sheet_time_plots.csv')
+                validation_reference_subtext = validation_reference_subtext_string
+            
             if threshold_crossing:
                 ### build the threshold crossing metrics
                 metric_label_start = 'Mean Error (pred - obs)'
@@ -958,9 +984,11 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
                     report_exists = True
                     appendage_set_list.append(appendages[j])
                     markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
-                vr_filename1_time = config.referencepath + '/validation_reference_sheet_time_metrics.csv'
-                vr_filename2_time = config.referencepath + '/validation_reference_sheet_time_skills.csv'
-                vr_filename3_time = config.referencepath + '/validation_reference_sheet_time_plots.csv'
+                validation_reference_subtext_string, validation_reference_flag_dict = construct_validation_reference_sheet(validation_reference_subtext, validation_reference_flag_dict, 'Time', 
+                                                                                                                           config.referencepath + '/validation_reference_sheet_time_metrics.csv',
+                                                                                                                           config.referencepath + '/validation_reference_sheet_time_skills.csv',
+                                                                                                                           config.referencepath + '/validation_reference_sheet_time_plots.csv')
+                validation_reference_subtext = validation_reference_subtext_string
             
             if fluence:
                 ### build the fluence metrics
@@ -974,9 +1002,11 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
                     report_exists = True
                     appendage_set_list.append(appendages[j])
                     markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
-                vr_filename1_flux = config.referencepath + '/validation_reference_sheet_flux_metrics.csv'
-                vr_filename2_flux = config.referencepath + '/validation_reference_sheet_flux_skills.csv'
-                vr_filename3_flux = config.referencepath + '/validation_reference_sheet_flux_plots.csv'  
+                validation_reference_subtext_string, validation_reference_flag_dict = construct_validation_reference_sheet(validation_reference_subtext, validation_reference_flag_dict, 'Flux', 
+                                                                                                                           config.referencepath + '/validation_reference_sheet_flux_metrics.csv',
+                                                                                                                           config.referencepath + '/validation_reference_sheet_flux_skills.csv',
+                                                                                                                           config.referencepath + '/validation_reference_sheet_flux_plots.csv')
+                validation_reference_subtext = validation_reference_subtext_string
             
             if max_flux_in_pred_win:
                 ### build the maximum flux in prediction window metrics
@@ -990,9 +1020,12 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
                     report_exists = True
                     appendage_set_list.append(appendages[j])
                     markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
-                vr_filename1_flux = config.referencepath + '/validation_reference_sheet_flux_metrics.csv'
-                vr_filename2_flux = config.referencepath + '/validation_reference_sheet_flux_skills.csv'
-                vr_filename3_flux = config.referencepath + '/validation_reference_sheet_flux_plots.csv' 
+                validation_reference_subtext_string, validation_reference_flag_dict = construct_validation_reference_sheet(validation_reference_subtext, validation_reference_flag_dict, 'Flux', 
+                                                                                                                           config.referencepath + '/validation_reference_sheet_flux_metrics.csv',
+                                                                                                                           config.referencepath + '/validation_reference_sheet_flux_skills.csv',
+                                                                                                                           config.referencepath + '/validation_reference_sheet_flux_plots.csv')
+                validation_reference_subtext = validation_reference_subtext_string
+                
             
             if probability:    
                 ### build the probability metrics
@@ -1006,11 +1039,12 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
                     report_exists = True
                     appendage_set_list.append(appendages[j])
                     markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
-                vr_filename1_prob = config.referencepath + '/validation_reference_sheet_probability_metrics.csv'
-                vr_filename2_prob = config.referencepath + '/validation_reference_sheet_probability_skills.csv'
-                vr_filename3_prob = config.referencepath + '/validation_reference_sheet_probability_plots.csv'
-            
-            
+                validation_reference_subtext_string, validation_reference_flag_dict = construct_validation_reference_sheet(validation_reference_subtext, validation_reference_flag_dict, 'Probability', 
+                                                                                                                           config.referencepath + '/validation_reference_sheet_probability_metrics.csv',
+                                                                                                                           config.referencepath + '/validation_reference_sheet_probability_skills.csv',
+                                                                                                                           config.referencepath + '/validation_reference_sheet_probability_plots.csv')
+                validation_reference_subtext = validation_reference_subtext_string
+                
             if start_time:
                 ### build the start time metrics
                 metric_label_start = 'Mean Error (pred - obs)'
@@ -1023,9 +1057,11 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
                     report_exists = True
                     appendage_set_list.append(appendages[j])
                     markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
-                vr_filename1_time = config.referencepath + '/validation_reference_sheet_time_metrics.csv'
-                vr_filename2_time = config.referencepath + '/validation_reference_sheet_time_skills.csv'
-                vr_filename3_time = config.referencepath + '/validation_reference_sheet_time_plots.csv'
+                validation_reference_subtext_string, validation_reference_flag_dict = construct_validation_reference_sheet(validation_reference_subtext, validation_reference_flag_dict, 'Time', 
+                                                                                                                           config.referencepath + '/validation_reference_sheet_time_metrics.csv',
+                                                                                                                           config.referencepath + '/validation_reference_sheet_time_skills.csv',
+                                                                                                                           config.referencepath + '/validation_reference_sheet_time_plots.csv')
+                validation_reference_subtext = validation_reference_subtext_string
             
             if duration:
                 ### build the duration metrics
@@ -1039,9 +1075,11 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
                     report_exists = True
                     appendage_set_list.append(appendages[j])
                     markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
-                vr_filename1_dur = config.referencepath + '/validation_reference_sheet_dur_metrics.csv'
-                vr_filename2_dur = None
-                vr_filename3_dur = None
+                validation_reference_subtext_string, validation_reference_flag_dict = construct_validation_reference_sheet(validation_reference_subtext, validation_reference_flag_dict, 'Duration', 
+                                                                                                                           config.referencepath + '/validation_reference_sheet_dur_metrics.csv',
+                                                                                                                           None,
+                                                                                                                           None)
+                validation_reference_subtext = validation_reference_subtext_string
               
             if end_time:
                 ### build the end time metrics
@@ -1055,10 +1093,12 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
                     report_exists = True
                     appendage_set_list.append(appendages[j])
                     markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
-                vr_filename1_time = config.referencepath + '/validation_reference_sheet_time_metrics.csv'
-                vr_filename2_time = config.referencepath + '/validation_reference_sheet_time_skills.csv'
-                vr_filename3_time = config.referencepath + '/validation_reference_sheet_time_plots.csv'
-            
+                validation_reference_subtext_string, validation_reference_flag_dict = construct_validation_reference_sheet(validation_reference_subtext, validation_reference_flag_dict, 'Time', 
+                                                                                                                           config.referencepath + '/validation_reference_sheet_time_metrics.csv',
+                                                                                                                           config.referencepath + '/validation_reference_sheet_time_skills.csv',
+                                                                                                                           config.referencepath + '/validation_reference_sheet_time_plots.csv')
+                validation_reference_subtext = validation_reference_subtext_string
+                    
             if time_profile:
                 ### build the time profile metrics
                 metric_label_start = 'Linear Regression Slope'
@@ -1072,62 +1112,23 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
                     report_exists = True
                     appendage_set_list.append(appendages[j])
                     markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, skip_label_list=skip_label_list, appendage=appendages[j])        
-                vr_filename1_flux = config.referencepath + '/validation_reference_sheet_flux_metrics.csv'
-                vr_filename2_flux = config.referencepath + '/validation_reference_sheet_flux_skills.csv'
-                vr_filename3_flux = None  
-            ### BUILD THE VALIDATION REFERENCE
+                validation_reference_subtext_string, validation_reference_flag_dict = construct_validation_reference_sheet(validation_reference_subtext, validation_reference_flag_dict, 'Flux', 
+                                                                                                                           config.referencepath + '/validation_reference_sheet_flux_metrics.csv',
+                                                                                                                           config.referencepath + '/validation_reference_sheet_flux_skills.csv',
+                                                                                                                           config.referencepath + '/validation_reference_sheet_flux_plots.csv')
+                validation_reference_subtext = validation_reference_subtext_string
             
-            # text = ''
-              
-            subtext = 'Something here\n'
-            if all_clear: 
-                subtext += add_collapsible_segment_start('All Clear', '')   
-                subtext += build_validation_reference_section(subtext,vr_filename1_cont, vr_filename2_cont, vr_filename3_cont)
-                
-                
-            
-            if probability:
-                subtext += add_collapsible_segment_start('Probability', '')   
-                subtext += build_validation_reference_section(subtext,vr_filename1_prob, vr_filename2_prob, vr_filename3_prob)
-                subtext += add_collapsible_segment_end()
-                
-                
-         
-            if peak_intensity or peak_intensity_max or fluence or time_profile:
-                subtext = add_collapsible_segment_start('Fluxes (Peak Intensity or Fluence or Time Profile)', '')   
-                validation_reference_text += build_validation_reference_section(subtext,vr_filename1_flux, vr_filename2_flux, vr_filename3_flux)
-                
-                
-        
-            if awt:
-                subtext = add_collapsible_segment_start('Advance Warning Time', '')   
-                validation_reference_text += build_validation_reference_section(subtext,vr_filename1_awt, vr_filename2_awt, vr_filename3_awt)
-                
-                
-      
-            if peak_intensity_time or peak_intensity_max_time or threshold_crossing or start_time or end_time:
-                subtext = add_collapsible_segment_start('Timing (Start, End, Threshold Crossing, Peak Intensity)', '')
-                validation_reference_text += build_validation_reference_section(subtext,vr_filename1_time, vr_filename2_time, vr_filename3_time)    
-                   
-                
-                
-            if duration:
-                subtext = add_collapsible_segment_start('Duration', '')   
-                validation_reference_text += build_validation_reference_section(subtext,vr_filename1_dur, vr_filename2_dur, vr_filename3_dur) 
-                
-            # print(subtext)
-            
-            # FINALIZE
+            ### BUILD THE VALIDATION REFERENCE SHEET AND FINALIZE
             validation_text = add_collapsible_segment(validation_header, validation_text)
             markdown_text = info_text + validation_text + markdown_text
             markdown_filename = config.reportpath + '/' + model + '_report' + appendages[j] + '.md'
             appendage_set_list = list(set(appendage_set_list))
-            
 
-            validation_reference_text = add_collapsible_segment_start('Validation Reference', '')
-            validation_reference_text += subtext
+            validation_reference_text = add_collapsible_segment_start('Validation Reference Sheet', '')
+            validation_reference_text += validation_reference_subtext
             validation_reference_text += add_collapsible_segment_end()
-             
+            validation_reference_subtext_html += validation_reference_subtext
+            
             if report_exists:
                 a = open(markdown_filename, 'w')
                 a.write(markdown_text + validation_reference_text)
@@ -1147,7 +1148,12 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
         
         for j in range(0, len(appendage_set_list)):
             html_text += add_tab(appendage_set_list[j].replace('_', ''), markdown_texts[appendage_set_list[j]])
-        html_text += convert_markdown_to_html(validation_reference_text)
+        
+        
+        validation_reference_text_html = add_collapsible_segment_start('Validation Reference Sheet', '')
+        validation_reference_text_html += validation_reference_subtext_html
+        validation_reference_text_html += add_collapsible_segment_end()
+        html_text += convert_markdown_to_html(validation_reference_text_html)
         html_filename = config.reportpath + '/' + model + '_report.html'
         a = open(html_filename, 'w')
         a.write(html_text)
