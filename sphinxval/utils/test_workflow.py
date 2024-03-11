@@ -22,11 +22,14 @@ class test_workflow(unittest.TestCase):
     '''
     Notes:
 
-    def setUp(self):
+    def setUp(self): <-- this function is a hook that is called once per test, useful for defining common parameters
         pass
 
-    def test_* <-- this is the format required for unittest.main() to run tests automatically
+    def test*(self): <-- this is the format required for unittest.main() to run tests automatically
+
+    def tearDown(self): <-- this function is another hook that is called once per test, useful for removing variables from the self.* space
     '''
+
 
     def test_basic_addition(self):
         self.assertEqual(basic_addition(1, 2), 3, 'The sum is wrong.')
