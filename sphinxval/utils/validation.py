@@ -28,7 +28,6 @@ __email__ = "kathryn.whitman@nasa.gov"
 """
 
 ######### DATAFRAMES CONTAINING OBSERVATIONS AND PREDICTIONS ######
-
 def initialize_dict():
     """ Set up a pandas df to hold each possible quantity,
         each observed energy channel, and predicted and

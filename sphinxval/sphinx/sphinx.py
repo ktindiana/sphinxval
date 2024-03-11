@@ -6,6 +6,7 @@ from ..utils import tools
 from ..utils import match
 from ..utils import resume
 from ..utils import report
+from ..utils import test_workflow
 import datetime
 import pickle
 import logging
