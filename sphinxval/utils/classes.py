@@ -906,14 +906,19 @@ class Forecast():
                 end_time = flare.end_time
                 last_data_time = flare.last_data_time
                 
-                if isinstance(peak_time,datetime.date):
+                #Give preference to last data time. This will
+                #be very relevant to historical analyses where
+                #all values are known and may be filled in in the
+                #json file
+                if isinstance(last_data_time,datetime.date):
+                    check_time = last_data_time
+                elif isinstance(peak_time,datetime.date):
                     check_time = peak_time
                 elif isinstance(start_time,datetime.date):
                     check_time = start_time
                 elif isinstance(end_time,datetime.date):
                     check_time = end_time
-                elif isinstance(last_data_time,datetime.date):
-                    check_time = last_data_time
+                
                     
                 if last_flare_time == None:
                     last_flare_time = check_time

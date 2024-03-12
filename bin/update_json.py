@@ -4,6 +4,7 @@ import os.path
 import argparse
 import json
 import traceback
+import sys
 import sphinxval.utils.validation_json_handler as vjson
 
 description = """
