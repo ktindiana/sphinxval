@@ -928,6 +928,7 @@ def box_plot_metrics(df, metric_names, highlight,
     -------
     None
     """
+    print("box_plot_metrics: Making plots")
 
     df.replace([np.inf, -np.inf, np.nan], None, inplace=True)
     df = df.dropna()

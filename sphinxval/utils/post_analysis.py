@@ -9,6 +9,7 @@ from . import plotting_tools as plt_tools
 from . import resume
 import pickle
 import pandas as pd
+import matplotlib as plt
 
 #Columns to exclude from box plots
 exclude = ["N (Total Number of Forecasts)", "Predicted SEP Events",
@@ -114,13 +115,15 @@ def get_file_prefix(quantity):
     
 
 
-def read_in_metrics(path, quantity):
+def read_in_metrics(path, quantity, exclude):
     """ Read in metrics files related to specfied quantity.
     
     INPUT:
     
     :path: (string) location of the output/ folder
     :quantity: (string) Forecasted quantity of interest.
+    :exclude: (array of strings) names or partial names of models
+        to exclude from the metrics post analysis
     
     OUTPUT:
     
@@ -130,8 +133,14 @@ def read_in_metrics(path, quantity):
     
     prefix = get_file_prefix(quantity)
     fname = path + "/output/pkl/" + prefix + "_metrics.pkl"
+    print("read_in_metrics: Reading in " + fname)
     
     df = resume.read_in_df(fname)
+    
+    for model in exclude:
+        if model != '':
+            df = df[~df['Model'].str.contains(model)]
+            print("read_in_metrics: Removed model metrics for " + model)
     
     return df
 
