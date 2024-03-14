@@ -1,4 +1,4 @@
 ﻿Plots,
 Plot Type,Description,Comments
-Time Profile,Plots true positive rate versus false positive rate for varying probability thresholds,'[https://en.wikipedia.org/wiki/Receiver_operating_characteristic](https://en.wikipedia.org/wiki/Receiver_operating_characteristic)\n'
-Correlation Plots,Stuff,Stuff
+Time Profile,Time series plot of the observed and model data,Additional lines represent when observations are above threshold and the matching time period for the model. It is for those alternate periods that time profile metrics are calculated (instead of for the entirety of the forecast window).
+Scatter Plots,X-axis is observed values and y-axis is predicted values. Dotted black line is 1:1 line. More accurate predictions will lie closer to that line. Precision can be interpreted from clustering of points., Information regarding linear regression fit and correlation is listed in the legend.

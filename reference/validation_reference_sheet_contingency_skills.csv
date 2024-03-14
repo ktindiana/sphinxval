@@ -1,7 +1,7 @@
 ﻿Contigency Skill Scores,,,
-Name,Attribute,Range,Perfect Score
-Gilbert Skill Score,Score,-1/3 to 1,1
-True Skill Score,Score,-1 to 1,1
-Heidke Skill Score,Score,-1 to 1,1
-Odds Ratio Skill Score,Score,-1 to 1,1
-Symmetric Extreme Dependency Score,Score,-1 to 1,1
+Name,Attribute,Calculation,Range,Perfect Score
+Gilbert Skill Score,Score,(Hits-((Hits+False Alarms)x(Hits+Misses)/N))/(Hits+Misses+False Alarms - ((Hits+False Alarms)x(Hits+Misses)/N)),-1/3 to 1,1
+True Skill Score,Score,(Hits/(Hits+Misses))-(False Alarms/(False Alarms+Correct Negatives)),-1 to 1,1
+Heidke Skill Score,Score,2(Hits x Correct Negatives - False Alarms x Misses)/((Hits+Misses)x(Misses+Correct Negatives)+(Hits+False Alarms)x(False Alarms+Correct Negatives)),-1 to 1,1
+Odds Ratio Skill Score,Score,(Hits x Correct Negatives - Misses x False Alarms)/(Hits x Correct Negatives + Misses x False Alarms),-1 to 1,1
+Symmetric Extreme Dependency Score,Score,(log10((Hits+False Alarms)/N)+log10((Hits+Misses)/N))/log10(Hits/N),-1 to 1,1

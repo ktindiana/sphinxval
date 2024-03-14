@@ -1,3 +1,9 @@
 ﻿Advance Warning Time Metrics,
-Notes,
-Put AWT Plot here. Describe how we calculate AWT.
+Time,Comments
+Put AWT Plot here. Describe how we calculate AWT., 
+Advance Warning Time ,Negative values indicate predicted time is earlier than observed. Positive values indicate predicted time is later than observed.
+SEP Threshold Crossing Time, 
+SEP Start Time,
+Onset Peak Time,
+Max Peak Time,
+SEP End Time,

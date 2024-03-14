@@ -502,6 +502,16 @@ def build_validation_reference_section(text, filename1, filename2, filename3=Non
 def construct_validation_reference_sheet(vr_subtext, vr_flag_dict, vr_flag, vr_filename_1, vr_filename_2=None, vr_filename_3=None):
     if vr_flag_dict[vr_flag]:
         vr_subtext += add_collapsible_segment_start(vr_flag, '')
+
+        # This block adds the AWT image to the reference section. Currently has the flag for Time but change to AWT for when AWT is 
+        # actually being calculated (it was not for my testing)
+        if vr_flag == 'Time':
+            plot_string_ = "./reference/AWT_image"
+            plot_string = os.path.abspath(plot_string_)
+            plot_file_string = plot_string + ''
+            plot_string = replace_backslash_with_forward_slash(plot_string) + '.pdf'
+            vr_subtext += '![](' +  plot_string + ')\n\n'
+            
         vr_subtext += build_validation_reference_section('', vr_filename_1, vr_filename_2, vr_filename_3)
         vr_subtext += add_collapsible_segment_end()
         vr_flag_dict[vr_flag] = False
@@ -878,7 +888,7 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
                 validation_reference_subtext_string, validation_reference_flag_dict = construct_validation_reference_sheet(validation_reference_subtext, validation_reference_flag_dict, 'All Clear', 
                                                                                                                            config.referencepath + '/validation_reference_sheet_contingency_metrics.csv',
                                                                                                                            config.referencepath + '/validation_reference_sheet_contingency_skills.csv',
-                                                                                                                           None)
+                                                                                                                           config.referencepath + '/validation_reference_sheet_contingency_plots.csv')
                 validation_reference_subtext = validation_reference_subtext_string
 
             if awt:
@@ -895,7 +905,7 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
                     markdown_text += build_section_awt(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
                 validation_reference_subtext_string, validation_reference_flag_dict = construct_validation_reference_sheet(validation_reference_subtext, validation_reference_flag_dict, 'AWT', 
                                                                                                                            config.referencepath + '/validation_reference_sheet_awt_metrics.csv',
-                                                                                                                           config.referencepath + '/validation_reference_sheet_awt_skills.csv',
+                                                                                                                           None,
                                                                                                                            None)
                 validation_reference_subtext += validation_reference_subtext_string
                 
@@ -913,7 +923,7 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
                     markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
                 validation_reference_subtext_string, validation_reference_flag_dict = construct_validation_reference_sheet(validation_reference_subtext, validation_reference_flag_dict, 'Flux', 
                                                                                                                            config.referencepath + '/validation_reference_sheet_flux_metrics.csv',
-                                                                                                                           config.referencepath + '/validation_reference_sheet_flux_skills.csv',
+                                                                                                                           None,
                                                                                                                            config.referencepath + '/validation_reference_sheet_flux_plots.csv')
                 validation_reference_subtext = validation_reference_subtext_string
                 
@@ -931,7 +941,7 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
                     markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
                 validation_reference_subtext_string, validation_reference_flag_dict = construct_validation_reference_sheet(validation_reference_subtext, validation_reference_flag_dict, 'Flux', 
                                                                                                                            config.referencepath + '/validation_reference_sheet_flux_metrics.csv',
-                                                                                                                           config.referencepath + '/validation_reference_sheet_flux_skills.csv',
+                                                                                                                           None,
                                                                                                                            config.referencepath + '/validation_reference_sheet_flux_plots.csv')
                 validation_reference_subtext = validation_reference_subtext_string
                 
@@ -949,8 +959,8 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
                     markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
                 validation_reference_subtext_string, validation_reference_flag_dict = construct_validation_reference_sheet(validation_reference_subtext, validation_reference_flag_dict, 'Time', 
                                                                                                                            config.referencepath + '/validation_reference_sheet_time_metrics.csv',
-                                                                                                                           config.referencepath + '/validation_reference_sheet_time_skills.csv',
-                                                                                                                           config.referencepath + '/validation_reference_sheet_time_plots.csv')
+                                                                                                                           None,
+                                                                                                                           None)
                 validation_reference_subtext = validation_reference_subtext_string
            
             if peak_intensity_max_time:
@@ -967,8 +977,8 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
                     markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
                 validation_reference_subtext_string, validation_reference_flag_dict = construct_validation_reference_sheet(validation_reference_subtext, validation_reference_flag_dict, 'Time', 
                                                                                                                            config.referencepath + '/validation_reference_sheet_time_metrics.csv',
-                                                                                                                           config.referencepath + '/validation_reference_sheet_time_skills.csv',
-                                                                                                                           config.referencepath + '/validation_reference_sheet_time_plots.csv')
+                                                                                                                           None,
+                                                                                                                           None)
                 validation_reference_subtext = validation_reference_subtext_string
             
             if threshold_crossing:
@@ -986,8 +996,8 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
                     markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
                 validation_reference_subtext_string, validation_reference_flag_dict = construct_validation_reference_sheet(validation_reference_subtext, validation_reference_flag_dict, 'Time', 
                                                                                                                            config.referencepath + '/validation_reference_sheet_time_metrics.csv',
-                                                                                                                           config.referencepath + '/validation_reference_sheet_time_skills.csv',
-                                                                                                                           config.referencepath + '/validation_reference_sheet_time_plots.csv')
+                                                                                                                           None,
+                                                                                                                           None)
                 validation_reference_subtext = validation_reference_subtext_string
             
             if fluence:
@@ -1004,7 +1014,7 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
                     markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
                 validation_reference_subtext_string, validation_reference_flag_dict = construct_validation_reference_sheet(validation_reference_subtext, validation_reference_flag_dict, 'Flux', 
                                                                                                                            config.referencepath + '/validation_reference_sheet_flux_metrics.csv',
-                                                                                                                           config.referencepath + '/validation_reference_sheet_flux_skills.csv',
+                                                                                                                           None,
                                                                                                                            config.referencepath + '/validation_reference_sheet_flux_plots.csv')
                 validation_reference_subtext = validation_reference_subtext_string
             
@@ -1022,7 +1032,7 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
                     markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
                 validation_reference_subtext_string, validation_reference_flag_dict = construct_validation_reference_sheet(validation_reference_subtext, validation_reference_flag_dict, 'Flux', 
                                                                                                                            config.referencepath + '/validation_reference_sheet_flux_metrics.csv',
-                                                                                                                           config.referencepath + '/validation_reference_sheet_flux_skills.csv',
+                                                                                                                           None,
                                                                                                                            config.referencepath + '/validation_reference_sheet_flux_plots.csv')
                 validation_reference_subtext = validation_reference_subtext_string
                 
@@ -1059,8 +1069,8 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
                     markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
                 validation_reference_subtext_string, validation_reference_flag_dict = construct_validation_reference_sheet(validation_reference_subtext, validation_reference_flag_dict, 'Time', 
                                                                                                                            config.referencepath + '/validation_reference_sheet_time_metrics.csv',
-                                                                                                                           config.referencepath + '/validation_reference_sheet_time_skills.csv',
-                                                                                                                           config.referencepath + '/validation_reference_sheet_time_plots.csv')
+                                                                                                                           None,
+                                                                                                                           None)
                 validation_reference_subtext = validation_reference_subtext_string
             
             if duration:
@@ -1076,7 +1086,7 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
                     appendage_set_list.append(appendages[j])
                     markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
                 validation_reference_subtext_string, validation_reference_flag_dict = construct_validation_reference_sheet(validation_reference_subtext, validation_reference_flag_dict, 'Duration', 
-                                                                                                                           config.referencepath + '/validation_reference_sheet_dur_metrics.csv',
+                                                                                                                           config.referencepath + '/validation_reference_sheet_time_metrics.csv',
                                                                                                                            None,
                                                                                                                            None)
                 validation_reference_subtext = validation_reference_subtext_string
@@ -1095,8 +1105,8 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
                     markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
                 validation_reference_subtext_string, validation_reference_flag_dict = construct_validation_reference_sheet(validation_reference_subtext, validation_reference_flag_dict, 'Time', 
                                                                                                                            config.referencepath + '/validation_reference_sheet_time_metrics.csv',
-                                                                                                                           config.referencepath + '/validation_reference_sheet_time_skills.csv',
-                                                                                                                           config.referencepath + '/validation_reference_sheet_time_plots.csv')
+                                                                                                                           None,
+                                                                                                                           None)
                 validation_reference_subtext = validation_reference_subtext_string
                     
             if time_profile:
@@ -1114,7 +1124,7 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
                     markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, skip_label_list=skip_label_list, appendage=appendages[j])        
                 validation_reference_subtext_string, validation_reference_flag_dict = construct_validation_reference_sheet(validation_reference_subtext, validation_reference_flag_dict, 'Flux', 
                                                                                                                            config.referencepath + '/validation_reference_sheet_flux_metrics.csv',
-                                                                                                                           config.referencepath + '/validation_reference_sheet_flux_skills.csv',
+                                                                                                                           None,
                                                                                                                            config.referencepath + '/validation_reference_sheet_flux_plots.csv')
                 validation_reference_subtext = validation_reference_subtext_string
             
