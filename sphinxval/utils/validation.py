@@ -952,8 +952,6 @@ def calculate_mean_forecast(df, pred_key):
     pred_end = sub['Prediction Window End'].max()
     
     #Record all the files that were used to create the average
-    print("calculate_mean_forecast for " + pred_key)
-    print(sub)
     fnames = sub['Forecast Source'].iloc[0]
     for i in range(1,len(sub),1):
         fnames += ";" + sub['Forecast Source'].iloc[i]

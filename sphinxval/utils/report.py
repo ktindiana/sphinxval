@@ -187,9 +187,10 @@ def add_collapsible_segment_nest(header_list, text_list, depth=0):
             result.append((depth, header_list[i], text_list[i]))
     return result
 
-def build_info_string_header(value):
+def build_info_string_header(value, limit_message):
     info_string = 'Instruments and observed values used in validation.<br>'
     info_string += 'N = ' + str(value) + '<br>\n'
+    info_string += limit_message
     return info_string
 
 def define_colors():
@@ -221,16 +222,21 @@ def build_skill_score_table(labels, values):
     table_string = '\n' + transpose_markdown(table.to_markdown(index=False)) + '\n'
     return table_string
 
-def build_info_events_table(filename, sphinx_dataframe, subset_list, subset_replacement_dict):
+def build_info_events_table(filename, sphinx_dataframe, subset_list, subset_replacement_dict, selections_limit=1000):
     data = pd.read_pickle(filename)
     subset = data[subset_list]
     subset.insert(0, 'Observatory', 'dummy')
     selection_index = list(data.index)
     subset['Observatory'] = sphinx_dataframe.loc[selection_index, 'Observatory'].to_list()
     subset = subset.rename(columns=subset_replacement_dict)
+    if len(subset) > selections_limit:
+        subset = subset.iloc[:selections_limit]
+        limit_message = 'This list has been truncated to the first ' + str(selections_limit) + ' entries. See ' + filename + ' for full list.\n'
+    else:
+        limit_message = ''
     output = '\n' + subset.to_markdown(index=False) + '\n'
     n_events = len(data)
-    return output, n_events
+    return output, n_events, limit_message
 
 def build_threshold_string(data, k):
     energy_threshold_data = data.iloc[k]['Energy Channel']
@@ -284,12 +290,11 @@ def build_all_clear_skill_scores_section(filename, model, sphinx_dataframe, appe
         misses = data.iloc[i]["All Clear 'False Negatives' (Misses)"]
         contingency_table_values = [hits, false_alarms, correct_negatives, misses]
         contingency_table_string = build_contingency_table(*contingency_table_values)
-        info_string = build_info_string_header(sum(contingency_table_values))
-        
         selections_filename = output_dir__ + 'all_clear_selections_' + model + '_' + data.iloc[i]['Energy Channel'] + '_threshold_' + obs_threshold.rstrip(' pfu') + mismatch_allowed_string + appendage + '.pkl'
         subset_list = ['Prediction Window Start', 'Prediction Window End']
         subset_list = append_subset_list(selections_filename, subset_list, 'Prediction Window End', 'Units')
-        info_string_, n_events = build_info_events_table(selections_filename, sphinx_dataframe, subset_list, {})
+        info_string_, n_events, limit_message = build_info_events_table(selections_filename, sphinx_dataframe, subset_list, {})
+        info_string = build_info_string_header(sum(contingency_table_values), limit_message)
         info_string += info_string_
         skill_score_table_values = data.iloc[i, skill_score_start_index:]
         skill_score_table_string = build_skill_score_table(skill_score_table_labels, skill_score_table_values)
@@ -424,8 +429,8 @@ def build_section_awt(filename, model, sphinx_dataframe, metric_label_start, sec
             subset_list = ['Prediction Window Start', 'Prediction Window End']
             if os.path.exists(selections_filename):            
                 subset_list = append_subset_list(selections_filename, subset_list, 'Prediction Window End', 'Units')
-                info_string_, n_events = build_info_events_table(selections_filename, sphinx_dataframe, subset_list, rename_dict)
-                info_string = build_info_string_header(n_events)
+                info_string_, n_events, limit_message = build_info_events_table(selections_filename, sphinx_dataframe, subset_list, rename_dict)
+                info_string = build_info_string_header(n_events, limit_message)
                 info_string += info_string_
                 text += add_collapsible_segment('Validation Info - ' + awt_string, info_string)
         text += add_collapsible_segment('Metrics', metrics_string)
@@ -460,8 +465,8 @@ def build_section(filename, model, sphinx_dataframe, metric_label_start, section
         selections_filename = output_dir__ + section_tag + '_selections_' + model + '_' + data.iloc[i]['Energy Channel'] + '_threshold_' + obs_threshold.rstrip(' pfu') + mismatch_allowed_string + appendage + '.pkl'
         subset_list = ['Prediction Window Start', 'Prediction Window End']
         subset_list = append_subset_list(selections_filename, subset_list, 'Prediction Window End', 'Units')
-        info_string_, n_events = build_info_events_table(selections_filename, sphinx_dataframe, subset_list, rename_dict)
-        info_string = build_info_string_header(n_events)
+        info_string_, n_events, limit_message = build_info_events_table(selections_filename, sphinx_dataframe, subset_list, rename_dict)
+        info_string = build_info_string_header(n_events, limit_message)
         info_string += info_string_
         metrics_string = metrics_description_string + '' 
         metrics_string_, plot_string_list, plot_file_string_list = build_metrics_table(data, i, metric_index_start, skip_label_list)
@@ -697,7 +702,7 @@ html *
 def add_title(model):
     return '<h1>' + model + ' Validation Report</h1>\n'
 
-def add_tab(appendage, markdown_text):
+def add_tab(appendage, markdown_text, model):
     if appendage == '':
         appendage = 'All'
         default_string = 'style="display:block"'
@@ -705,13 +710,16 @@ def add_tab(appendage, markdown_text):
         default_string = ''
     text = '<div id="' + appendage + '" class="tabcontent"' + default_string + '>\n'
     text += '    <h3>' + appendage + '</h3>\n'
-    text += '    ' + convert_markdown_to_html(markdown_text) + '\n'
+    text += '    ' + convert_markdown_to_html(markdown_text, model + '...' + appendage, False) + '\n'
     text += '</div>\n'
     return text
 
-def convert_markdown_to_html(text, size_limit=10**20):
+def convert_markdown_to_html(text, model, validation_reference=False):
     
-    print('Generating HTML report...')
+    if validation_reference:
+        None
+    else:
+        print('Generating HTML report...' + model + '...' + str(datetime.datetime.now()))
     text = text.split('\n')
     
     # REPLACE TABLES
