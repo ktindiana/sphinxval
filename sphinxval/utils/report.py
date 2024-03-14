@@ -1165,13 +1165,13 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
         
         
         for j in range(0, len(appendage_set_list)):
-            html_text += add_tab(appendage_set_list[j].replace('_', ''), markdown_texts[appendage_set_list[j]])
+            html_text += add_tab(appendage_set_list[j].replace('_', ''), markdown_texts[appendage_set_list[j]], model)
         
         
         validation_reference_text_html = add_collapsible_segment_start('Validation Reference Sheet', '')
         validation_reference_text_html += validation_reference_subtext_html
         validation_reference_text_html += add_collapsible_segment_end()
-        html_text += convert_markdown_to_html(validation_reference_text_html)
+        html_text += convert_markdown_to_html(validation_reference_text_html, model)
         html_filename = config.reportpath + '/' + model + '_report.html'
         a = open(html_filename, 'w')
         a.write(html_text)
