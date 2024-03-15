@@ -577,7 +577,7 @@ def convert_plots_html(text):
                 # CHECK IMAGE DIMENSIONS
                 image_filename = os.path.abspath(image_filename_plot_path)
                 image_filename = replace_backslash_with_forward_slash(image_filename)
-                image_filename = image_filename.replace('output/plots/', 'clayton_sphinxval/output/plots/')
+                image_filename = image_filename.replace('output/plots/', config.basepath + '/output/plots/')
                 reader = pdf.PdfReader(image_filename)
                 box = reader.pages[0].mediabox
                 width = str(box.width)
