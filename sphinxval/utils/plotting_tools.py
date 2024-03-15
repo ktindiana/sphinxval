@@ -486,7 +486,7 @@ def plot_time_profile(date, values, labels, dy=None, dyl=None, dyh=None,
 
 
 def plot_false_alarms(all_dates, fa_dates, labels, x_label="Date",
-    y_label="Value", date_format="year", title="False Alarms", showplot=False,
+    y_label="Value", date_format=None, title="False Alarms", showplot=False,
     closeplot=False, saveplot=False, figname = "false_alarms.png"):
     """
     Plot all forecasts with time with false alarms highlighted.
@@ -958,7 +958,7 @@ def box_plot_metrics(df, metric_names, highlight,
                 legend=True, linewidth=0.5, size=8, palette='tab20')
     else:
         sns.stripplot(data=df, x='Metrics', y='Values', hue='Models',
-                legend=True, linewidth=0.5, size=8, palette='Dark2')
+                legend=True, linewidth=0.5, size=8, palette='Dark2') #Dark2
 
     means = []
     medians = []

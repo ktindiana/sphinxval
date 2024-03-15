@@ -895,6 +895,7 @@ class Forecast():
 
         #Find the time of the latest flare in the trigger list
         last_flare_time = None
+        last_flare_data_time = None
         if self.flares != []:
             for flare in self.flares:
                 #The flare peak time is the most relevant for matching
@@ -906,24 +907,31 @@ class Forecast():
                 end_time = flare.end_time
                 last_data_time = flare.last_data_time
                 
-                #Give preference to last data time. This will
-                #be very relevant to historical analyses where
-                #all values are known and may be filled in in the
-                #json file
-                if isinstance(last_data_time,datetime.date):
-                    check_time = last_data_time
-                elif isinstance(peak_time,datetime.date):
+                #Find the last flare time that is available
+                #Give preference to the peak as it is more useful
+                #for timing wrt to an SEP onset and most likely closest
+                #to CME release time
+                if isinstance(peak_time,datetime.date):
                     check_time = peak_time
                 elif isinstance(start_time,datetime.date):
                     check_time = start_time
                 elif isinstance(end_time,datetime.date):
                     check_time = end_time
-                
-                    
+
+                #Get the time for the very last flare
                 if last_flare_time == None:
                     last_flare_time = check_time
                 elif insinstance(check_time, datetime.date):
                     last_flare_time = max(last_flare_time,check_time)
+
+                #In the case that last_data_time is provided, find the
+                #last one for comparison with issue time.
+                if isinstance(last_data_time,datetime.date):
+                    if last_flare_data_time == None:
+                        last_flare_data_time = last_data_time
+                    else:
+                        last_flare_data_time = max(last_flare_data_time, last_data_time)
+
 
         #Find the latest particle intensity data used by the model
         last_pi_time = None
@@ -937,19 +945,27 @@ class Forecast():
                         last_pi_time = max(last_pi_time,check_time)
 
 
-        #Take the latest of all the times
+        #Take the latest of all the eruptions times to determine
+        #association with SEP events
         if isinstance(last_cme_time,datetime.date):
             last_time = last_cme_time
             last_eruption_time = last_cme_time
             
         if isinstance(last_flare_time,datetime.date):
-            if last_time == None:
-                last_time = last_flare_time
+            if last_eruption_time == None:
                 last_eruption_time = last_flare_time
             else:
-                last_time = max(last_time,last_flare_time)
                 last_eruption_time = max(last_eruption_time,last_flare_time)
-                
+
+        #Take the latest of the last_data_times for comparison with issue time
+        #The last_time and last_eruption_time may differ in a historical analysis
+        #The two times should be approximately the same in real time forecasting
+        if isinstance(last_flare_data_time, datetime.date):
+            if last_time == None:
+                last_time = last_flare_data_time
+            else:
+                last_time = max(last_time, last_flare_data_time)
+
         if isinstance(last_pi_time,datetime.date):
             if last_time == None:
                 last_time = last_pi_time
