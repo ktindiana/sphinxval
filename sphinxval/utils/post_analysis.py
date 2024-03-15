@@ -11,12 +11,12 @@ import pickle
 import pandas as pd
 import matplotlib as plt
 
-#Columns to exclude from box plots
-exclude = ["N (Total Number of Forecasts)", "Predicted SEP Events",
+#Columns to exclude from box plots - not used
+exclude_box = ["N (Total Number of Forecasts)", "Predicted SEP Events",
         "Missed SEP Events", "Scatter Plot", "Linear Regression y-intercept",
-        "ROC Curve Plot"]
+        "ROC Curve Plot", "Spearman Correlation Coefficient (Log)"]
 
-
+#"N (Total Number of Forecasts)"
 
 def export_all_clear_false_alarms(filename, doplot=False):
     """ Provide the filename of an all_clear_selections_*.pkl
@@ -83,7 +83,7 @@ def export_all_clear_false_alarms(filename, doplot=False):
         
         labels = ["All Forecasts", "False Alarms"]
         fig, _ = plt_tools.plot_false_alarms(all_dates, fa_dates, labels,
-            x_label="Date", y_label="", date_format="year", title=title,
+            x_label="Date", y_label="", date_format=None, title=title,
             figname=figname, saveplot=True, showplot=True)
         
 
@@ -115,7 +115,7 @@ def get_file_prefix(quantity):
     
 
 
-def read_in_metrics(path, quantity, exclude):
+def read_in_metrics(path, quantity, include, exclude):
     """ Read in metrics files related to specfied quantity.
     
     INPUT:
@@ -137,8 +137,29 @@ def read_in_metrics(path, quantity, exclude):
     
     df = resume.read_in_df(fname)
     
+    #This is a little tricky because a part of a model
+    #short_name might be in include. For example, to
+    #include all 30 of SAWS-ASPECS flavors, the user would
+    #simply have to put "ASPECS" in include.
+    #So need to check if the substring is in any of the
+    #model names. If not, then will append the model name
+    #to the exclude array and remove from the data frame.
+    if include[0] != 'All':
+        models = resume.identify_unique(df,'Model')
+        for model in models:
+            included = False
+            for incl_model in include:
+                if incl_model in model:
+                    included = True
+            if not included:
+                exclude.append(model)
+    
+    #Remove model results that should be excluded from the plots
     for model in exclude:
         if model != '':
+            model = model.replace('+','\+')
+            model = model.replace('(','\(')
+            model = model.replace(')','\)')
             df = df[~df['Model'].str.contains(model)]
             print("read_in_metrics: Removed model metrics for " + model)
     
@@ -170,12 +191,11 @@ def plot_groups(quantity):
                     ["Probability of Correct Negatives",
                     "Frequency of Correct Negatives", "False Alarm Ratio",
                     "Detection Failure Ratio", "Threat Score"],
-                    ["Odds Ratio"],
                     ["Gilbert Skill Score", "True Skill Statistic",
                     "Heidke Skill Score", "Odds Ratio Skill Score",
                     "Symmetric Extreme Dependency Score"],
                     ["Number SEP Events Correctly Predicted",
-                    "Number SEP Events Missed"]
+                    "Number SEP Events Missed", "Odds Ratio"]
                 ]
 
     #PROBABILITY
@@ -191,12 +211,12 @@ def plot_groups(quantity):
         groups = [ ["Linear Regression Slope",
                     "Pearson Correlation Coefficient (Linear)",
                     "Pearson Correlation Coefficient (Log)",
-                    "Spearman Correlation Coefficient (Linear)",
-                    "Spearman Correlation Coefficient (Log)"],
-                    ["Mean Error (ME)", "Median Error (MedE)"],
+                    "Spearman Correlation Coefficient (Linear)"],
+                    ["Mean Error (ME)", "Median Error (MedE)",
+                    "Median Symmetric Accuracy (MdSA)"],
                     ["Mean Absolute Error (MAE)",
-                    "Median Absolute Error (MedAE)"],
-                    ["Root Mean Square Error (RMSE)"],
+                    "Median Absolute Error (MedAE)",
+                    "Root Mean Square Error (RMSE)"],
                     ["Mean Log Error (MLE)", "Median Log Error (MedLE)"],
                     ["Mean Absolute Log Error (MALE)",
                     "Median Absolute Log Error (MedALE)",
@@ -205,8 +225,7 @@ def plot_groups(quantity):
                     "Mean Absolute Percent Error (MAPE)",
                     "Mean Accuracy Ratio (MAR)"],
                     ["Mean Symmetric Percent Error (MSPE)",
-                    "Mean Symmetric Absolute Percent Error (SMAPE)"],
-                    ["Median Symmetric Accuracy (MdSA)"]
+                    "Mean Symmetric Absolute Percent Error (SMAPE)"]
                 ]
 
     #TIME METRICS
@@ -219,7 +238,8 @@ def plot_groups(quantity):
 
 
 
-def make_box_plots(df, path, quantity, anonymous, highlight):
+def make_box_plots(df, path, quantity, anonymous, highlight, saveplot,
+    showplot):
     """ Take a dataframe of metrics and generate box plots
         of each of the metrics.
         
@@ -267,16 +287,24 @@ def make_box_plots(df, path, quantity, anonymous, highlight):
                 values = []
                 metric_names = []
                 model_names = []
+                hghlt = ''
                 for metric_col in group:
                     vals = sub[metric_col].to_list()
                     values.extend(vals)
                     metric_names.extend([metric_col]*len(vals))
                     model_list = sub['Model'].to_list()
                     
+                    nfcasts = []
+                    if 'N (Total Number of Forecasts)' in sub.columns.to_list():
+                        nfcasts = sub['N (Total Number of Forecasts)'].to_list()
+                                        
                     if anonymous and highlight == '':
                         for j in range(len(model_list)):
                             model_list[j] = "Model " + str(j)
-                    
+
+                    for jj in range(len(nfcasts)):
+                        model_list[jj] += " (" + str(nfcasts[jj]) + ")"
+
                     if highlight != '':
                         for j in range(len(model_list)):
                             if highlight in model_list[j]:
@@ -293,10 +321,14 @@ def make_box_plots(df, path, quantity, anonymous, highlight):
                 
           
                 title = quantity + " Group " + str(grp) + " (" + ek + ", " + tk + ")"
-                figname = path + "/output/plots/" + quantity + "_" + ek + "_" + tk \
+                figname = path + "/summary/" + quantity + "_" + ek  \
                         + "_boxes_Group" + str(grp)
+                if highlight != '':
+                    figname += "_" + highlight
+                if anonymous:
+                    figname += "_anon"
                 plt_tools.box_plot_metrics(metrics_df, group, highlight,
                     x_label="Metric", y_label="Value", title=title,
-                    save=figname, uselog=False, showplot=True, \
-                    closeplot=False)
+                    save=figname, uselog=False, showplot=showplot, \
+                    closeplot=False, saveplot=saveplot)
 

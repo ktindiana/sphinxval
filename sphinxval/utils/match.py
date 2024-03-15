@@ -2102,7 +2102,7 @@ def revise_eruption_matches(matched_sphinx, all_energy_channels, obs_values,
         In the case that there are multiple predictions with different
         CME/flare triggers, then the following selections will be applied:
         
-        - The eruption must be within 15 minutes to 48 hours prior to threshold
+        - The eruption must be within a few minutes to 48 hours prior to threshold
             crossing (this selection is already made in match_all_forecasts).
         - Associate only the prediction with the eruption closest in time to
             the SEP event (this subroutine). Predictions with earlier
