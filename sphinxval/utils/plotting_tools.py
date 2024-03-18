@@ -593,6 +593,124 @@ def plot_false_alarms(all_dates, fa_dates, labels, x_label="Date",
 
 
 
+def plot_flux_false_alarms(all_dates, obs_fluxes, pred_fluxes,
+    fa_dates, fa_fluxes, labels, threshold, x_label="Date",
+    y_label="Flux", date_format=None, title="False Alarms", showplot=False,
+    closeplot=False, saveplot=False, figname = "flux_false_alarms.png"):
+    """
+    Plot all forecasts with time with false alarms highlighted.
+
+    Parameters
+    ----------
+    all_dates : array-like datetime objects, shape=(n dates)
+        Dates correspond to prediction window start times for all forecasts.
+        Datetimes
+        [dates1,dates2,dates3,...]
+        
+    all_fluxes : array-like floats, shape=(n floats)
+        All fluxes corresponding to all dates
+
+    fa_dates : array-like datetime objects, shape=(m dates)
+        Dates correspond to prediction window start times for false alarms.
+        Datetimes
+        [dates1,dates2,dates3,...]
+        
+    fa_fluxes : array-like floats, shape=(m floats)
+        Fluxes corresponding to false alarms
+        
+    
+    labels : array-like string, shape=(2)
+
+
+    title : string
+        Title for plot
+        Optional
+
+    x_label : string
+        Label for x-axis
+        Optional. Defaults to "Date"
+        
+    y_label : string
+        Label for y-axis
+        Optional. Defaults to "Metric"
+        
+    date_format : string
+        May be "year" or "day" or "none"
+        Default year
+        Determines format of date on x-axis
+
+    showplot : boolean
+        Indicator for displaying the plot on screen or not
+        Optional. Defaults to False
+
+    closeplot : boolean
+        Indicator for clearing the figure from memory
+        Optional. Defaults to False
+
+    figname : string
+        Name to save figure (includes filetype)
+        Optional. Defaults to "false_alarms.png"
+
+    Returns
+    -------
+    fig, figname
+    """
+
+    register_matplotlib_converters()
+
+    #check_consistent_length(date, metric)
+
+    # checking if items in date are datetime objects
+    #if not all(isinstance(x, datetime.datetime) for x in date):
+    #    raise TypeError("Dates must be datetime objects.")
+
+    try:
+        plt.style.use('seaborn-whitegrid')
+    except OSError:
+        plt.style.use('seaborn-v0_8-whitegrid')
+
+    fig = plt.figure(figsize=(10,6))
+    ax = plt.subplot(111)
+    
+
+    ax.plot(all_dates, obs_fluxes, "o", label=labels[0], color="black")
+    ax.plot(all_dates, pred_fluxes, "o", label=labels[1], color="blue")
+    ax.plot(fa_dates, fa_fluxes, "o", label=labels[2], color="red", mfc='none')
+
+
+    ax.set(xlabel=x_label, ylabel=y_label)
+    if date_format == "year" or date_format == "Year":
+        ax.xaxis_date()
+        ax.xaxis.set_major_formatter(DateFormatter('%Y-%m-%d'))
+    if date_format == "day" or date_format == "Day":
+        ax.xaxis_date()
+        ax.xaxis.set_major_formatter(DateFormatter('%m-%d\n%H:%M'))
+    
+    plt.setp(ax.get_xticklabels(), rotation = 15)
+    ax.set_title(title)
+    
+    #Threshold line
+    plt.axhline(threshold, color="red", linestyle='--')
+    
+    chartBox = ax.get_position()
+    ax.set_position([chartBox.x0, chartBox.y0, chartBox.width*0.87,
+                    chartBox.height])
+    ax.legend(loc='upper right', bbox_to_anchor=(1.3, 0.95), fontsize='9', \
+              framealpha=0.5)
+        
+    plt.yscale('log')
+        
+    if showplot: plt.show()
+    if saveplot:
+        fig.savefig(figname, dpi=300, bbox_inches='tight')
+
+    if closeplot: plt.close(fig)
+
+    return fig, figname
+
+
+
+
 
 def correlation_plot(obs_values, model_values, plot_title,
     xlabel="Observations", ylabel="Model",  value="Value",
@@ -792,6 +910,8 @@ def plot_scores_thresholds(thresholds, scores, labels, x_scale='log', \
     if closeplot: plt.close(fig)
 
 
+
+
 def box_plot(values, labels, x_label="Model", y_label="Metric", \
              title=None, save="boxes", uselog=False, showplot=False, \
              closeplot=False):
@@ -880,6 +1000,8 @@ def box_plot(values, labels, x_label="Model", y_label="Metric", \
     #fig.savefig(save+'.png', dpi=300, bbox_inches='tight')
 
     if closeplot: plt.close(fig)
+
+
 
 
 def box_plot_metrics(df, metric_names, highlight,
