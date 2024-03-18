@@ -878,7 +878,8 @@ def calc_MdSA(y_true, y_pred):
                          "targets contain negative values.")
 
     #Using the natural log as in the definition of this metric in eqn 11 of the Morley paper
-    return 100*(np.exp(np.median(np.abs(np.log(y_true / y_pred)))) - 1.0) 
+    #Removing 100% from definition - RE, KW
+    return (np.exp(np.median(np.abs(np.log(y_true / y_pred)))) - 1.0)
 
 
 #CA
