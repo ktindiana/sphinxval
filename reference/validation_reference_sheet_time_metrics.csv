@@ -1,0 +1,9 @@
+﻿Metrics,,,
+Name,Comments
+Time Metrics,Negative values indicate predicted time is earlier than observed. Positive values indicate predicted time is later than observed.
+SEP Threshold Crossing Time, Typically the same as SEP start time but can change if custom thresholds are applied to validation scheme.
+SEP Start Time, Time that the SEP event starts for each respective energy channel for standard operational thresholds (>10 MeV @ 10 pfu and >100 MeV @ 1 pfu)
+Onset Peak Flux Time, Onset Peak is the peak that is typically found just after the initial increase in particle flux. Onset peak is found via an algorithm that uses the following steps: Fit the time profile using a Weibull function and find the global maximum of the fit. Take second derivative of Weibull and find the global minimum. Find the peak flux between the found max and min from the previous steps.
+Max Peak Flux Time, Max Peak is the maximum flux value in the time profile. Can be associated with ESP peak but not necessarily so.
+SEP End Time, Time that each energy channel decreases back below the chosen threshold for three consecutive points (to avoid times when flux decreases and then increases back above threshold being called two different events).
+Duration, SEP End time minus SEP Start Time

@@ -1,0 +1,24 @@
+﻿Flux Metrics,,,
+Name,Calculation,Notes,Perfect Score,Range
+Error (E), Prediction - Observation, Linear error calculation, 0, -inf - inf
+Log Error (LE), log10(Prediction) - log10(Observation), Order of magnitude, 0, -inf - inf
+Absolute Error (AE), abs(Prediction - Observation), Bias calculation, 0, 0 - inf 
+Absolute Log Error (ALE), abs(log10(Prediction) - log10(Observation)), Something,0, 0 - inf
+Percent Error (PE), (Prediction - Observation)/Observation ,Something,0, -inf - inf
+Absolute Percent Error (APE), abs((Prediction - Observation)/Observation),Something ,0, 0 - inf 
+Symmetric Percent Error (SPE), 2.0x(Prediction - Observation)/(Prediction + Observation),Something , 0, -2 - 2
+Symmetric Absolute Percent Error (MAPE),2.0xabs((Prediction - Observation)/(Prediction + Observation)),Something ,0,0 - 2
+Mean Accuracy Ratio (MAR), mean(Prediction/Observation),Something ,0, 0 - inf
+Root Mean Square Error (RMSE), Sqrt((Prediction - Observation)^2/N) where N is number of matched pairs of predictions and observations,Something ,0, 0 - inf 
+Root Mean Square Log Error (RMSLE),  Sqrt((log10(Prediction) - log10(Observation))^2/N) where N is number of matched pairs of predictions and observations,Something ,0, 0 - inf 
+Median Symmetric Accuracy (MdSA), 100x(exp(median(abs(log10(Observation/Prediction)))) - 1.0), Source: eqn 11 in https://doi.org/10.1002/2017SW001669,1,0 - inf
+Linear Regression Slope, Fit the flux quantity data on a scatter plot and fit data using a linear regression scheme. This is the slope of the fit., Positive (negative) slope means data is positively (negatively) correlated.,1, -inf - inf
+Linear Regression y-intercept,Y-intercept of the linear regression.,,,
+Pearson Correlation Coefficient (Linear), Linear correlation coefficient calculation,Uses Scipy's pearson correlation coefficient calculation,1,-1 - 1
+Pearson Correlation Coefficient (Log),Linear correlation coefficient calculation on log data,Uses Scipy's pearson correlation coefficient calculation,1,-1 - 1
+Spearman Correlation Coefficient (Linear), Rank Order Correlation coefficient,Uses Scipy's Spearman correlation coefficient calculation,1,-1 - 1
+
+Other Notes, , , , 
+Error Metrics, We calculate our error metrics in a different way than convention. We always subtract the observed value from the model value such that under-predictions are negative and over-predictions are positive., , , 
+Onset Peak Flux, Onset Peak is the peak that is typically found just after the initial increase in particle flux., Onset peak is found via an algorithm that uses the following steps: Fit the time profile using a Weibull function and find the global maximum of the fit. Take second derivative of Weibull and find the global minimum. Find the peak flux between the found max and min from the previous steps., , 
+Max Peak Flux, Max Peak is the maximum flux value in the time profile. Can be associated with ESP peak but not necessarily so., , , 
