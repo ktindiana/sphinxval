@@ -1,0 +1,3 @@
+﻿Table,
+Table,Description,Comments
+Contigency Table,Delineates the model predictions and observations into two classifications each (Event Yes/No) and displays the number of times each combination appears across the event list.,Each quadrant of the table can be called by a different name: Hit. False Positive. Miss. Correct Negative

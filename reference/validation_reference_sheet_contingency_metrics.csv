@@ -1,0 +1,14 @@
+﻿Contigency Metrics,,,
+Name,Attribute,Calculation,Range, Perfect Score,Alternate Names
+Percent Correct,Accuracy,(Hits+Correct Negatives)/N,0 to 1,1,Accuracy
+Bias,Bias,(Hits+False Alarms)/(Hits+Misses),0 to infinity,1,Precision
+Hit Rate,Discrimination,Hits+(Hits+Misses),0 to 1,1,Probability of Detection & Recall & Sensitivity
+False Alarm Ratio,Resolution,False Alarms/(Hits+False Alarms),0 to 1,1,
+False Alarm Rate,Discrimination,False Alarms/(False Alarms + Correct Negatives),0 to 1,0, 
+Frequency of Hits,Resolution,Hits/(Hits+False Alarms),0 to 1,1, 
+Frequency of Misses,Discrimination,Misses/(Misses+Correct Negatives),0 to 1,0, 
+Probability of Correct Negatives,Discrimination,Correct Negatives/(False Alarms+Correct Negatives),0 to 1,1, 
+Detection Failure Ratio,Resolution,Misses/(Misses+Correct Negatives),0 to 1,0, 
+Frequency of Correct Negatives,Resolution,Correct Negatives/(Misses+Correct Negatives),0 to 1,1, 
+Threat Score,Accuracy,Hits/(Hits+False Alarms+Misses),0 to 1,1,Critical Success Index
+Odds Ratio,Accuracy,(Hits x Correct Negatives)/(False Alarms x Misses),0 to infinity,infinity, 
