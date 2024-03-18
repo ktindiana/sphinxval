@@ -1,11 +1,16 @@
 from . import units_handler as vunits
 from . import object_handler as objh
+import os
+
 
 datapath = './data'
 modelpath = './model'
 outpath = './output'
 referencepath = './reference'
 reportpath = './reports'
+basepath = os.getcwd().split('\\')[-1]
+#basepath_full = os.getcwd()
+
 
 #Advanced Warning Time
 awt_cut = 96
