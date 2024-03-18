@@ -796,7 +796,6 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
         # define on/off flags for validation reference tables
         validation_reference_flag_dict = {'All Clear' : True,
                                           'AWT' : True,
-                                          'Duration' : True,
                                           'Flux' : True,
                                           'Time' : True,
                                           'Probability' : True,
@@ -816,7 +815,6 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
             max_flux_in_pred_win = False
             probability = False
             start_time = False
-            duration = False
             end_time = False
             time_profile = False
             
@@ -1093,7 +1091,7 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
                     report_exists = True
                     appendage_set_list.append(appendages[j])
                     markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
-                validation_reference_subtext_string, validation_reference_flag_dict = construct_validation_reference_sheet(validation_reference_subtext, validation_reference_flag_dict, 'Duration', 
+                validation_reference_subtext_string, validation_reference_flag_dict = construct_validation_reference_sheet(validation_reference_subtext, validation_reference_flag_dict, 'Time', 
                                                                                                                            config.referencepath + '/validation_reference_sheet_time_metrics.csv',
                                                                                                                            None,
                                                                                                                            None)
