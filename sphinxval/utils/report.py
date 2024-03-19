@@ -1149,7 +1149,8 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
             
             if report_exists:
                 a = open(markdown_filename, 'w')
-                a.write(markdown_text + validation_reference_text)
+                # a.write(markdown_text + validation_reference_text)
+                a.write(markdown_text)
                 a.close()
                 markdown_texts[appendages[j]] = markdown_text
         
@@ -1171,7 +1172,7 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
         validation_reference_text_html = add_collapsible_segment_start('Validation Reference Sheet', '')
         validation_reference_text_html += validation_reference_subtext_html
         validation_reference_text_html += add_collapsible_segment_end()
-        html_text += convert_markdown_to_html(validation_reference_text_html, model)
+        #html_text += convert_markdown_to_html(validation_reference_text_html, model)
         html_filename = config.reportpath + '/' + model + '_report.html'
         a = open(html_filename, 'w')
         a.write(html_text)
