@@ -6,6 +6,7 @@
 '''
 import sys
 from . import plotting_tools as plt_tools
+from . import time_profile as profile
 from . import resume
 import pickle
 import pandas as pd
@@ -23,9 +24,55 @@ in_percent = ["Mean Percent Error (MPE)",
                 "Median Symmetric Accuracy (MdSA)",
                 "Mean Accuracy Ratio (MAR)"]
 
-#"N (Total Number of Forecasts)"
 
-def export_all_clear_false_alarms(filename, doplot=False):
+
+def read_observed_flux_files(path, energy_key, thresh_key):
+    """ Read in all observed flux time profiles that were associated
+        with a forecast prediction window from the SPHINX_dataframe.pkl
+        file.
+        
+        INPUT:
+        
+        :path: (string) path to the output directory with trailing /
+            (not including) output/
+        :energy_key: (string) energy channel key
+        :thresh_key: (string) threshold key
+            
+        OUTPUT:
+        
+        :dates: (1xn datetime array) dates
+        :fluxes: (1xn floar array) fluxes associated with dates
+        
+    """
+
+    spx_fname = path + "output/pkl/SPHINX_dataframe.pkl"
+    sphinx_df = resume.read_in_df(spx_fname)
+    sphinx_df = sphinx_df[(sphinx_df["Energy Channel Key"] == energy_key) & (sphinx_df["Threshold Key"] == thresh_key)]
+    
+    
+    observations = sphinx_df['Observed Time Profile'].to_list()
+    #Create list of unique observed time profile filenames
+    #(may be repeates in the sphinx dataframe
+    tprof = []
+    for obsfile in observations:
+        obsfile = obsfile.strip().split(",")
+        for tp in obsfile:
+            if tp not in tprof:
+                tprof.append(tp)
+
+    dates = []
+    fluxes = []
+    for fnm in tprof:
+        dt, flx = profile.read_single_time_profile(fnm)
+        if dt == []:
+            continue
+        dates.extend(dt)
+        fluxes.extend(flx)
+
+    return dates, fluxes
+
+
+def export_all_clear_incorrect(filename, threshold, doplot=False):
     """ Provide the filename of an all_clear_selections_*.pkl
         file.
         
@@ -50,52 +97,100 @@ def export_all_clear_false_alarms(filename, doplot=False):
     """
     
     df = resume.read_in_df(filename)
-    
     if df.empty:
         return
+        
+    model = df["Model"].iloc[0]
+    energy_key = df["Energy Channel Key"].iloc[0]
+    thresh_key = df["Threshold Key"].iloc[0]
 
-    sub = df.loc[(df["Observed SEP All Clear"] == True) & (df["Predicted SEP All Clear"] == False)]
-    
+    #Correct Predictions
+    cn_dates = []
+    cn_fluxes = []
+    sub = df.loc[(df["Observed SEP All Clear"] == True) & (df["Predicted SEP All Clear"] == True)]
     if sub.empty:
-        print("post_analysis: export_all_clear_false_alarms: No false alarms identified. Returning.")
-        return
-    
-    
-    fname = filename.replace(".pkl","_false_alarms.csv")
-    figname = filename.replace(".pkl","_false_alarms.png")
-    fname = fname.replace("pkl","csv")
-    figname = figname.replace("pkl","plots")
-    
-    #Write false alarms out to csv file
-    sub.to_csv(fname)
-    
+        print("post_analysis: export_all_clear_incorrect: No correct negatives identified.")
+    else:
+        cn_dates = sub["Prediction Window Start"].to_list()
+        cn_fluxes = [threshold]*len(cn_dates)
 
-    all_dates = df["Prediction Window Start"].to_list()
-    fa_dates = sub["Prediction Window Start"].to_list()
+    #Hits
+    hits_dates = []
+    hits_fluxes = []
+    sub = df.loc[(df["Observed SEP All Clear"] == False) & (df["Predicted SEP All Clear"] == False)]
+    if sub.empty:
+        print("post_analysis: export_all_clear_incorrect: No hits.")
+    else:
+        hits_dates = sub["Prediction Window Start"].to_list()
+        hits_fluxes = [threshold]*len(hits_dates)
+
+
+
+    #False Alarms
+    fa_dates = []
+    fa_fluxes = []
+    fa_sub = df.loc[(df["Observed SEP All Clear"] == True) & (df["Predicted SEP All Clear"] == False)]
+    
+    if fa_sub.empty:
+        print("post_analysis: export_all_clear_incorrect: No false alarms identified.")
+    else:
+        fa_dates = fa_sub["Prediction Window Start"].to_list()
+        fa_fluxes = [threshold+2]*len(fa_dates)
+
+        fname = filename.replace(".pkl","_false_alarms.csv")
+        fname = fname.replace("pkl","csv")
+        
+        #Write false alarms out to csv file
+        fa_sub.to_csv(fname)
+
+
+    #Misses
+    miss_dates = []
+    miss_fluxes = []
+    miss_sub = df.loc[(df["Observed SEP All Clear"] == False) & (df["Predicted SEP All Clear"] == True)]
+    
+    if miss_sub.empty:
+        print("post_analysis: export_all_clear_incorrect: No misses identified.")
+    else:
+        miss_dates = miss_sub["Prediction Window Start"].to_list()
+        miss_fluxes = [threshold-2]*len(miss_dates)
+
+        fname = filename.replace(".pkl","_misses.csv")
+        fname = fname.replace("pkl","csv")
+        
+        #Write false alarms out to csv file
+        miss_sub.to_csv(fname)
+
+
 
     if doplot:
-        model = sub["Model"].iloc[0]
-        energy_channel = sub["Energy Channel Key"].iloc[0]
-        thresh_key = sub["Threshold Key"].iloc[0]
+        #Read in observed time profiles to plot with the forecasts
+        path = filename.strip().split("output")[0]
+        obs_dates, obs_fluxes = read_observed_flux_files(path, energy_key, thresh_key)
         
-        title = model + " False Alarms (" + energy_channel + ", " + thresh_key +")"
+        figname = filename.replace(".pkl","_incorrect.png")
+        figname = figname.replace("pkl","plots")
         
-        mismatch = sub["Mismatch Allowed"].iloc[0]
+        title = "All Clear " + model + " (" + energy_key + ", " + thresh_key +")"
+        
+        mismatch = df["Mismatch Allowed"].iloc[0]
         if mismatch:
-            pred_energy_channel = sub["Prediction Energy Channel Key"].iloc[0]
-            pred_thresh_key = sub["Prediction Threshold Key"].iloc[0]
-            title = model + " False Alarms (Observations: " + energy_channel \
+            pred_energy_channel = df["Prediction Energy Channel Key"].iloc[0]
+            pred_thresh_key = df["Prediction Threshold Key"].iloc[0]
+            title = "All Clear " + model + " (Observations: " + energy_key \
                     + ", " + thresh_key +" and "  + " Predictions: " \
                     + pred_energy_channel + ", " + pred_thresh_key +")"
         
-        labels = ["All Forecasts", "False Alarms"]
-        fig, _ = plt_tools.plot_false_alarms(all_dates, fa_dates, labels,
-            x_label="Date", y_label="", date_format=None, title=title,
+        labels = ["Observed Flux", "Hits", "Correct Negatives", "False Alarms", "Misses"]
+        fig, _ = plt_tools.plot_flux_false_alarms(obs_dates, obs_fluxes,
+            hits_dates, hits_fluxes, cn_dates, cn_fluxes, fa_dates, fa_fluxes,
+            miss_dates, miss_fluxes, labels, threshold,
+            x_label="Date", y_label="", date_format="Year", title=title,
             figname=figname, saveplot=True, showplot=True)
         
 
 
-def export_max_flux_false_alarms(filename, threshold, doplot=False):
+def export_max_flux_incorrect(filename, threshold, doplot=False):
     """ Provide the filename of an max_flux_in_pred_win_selections_*.pkl
         file.
         
@@ -122,8 +217,11 @@ def export_max_flux_false_alarms(filename, threshold, doplot=False):
     
     df = resume.read_in_df(filename)
     
+    energy_key = resume.identify_unique(df, "Energy Channel Key")[0]
+    thresh_key = resume.identify_unique(df, "Threshold Key")[0]
+    
     if df.empty:
-        print("post_analysis: export_max_flux_false_alarms: Dataframe empty. Returning.")
+        print("post_analysis: export_max_flux_incorrect: Dataframe empty. Returning.")
         return
 
     #Could have a column with "Predicted SEP Peak Intensity (Onset Peak)" or
@@ -138,47 +236,93 @@ def export_max_flux_false_alarms(filename, threshold, doplot=False):
             print("Predicted column is " + pred_col)
     
 
-    sub = df[(df["Observed Max Flux in Prediction Window"] < threshold) & (df[pred_col] >= threshold)]
+    #Correct Predictions
+    cn_dates = []
+    cn_fluxes = []
+    #Correct negatives
+    sub = df[(df["Observed Max Flux in Prediction Window"] < threshold) & (df[pred_col] < threshold)]
     
     if sub.empty:
-        print("post_analysis: export_max_flux_false_alarms: No false alarms identified. Returning.")
-        return
+        print("post_analysis: export_max_flux_incorrect: No correct negatives identified.")
+    else:
+        cn_dates = sub["Prediction Window Start"].to_list()
+        cn_fluxes = sub[pred_col].to_list()
+
+
+    #Hits
+    hits_dates = []
+    hits_fluxes = []
+    sub = df[(df["Observed Max Flux in Prediction Window"] >= threshold) & (df[pred_col] >= threshold)]
+    
+    if sub.empty:
+        print("post_analysis: export_max_flux_incorrect: No hits identified.")
+    else:
+        hits_dates= sub["Prediction Window Start"].to_list()
+        hits_fluxes = sub[pred_col].to_list()
+
+
+    #False Alarms
+    fa_dates = []
+    fa_fluxes = []
+    fa_sub = df[(df["Observed Max Flux in Prediction Window"] < threshold) & (df[pred_col] >= threshold)]
+    
+    if fa_sub.empty:
+        print("post_analysis: export_max_flux_incorrect: No false alarms identified.")
+    else:
+        fa_dates = fa_sub["Prediction Window Start"].to_list()
+        fa_fluxes = fa_sub[pred_col].to_list()
+        
+        fafname = filename.replace(".pkl","_false_alarms.csv")
+        fafname = fafname.replace("pkl","csv")
+        
+        #Write false alarms out to csv file
+        fa_sub.to_csv(fafname)
     
     
-    fname = filename.replace(".pkl","_false_alarms.csv")
-    figname = filename.replace(".pkl","_false_alarms.png")
-    fname = fname.replace("pkl","csv")
-    figname = figname.replace("pkl","plots")
-    
-    #Write false alarms out to csv file
-    sub.to_csv(fname)
-    
-    #Instead of the observed max flux points, read in the Observed Time Profile from
-    #the SPHINX_dataframe.pkl file and plot with the predicted max fluxes and false alarms.
-    all_dates = df["Prediction Window Start"].to_list()
-    obs_fluxes = df["Observed Max Flux in Prediction Window"].to_list()
-    pred_fluxes = df[pred_col].to_list()
-    fa_dates = sub["Prediction Window Start"].to_list()
-    fa_fluxes = sub[pred_col].to_list()
+    #Misses
+    miss_dates = []
+    miss_fluxes = []
+    miss_sub = df[(df["Observed Max Flux in Prediction Window"] >= threshold) & (df[pred_col] < threshold)]
+ 
+    if miss_sub.empty:
+        print("post_analysis: export_max_flux_incorrect: No misses identified.")
+    else:
+        miss_dates = miss_sub["Prediction Window Start"].to_list()
+        miss_fluxes = miss_sub[pred_col].to_list()
+        
+        mfname = filename.replace(".pkl","_misses.csv")
+        mfname = mfname.replace("pkl","csv")
+
+        #Write misses out to csv file
+        miss_sub.to_csv(mfname)
+
+
 
     if doplot:
-        model = sub["Model"].iloc[0]
-        energy_channel = sub["Energy Channel Key"].iloc[0]
-        thresh_key = sub["Threshold Key"].iloc[0]
+        figname = filename.replace(".pkl","_Outcomes.png")
+        figname = figname.replace("pkl","plots")
+                
+
+        #Read in observed time profiles to plot with the forecasts
+        path = filename.strip().split("output")[0]
+        obs_dates, obs_fluxes = read_observed_flux_files(path, energy_key, thresh_key)
         
-        title = model + " False Alarms (" + energy_channel + ", " + thresh_key +")"
+        model = df["Model"].iloc[0]
         
-        mismatch = sub["Mismatch Allowed"].iloc[0]
+        title = "Max Flux " + model + " (" + energy_key + ", " + thresh_key +")"
+        
+        mismatch = df["Mismatch Allowed"].iloc[0]
         if mismatch:
-            pred_energy_channel = sub["Prediction Energy Channel Key"].iloc[0]
-            pred_thresh_key = sub["Prediction Threshold Key"].iloc[0]
-            title = model + " False Alarms (Observations: " + energy_channel \
+            pred_energy_channel = df["Prediction Energy Channel Key"].iloc[0]
+            pred_thresh_key = df["Prediction Threshold Key"].iloc[0]
+            title = model + " False Alarms (Observations: " + energy_key \
                     + ", " + thresh_key +" and "  + " Predictions: " \
                     + pred_energy_channel + ", " + pred_thresh_key +")"
         
-        labels = ["Observed Max Flux", "Predicted Max Flux", "False Alarms"]
-        fig, _ = plt_tools.plot_flux_false_alarms(all_dates, obs_fluxes, pred_fluxes,
-            fa_dates, fa_fluxes, labels, threshold,
+        labels = ["Observed Flux", "Hits", "Correct Negatives", "False Alarms", "Misses"]
+        fig, _ = plt_tools.plot_flux_false_alarms(obs_dates, obs_fluxes,
+            hits_dates, hits_fluxes, cn_dates, cn_fluxes, fa_dates, fa_fluxes,
+            miss_dates, miss_fluxes, labels, threshold,
             x_label="Date", y_label="", date_format="Year", title=title,
             figname=figname, saveplot=True, showplot=True)
         

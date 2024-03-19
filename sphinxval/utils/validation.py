@@ -1579,8 +1579,9 @@ def point_intensity_intuitive_metrics(df, dict, model, energy_key, thresh_key,
             figname = figname + "_mm"
         if validation_type != "" and validation_type != "All":
             figname = figname + "_" + validation_type
-
-        corr_plot.savefig(figname + ".pdf", dpi=300, bbox_inches='tight')
+        
+        figname += ".pdf"
+        corr_plot.savefig(figname, dpi=300, bbox_inches='tight')
         corr_plot.close()
    
     else:
@@ -1702,7 +1703,9 @@ def peak_intensity_intuitive_metrics(df, dict, model, energy_key, thresh_key,
             figname = figname + "_mm"
         if validation_type != "" and validation_type != "All":
             figname = figname + "_" + validation_type
-        corr_plot.savefig(figname + ".pdf", dpi=300, bbox_inches='tight')
+        
+        figname += ".pdf"
+        corr_plot.savefig(figname, dpi=300, bbox_inches='tight')
         corr_plot.close()
     else:
         r_lin = None
@@ -1882,7 +1885,9 @@ def peak_intensity_max_intuitive_metrics(df, dict, model, energy_key,
             figname = figname + "_mm"
         if validation_type != "" and validation_type != "All":
             figname = figname + "_" + validation_type
-        corr_plot.savefig(figname+ ".pdf", dpi=300, bbox_inches='tight')
+
+        figname += ".pdf"
+        corr_plot.savefig(figname, dpi=300, bbox_inches='tight')
         corr_plot.close()
     else:
         r_lin = None
@@ -2047,7 +2052,8 @@ def max_flux_in_pred_win_metrics(df, dict, model, energy_key,
                 + model + "_" + energy_key.strip() + "_" + thresh_fnm
         if mismatch:
             figname = figname + "_mm"
-        corr_plot.savefig(figname+ ".pdf", dpi=300, bbox_inches='tight')
+        figname += ".pdf"
+        corr_plot.savefig(figname, dpi=300, bbox_inches='tight')
         corr_plot.close()
     else:
         r_lin = None
@@ -2165,7 +2171,9 @@ def fluence_intuitive_metrics(df, dict, model, energy_key,
             figname = figname + "_mm"
         if validation_type != "" and validation_type != "All":
             figname = figname + "_" + validation_type
-        corr_plot.savefig(figname+ ".pdf", dpi=300, bbox_inches='tight')
+        
+        figname += ".pdf"
+        corr_plot.savefig(figname, dpi=300, bbox_inches='tight')
         corr_plot.close()
     else:
         r_lin = None
@@ -2949,7 +2957,9 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
                     + "_" + str_date
                 if mismatch:
                     figname = figname + "_mm"
-                corr_plot.savefig(figname + ".pdf", dpi=300, bbox_inches='tight')
+                
+                figname += ".pdf"
+                corr_plot.savefig(figname, dpi=300, bbox_inches='tight')
                 corr_plot.close()
 
     #Calculate mean of metrics for all time profiles

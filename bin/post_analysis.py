@@ -5,10 +5,10 @@ import sphinxval.utils.post_analysis as pa
 import sys
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--AllClearFalseAlarms", type=str, default='', \
+parser.add_argument("--AllClearOutcomes", type=str, default='', \
         help=("pkl file containing all_clear_selections*.pkl"))
-parser.add_argument("--MaxFluxFalseAlarms", type=str, default='', \
-        help=("pkl file containing all_clear_selections*.pkl"))
+parser.add_argument("--MaxFluxOutcomes", type=str, default='', \
+        help=("pkl file containing max_flux_in_pred_win_selections*.pkl"))
 parser.add_argument("--Threshold", type=float, default=10., \
         help=("Threshold for Max Flux false alarms. Default 10."))
 
@@ -46,8 +46,8 @@ parser.add_argument("--showplot",
 
 
 args = parser.parse_args()
-acfa_filename = args.AllClearFalseAlarms
-mf_filename = args.MaxFluxFalseAlarms
+acfa_filename = args.AllClearOutcomes
+mf_filename = args.MaxFluxOutcomes
 threshold = args.Threshold
 path = args.Path
 include = args.Include
@@ -62,10 +62,10 @@ exclude = exclude.strip().split(",")
 include = include.strip().split(",")
 
 if acfa_filename != '':
-    pa.export_all_clear_false_alarms(acfa_filename, doplot=True)
+    pa.export_all_clear_incorrect(acfa_filename, threshold, doplot=True)
 
 if mf_filename != '':
-    pa.export_max_flux_false_alarms(mf_filename, threshold, doplot=True)
+    pa.export_max_flux_incorrect(mf_filename, threshold, doplot=True)
 
 #Make summary box plots
 if quantity == '':
