@@ -76,3 +76,13 @@ mm_thresh_key = mm_obs_tk + "_" + mm_pred_tk
 #organize observation and model objects.
 #The observed threshold key, mm_obs_tk, will be used in
 #organizing observed and predicted values by threshold.
+
+# METRICS TO BE REPORTED AS A PERCENTAGE
+in_percent = ["Mean Percent Error (MPE)",
+              "Mean Absolute Percent Error (MAPE)",
+              "Mean Symmetric Percent Error (MSPE)",
+              "Mean Symmetric Absolute Percent Error (SMAPE)",
+              "Median Symmetric Accuracy (MdSA)",
+              "Mean Accuracy Ratio (MAR)"]
+
+

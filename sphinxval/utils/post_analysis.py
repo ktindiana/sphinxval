@@ -10,18 +10,12 @@ from . import resume
 import pickle
 import pandas as pd
 import matplotlib as plt
+import config as cfg
 
 #Columns to exclude from box plots - not used
 exclude_box = ["N (Total Number of Forecasts)", "Predicted SEP Events",
         "Missed SEP Events", "Scatter Plot", "Linear Regression y-intercept",
         "ROC Curve Plot", "Spearman Correlation Coefficient (Log)"]
-
-in_percent = ["Mean Percent Error (MPE)",
-                "Mean Absolute Percent Error (MAPE)",
-                "Mean Symmetric Percent Error (MSPE)",
-                "Mean Symmetric Absolute Percent Error (SMAPE)",
-                "Median Symmetric Accuracy (MdSA)",
-                "Mean Accuracy Ratio (MAR)"]
 
 #"N (Total Number of Forecasts)"
 
@@ -399,7 +393,7 @@ def make_box_plots(df, path, quantity, anonymous, highlight, saveplot,
                 hghlt = ''
                 for metric_col in group:
                     vals = sub[metric_col].to_list()
-                    if metric_col in in_percent:
+                    if metric_col in cfg.in_percent:
                         vals = [x*100. for x in vals]
                     model_list = sub['Model'].to_list()
                     

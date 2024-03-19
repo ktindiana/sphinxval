@@ -72,12 +72,11 @@ def make_markdown_table(column_1, column_2, dataframe, width=50):
     numbers = list(dataframe.to_numpy())
     
     # CHANGE RATIOS TO PERCENTAGES
-    '''
     for i in range(0, len(rows)):
-         if 'percent' in rows[i].lower():
+         if rows[i] in config.in_percent:
             numbers[i] *= 100.0
-    '''
-     
+            rows[i] = rows[i] + ' [%]'
+    
     # CLEAN UP numbers
     formatted_numbers = []
     for i in range(0, len(rows)):
@@ -577,7 +576,6 @@ def convert_plots_html(text):
                 # CHECK IMAGE DIMENSIONS
                 image_filename = os.path.abspath(image_filename_plot_path)
                 image_filename = replace_backslash_with_forward_slash(image_filename)
-                print(config.basepath)
                 image_filename = image_filename.replace('output/plots/', config.basepath + '/output/plots/')
                 reader = pdf.PdfReader(image_filename)
                 box = reader.pages[0].mediabox
