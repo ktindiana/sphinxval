@@ -577,6 +577,7 @@ def convert_plots_html(text):
                 # CHECK IMAGE DIMENSIONS
                 image_filename = os.path.abspath(image_filename_plot_path)
                 image_filename = replace_backslash_with_forward_slash(image_filename)
+                print(config.basepath)
                 image_filename = image_filename.replace('output/plots/', config.basepath + '/output/plots/')
                 reader = pdf.PdfReader(image_filename)
                 box = reader.pages[0].mediabox
@@ -796,10 +797,7 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
         # define on/off flags for validation reference tables
         validation_reference_flag_dict = {'All Clear' : True,
                                           'AWT' : True,
-<<<<<<< HEAD
                                           'Duration' : True,
-=======
->>>>>>> f82372da1eece4360fee0f54583ca032b973894c
                                           'Flux' : True,
                                           'Time' : True,
                                           'Probability' : True,
@@ -1095,11 +1093,7 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
                     report_exists = True
                     appendage_set_list.append(appendages[j])
                     markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
-<<<<<<< HEAD
-                validation_reference_subtext_string, validation_reference_flag_dict = construct_validation_reference_sheet(validation_reference_subtext, validation_reference_flag_dict, 'Duration', 
-=======
                 validation_reference_subtext_string, validation_reference_flag_dict = construct_validation_reference_sheet(validation_reference_subtext, validation_reference_flag_dict, 'Time', 
->>>>>>> f82372da1eece4360fee0f54583ca032b973894c
                                                                                                                            config.referencepath + '/validation_reference_sheet_time_metrics.csv',
                                                                                                                            None,
                                                                                                                            None)
