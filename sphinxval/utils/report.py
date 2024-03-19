@@ -796,7 +796,10 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
         # define on/off flags for validation reference tables
         validation_reference_flag_dict = {'All Clear' : True,
                                           'AWT' : True,
+<<<<<<< HEAD
                                           'Duration' : True,
+=======
+>>>>>>> f82372da1eece4360fee0f54583ca032b973894c
                                           'Flux' : True,
                                           'Time' : True,
                                           'Probability' : True,
