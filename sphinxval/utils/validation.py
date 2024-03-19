@@ -1393,8 +1393,9 @@ def probability_intuitive_metrics(df, dict, model, energy_key, thresh_key,
             figname = figname + "_mm"
     if validation_type != "" and validation_type != "All":
             figname = figname + "_" + validation_type
+    figname += ".pdf"
     plt.legend(loc="lower right")
-    roc_curve_plt.figure_.savefig(figname + ".pdf", dpi=300, bbox_inches='tight')
+    roc_curve_plt.figure_.savefig(figname, dpi=300, bbox_inches='tight')
     plt.close(roc_curve_plt.figure_)
     
     #Save to dict (ultimately dataframe)
@@ -1543,18 +1544,19 @@ def point_intensity_intuitive_metrics(df, dict, model, energy_key, thresh_key,
                 tpfigame = tpfigname + "_mm"
             if validation_type != "" and validation_type != "All":
                 tpfigname = tpfigname + "_" + validation_type
+            tpfigname += ".pdf"
 
             if tp_plotnames == "":
-                tp_plotnames = tpfigname + ".pdf"
+                tp_plotnames = tpfigname
             else:
-                tp_plotnames += ";" + tpfigname + ".pdf"
+                tp_plotnames += ";" + tpfigname
  
  
             plt_tools.plot_time_profile([trim_times, trim_times], [trim_pred,trim_obs],
             labels, title=title, x_label="Date", y_min=1e-5, y_max=1e4,
             y_label="Particle Intensity", uselog_x = False, uselog_y = True,
             date_format="none", showplot=False,
-            closeplot=True, saveplot=True, figname = tpfigname + ".pdf")
+            closeplot=True, saveplot=True, figname=tpfigname)
     
     
     
@@ -1578,8 +1580,7 @@ def point_intensity_intuitive_metrics(df, dict, model, energy_key, thresh_key,
         if mismatch:
             figname = figname + "_mm"
         if validation_type != "" and validation_type != "All":
-            figname = figname + "_" + validation_type
-        
+            figname = figname + "_" + validation_type 
         figname += ".pdf"
         corr_plot.savefig(figname, dpi=300, bbox_inches='tight')
         corr_plot.close()
@@ -1702,8 +1703,7 @@ def peak_intensity_intuitive_metrics(df, dict, model, energy_key, thresh_key,
         if mismatch:
             figname = figname + "_mm"
         if validation_type != "" and validation_type != "All":
-            figname = figname + "_" + validation_type
-        
+            figname = figname + "_" + validation_type 
         figname += ".pdf"
         corr_plot.savefig(figname, dpi=300, bbox_inches='tight')
         corr_plot.close()
@@ -1880,12 +1880,10 @@ def peak_intensity_max_intuitive_metrics(df, dict, model, energy_key,
 
         figname = config.outpath + '/plots/Correlation_peak_intensity_max_' \
                 + model + "_" + energy_key.strip() + "_" + thresh_fnm
-        print(figname)
         if mismatch:
             figname = figname + "_mm"
         if validation_type != "" and validation_type != "All":
             figname = figname + "_" + validation_type
-
         figname += ".pdf"
         corr_plot.savefig(figname, dpi=300, bbox_inches='tight')
         corr_plot.close()
@@ -2170,8 +2168,7 @@ def fluence_intuitive_metrics(df, dict, model, energy_key,
         if mismatch:
             figname = figname + "_mm"
         if validation_type != "" and validation_type != "All":
-            figname = figname + "_" + validation_type
-        
+            figname = figname + "_" + validation_type 
         figname += ".pdf"
         corr_plot.savefig(figname, dpi=300, bbox_inches='tight')
         corr_plot.close()
@@ -2875,18 +2872,18 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
             + "_" + energy_chan[i] + "_" + thresh_fnm  + "_" + str_date
         if mismatch:
             tpfigame = tpfigname + "_mm"
-        
+        tpfigname += ".pdf" 
         if tp_plotnames == "":
-            tp_plotnames = tpfigname + ".pdf"
+            tp_plotnames = tpfigname
         else:
-            tp_plotnames += ";" + tpfigname + ".pdf"
+            tp_plotnames += ";" + tpfigname
             
             
         plt_tools.plot_time_profile(date, values, labels,
         title=title, x_label="Date", y_min=1e-5, y_max=1e4,
         y_label="Particle Intensity", uselog_x = False, uselog_y = True,
         date_format="year", showplot=False,
-        closeplot=True, saveplot=True, figname = tpfigname + ".pdf")
+        closeplot=True, saveplot=True, figname=tpfigname)
         
         #Check for None and Zero values and remove
         if trim_pred_flux == [] or trim_obs_flux == []: continue
@@ -2957,7 +2954,6 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
                     + "_" + str_date
                 if mismatch:
                     figname = figname + "_mm"
-                
                 figname += ".pdf"
                 corr_plot.savefig(figname, dpi=300, bbox_inches='tight')
                 corr_plot.close()
