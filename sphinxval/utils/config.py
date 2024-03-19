@@ -8,9 +8,6 @@ modelpath = './model'
 outpath = './output'
 referencepath = './reference'
 reportpath = './reports'
-basepath = os.getcwd().replace('\\', '/').split('/')[-1]
-#basepath_full = os.getcwd()
-
 
 #Advanced Warning Time
 awt_cut = 96
@@ -76,3 +73,13 @@ mm_thresh_key = mm_obs_tk + "_" + mm_pred_tk
 #organize observation and model objects.
 #The observed threshold key, mm_obs_tk, will be used in
 #organizing observed and predicted values by threshold.
+
+# METRICS TO BE REPORTED AS A PERCENTAGE
+in_percent = ["Mean Percent Error (MPE)",
+              "Mean Absolute Percent Error (MAPE)",
+              "Mean Symmetric Percent Error (MSPE)",
+              "Mean Symmetric Absolute Percent Error (SMAPE)",
+              "Median Symmetric Accuracy (MdSA)",
+              "Mean Accuracy Ratio (MAR)"]
+
+
