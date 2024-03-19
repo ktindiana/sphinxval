@@ -577,6 +577,7 @@ def convert_plots_html(text):
                 # CHECK IMAGE DIMENSIONS
                 image_filename = os.path.abspath(image_filename_plot_path)
                 image_filename = replace_backslash_with_forward_slash(image_filename)
+                print(config.basepath)
                 image_filename = image_filename.replace('output/plots/', config.basepath + '/output/plots/')
                 reader = pdf.PdfReader(image_filename)
                 box = reader.pages[0].mediabox
@@ -796,6 +797,7 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
         # define on/off flags for validation reference tables
         validation_reference_flag_dict = {'All Clear' : True,
                                           'AWT' : True,
+                                          'Duration' : True,
                                           'Flux' : True,
                                           'Time' : True,
                                           'Probability' : True,
@@ -1147,7 +1149,8 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
             
             if report_exists:
                 a = open(markdown_filename, 'w')
-                a.write(markdown_text + validation_reference_text)
+                # a.write(markdown_text + validation_reference_text)
+                a.write(markdown_text)
                 a.close()
                 markdown_texts[appendages[j]] = markdown_text
         
@@ -1169,7 +1172,7 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
         validation_reference_text_html = add_collapsible_segment_start('Validation Reference Sheet', '')
         validation_reference_text_html += validation_reference_subtext_html
         validation_reference_text_html += add_collapsible_segment_end()
-        html_text += convert_markdown_to_html(validation_reference_text_html, model)
+        #html_text += convert_markdown_to_html(validation_reference_text_html, model)
         html_filename = config.reportpath + '/' + model + '_report.html'
         a = open(html_filename, 'w')
         a.write(html_text)

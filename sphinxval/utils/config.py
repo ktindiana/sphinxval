@@ -8,7 +8,7 @@ modelpath = './model'
 outpath = './output'
 referencepath = './reference'
 reportpath = './reports'
-basepath = os.getcwd().split('\\')[-1]
+basepath = os.getcwd().replace('\\', '/').split('/')[-1]
 #basepath_full = os.getcwd()
 
 
