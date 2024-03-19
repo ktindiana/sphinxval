@@ -8,9 +8,6 @@ modelpath = './model'
 outpath = './output'
 referencepath = './reference'
 reportpath = './reports'
-basepath = os.getcwd().replace('\\', '/').split('/')[-1]
-#basepath_full = os.getcwd()
-
 
 #Advanced Warning Time
 awt_cut = 96

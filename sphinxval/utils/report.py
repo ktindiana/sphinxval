@@ -1,4 +1,4 @@
-### SPHINX MARKDOWN GENERATOR -- please ignore the mess for now
+### SPHINX MARKDOWN GENERATOR -- please criticize the mess as you please
 
 import pandas as pd
 import numpy as np
@@ -12,10 +12,6 @@ import PyPDF2 as pdf
 import glob
 
 from . import config 
-
-def replace_backslash_with_forward_slash(input_string):
-    replaced_string = input_string.replace('\\', '/')
-    return replaced_string
 
 def formatting_function(value):
     condition = True
@@ -215,7 +211,6 @@ def add_text_color(text, color):
     new_text = '<span style="' + 'color:' + color + '">' + text + '</span>'
     return new_text
 
-
 def build_skill_score_table(labels, values):
     table = pd.DataFrame(data=[values], columns=labels)
     table_string = '\n' + transpose_markdown(table.to_markdown(index=False)) + '\n'
@@ -318,48 +313,35 @@ def build_metrics_table(data, current_index, metric_index_start, skip_label_list
     metrics_table_string += '\n' + make_markdown_table(column_1, column_2, subset) + '\n'
     plot_string_list, plot_file_string_list = build_plot_string_list(data, current_index)
     return metrics_table_string, plot_string_list, plot_file_string_list
-    
+   
+def append_plot_string_list(plot_string_list, plot_file_string_list, plot_string_): 
+    if plot_string_ == '':
+        plot_string = 'No image files found.\n\n'
+        plot_file_string = ''
+        plot_string_list.append(plot_string)
+        plot_file_string_list.append(plot_file_string)
+    else:    
+        if relative_path_plots__:
+            plot_string = os.path.relpath(plot_string_, 'reports/')
+            plot_file_string = os.path.relpath(plot_string_, '.')
+        else:
+            plot_string = os.path.abspath(plot_string_)
+            plot_file_string = plot_string + ''
+        plot_string_list.append('![](' +  plot_string + ')\n\n')
+        plot_file_string_list.append(plot_file_string)
+    return plot_string_list, plot_file_string_list
+ 
 def build_plot_string_list(data, current_index):
     plot_string_list = []
     plot_file_string_list = []
     if ('Scatter Plot' in data.columns):    
-        plot_string_ = data.iloc[current_index]['Scatter Plot']
-        if plot_string_ == '':
-            plot_string = 'No image files found.\n\n'
-            plot_file_string = ''
-            plot_string_list.append(plot_string)
-            plot_file_string_list.append(plot_file_string)
-        else:    
-            if relative_path_plots__:
-                plot_string = os.path.relpath(plot_string_, 'reports/')
-                plot_file_string = os.path.relpath(plot_string_, '.')
-            else:
-                plot_string = os.path.abspath(plot_string_)
-                plot_file_string = plot_string + ''
-            plot_string = replace_backslash_with_forward_slash(plot_string) + '.pdf'
-            plot_file_string = replace_backslash_with_forward_slash(plot_file_string) + '.pdf'
-            plot_string_list.append('![](' +  plot_string + ')\n\n')
-            plot_file_string_list.append(plot_file_string)
+        plot_string = data.iloc[current_index]['Scatter Plot']
+        plot_string_list, plot_file_string_list = append_plot_string_list(plot_string_list, plot_file_string_list, plot_string)
     
     if ('ROC Curve Plot' in data.columns):
-        plot_string_ = data.iloc[current_index]['ROC Curve Plot']
-        if plot_string_ == '':
-            plot_string = 'No image files found.\n\n'
-            plot_file_string = ''
-            plot_string_list.append(plot_string)
-            plot_file_string_list.append(plot_file_string)
-        else:    
-            if relative_path_plots__:
-                plot_string = os.path.relpath(plot_string_, 'reports/')
-                plot_file_string = os.path.relpath(plot_string_, '.')
-            else:
-                plot_string = os.path.abspath(plot_string_)
-                plot_file_string = plot_string + ''
-            plot_string = replace_backslash_with_forward_slash(plot_string) + '.pdf'
-            plot_file_string = replace_backslash_with_forward_slash(plot_file_string) + '.pdf'
-            plot_string_list.append('![](' +  plot_string + ')\n\n')
-            plot_file_string_list.append(plot_file_string)
- 
+        plot_string = data.iloc[current_index]['ROC Curve Plot']
+        plot_string_list, plot_file_string_list = append_plot_string_list(plot_string_list, plot_file_string_list, plot_string) 
+
     if 'Time Profile Selection Plot' in data.columns:
         time_profile_plot_string = data.iloc[current_index]['Time Profile Selection Plot']
         time_profile_plot_string_list = time_profile_plot_string.split(';')
@@ -373,8 +355,6 @@ def build_plot_string_list(data, current_index):
                 else:
                     plot_string = os.path.abspath(time_profile_plot_string_list[i])
                     plot_file_string = plot_string + ''
-                plot_string = replace_backslash_with_forward_slash(plot_string)
-                plot_file_string = replace_backslash_with_forward_slash(plot_file_string)
                 plot_string_list.append('![](' +  plot_string + ')\n\n')
                 plot_file_string_list.append(plot_file_string)
     return plot_string_list, plot_file_string_list
@@ -513,7 +493,6 @@ def construct_validation_reference_sheet(vr_subtext, vr_flag_dict, vr_flag, vr_f
             plot_string_ = "./reference/AWT_image"
             plot_string = os.path.abspath(plot_string_)
             plot_file_string = plot_string + ''
-            plot_string = replace_backslash_with_forward_slash(plot_string) + '.pdf'
             vr_subtext += '![](' +  plot_string + ')\n\n'
             
         vr_subtext += build_validation_reference_section('', vr_filename_1, vr_filename_2, vr_filename_3)
@@ -574,10 +553,7 @@ def convert_plots_html(text):
             if line[0] == '!':
                 image_filename_plot_path = get_image_string(line)
                 # CHECK IMAGE DIMENSIONS
-                image_filename = os.path.abspath(image_filename_plot_path)
-                image_filename = replace_backslash_with_forward_slash(image_filename)
-                print(config.basepath)
-                image_filename = image_filename.replace('output/plots/', config.basepath + '/output/plots/')
+                image_filename = os.path.abspath(os.path.join(config.reportpath, image_filename_plot_path))
                 reader = pdf.PdfReader(image_filename)
                 box = reader.pages[0].mediabox
                 width = str(box.width)
