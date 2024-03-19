@@ -1310,7 +1310,7 @@ def probability_intuitive_metrics(df, dict, model, energy_key, thresh_key,
 
     """
     #Only calculate probability metrics for ALL forecasts
-    val_type = ["", "All"]
+    val_type = ["", "All","Max"]
     if validation_type not in val_type:
         return
     
