@@ -62,6 +62,88 @@ For the sphinxval maintainters, follow the following guidlelines:
    in Issues, include a cross-reference in the pull request message.
    Close the relevant Issue when the pull request is merged.
 
+Git Commands Used Infrequently
+------------------------------
+
+.. code-block:: sh
+
+  # Set a reference for upstream (the source of your GitHub fork)
+  git remote add upstream https://github.com/ktindiana/sphinxval
+
+  # View remotes
+  git remote -v
+
+Git Commands Used Routinely
+---------------------------
+
+.. code-block:: sh
+		
+  # Create a new feature branch and switch to it
+  # 1. Make sure the trunk is current
+  git fetch upstream --tags
+
+  # 2. Create the branch
+  git branch my-new-feature
+
+  # 3. Switch to the branch
+  git switch branch
+
+  # 2+3. Or Do the above two in one line
+  git switch -c my-new-feature
+
+  # Check what branch you are on at the moment
+  git status
+  On branch my-new-feature
+  ...
+
+  # Commit new code
+  git commit
+
+  # Update your personal GitHub with your new branch
+  git push --set-upstream origin my-new-feature
+
+  # At this point, a pull request on GitHub.com is possible
+  # But let's assume you're not done yet, and meanwhile
+  # progress has been made on the trunk
+
+  # Get up-to-date with the upstream trunk
+  # 1. Verify that all your work is committed
+  git status
+
+  # 2. fetch the new stuff from upstream
+  git fetch upstream
+
+  # 3. Rebase your current work to the head of upstream main
+  git rebase main
+  # if there were conflicts, resolve them
+
+  # Push your updates to your personal repository.
+  # The rebase operation neccessitates force, since you have
+  # rewritten your history to include the changes from upstream
+  git push --force
+
+  # If you previously made a pull request, your new changes
+  # should appear on it now.  When the pull request is accepted
+  # you should delete your branch.  The commits you offered in the
+  # pull request may be squashed to a simpler commit, and in that case 
+  # may never use this branch again.
+  git branch -D my-new-feature
+
+  # Since the pull request was accepted you can see your changes in
+  # the trunk
+  git switch main
+  git pull upstream
+  git log
+
+  # If for some reason you want to examine the history of your
+  # deleted branch, it will remain
+
+  # 1. Find the SHA1 of your old branch, identified by your last commit
+  #    message on it
+  git reflog --no-abbrev
+
+  # 2. Copy/paste into a git log command
+  git log <SHA1>
 
 
 References
