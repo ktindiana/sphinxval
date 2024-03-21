@@ -12,12 +12,36 @@ import pickle
 import pandas as pd
 import matplotlib as plt
 from . import config as cfg
+from . import metrics
+from . import validation
 
 #Columns to exclude from box plots - not used
 exclude_box = ["N (Total Number of Forecasts)", "Predicted SEP Events",
         "Missed SEP Events", "Scatter Plot", "Linear Regression y-intercept",
         "ROC Curve Plot", "Spearman Correlation Coefficient (Log)"]
 
+#If not empty, add metrics to the contingency metrics analysis
+add_contingency = {
+"Model": ['UMASEP-10 single',
+            'UMASEP-100 single',
+            'MagPy_SHARP_HMI_CEA single'],
+"Energy Channel": ['min.10.0.max.-1.0.units.MeV',
+            'min.100.0.max.-1.0.units.MeV',
+            'min.10.0.max.-1.0.units.MeV'],
+"Threshold": ['threshold.10.0.units.1 / (cm2 s sr)',
+            'threshold.1.0.units.1 / (cm2 s sr)',
+            'threshold.10.0.units.1 / (cm2 s sr)'],
+"Prediction Energy Channel": ['min.10.0.max.-1.0.units.MeV',
+            'min.100.0.max.-1.0.units.MeV',
+            'min.10.0.max.-1.0.units.MeV'],
+"Prediction Threshold": ['threshold.10.0.units.1 / (cm2 s sr)',
+            'threshold.1.0.units.1 / (cm2 s sr)',
+            'threshold.10.0.units.1 / (cm2 s sr)'],
+"Hits": [30, 16, 4], #Hits
+"False Alarms": [1, 4, 2], #False Alarms
+"Correct Negatives": [29, 41, 27],  #Correct negatives
+"Misses": [2, 1, 29] #Misses
+}
 
 def read_observed_flux_files(path, energy_key, thresh_key):
     """ Read in all observed flux time profiles that were associated
@@ -483,6 +507,47 @@ def plot_groups(quantity):
     return groups
 
 
+def add_to_all_clear(df):
+    """ Add more lines to the all clear metrics dataframe if the
+        add_contingency dict above is populated.
+        
+        INPUT:
+        
+            :df: (pandas DataFrame) contains all clear metrics
+            
+        Output:
+        
+            None but df is updated with more rows
+        
+    """
+    if add_contingency == {}:
+        return df
+        
+    dict = validation.initialize_all_clear_dict()
+        
+    n = len(add_contingency['Model'])
+    for i in range(n):
+        model = add_contingency['Model'][i]
+        energy_key = add_contingency['Energy Channel'][i]
+        thresh_key = add_contingency['Threshold'][i]
+        pred_energy_key = add_contingency['Prediction Energy Channel'][i]
+        pred_thresh_key = add_contingency['Prediction Threshold'][i]
+        h = add_contingency['Hits'][i]
+        m = add_contingency['Misses'][i]
+        f = add_contingency['False Alarms'][i]
+        c = add_contingency['Correct Negatives'][i]
+    
+        scores = metrics.contingency_scores(h,m,f,c)
+    
+        validation.fill_all_clear_dict(dict, model, energy_key, thresh_key, pred_energy_key,
+        pred_thresh_key, scores, h, 'Not provided', m, 'Not provided')
+    
+    add_df = pd.DataFrame(dict)
+    
+    df = pd.concat([df,add_df], ignore_index=True)
+    return df
+
+
 
 def make_box_plots(df, path, quantity, anonymous, highlight, saveplot,
     showplot):
@@ -510,6 +575,9 @@ def make_box_plots(df, path, quantity, anonymous, highlight, saveplot,
         path/output/plots/. directory
     
     """
+    if quantity == 'All Clear':
+        df = add_to_all_clear(df)
+
 
     energy_channels = resume.identify_unique(df,'Energy Channel')
     thresholds = resume.identify_thresholds_per_energy_channel(df,
