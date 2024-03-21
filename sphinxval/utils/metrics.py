@@ -1012,6 +1012,54 @@ def arr_to_df(arr, keys):
     return pd.DataFrame(dict)
 
 
+
+def contingency_scores(h,m,f,c):
+    """
+    INPUT:
+    
+        h : hits
+        m : misses
+        f : false alarms
+        c : correct negatives
+    
+    """
+    n = h + m + f + c
+
+    # all scores while checking for dividing by zero
+    scores = {
+    'TP': h,
+    'FN': m,
+    'FP': f,
+    'TN': c,
+    'PC': check_div(h+c, n),                           # Accuracy, Percent Correct
+    'B': check_div(h+f, h+m),                          # Bias, Precision
+    'H': check_div(h, h+m),                            # Hit Rate, Probability of Detection, Recall, Sensitivity
+    'FAR': check_div(f, h+f),                          # False Alarm Ratio
+    'F': check_div(f, f+c),                            # False Alarm Rate
+    'FOH': check_div(h, h+f),                          # Frequency of Hits
+    'FOM': check_div(m, h+m),                          # Frequency of Misses
+    'POCN': check_div(c, f+c),                         # Probability of Correct Negatives
+    'DFR': check_div(m, m+c),                          # Detection Failure Ratio
+    'FOCN': check_div(c, m+c),                         # Frequency of Correct Negatives
+    'TS': check_div(h, h+f+m),                         # Threat Score, Critical success index
+    'OR': check_div(h*c, f*m),                         # Odds Ratio
+    'GSS': check_GSS(h, f, m, n),                      # Gilbert Skill score
+    'TSS': check_div(h, h+m) - check_div(f, f+c),      # True Skill Score
+    'HSS': check_div(2.0 * (h*c - f*m), ((h+m) * (m+c) + (h+f) * (f+c))), # Heidke Skill Score
+    'ORSS': check_div((h*c - m*f), (h*c + m*f)),       # Odds Ratio Skill Score
+    'SEDS': check_SEDS(h, f, m, n)                     # Symmetric Extreme Dependency Score
+    }
+    #### Just doing some testing here with likelihood ratios, keep commented out for now
+    # print(df[obs_key], df[pred_key])
+    # clr_pos = check_div(h, h+m) / (1-check_div(c, c+f))
+    # clr_neg = (1-check_div(h, h+m)) / check_div(c, c+f)
+    # print(clr_pos, clr_neg)
+    # input()
+    
+    return scores
+
+
+
 def calc_contingency(y_true, y_pred, thresh):
     """
     Calculates a contingency table and relevant
@@ -1049,7 +1097,7 @@ def calc_contingency(y_true, y_pred, thresh):
     keys = ["Observed Peak Flux All Clear", "Predicted Peak Flux All Clear"]
     df = arr_to_df([y_true, y_pred], keys)
 
-    scores = calc_contingency_bool(df, keys[0], keys[1])
+    scores = calc_contingency_all_clear(df, keys[0], keys[1])
     
     return scores
 
@@ -1100,38 +1148,8 @@ def calc_contingency_all_clear(df, obs_key, pred_key):
     result = (df[obs_key] == True) & (df[pred_key] == True)
     c = result.sum(axis=0)
     
-    n = h + m + f + c
+    scores = contingency_scores(h,m,f,c)
 
-    # all scores while checking for dividing by zero
-    scores = {
-    'TP': h,
-    'FN': m,
-    'FP': f,
-    'TN': c,
-    'PC': check_div(h+c, n),                           # Accuracy, Percent Correct
-    'B': check_div(h+f, h+m),                          # Bias, Precision
-    'H': check_div(h, h+m),                            # Hit Rate, Probability of Detection, Recall, Sensitivity
-    'FAR': check_div(f, h+f),                          # False Alarm Ratio
-    'F': check_div(f, f+c),                            # False Alarm Rate
-    'FOH': check_div(h, h+f),                          # Frequency of Hits
-    'FOM': check_div(m, h+m),                          # Frequency of Misses
-    'POCN': check_div(c, f+c),                         # Probability of Correct Negatives
-    'DFR': check_div(m, m+c),                          # Detection Failure Ratio
-    'FOCN': check_div(c, m+c),                         # Frequency of Correct Negatives
-    'TS': check_div(h, h+f+m),                         # Threat Score, Critical success index
-    'OR': check_div(h*c, f*m),                         # Odds Ratio
-    'GSS': check_GSS(h, f, m, n),                      # Gilbert Skill score
-    'TSS': check_div(h, h+m) - check_div(f, f+c),      # True Skill Score
-    'HSS': check_div(2.0 * (h*c - f*m), ((h+m) * (m+c) + (h+f) * (f+c))), # Heidke Skill Score
-    'ORSS': check_div((h*c - m*f), (h*c + m*f)),       # Odds Ratio Skill Score
-    'SEDS': check_SEDS(h, f, m, n)                     # Symmetric Extreme Dependency Score         
-    }
-    #### Just doing some testing here with likelihood ratios, keep commented out for now
-    # print(df[obs_key], df[pred_key])
-    # clr_pos = check_div(h, h+m) / (1-check_div(c, c+f))
-    # clr_neg = (1-check_div(h, h+m)) / check_div(c, c+f)
-    # print(clr_pos, clr_neg)
-    # input()
     return scores
 
 
