@@ -753,7 +753,10 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
     if 'desktop.ini' in files:
         files.remove('desktop.ini')
     files.sort()
-    
+   
+    if not os.path.exists(config.reportpath):
+        os.mkdir(config.reportpath)
+ 
     # obtain sphinx dataframe
     sphinx_dataframe = pd.read_pickle(output_dir__ + 'SPHINX_dataframe.pkl')
 
