@@ -11,20 +11,13 @@ from . import resume
 import pickle
 import pandas as pd
 import matplotlib as plt
-import config as cfg
+from . import config as cfg
 
 #Columns to exclude from box plots - not used
 exclude_box = ["N (Total Number of Forecasts)", "Predicted SEP Events",
         "Missed SEP Events", "Scatter Plot", "Linear Regression y-intercept",
         "ROC Curve Plot", "Spearman Correlation Coefficient (Log)"]
 
-#"N (Total Number of Forecasts)"
-in_percent = ["Mean Percent Error (MPE)",
-                "Mean Absolute Percent Error (MAPE)",
-                "Mean Symmetric Percent Error (MSPE)",
-                "Mean Symmetric Absolute Percent Error (SMAPE)",
-                "Median Symmetric Accuracy (MdSA)",
-                "Mean Accuracy Ratio (MAR)"]
 
 def read_observed_flux_files(path, energy_key, thresh_key):
     """ Read in all observed flux time profiles that were associated
