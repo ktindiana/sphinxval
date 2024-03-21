@@ -754,7 +754,7 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
         files.remove('desktop.ini')
     files.sort()
    
-    if not os.path.exists(config.reportpath):
+    if not os.path.isdir(config.reportpath):
         os.mkdir(config.reportpath)
  
     # obtain sphinx dataframe
