@@ -86,7 +86,7 @@ Git Commands Used Routinely
   git branch my-new-feature
 
   # 3. Switch to the branch
-  git switch branch
+  git switch my-new-feature
 
   # 2+3. Or Do the above two in one line
   git switch -c my-new-feature
@@ -111,10 +111,10 @@ Git Commands Used Routinely
   git status
 
   # 2. fetch the new stuff from upstream
-  git fetch upstream
+  git fetch upstream main
 
   # 3. Rebase your current work to the head of upstream main
-  git rebase main
+  git rebase upstream/main
   # if there were conflicts, resolve them
 
   # Push your updates to your personal repository.
@@ -122,21 +122,20 @@ Git Commands Used Routinely
   # rewritten your history to include the changes from upstream
   git push --force
 
-  # If you previously made a pull request, your new changes
-  # should appear on it now.  When the pull request is accepted
-  # you should delete your branch.  The commits you offered in the
-  # pull request may be squashed to a simpler commit, and in that case 
-  # may never use this branch again.
-  git branch -D my-new-feature
-
   # Since the pull request was accepted you can see your changes in
   # the trunk
   git switch main
-  git pull upstream
+  git pull upstream main
   git log
 
+  # After the pull request is accepted you should delete your branch.
+  # The commits you offered in the pull request may be squashed to a #
+  # simpler commit, and in that case may never use this branch again as
+  # they have different histories.
+  git branch -D my-new-feature
+  
   # If for some reason you want to examine the history of your
-  # deleted branch, it will remain
+  # deleted branch:
 
   # 1. Find the SHA1 of your old branch, identified by your last commit
   #    message on it
