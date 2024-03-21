@@ -148,20 +148,20 @@ Git Commands Used Routinely
 References
 ==========
 
- * SunPy_newcomers_
- * SunPy_maintainer_
- * AstroPy_development_
- * AstroPy_git_example_
- * Altassian_git_rebase_
- * Altassian_merge_vs_rebase_
- * GitHub_merge_pull_requests_
- * git_branching_rebasing_
+* `SunPy newcomers`_
+* `SunPy maintainer`_
+* `AstroPy development`_
+* `AstroPy git example`_
+* `Altassian git rebase`_
+* `Altassian merge vs. rebase`_
+* `GitHub merge pull requests`_
+* `git branching and rebasing`_
 
-.. _SunPy_newcomers: https://docs.sunpy.org/en/latest/dev_guide/contents/newcomers.html#newcomers
-.. _SunPy_maintainer: https://docs.sunpy.org/en/latest/dev_guide/contents/maintainer_workflow.html
-.. _AstroPy_development: https://docs.astropy.org/en/latest/development/workflow/development_workflow.html
-.. _AstroPy_git_example: https://docs.astropy.org/en/latest/development/workflow/git_edit_workflow_examples.html#astropy-fix-example
-.. _Altassian_git_rebase: https://www.atlassian.com/git/tutorials/rewriting-history/git-rebase
-.. _Altassian_merge_vs_rebase: https://www.atlassian.com/git/tutorials/merging-vs-rebasing
-.. _GitHub_merge_pull_requests: https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/incorporating-changes-from-a-pull-request/about-pull-request-merges
-.. _git_branching_rebasing: https://git-scm.com/book/en/v2/Git-Branching-Rebasing
+.. _SunPy newcomers: https://docs.sunpy.org/en/latest/dev_guide/contents/newcomers.html#newcomers
+.. _SunPy maintainer: https://docs.sunpy.org/en/latest/dev_guide/contents/maintainer_workflow.html
+.. _AstroPy development: https://docs.astropy.org/en/latest/development/workflow/development_workflow.html
+.. _AstroPy git example: https://docs.astropy.org/en/latest/development/workflow/git_edit_workflow_examples.html#astropy-fix-example
+.. _Altassian git rebase: https://www.atlassian.com/git/tutorials/rewriting-history/git-rebase
+.. _Altassian merge vs. rebase: https://www.atlassian.com/git/tutorials/merging-vs-rebasing
+.. _GitHub merge pull requests: https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/incorporating-changes-from-a-pull-request/about-pull-request-merges
+.. _git branching and rebasing: https://git-scm.com/book/en/v2/Git-Branching-Rebasing
