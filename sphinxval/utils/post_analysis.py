@@ -14,6 +14,11 @@ import matplotlib as plt
 from . import config as cfg
 from . import metrics
 from . import validation
+import datetime
+import os.path
+import numpy as np
+import sklearn.metrics as skl
+import matplotlib.pylab as plt
 
 #Columns to exclude from box plots - not used
 exclude_box = ["N (Total Number of Forecasts)", "Predicted SEP Events",
@@ -24,24 +29,70 @@ exclude_box = ["N (Total Number of Forecasts)", "Predicted SEP Events",
 add_contingency = {
 "Model": ['UMASEP-10 single',
             'UMASEP-100 single',
-            'MagPy_SHARP_HMI_CEA single'],
+            'MagPy_SHARP_HMI_CEA single',
+            'SPRINTS Post Eruptive 0-24 hrs single',
+            'SPRINTS Post Eruptive 0-24 hrs single'],
 "Energy Channel": ['min.10.0.max.-1.0.units.MeV',
             'min.100.0.max.-1.0.units.MeV',
-            'min.10.0.max.-1.0.units.MeV'],
+            'min.10.0.max.-1.0.units.MeV',
+            'min.10.0.max.-1.0.units.MeV',
+            'min.100.0.max.-1.0.units.MeV'],
 "Threshold": ['threshold.10.0.units.1 / (cm2 s sr)',
             'threshold.1.0.units.1 / (cm2 s sr)',
-            'threshold.10.0.units.1 / (cm2 s sr)'],
+            'threshold.10.0.units.1 / (cm2 s sr)',
+            'threshold.10.0.units.1 / (cm2 s sr)',
+            'threshold.1.0.units.1 / (cm2 s sr)'],
 "Prediction Energy Channel": ['min.10.0.max.-1.0.units.MeV',
             'min.100.0.max.-1.0.units.MeV',
-            'min.10.0.max.-1.0.units.MeV'],
+            'min.10.0.max.-1.0.units.MeV',
+            'min.10.0.max.-1.0.units.MeV',
+            'min.100.0.max.-1.0.units.MeV'],
 "Prediction Threshold": ['threshold.10.0.units.1 / (cm2 s sr)',
             'threshold.1.0.units.1 / (cm2 s sr)',
-            'threshold.10.0.units.1 / (cm2 s sr)'],
-"Hits": [30, 16, 4], #Hits
-"False Alarms": [1, 4, 2], #False Alarms
-"Correct Negatives": [29, 41, 27],  #Correct negatives
-"Misses": [2, 1, 29] #Misses
+            'threshold.10.0.units.1 / (cm2 s sr)',
+            'threshold.10.0.units.1 / (cm2 s sr)',
+            'threshold.1.0.units.1 / (cm2 s sr)'],
+"Hits": [30, 16, 4, 19, 0], #Hits
+"False Alarms": [1, 4, 2, 7, 1], #False Alarms
+"Correct Negatives": [29, 41, 27, 23, 29],  #Correct negatives
+"Misses": [2, 1, 29, 10, 14] #Misses
 }
+
+add_probability = {}
+
+non_event_duration = datetime.timedelta(hours=14)
+non_event_start = [
+        '2011-05-09 20:42:00',
+        '2012-03-04 10:29:00',
+        '2012-03-05 03:30:00',
+        '2012-06-13 11:29:00',
+        '2012-06-29 09:13:00',
+        '2013-06-07 22:32:00',
+        '2013-06-28 01:36:00',
+        '2014-08-01 18:00:00',
+        '2014-10-24 07:37:00',
+        '2014-11-06 03:32:00',
+        '2014-11-07 16:53:00',
+        '2014-12-17 04:25:00',
+        '2014-12-18 21:41:00',
+        '2015-03-09 23:29:00',
+        '2016-07-23 05:00:00',
+        '2021-11-01 00:57:00',
+        '2021-11-02 02:03:00',
+        '2022-01-18 17:01:00',
+        '2022-04-17 03:17:00',
+        '2022-04-20 03:41:00',
+        '2022-04-29 07:15:00',
+        '2022-05-25 18:12:00',
+        '2022-08-17 13:26:00',
+        '2022-08-18 10:37:00',
+        '2022-08-19 04:14:00',
+        '2022-08-29 16:15:00',
+        '2022-08-30 18:05:00',
+        '2022-12-01 07:04:00',
+        '2023-03-04 15:19:00',
+        '2023-03-06 02:08:00'
+        ]
 
 def read_observed_flux_files(path, energy_key, thresh_key):
     """ Read in all observed flux time profiles that were associated
@@ -391,7 +442,7 @@ def read_in_metrics(path, quantity, include, exclude):
     """
     
     prefix = get_file_prefix(quantity)
-    fname = path + "/output/pkl/" + prefix + "_metrics.pkl"
+    fname = path + "output/pkl/" + prefix + "_metrics.pkl"
     print("read_in_metrics: Reading in " + fname)
     
     df = resume.read_in_df(fname)
@@ -465,7 +516,8 @@ def plot_groups(quantity):
                     "Heidke Skill Score", "Odds Ratio Skill Score",
                     "Symmetric Extreme Dependency Score"],
                     ["Number SEP Events Correctly Predicted",
-                    "Number SEP Events Missed", "Odds Ratio"]
+                    "Number SEP Events Missed"],
+                    ["Odds Ratio"]
                 ]
 
     #PROBABILITY
@@ -539,13 +591,190 @@ def add_to_all_clear(df):
     
         scores = metrics.contingency_scores(h,m,f,c)
     
+        print("post_analysis: add_to_all_clear: Adding " + model + " for " + energy_key + " and " + thresh_key + " to all clear plots:")
+        print(scores)
+    
         validation.fill_all_clear_dict(dict, model, energy_key, thresh_key, pred_energy_key,
         pred_thresh_key, scores, h, 'Not provided', m, 'Not provided')
     
-    add_df = pd.DataFrame(dict)
     
+    add_df = pd.DataFrame(dict)
     df = pd.concat([df,add_df], ignore_index=True)
+    
+    
     return df
+
+
+def max_prob_per_time_period(df, model, energy_key, thresh_key, starttime, endtime):
+    """ Given a probability_selections df, find the maximum
+        probability issued by the model between the
+        starttime and endtime.
+        
+    """
+    sub  = df[(df['Model'] == model) & (df['Energy Channel Key'] == energy_key)
+            & (df['Threshold Key'] == thresh_key)]
+    
+    sub = sub[(sub['Prediction Window End'] >= starttime) & (sub['Prediction Window Start'] < endtime)]
+    
+    if sub.empty:
+        return None
+    
+    row = validation.identify_max_forecast(sub,'Predicted SEP Probability')
+    
+    return row
+    
+
+def calculate_probability_metrics(df, dict, path, model, energy_key, thresh_fnm):
+
+    obs = df['Observed SEP Probability'].to_list()
+    pred = df['Predicted SEP Probability'].to_list()
+
+    #Calculate metrics
+    brier_score = metrics.calc_brier(obs, pred)
+    brier_skill = metrics.calc_brier_skill(obs, pred)
+    rank_corr_coeff = metrics.calc_spearman(obs, pred)
+
+    roc_auc, roc_curve_plt = metrics.receiver_operator_characteristic(obs, pred, model)
+    
+    roc_curve_plt.plot()
+    skill_line = np.linspace(0.0, 1.0, num=10) # Constructing a diagonal line that represents no skill/random guess
+    plt.plot(skill_line, skill_line, '--', label = 'Random Guess')
+    figname = path + '/summary/ROC_curve_' \
+            + model + "_" + energy_key.strip() + "_" + thresh_fnm
+#    if mismatch:
+#            figname = figname + "_mm"
+#    if validation_type != "" and validation_type != "All":
+#            figname = figname + "_" + validation_type
+    figname += "_Max_All.pdf"
+    plt.legend(loc="lower right")
+    roc_curve_plt.figure_.savefig(figname, dpi=300, bbox_inches='tight')
+    plt.close(roc_curve_plt.figure_)
+
+
+    #Save to dict (ultimately dataframe)
+    dict['Model'].append(df['Model'].iloc[0])
+    dict['Energy Channel'].append(df['Energy Channel Key'].iloc[0])
+    dict['Threshold'].append(df['Threshold Key'].iloc[0])
+    dict['Prediction Energy Channel'].append(df['Prediction Energy Channel Key'].iloc[0])
+    dict['Prediction Threshold'].append(df['Prediction Threshold Key'].iloc[0])
+    dict['ROC Curve Plot'].append(figname)
+    dict['Brier Score'].append(brier_score)
+    dict['Brier Skill Score'].append(brier_skill)
+    dict['Spearman Correlation Coefficient'].append(rank_corr_coeff)
+    dict['Area Under ROC Curve'].append(roc_auc)
+
+
+
+
+def get_max_probabilities(df, path):
+    """ Models that produce more than one probability forecast per
+        SEP event or non-event period will have a file named
+        probability_selections_*_Max.pkl or csv.
+        This Max file only contains the maximum probability issued
+        for each observed SEP event that fell within the prediction
+        windows. Note that only models that made more than one prediction
+        for an SEP event will be in the Max file. The full list of
+        models should come from the full probability dataframe.
+        
+        SPHINX does not know about non-event periods. The array above
+        called non_event_start lists the flare start time for all
+        SEPVAL non-event periods. The non_event_duration indicates
+        how long after the flare start should be considered to assess
+        probability predictions.
+        
+        This code will identify the maximum probability for forecasts
+        between non_event_start + non_event_duration and write out
+        to the probability_selections_*_Max_non_event.csv file.
+        
+        The probability metrics will be recalculated and saved to file.
+        
+    """
+    columns = df.columns.to_list()
+    all_max_metrics_df = pd.DataFrame(columns=columns)
+    dict = validation.initialize_probability_dict()
+    
+    all_models = df['Model'].to_list()
+    
+    #Check for a probability_selections_*_Max.pkl file. If exists,
+    #then need to add max probability for non-events and recalculate
+    #metrics.
+    #If doesn't exist, then keep metrics as-is.
+    for i in range(len(df)):
+        metrics_df = pd.DataFrame(columns = columns)
+        model = df['Model'].iloc[i]
+        energy_key = df['Energy Channel'].iloc[i]
+        thresh_key = df['Threshold'].iloc[i]
+        
+        thresh_fnm = validation.make_thresh_fname(thresh_key)
+        fnm = "probability_selections_" + model + "_" + energy_key.strip() \
+            + "_" + thresh_fnm
+        
+        all_fname = path + "output/pkl/" + fnm + ".pkl"
+        max_fname = path + "output/pkl/" + fnm + "_Max.pkl"
+
+ 
+        #If no Max file, then no need to recalculate metrics, just
+        #save already calculated metrics
+        if not os.path.exists(max_fname):
+            all_max_metrics_df[len(all_max_metrics_df)] = df.iloc[i]
+            continue
+    
+        #Read in the maximum values per SEP event
+        max_event_df = resume.read_in_df(max_fname)
+
+        #Need to add in the maximum values per non-event
+        selections_df = resume.read_in_df(all_fname)
+        
+        for date in non_event_start:
+            starttime = datetime.datetime.strptime(date, '%Y-%m-%d %H:%M:%S')
+            endtime = starttime + non_event_duration
+            max_row = max_prob_per_time_period(selections_df, model,
+                    energy_key, thresh_key, starttime, endtime)
+            max_event_df.loc[len(max_event_df)] = max_row
+        
+        
+        #Write out selections file with SEP event and non-event periods.
+        max_all_fname = path + "output/csv/" + fnm + "_Max_all.csv"
+        max_event_df.to_csv(max_all_fname)
+        
+        
+        #Clear the dataframe
+        #Find predicted None values
+        noneval = pd.isna(max_event_df['Predicted SEP Probability'])
+        #Extract only indices for Nones
+        #True indicates that peak intensity was a None value
+        noneval = noneval.loc[noneval == True]
+        noneval = noneval.index.to_list()
+        if len(noneval) > 0:
+            for ix in noneval:
+                max_event_df = max_event_df.drop(index=ix)
+
+        if not max_event_df.empty:
+            #Find predicted None values
+            noneval = pd.isna(max_event_df['Observed SEP Probability'])
+            #Extract only indices for Nones
+            #True indicates that peak intensity was a None value
+            noneval = noneval.loc[noneval == True]
+            noneval = noneval.index.to_list()
+            if len(noneval) > 0:
+                for ix in noneval:
+                    max_event_df = max_event_df.drop(index=ix)
+
+        
+        
+        #Now have maximum probability for all SEP event and non_event
+        #time periods. Need to recalculate metrics.
+        calculate_probability_metrics(max_event_df, dict, path,
+            model, energy_key, thresh_fnm)
+        
+        #Add the newly calculated metrics for the max of all SEP event
+        #and non-event periods for the give model, energy channel, and thresh
+        metrics_df = pd.concat([metrics_df, pd.DataFrame(dict)],
+            ignore_index=True)
+    
+    all_max_metrics_df = pd.concat([all_max_metrics_df, metrics_df], ignore_index=True)
+    
+    return all_max_metrics_df
 
 
 
@@ -576,7 +805,27 @@ def make_box_plots(df, path, quantity, anonymous, highlight, saveplot,
     
     """
     if quantity == 'All Clear':
+        #Add metrics hard coded at the top of this code
         df = add_to_all_clear(df)
+        fname = path + ""
+        prefix = get_file_prefix(quantity)
+        fname = path + "output/pkl/" + prefix + "_metrics_plotted.pkl"
+        fname = fname.replace("pkl","csv")
+        print("make_box_plots: Writing " + fname)
+        df.to_csv(fname)
+
+    if quantity == "Probability":
+        #Get maximum probability for non-event time periods for models
+        #that produce high cadence forecasts.
+        #If models produce only a single forecast for an event period,
+        #these will also be included
+        df = get_max_probabilities(df, path)
+        fname = path + ""
+        prefix = get_file_prefix(quantity)
+        fname = path + "output/pkl/" + prefix + "_metrics_plotted.pkl"
+        fname = fname.replace("pkl","csv")
+        print("make_box_plots: Writing " + fname)
+        df.to_csv(fname)
 
 
     energy_channels = resume.identify_unique(df,'Energy Channel')

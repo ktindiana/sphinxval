@@ -1035,7 +1035,7 @@ def box_plot_metrics(df, metric_names, highlight,
     maxvals = [max(vals) for vals in values]
     nonzero = [min(vals) > 0 for vals in values]
     if False not in nonzero:
-        if max(maxvals) > 500:
+        if max(maxvals) > 400:
             ax.set_yscale('log')
 
     if showplot: plt.show()

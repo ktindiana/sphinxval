@@ -39,6 +39,7 @@ parser.add_argument("--short_name", type=str, default="",
 parser.add_argument("--append_short_name", type=str, default="",
                     help="String to add to end of current short name. Include a space or underscore or other separator.")
 
+
 args = parser.parse_args()
 
 # Prepare lists of json files
@@ -108,6 +109,7 @@ def append_short_name(kind, json_in, app_short_name):
         json_in['sep_forecast_submission']['model']['short_name'] = short_name + app_short_name
 
     return json_in
+
 
 
 
