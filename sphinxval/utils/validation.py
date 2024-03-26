@@ -391,6 +391,8 @@ def fill_dict_row(sphinx, dict, energy_key, thresh_key):
 
 
 def prepare_outdirs():
+    if not os.path.isdir(config.outpath):
+        os.mkdir(config.outpath)
     for datafmt in ('pkl', 'csv', 'plots'):
         outdir = os.path.join(config.outpath, datafmt)
         if not os.path.isdir(outdir):
