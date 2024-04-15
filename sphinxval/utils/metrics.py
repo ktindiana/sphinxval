@@ -409,6 +409,7 @@ def calc_RMSLE(y_true, y_pred):
 
     Formula
     -------
+
     RMSLE = sqrt(sum((log10(y_pred) - log10(y_true))**2) / N)
     where N is the number of prediction-observation pairs
     """
@@ -846,6 +847,7 @@ def calc_brier(y_true, y_pred):
 
     Formula
     -------
+
     BS = ((y_pred - y_true)**2) / N
     where N is the number of prediction-observation pairs.
     """
