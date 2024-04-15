@@ -34,6 +34,9 @@ parser.add_argument("--anonymous",
         action="store_true")
 parser.add_argument("--Highlight", type=str, default='',
         help=("Model name to highlight on anonymous plots."))
+parser.add_argument("--Scoreboard",
+        help=("Save plots to file in summary directory."),
+        action="store_true")
 parser.add_argument("--Exclude", type=str, default='',
         help=("Models to be excluded from the plots. Can be multiple surrounded "
             "by quotes and separated by commas."))
@@ -54,6 +57,7 @@ include = args.Include
 quantity = args.Quantity
 anonymous = args.anonymous
 highlight = args.Highlight
+scoreboard = args.Scoreboard
 exclude = args.Exclude
 saveplot = args.saveplot
 showplot = args.showplot
@@ -71,5 +75,6 @@ if mf_filename != '':
 if quantity == '':
     sys.exit("Enter a quantity.")
 df = pa.read_in_metrics(path, quantity, include, exclude)
-pa.make_box_plots(df, path, quantity, anonymous, highlight, saveplot, showplot)
+pa.make_box_plots(df, path, quantity, anonymous, highlight, scoreboard,
+        saveplot, showplot)
 

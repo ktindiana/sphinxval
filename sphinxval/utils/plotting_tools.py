@@ -979,24 +979,26 @@ def box_plot_metrics(df, metric_names, highlight,
     PROPS = {
         'boxprops':{'facecolor':'floralwhite', 'edgecolor':'black'},
         'medianprops':{'color':'blue'},
-        'meanprops':{'color':'black'},
+        #'meanprops':{'color':'black'},
         'whiskerprops':{'color':'black'},
         'capprops':{'color':'black'}
     }
 
 
     sns.boxplot(data=df, x='Metrics', y='Values',
-                fliersize=0, meanline=True, showmeans=True,
+                fliersize=0, meanline=True, showmeans=False,
                 linewidth=1.5, **PROPS)
-                #medianprops = {'color': 'b', 'linewidth': 1},
-                #meanprops = {'color': 'k', 'linewidth': 1})
 
     if highlight == '':
         sns.stripplot(data=df, x='Metrics', y='Values', hue='Models',
-                legend=True, linewidth=0.5, size=8, palette='tab20')
+                legend=True, linewidth=0.5, size=8, palette='tab20') #tab20
+                #Use Set1 for highlighting Scoreboard models
+                #Use tab20 for all models
     else:
         sns.stripplot(data=df, x='Metrics', y='Values', hue='Models',
                 legend=True, linewidth=0.5, size=8, palette='Dark2') #Dark2
+                #Use Dark2 to highlight just one or two models
+                #Use Spectral to highlight >3 models (ASPECS)
 
     means = []
     medians = []
@@ -1015,12 +1017,12 @@ def box_plot_metrics(df, metric_names, highlight,
         else:
             vmean = 'top'
             vmed = 'bottom'
-        ax.text(i, means[i], "\u03BC=" + str(np.round(means[i], 2)), size='large',\
-                color='k', weight='semibold', horizontalalignment='center', \
-                verticalalignment=vmean)
-        ax.text(i, medians[i], "M=" + str(np.round(medians[i], 2)), size='large', \
-                color='b', weight='semibold', horizontalalignment='center', \
-                verticalalignment=vmed)
+#        ax.text(i, means[i], "\u03BC=" + str(np.round(means[i], 2)), size='large',\
+#                color='k', weight='semibold', horizontalalignment='center', \
+#                verticalalignment=vmean)
+#        ax.text(i, medians[i], "Median =" + str(np.round(medians[i], 2)), size='large', \
+#                color='b', weight='semibold', horizontalalignment='center', \
+#                verticalalignment=vmed)
 
 
     ax.set_title(title)
