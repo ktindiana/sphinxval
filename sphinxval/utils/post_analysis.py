@@ -20,10 +20,8 @@ import numpy as np
 import sklearn.metrics as skl
 import matplotlib.pylab as plt
 
-#Columns to exclude from box plots - not used
-exclude_box = ["N (Total Number of Forecasts)", "Predicted SEP Events",
-        "Missed SEP Events", "Scatter Plot", "Linear Regression y-intercept",
-        "ROC Curve Plot", "Spearman Correlation Coefficient (Log)"]
+scoreboard_models = ["ASPECS", "iPATH", "MagPy", "SEPMOD",
+                    "SEPSTER", "SPRINTS", "UMASEP"]
 
 #If not empty, add metrics to the contingency metrics analysis
 add_contingency = {
@@ -32,30 +30,35 @@ add_contingency = {
             'MagPy_SHARP_HMI_CEA single',
             'SPRINTS Post Eruptive 0-24 hrs single',
             'SPRINTS Post Eruptive 0-24 hrs single'],
+            #'SWPC Day 2 >50%'],
 "Energy Channel": ['min.10.0.max.-1.0.units.MeV',
             'min.100.0.max.-1.0.units.MeV',
             'min.10.0.max.-1.0.units.MeV',
             'min.10.0.max.-1.0.units.MeV',
             'min.100.0.max.-1.0.units.MeV'],
+            #'min.10.0.max.-1.0.units.MeV'],
 "Threshold": ['threshold.10.0.units.1 / (cm2 s sr)',
             'threshold.1.0.units.1 / (cm2 s sr)',
             'threshold.10.0.units.1 / (cm2 s sr)',
             'threshold.10.0.units.1 / (cm2 s sr)',
             'threshold.1.0.units.1 / (cm2 s sr)'],
+            #'threshold.10.0.units.1 / (cm2 s sr)'],
 "Prediction Energy Channel": ['min.10.0.max.-1.0.units.MeV',
             'min.100.0.max.-1.0.units.MeV',
             'min.10.0.max.-1.0.units.MeV',
             'min.10.0.max.-1.0.units.MeV',
             'min.100.0.max.-1.0.units.MeV'],
+            #'min.10.0.max.-1.0.units.MeV'],
 "Prediction Threshold": ['threshold.10.0.units.1 / (cm2 s sr)',
             'threshold.1.0.units.1 / (cm2 s sr)',
             'threshold.10.0.units.1 / (cm2 s sr)',
             'threshold.10.0.units.1 / (cm2 s sr)',
             'threshold.1.0.units.1 / (cm2 s sr)'],
-"Hits": [30, 16, 4, 19, 0], #Hits
-"False Alarms": [1, 4, 2, 7, 1], #False Alarms
-"Correct Negatives": [29, 41, 27, 23, 29],  #Correct negatives
-"Misses": [2, 1, 29, 10, 14] #Misses
+            #'threshold.10.0.units.1 / (cm2 s sr)'],
+"Hits": [30, 16, 4, 19, 0], #2], #Hits
+"False Alarms": [1, 4, 2, 7, 1], #14], #False Alarms
+"Correct Negatives": [29, 41, 27, 23, 29], #3842],  #Correct negatives
+"Misses": [2, 1, 29, 10, 14]#, 39] #Misses
 }
 
 add_probability = {}
@@ -517,14 +520,14 @@ def plot_groups(quantity):
                     "Symmetric Extreme Dependency Score"],
                     ["Number SEP Events Correctly Predicted",
                     "Number SEP Events Missed"],
-                    ["Odds Ratio"]
+                    ["Odds Ratio"],
+                    ["Hit Rate", "False Alarm Ratio", "Bias",
+                    "True Skill Statistic", "Heidke Skill Score"] #RE
                 ]
 
     #PROBABILITY
     if quantity == "Probability":
-        groups = [ ["Brier Score", "Brier Skill Score",
-                    "Spearman Correlation Coefficient", "Area Under ROC Curve"]
-                ]
+        groups = [["Brier Score", "Brier Skill Score", "Area Under ROC Curve"]]
 
     #FLUX METRICS
     flux_types = ["Onset Peak", "Max Flux", "Fluence",
@@ -778,8 +781,8 @@ def get_max_probabilities(df, path):
 
 
 
-def make_box_plots(df, path, quantity, anonymous, highlight, saveplot,
-    showplot):
+def make_box_plots(df, path, quantity, anonymous, highlight, scoreboard,
+    saveplot, showplot):
     """ Take a dataframe of metrics and generate box plots
         of each of the metrics.
         
@@ -841,8 +844,6 @@ def make_box_plots(df, path, quantity, anonymous, highlight, saveplot,
             print(ek + ", " + tk)
             sub = df.loc[(df['Energy Channel'] == ek) &
                     (df['Threshold'] == tk)]
-
-            
             
             grp = 0
             for group in groups:
@@ -855,12 +856,16 @@ def make_box_plots(df, path, quantity, anonymous, highlight, saveplot,
                     vals = sub[metric_col].to_list()
                     if metric_col in cfg.in_percent:
                         vals = [x*100. for x in vals]
+
+
                     model_list = sub['Model'].to_list()
-                    
                     nfcasts = []
                     if 'N (Total Number of Forecasts)' in sub.columns.to_list():
                         nfcasts = sub['N (Total Number of Forecasts)'].to_list()
-                                        
+
+
+                    #--- Adjust names of models in lists as needed --------
+                    #ANONYMOUS
                     if anonymous and highlight == '':
                         for j in range(len(model_list)):
                             model_list[j] = "Model " + str(j)
@@ -868,6 +873,8 @@ def make_box_plots(df, path, quantity, anonymous, highlight, saveplot,
                     for jj in range(len(nfcasts)):
                         model_list[jj] += " (" + str(nfcasts[jj]) + ")"
 
+
+                    #HIGHLIGHTED MODEL
                     if highlight != '':
                         in_list = False
                         for j in range(len(model_list)):
@@ -877,18 +884,37 @@ def make_box_plots(df, path, quantity, anonymous, highlight, saveplot,
                             else:
                                 model_list[j] = "Models"
                     
+                        #Only include the plots where the highlighted model
+                        #is in the model list
+                        if in_list:
+                            values.extend(vals)
+                            metric_names.extend([metric_col]*len(vals))
+                            model_names.extend(model_list)
+
+
+                    #SCOREBOARD MODELS
+                    #Highlight only the models on the SEP Scoreboards
+                    if scoreboard:
+                         for j in range(len(model_list)):
+                            in_list = False
+                            for mod in scoreboard_models:
+                                if mod in model_list[j] and 'electrons' not in model_list[j]:
+                                    in_list = True
+
+                            if in_list:
+                                model_list[j] = "SEP Scoreboards"
+                            else:
+                                model_list[j] = "Models"
+                    
+                    #If no model is highlighted, then make all the plots
                     if highlight == '':
                         values.extend(vals)
                         metric_names.extend([metric_col]*len(vals))
                         model_names.extend(model_list)
- 
-                    
-                    if highlight != '' and in_list:
-                        values.extend(vals)
-                        metric_names.extend([metric_col]*len(vals))
-                        model_names.extend(model_list)
- 
-                
+
+
+
+
                 dict = {"Metrics": metric_names, "Models":model_names,
                         "Values":values}
                 metrics_df = pd.DataFrame(dict)
@@ -899,6 +925,8 @@ def make_box_plots(df, path, quantity, anonymous, highlight, saveplot,
                         + "_boxes_Group" + str(grp)
                 if highlight != '':
                     figname += "_" + highlight
+                if scoreboard:
+                    figname += "_Scoreboards"
                 if anonymous:
                     figname += "_anon"
                 plt_tools.box_plot_metrics(metrics_df, group, highlight,
