@@ -1383,7 +1383,6 @@ def probability_intuitive_metrics(df, dict, model, energy_key, thresh_key,
     brier_skill = metrics.calc_brier_skill(obs, pred)
     rank_corr_coeff = metrics.calc_spearman(obs, pred) 
 
-   
     roc_auc, roc_curve_plt = metrics.receiver_operator_characteristic(obs, pred, model)
     
     roc_curve_plt.plot()
