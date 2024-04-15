@@ -368,7 +368,7 @@ def calc_RMSE(y_true, y_pred):
 
     Formula
     -------
-    RMSE = sqrt(sum(y_pred - y_true)**2/N)
+    RMSE = sqrt(sum((y_pred - y_true)**2) / N)
     where N is the number of prediction-observation pairs
     """
 
@@ -409,7 +409,8 @@ def calc_RMSLE(y_true, y_pred):
 
     Formula
     -------
-    RMSLE = sqrt(sum(log10(y_pred) - log10(y_true))**2/N)
+
+    RMSLE = sqrt(sum((log10(y_pred) - log10(y_true))**2) / N)
     where N is the number of prediction-observation pairs
     """
 
@@ -846,7 +847,8 @@ def calc_brier(y_true, y_pred):
 
     Formula
     -------
-    BS = (y_pred - y_true)**2/N
+
+    BS = ((y_pred - y_true)**2) / N
     where N is the number of prediction-observation pairs.
     """
 
@@ -1044,7 +1046,7 @@ def check_GSS(h, f, m, n):
 
     Formula
     -------
-    GSS = (h-(h+f)*(h+m)/n)/(h+f+m-(h+f)*(h+m)/n)
+    GSS = (h- ((h+f)*(h+m)/n) ) / (h + f + m - ((h+f)*(h+m)/n) )
     
     """
     chk = check_div((h+m),n)
@@ -1072,7 +1074,7 @@ def check_SEDS(h, f, m, n):
      
     Formula
     -------
-    SEDS = ((ln((h+f)/n)+ln((h+m)/n))/ln(h/n)) - 1
+    SEDS = ( (ln((h+f)/n)+ln((h+m)/n)) / ln(h/n) ) - 1
     """
     #Zero values in numerator or denominator that will cause mathematical errors
     if h+f == 0 or h+m == 0 or h == 0 or n == 0:
