@@ -130,6 +130,10 @@ def calc_E(y_true, y_pred):
     -------
     error : array-like
         Error between forecast and observation
+
+    Formula
+    -------
+    E = y_pred - y_true
     """
 
     check_consistent_length(y_true, y_pred)
@@ -163,6 +167,10 @@ def calc_AE(y_true, y_pred):
     -------
     error : array-like
         Error between forecast and observation
+
+    Formula
+    -------
+    AE = |y_pred - y_true|
     """
 
     check_consistent_length(y_true, y_pred)
@@ -196,6 +204,10 @@ def calc_LE(y_true, y_pred):
     -------
     error : array-like
         Error between forecast and observation
+
+    Formula
+    -------
+    LE = log10(y_pred) - log10(y_true)
     """
 
     check_consistent_length(y_true, y_pred)
@@ -233,6 +245,10 @@ def calc_ALE(y_true, y_pred):
     -------
     error : array-like
         Error between forecast and observation
+
+    Formula
+    -------
+    ALE = |log10(y_pred) - log10(y_true)|
     """
 
     check_consistent_length(y_true, y_pred)
@@ -270,6 +286,10 @@ def calc_SE(y_true, y_pred):
     -------
     error : array-like
         Error between forecast and observation
+
+    Formula
+    -------
+    SE = (y_pred - y_true)**2
     """
 
     check_consistent_length(y_true, y_pred)
@@ -303,6 +323,10 @@ def calc_SLE(y_true, y_pred):
     -------
     error : array-like
         Error between forecast and observation
+
+    Formula
+    -------
+    SLE = (log10(y_pred) - log10(y_true))**2
     """
 
     check_consistent_length(y_true, y_pred)
@@ -341,6 +365,11 @@ def calc_RMSE(y_true, y_pred):
     -------
     error : float
         Error between forecast and observation
+
+    Formula
+    -------
+    RMSE = sqrt(sum((y_pred - y_true)**2) / N)
+    where N is the number of prediction-observation pairs
     """
 
     check_consistent_length(y_true, y_pred)
@@ -377,6 +406,12 @@ def calc_RMSLE(y_true, y_pred):
     -------
     error : float
         Error between forecast and observation
+
+    Formula
+    -------
+
+    RMSLE = sqrt(sum((log10(y_pred) - log10(y_true))**2) / N)
+    where N is the number of prediction-observation pairs
     """
 
     check_consistent_length(y_true, y_pred)
@@ -418,6 +453,10 @@ def calc_PE(y_true, y_pred):
     -------
     error : array-like
         Error between forecast and observation
+
+    Formula
+    -------
+    PE = (y_pred - y_true) / y_true
     """
 
     check_consistent_length(y_true, y_pred)
@@ -455,6 +494,10 @@ def calc_APE(y_true, y_pred):
     -------
     error : array-like
         Error between forecast and observation
+
+    Formula
+    -------
+    APE = |(y_pred - y_true) / y_true|
     """
 
     check_consistent_length(y_true, y_pred)
@@ -574,6 +617,10 @@ def calc_SPE(y_true, y_pred):
     -------
     error : array-like
         Error between forecast and observation
+
+    Formula
+    -------
+    SPE = 2.0 * (y_pred - y_true) / (y_pred + y_true)
     """
 
     check_consistent_length(y_true, y_pred)
@@ -611,6 +658,10 @@ def calc_SAPE(y_true, y_pred):
     -------
     error : array-like
         Error between forecast and observation
+
+    Formula
+    -------
+    SAPE = 2.0 * |y_pred - y_true| / (|y_pred| + |y_true|)
     """
 
     check_consistent_length(y_true, y_pred)
@@ -712,6 +763,8 @@ def calc_pearson(y_true, y_pred, type=""):
     """
     Calculates the pearson coefficient while considering the scale
 
+    Best value is 1.0
+
     Parameters
     ----------
     y_true : array-like
@@ -764,12 +817,20 @@ def calc_pearson(y_true, y_pred, type=""):
 def calc_brier(y_true, y_pred):
     """
     Calculates the Brier Score from probability predictions.
+
     Mean squared difference between the predicted probability
     and actual outcome. It can be composed into the sum of
     refinement loss and calibration loss.
+
+    Sensitive to climatological frequency of the event: the 
+    more rare an event, the easier it is to get a good BS without 
+    having any real skill. 
+
     Brier score and Brier Skill Score are different metrics,
     the skill score requires a climatological/reference forecast to 
-    compare to.
+    compare to - this is the subroutine for the Brier Score.
+
+    Best value is 0.0
 
     Parameters
     ----------
@@ -781,7 +842,14 @@ def calc_brier(y_true, y_pred):
 
     Returns
     -------
-    Brier Score
+    score : float
+        Brier Score
+
+    Formula
+    -------
+
+    BS = ((y_pred - y_true)**2) / N
+    where N is the number of prediction-observation pairs.
     """
 
     check_consistent_length(y_true, y_pred)
@@ -808,7 +876,7 @@ def calc_MAR(y_true, y_pred):
     """
     Calculates Mean Accuracy Ratio
 
-    Best value is 0 (probably)
+    Best value is 1.0
     Range is [0.0, inf)
 
     Note: 
@@ -825,6 +893,9 @@ def calc_MAR(y_true, y_pred):
     -------
     MAR: float
     
+    Formula
+    -------
+    MAR = mean(y_pred / y_true)
     """
 
     check_consistent_length(y_true, y_pred)
@@ -865,7 +936,10 @@ def calc_MdSA(y_true, y_pred):
     Returns
     -------
     MSA: float
-    
+
+    Formula
+    -------
+    MdSA = exp(median(|ln(y_true/y_pred)|)) - 1
     """
 
     check_consistent_length(y_true, y_pred)
@@ -878,6 +952,9 @@ def calc_MdSA(y_true, y_pred):
                          "targets contain negative values.")
 
     #Using the natural log as in the definition of this metric in eqn 11 of the Morley paper
+    #Small note - order of y_true and y_pred (in numerator or denominator) does not matter
+    #due to property of natural logs and absolute value. So if you compare to MAR the order is
+    #flipped but this does not affect the outcome - CA 
     #Removing 100% from definition - RE, KW
     return (np.exp(np.median(np.abs(np.log(y_true / y_pred)))) - 1.0)
 
@@ -886,6 +963,8 @@ def calc_MdSA(y_true, y_pred):
 def calc_spearman(y_true, y_pred):
     """
     Calculates the spearman coefficient while considering the scale
+
+    Best value is 1.0
 
     Parameters
     ----------
@@ -933,7 +1012,19 @@ def calc_spearman(y_true, y_pred):
 def calc_brier_skill(y_true, y_pred):
     """
     Calculates the Brier Skill score using Hazel Bain's
-    climatology probability from SC24 which is 0.033
+    climatology probability from SC24 which is 0.033.
+    This climatology is not adequate for all solar cycles
+    since each solar cycle will be different but there has
+    not been a value calculated for SC25 as of yet.
+
+    Best value is 1.0
+    Formula
+    -------
+    BSS = 1 - Brier_score / Brier_score_climatology
+
+    Brier_score_climatology is just using the same formula as
+    the model's Brier score but using the climatology probability
+    from above.
     """
     check_consistent_length(y_true, y_pred)
     clim = np.ndarray(np.size(y_pred))
@@ -948,7 +1039,16 @@ def calc_brier_skill(y_true, y_pred):
 
 
 def check_GSS(h, f, m, n):
-    """check h+m/n first"""
+    """
+    Calculates the Gilbert Skill Score using the contigency table
+
+    Best value is 1.0
+
+    Formula
+    -------
+    GSS = (h- ((h+f)*(h+m)/n) ) / (h + f + m - ((h+f)*(h+m)/n) )
+    
+    """
     chk = check_div((h+m),n)
     if math.isinf(chk) or math.isnan(chk):
         return chk
@@ -957,18 +1057,24 @@ def check_GSS(h, f, m, n):
 
 
 def check_SEDS(h, f, m, n):
-    """check zero values and division
+    """
+    check zero values and division
         h - hits
         m - misses
         f - false alarms
         c - correct negatives
         n = h + m + f + c
  
-        From Liemohn et al. 2021, RSME is not enough, JASTP Sec 3.2.5 "Extremes"
+    From Liemohn et al. 2021, RSME is not enough, JASTP Sec 3.2.5 "Extremes"
         SEDS = [ln( (a+b) / N ) + ln( (a+c) / N)] / ln( a/N ) -1
-        where a = Hits, b = False Alarms, c = Misses, d = Correct Negatives,
-        N = a + b + c + d
- 
+    where a = Hits, b = False Alarms, c = Misses, d = Correct Negatives,
+    N = a + b + c + d
+
+    Best value is 1.0
+     
+    Formula
+    -------
+    SEDS = ( (ln((h+f)/n)+ln((h+m)/n)) / ln(h/n) ) - 1
     """
     #Zero values in numerator or denominator that will cause mathematical errors
     if h+f == 0 or h+m == 0 or h == 0 or n == 0:
@@ -1015,13 +1121,38 @@ def arr_to_df(arr, keys):
 
 def contingency_scores(h,m,f,c):
     """
+    Calculates a variety of metrics from the contigency table
+
     INPUT:
     
         h : hits
         m : misses
         f : false alarms
         c : correct negatives
-    
+
+    Formulas:
+        True Positive (TP) = h
+        False Negatives/Misses (FN) = m
+        False Positive (FP) = f
+        True Negatives (TN) = c
+        Percent Correct (PC) = (h+c)/n
+        Bias (B)= (h+f)/(h+m)
+        Hit Rate (H) = h/(h+m)
+        False Alarm Ratio (FAR) = f/(f+h)
+        False Alarm Rate (F) = f/(f+c)
+        Frequency of Hits (FOH) = h/(h+f)
+        Frequency of Misses (FOM) = m/(h+m)
+        Probability of Correct Negatives (POCN) = c/(c+f)
+        Detection Failure Ratio (DFR) = m/(m+c)
+        Frequency of Correct Negatives (FOCN) = c/(c+m)
+        Threat Score (TS) = h/(h+f+m)
+        Odds Ratio (OR) = hc/fm
+        Gilbert Skill Score (GSS) = (h-(h+f)*(h+m)/n)/(h+f+m-(h+f)*(h+m)/n)
+        True Skill Score (TSS) = h/(h+m) - f/(f+c)
+        Heidke Skill Score (HSS) = 2(hc-fm)/((h+m)(m+c)+(h+f)(f+c))
+        Odds Ratio Skill Score (ORSS) = (hc-mf)/(hc+mf)
+        Symmetric Extreme Dependency Score (SEDS) = ((ln((h+f)/n)+ln((h+m)/n))/ln(h/n)) - 1
+     
     """
     n = h + m + f + c
 
@@ -1149,7 +1280,6 @@ def calc_contingency_all_clear(df, obs_key, pred_key):
     c = result.sum(axis=0)
     
     scores = contingency_scores(h,m,f,c)
-
     return scores
 
 
@@ -1215,6 +1345,50 @@ def remove_none(obs, model):
 
 
 def receiver_operator_characteristic(obs, pred, model_name):
+    """
+    Subroutine that does the calculations for the Reciever
+    Operator Characteristic (ROC) using the scikitlearn package.
+
+    Parameters
+    ----------
+    obs : array-like
+        Observed (true) values
+
+    pred : array-like
+        Forecasted (estimated) values
+
+    model_name : string
+        String containing the model name,
+        used as part of the plotting for the
+        RO
+
+    Returns
+    -------
+    roc_auc : float
+        Area under the ROC curve
+        Ideal values are closer to 1 (random guess will be 1/2)
+
+    roc_curve_plt : sklearn.metrics._plot.roc_curve.RocCurveDisplay
+        Figure generated by the scikitlearn package to create
+        the ROC plot - which is returned and added to as part of 
+        validation.py
+
+    Details
+    -------
+    ROC is calculated by comparing the predicted probabilities to
+    various probabality thresholds defining event/no event and using that
+    to calculate false positive rate and true positive rate at each threshold.
+
+    The area under the curve is calculated by integrating the resulting line
+    that is generated by the false positive rate and true positive rate for 
+    each threshold. A value closer to 1 is ideal as it represents no increase in 
+    false positives until the true positive rate is at 1.
+
+    In validation.py, a diagonal line is added to the ROC plot to represent
+    a random guess, and the model's result can be compared to this guess. Models
+    above the diagonal line represent having some level of skill, and below/on the 
+    diagonal having no skill. 
+    """
     fpr, tpr, thresholds = skl.roc_curve(obs, pred) # fpr: false positive rate, tpr: true positive rate, thresholds: Decreasing thresholds on the decision function used to compute fpr and tpr. 
     roc_auc = skl.auc(fpr, tpr) # Area under the curve 
     roc_curve_plt = skl.RocCurveDisplay(fpr=fpr, tpr=tpr, roc_auc=roc_auc,estimator_name=model_name)
