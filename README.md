@@ -12,7 +12,7 @@ The exectuables for SPHINX are in the bin directory.
 
 Input `ModelList`: Text list of model forecast jsons (full or relative path to sphinxval required, typically in a subdirectory in sphinxval/model/)
 
-Input `DataList`: Text list of observation jsons, prepared with fetchsep (full or relative path to sphinxval required, typically in a subdirectory in sphinxval/data/)
+Input `DataList`: Text list of observation jsons prepared with [fetchsep](https://github.com/ktindiana/fetchsep) (full or relative path to sphinxval required, typically in a subdirectory in sphinxval/data/)
 
 Input `TopDirectory`: For models that produce time profiles in txt files, their location is stored in SPHINX by searching through the directories on the user computer. TopDirectory needs to be general enough to find all txt files needed for the validation, but specific enough to avoid searching through unnecessary directories or directories that may contain copies of the same files. 
 
@@ -23,7 +23,7 @@ On a Mac, the run command is:
 `python3 bin/sphinx.py --ModelList model/forecasts.list --DataList lists/observations.list --TopDirectory model/`
 
 ## Output Files
-Results and supporting output files will be written to the directories:
+Results and supporting output files are written to the directories:
 
 `output/csv` - files containing all observation to forecast matching information and metrics in csv format
 
