@@ -12,10 +12,8 @@ import logging
 import sys
 import os
 
-
-
     
-def validate(data_list, model_list, DoResume=False, df_pkl=""):
+def validate(data_list, model_list, top='model/', DoResume=False, df_pkl=""):
     """ Validate ingests a list of observations (data_list) and a
         list of predictions (model_list).
         
@@ -33,6 +31,8 @@ def validate(data_list, model_list, DoResume=False, df_pkl=""):
             :data_list: (string array) filenames of observation jsons,
                 preferably covering a continuous time period
             :model_list: (string array) filenames of model prediction jsons
+            :top: (string) top directory in which to search for time profile
+                files. Directory containing model jsons and .txt files.
             :resume: (boolean) set to False and only data_list and model_list
                 will be used to calculate metrics; set to True and new
                 predictions will be added to existing dataframe
@@ -57,7 +57,13 @@ def validate(data_list, model_list, DoResume=False, df_pkl=""):
         vjson.load_objects_from_json(data_list, model_list)
     print("sphinx: Loaded all JSON files into Objects: " + str(datetime.datetime.now()))
 
-    
+    #Dictionary containing the location of all the .txt files
+    #in the subdirectories below top.
+    #Used to specify where the time profile .txt files are.
+    profname_dict = vjson.generate_profile_dict(top)
+    print("sphinx: Generated dictionary of all txt files in " + top \
+        + ": " + str(datetime.datetime.now()))
+
     #Identify the unique models represented in the forecasts
     model_names = objh.build_model_list(model_objs)
     print("sphinx: Built model list: " + str(datetime.datetime.now()))
@@ -93,5 +99,5 @@ def validate(data_list, model_list, DoResume=False, df_pkl=""):
 
     #Perform intuitive validation
     valid.intuitive_validation(matched_sphinx, model_names,
-        all_energy_channels, all_observed_thresholds, observed_sep_events, DoResume, r_df)
+        all_energy_channels, all_observed_thresholds, observed_sep_events, profname_dict, DoResume, r_df)
     print("sphinx: Completed validation: " + str(datetime.datetime.now()))

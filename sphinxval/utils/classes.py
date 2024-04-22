@@ -2159,11 +2159,11 @@ class SPHINX:
         except:
             pass
         
-        #Check if a forecast exists for probability
+        #Check if a forecast exists for event_lengths
         if self.prediction.event_lengths == []:
             return predicted, match_status
 
-        #Check each forecast for probability
+        #Check each forecast for event_lengths
         for obj in self.prediction.event_lengths:
             pred_thresh = {'threshold': obj.threshold,
                 'threshold_units': obj.threshold_units}

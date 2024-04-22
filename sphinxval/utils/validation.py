@@ -140,7 +140,7 @@ def initialize_dict():
 
 
 
-def fill_dict_row(sphinx, dict, energy_key, thresh_key):
+def fill_dict_row(sphinx, dict, energy_key, thresh_key, profname_dict):
     """ Add a row to a dataframe with all of the supporting information
         for the forecast and observations that needs to be passed to
         SPHINX-Web.
@@ -246,6 +246,12 @@ def fill_dict_row(sphinx, dict, energy_key, thresh_key):
     pred_peak_intensity_max, pred_pimax_units, pred_pimax_time,\
         pimax_match_status = sphinx.return_predicted_peak_intensity_max()
     pred_time_profile = sphinx.prediction.sep_profile
+    if pred_time_profile != None and pred_time_profile != '':
+        try:
+            pred_time_profile = profname_dict[pred_time_profile]
+        except:
+            print('fill_dict_row: Cannot local time profile file ' + pred_time_profile)
+            pred_time_profile = None
     tp_match_status = et_match_status
         
 
@@ -417,7 +423,7 @@ def write_df(df, name, log=True):
 
 
 def fill_df(matched_sphinx, model_names, all_energy_channels,
-    all_obs_thresholds, DoResume):
+    all_obs_thresholds, profname_dict, DoResume):
     """ Fill in a dictionary with the all clear predictions and observations
         organized by model and energy channel.
     """
@@ -431,7 +437,7 @@ def fill_df(matched_sphinx, model_names, all_energy_channels,
             print("---Model: " + model + ", Energy Channel: " + ek)
             for sphinx in matched_sphinx[model][ek]:
                 for tk in all_obs_thresholds[ek]:
-                    fill_dict_row(sphinx, dict, ek, tk)
+                    fill_dict_row(sphinx, dict, ek, tk, profname_dict)
                 
     
     df = pd.DataFrame(dict)
@@ -2833,8 +2839,7 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
         
         obs_dates, obs_flux = profile.combine_time_profiles(all_obs_dates,
             all_obs_flux)
-        pred_dates, pred_flux = profile.read_single_time_profile(pred_paths[i]
-            + pred_profs[i])
+        pred_dates, pred_flux = profile.read_single_time_profile(pred_profs[i])
         if pred_flux == []:
             return
         
@@ -3586,7 +3591,8 @@ def calculate_intuitive_metrics(df, model_names, all_energy_channels,
 
 
 def intuitive_validation(matched_sphinx, model_names, all_energy_channels,
-    all_observed_thresholds, observed_sep_events, DoResume=False, r_df=None):
+    all_observed_thresholds, observed_sep_events, profname_dict,
+    DoResume=False, r_df=None):
     """ In the intuitive_validation subroutine, forecasts are validated in a
         way similar to which people would interpret forecasts.
     
@@ -3644,8 +3650,8 @@ def intuitive_validation(matched_sphinx, model_names, all_energy_channels,
     #so can calculate metrics
     print("intuitive_validation: Filling dataframe with information from matched sphinx objects: " + str(datetime.datetime.now()))
 
-    df = fill_df(matched_sphinx, model_names,
-            all_energy_channels, all_observed_thresholds, DoResume)
+    df = fill_df(matched_sphinx, model_names, all_energy_channels,
+            all_observed_thresholds, profname_dict, DoResume)
  
     print("intuitive_validation: Completed filling dataframe (and possibly writing): " + str(datetime.datetime.now()))
 
