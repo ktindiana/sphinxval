@@ -13,7 +13,7 @@ import sys
 import os
 
     
-def validate(data_list, model_list, top='model/', DoResume=False, df_pkl=""):
+def validate(data_list, model_list, top=None, DoResume=False, df_pkl=""):
     """ Validate ingests a list of observations (data_list) and a
         list of predictions (model_list).
         
@@ -60,9 +60,11 @@ def validate(data_list, model_list, top='model/', DoResume=False, df_pkl=""):
     #Dictionary containing the location of all the .txt files
     #in the subdirectories below top.
     #Used to specify where the time profile .txt files are.
-    profname_dict = vjson.generate_profile_dict(top)
-    print("sphinx: Generated dictionary of all txt files in " + top \
-        + ": " + str(datetime.datetime.now()))
+    profname_dict = None
+    if top != None:
+        profname_dict = vjson.generate_profile_dict(top)
+        print("sphinx: Generated dictionary of all txt files in " + top \
+            + ": " + str(datetime.datetime.now()))
 
     #Identify the unique models represented in the forecasts
     model_names = objh.build_model_list(model_objs)

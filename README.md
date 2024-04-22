@@ -10,17 +10,19 @@ Reminder to Windows users: change your system PYTHONPATH environment variable su
 ## Run SPHINX
 The exectuables for SPHINX are in the bin directory. 
 
-Input `ModelList`: Text list of model forecast jsons (full or relative path to sphinxval required, typically in a subdirectory in sphinxval/model/)
+`ModelList`: Required. Text list of model forecast jsons (full or relative path to sphinxval required, typically in a subdirectory in sphinxval/model/)
 
-Input `DataList`: Text list of observation jsons prepared with [fetchsep](https://github.com/ktindiana/fetchsep) (full or relative path to sphinxval required, typically in a subdirectory in sphinxval/data/)
+`DataList`: Required. Text list of observation jsons prepared with [fetchsep](https://github.com/ktindiana/fetchsep) (full or relative path to sphinxval required, typically in a subdirectory in sphinxval/data/)
 
-Input `TopDirectory`: For models that produce time profiles in txt files, their location is stored in SPHINX by searching through the directories on the user computer. TopDirectory needs to be general enough to find all txt files needed for the validation, but specific enough to avoid searching through unnecessary directories or directories that may contain copies of the same files. 
+`TopDirectory`: Optional. For models that produce time profiles in txt files, if the forecast jsons and time profile txt files are in different directories, then SPHINX searches through the directories on the user computer to find the location of the txt files starting at TopDirectory. TopDirectory needs to be general enough to find all txt files needed for the validation, but specific enough to avoid searching through unnecessary directories or directories that may contain copies of the same files. 
 
 Forecast files, observations files, and lists of these files can be stored anywhere on the user computer (or accessible drive) as long as full paths are provided to SPHINX.
 
 On a Mac, the run command is:
 
-`python3 bin/sphinx.py --ModelList model/forecasts.list --DataList lists/observations.list --TopDirectory model/`
+`python3 bin/sphinx.py --ModelList model/forecasts.list --DataList lists/observations.list`
+
+`python3 bin/sphinx.py --ModelList model/forecasts.list --DataList lists/observations.list --TopDirectory model/MyModel`
 
 ## Output Files
 Results and supporting output files are written to the directories:

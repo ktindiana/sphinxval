@@ -246,12 +246,15 @@ def fill_dict_row(sphinx, dict, energy_key, thresh_key, profname_dict):
     pred_peak_intensity_max, pred_pimax_units, pred_pimax_time,\
         pimax_match_status = sphinx.return_predicted_peak_intensity_max()
     pred_time_profile = sphinx.prediction.sep_profile
-    if pred_time_profile != None and pred_time_profile != '':
-        try:
-            pred_time_profile = profname_dict[pred_time_profile]
-        except:
-            print('fill_dict_row: Cannot local time profile file ' + pred_time_profile)
-            pred_time_profile = None
+    #If need to search for path of .txt files
+    if profname_dict != None:
+        if pred_time_profile != None and pred_time_profile != '':
+            try:
+                pred_time_profile = profname_dict[pred_time_profile]
+            except:
+                sys.exit('fill_dict_row: Cannot local time profile file ' + pred_time_profile)
+                #print('fill_dict_row: Cannot local time profile file ' + pred_time_profile)
+                #pred_time_profile = None
     tp_match_status = et_match_status
         
 

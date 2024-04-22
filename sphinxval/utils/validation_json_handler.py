@@ -1274,16 +1274,10 @@ def generate_profile_dict(top):
 
     profname_dict = {}
     for path, dirnames, filenames in os.walk(top):
-        if len(filenames) == 0:
-            continue
-        
-        #Quickly determine whether .txt files are present
-        combined = '\t'.join(filenames)
-        if '.txt' not in combined:
-            continue
-            
         for file in filenames:
-            if '.txt' in file:
+            if file.endswith('.txt'):
                 profname_dict.update({file: os.path.join(path,file)})
     
+    bytes = sys.getsizeof(profname_dict)/1024**2 #MB
+    print("generate_profile_dict: Filesize of generated dictionary: " + str(bytes) + " MB")
     return profname_dict
