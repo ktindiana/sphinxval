@@ -1012,6 +1012,11 @@ def dict_to_event_length(event):
         if isinstance(end_time,str):
             end_time = zulu_to_time(end_time)
 
+    if 'threshold_start' in event:
+        threshold = event['threshold_start']
+        if isinstance(threshold,str):
+            threshold = float(threshold)
+
     if 'threshold' in event:
         threshold = event['threshold']
         if isinstance(threshold,str):
@@ -1240,3 +1245,45 @@ def dict_to_probability(prob_dict):
                 vunits.convert_string_to_units(threshold_units) #astropy
 
     return probability_value, uncertainty, threshold, threshold_units
+
+
+def generate_profile_dict(top):
+    """ Starting at the top directory, recursively search to find
+        .txt files and generate a dictionary containing the full
+        path of all .txt files.
+        
+        This is needed for cases when the sep_profile files are not
+        stored in the same directory as the json files.
+        
+        For models on the SEP Scoreboard and on iSWA, the .txt profiles
+        and json files need to be in different directories to adhere to
+        file organization rules.
+        
+        Find the full location of the time profile files automatically.
+        
+        INPUT:
+        
+            :top: (string) top directory
+            
+        OUTPUT:
+        
+            :profname_dict: (dictionary) filename as key and full
+                filename with path as value
+        
+    """
+
+    profname_dict = {}
+    for path, dirnames, filenames in os.walk(top):
+        if len(filenames) == 0:
+            continue
+        
+        #Quickly determine whether .txt files are present
+        combined = '\t'.join(filenames)
+        if '.txt' not in combined:
+            continue
+            
+        for file in filenames:
+            if '.txt' in file:
+                profname_dict.update({file: os.path.join(path,file)})
+    
+    return profname_dict

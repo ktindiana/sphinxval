@@ -7,6 +7,10 @@ parser.add_argument("--ModelList", type=str, default='', \
         help=("List containing filenames of prediction json files."))
 parser.add_argument("--DataList", type=str, default="",
         help=("List containing filenames of observation json files."))
+parser.add_argument("--TopDirectory", type=str, default="model/",
+        help=("Base path in which the model json and time profile txt files "
+            "might be found. Better to be specific. e.g. model/SEPScoreboard. "
+            "Default=\'model/\'"))
 parser.add_argument("--resume",
         help=("Specify resume to add forecasts to an existing "
             "dataframe and recalculate metrics."), action="store_true")
@@ -38,6 +42,7 @@ parser.add_argument("--RelativePathPlots", type=bool, default=True, \
 args = parser.parse_args()
 model_list = args.ModelList
 data_list = args.DataList
+top = args.TopDirectory
 resume = args.resume
 df_pkl = args.DataFrame
 relative_path_plots = args.RelativePathPlots
@@ -52,5 +57,5 @@ relative_path_plots = args.RelativePathPlots
 #onemodel = args.OneModel
 
 
-sphinxval.sphinx.validate(data_list, model_list, resume, df_pkl)
+sphinxval.sphinx.validate(data_list, model_list, top, resume, df_pkl)
 sphinxval.sphinx.report.report(None, relative_path_plots)
