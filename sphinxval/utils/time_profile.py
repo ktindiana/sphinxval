@@ -1,6 +1,7 @@
 from . import validation_json_handler as vjson
 from . import metrics
 import numpy as np
+import pandas as pd
 import datetime
 import os
 import csv
@@ -475,6 +476,8 @@ def trim_profile(startdate, enddate, dates, fluxes):
     trim_flux = []
     
     if startdate == None or enddate == None:
+        return trim_dates, trim_flux
+    if startdate == pd.NaT or enddate == pd.NaT:
         return trim_dates, trim_flux
     if startdate == '' or enddate == '':
         return trim_dates, trim_flux

@@ -16,6 +16,7 @@ import datetime
 import scipy
 from pandas.api.types import is_datetime64_any_dtype as is_datetime
 import sklearn.metrics as skl
+import os.path
 
 
 __version__ = "0.1"
@@ -246,15 +247,21 @@ def fill_dict_row(sphinx, dict, energy_key, thresh_key, profname_dict):
     pred_peak_intensity_max, pred_pimax_units, pred_pimax_time,\
         pimax_match_status = sphinx.return_predicted_peak_intensity_max()
     pred_time_profile = sphinx.prediction.sep_profile
-    #If need to search for path of .txt files
-    if profname_dict != None:
-        if pred_time_profile != None and pred_time_profile != '':
+    #Add path .txt files
+    if pred_time_profile != None and pred_time_profile != '':
+        #From dictionary created by searching subdirectories
+        if profname_dict != None:
             try:
                 pred_time_profile = profname_dict[pred_time_profile]
             except:
-                sys.exit('fill_dict_row: Cannot local time profile file ' + pred_time_profile)
+                sys.exit('fill_dict_row: Cannot locate time profile file ' + pred_time_profile)
                 #print('fill_dict_row: Cannot local time profile file ' + pred_time_profile)
                 #pred_time_profile = None
+                
+        #json file path because in same directory
+        else:
+            pred_time_profile = os.path.join(sphinx.prediction.path, pred_time_profile)
+
     tp_match_status = et_match_status
         
 
@@ -1563,8 +1570,8 @@ def point_intensity_intuitive_metrics(df, dict, model, energy_key, thresh_key,
  
  
             plt_tools.plot_time_profile([trim_times, trim_times], [trim_pred,trim_obs],
-            labels, title=title, x_label="Date", y_min=1e-5, y_max=1e4,
-            y_label="Particle Intensity", uselog_x = False, uselog_y = True,
+            labels, title=title, x_label="Date", y_min=1e-7, y_max=1e5,
+            y_label="Particle Intensity",
             date_format="none", showplot=False,
             closeplot=True, saveplot=True, figname=tpfigname)
     
@@ -2639,7 +2646,7 @@ def date_to_string(date):
     min = date.minute
     sec = date.second
     
-    date_str = '{:d}{:02d}{:02d}_{:02d}hr{:02d}min{:02d}sec'.format(year, month, day, hour, min, sec)
+    date_str = '{:d}{:02d}{:02d}T{:02d}{:02d}{:02d}'.format(year, month, day, hour, min, sec)
     
     return date_str
 
@@ -2806,6 +2813,10 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
     pred_paths = sub['Forecast Path'].to_list()
     model_names = sub['Model'].to_list()
     energy_chan = sub['Energy Channel Key'].to_list()
+
+    print("Extracted SEP start and end times")
+    print(obs_st)
+    print(obs_et)
     
     sepE = []
     sepAE = []
@@ -2865,6 +2876,7 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
             pred_dates)
         
         #Trim the time profiles to the observed start and end time
+        print("Trimming between " + str(obs_st[i]) + " and " + str(obs_et[i]))
         trim_pred_dates, trim_pred_flux = profile.trim_profile(obs_st[i],
                 obs_et[i], pred_dates, pred_flux)
         trim_obs_dates, trim_obs_flux = profile.trim_profile(obs_st[i],
@@ -2874,7 +2886,7 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
         #PLOT TIME PROFILE TO CHECK
         date = [obs_dates, trim_obs_dates, pred_dates, trim_pred_dates]
         values = [obs_flux, trim_obs_flux, pred_flux, trim_pred_flux]
-        labels=["Observations", "Interp Trimmed Obs", "Model", "Trimmed Model"]
+        labels=["Observations", "Interp Trimmed Obs", model_names[i], "Trimmed " + model_names[i]]
         str_date = date_to_string(pred_dates[0])
         title = model_names[i] + ", " + energy_chan[i] + " Time Profile"
         tpfigname = config.outpath + "/plots/Time_Profile_" + model_names[i] \
@@ -2889,8 +2901,8 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
             
             
         plt_tools.plot_time_profile(date, values, labels,
-        title=title, x_label="Date", y_min=1e-5, y_max=1e4,
-        y_label="Particle Intensity", uselog_x = False, uselog_y = True,
+        title=title, x_label="Date", y_min=1e-7, y_max=1e5,
+        y_label="Particle Intensity",
         date_format="year", showplot=False,
         closeplot=True, saveplot=True, figname=tpfigname)
         
