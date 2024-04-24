@@ -4,6 +4,7 @@ import matplotlib.pylab as plt
 import seaborn as sns
 import matplotlib.gridspec as gridspec
 from matplotlib.dates import DateFormatter
+from matplotlib.ticker import LogLocator
 import math
 from sklearn.utils.validation import check_consistent_length
 from sklearn.utils.validation import check_array
@@ -308,7 +309,7 @@ def plot_metric_profile(date, metric, labels, mean, title=None, x_min=None, \
 
 def plot_time_profile(date, values, labels, dy=None, dyl=None, dyh=None,
     title=None, x_min=None, x_max=None, x_label="Date", y_min=None,
-    y_max=None, y_label="Value", uselog_x = False, uselog_y = False,
+    y_max=None, y_label="Value",
     date_format="year", save="time_profile", showplot=False,
     closeplot=False, saveplot=False, figname = "time_profile.png"):
     """
@@ -403,12 +404,7 @@ def plot_time_profile(date, values, labels, dy=None, dyl=None, dyh=None,
         if 0 in values[i]:
             y_values = np.array(values[i])
             values[i] = np.ma.masked_where(y_values <= 0 , y_values)
-        # getting indices where the metric is nan or +/-inf
-        #indices = [j for j, arr in enumerate(metric[i]) if not np.isfinite(arr).all()]
 
-        # replacing nan and +/-inf with None types so the results are still plottable
-        #values[i] = [None if np.isnan(x) else x for x in values[i]]
-        #values[i] = [None if x==np.inf else x for x in values[i]]
         if dy==None:
             if "REleASE" in labels[i]:
                 ax.plot(date[i], values[i], ".", label=labels[i])
@@ -432,11 +428,6 @@ def plot_time_profile(date, values, labels, dy=None, dyl=None, dyh=None,
             else:
                 ax.errorbar(date[i], values[i], label=labels[i], yerr=dy[i], elinewidth=2)
 
-        #ax.axhline(mean[i])
-
-    # plotting vertical dashed lines where the metric is nan or +/-inf
-    #for i in indices:
-    #    plt.axvline(x=date[i], color=color_nans, linestyle='--')
 
     ax.grid(True, linestyle=':', alpha=0.5)
 
@@ -461,10 +452,9 @@ def plot_time_profile(date, values, labels, dy=None, dyl=None, dyh=None,
     
     plt.setp(ax.get_xticklabels(), rotation = 15)
     ax.set_title(title)
-    if uselog_x:
-        ax.set_xscale('log')
-    if uselog_y:
-        ax.set_yscale('log')
+    ax.set_yscale('log')
+    ax.yaxis.set_major_locator(LogLocator(numticks=15))
+    ax.yaxis.set_minor_locator(LogLocator(numticks=15,subs=np.arange(2,10)))
 
     chartBox = ax.get_position()
     ax.set_position([chartBox.x0, chartBox.y0, chartBox.width*0.87,

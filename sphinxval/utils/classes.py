@@ -1977,6 +1977,8 @@ class SPHINX:
         
         #Uses thresholds from self.thresholds as keys
         self.sep_match_status[thresh_key] = "Unmatched"
+        self.end_time_match_status[thresh_key] = "Unmatched"
+        self.time_profile_match_status[thresh_key] = "Unmatched"
         self.observed_probability[thresh_key].probability_value = 0.0
         self.observed_threshold_crossing[thresh_key] = Threshold_Crossing(None, None, None, None)
         self.observed_event_length[thresh_key] = Event_Length(None, None, None, None)
