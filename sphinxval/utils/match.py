@@ -172,7 +172,7 @@ def compile_all_obs(all_energy_channels, obs_objs):
     
     Inputs:
         
-        :all_energy_channels: (array of dict) all energy channels
+        :all_energy_channels: (array of dict keys) all energy channels
             found in the observations
         :obs_objs: (dict) dictionary containing arrays of Observation
             class objects sorted by energy channel
@@ -214,12 +214,11 @@ def compile_all_obs(all_energy_channels, obs_objs):
     #specific energy channel and threshold combination.
     obs_match = {}
     for energy_key in all_energy_channels:
-        print('validate: Extracting observation arrays for matching '
-            'for threshold ' + str(energy_key))
+        #print('validate: Extracting observation arrays for matching '
+        #    'for threshold ' + str(energy_key))
         dict = create_obs_match_array(obs_objs[energy_key])
         
         obs_match.update({energy_key: dict})
-
     return obs_match
 
 
@@ -312,14 +311,14 @@ def pred_and_obs_overlap(fcast, obs):
     
     Output:
     
-        :decision: (array of booleans) have same indices as the
+        :overlaps_bool: (array of booleans) have same indices as the
             observations in obs. True if overlap, False if no overlap
             
     """
     pred_win_st = fcast.prediction_window_start
     pred_win_end = fcast.prediction_window_end
-    print("Prediction window: " + str(pred_win_st) + " to "
-        + str(pred_win_end))
+    #print("Prediction window: " + str(pred_win_st) + " to "
+    #    + str(pred_win_end))
         
     pred_interval = pd.Interval(pd.Timestamp(pred_win_st),
         pd.Timestamp(pred_win_end))
@@ -1268,7 +1267,7 @@ def pred_win_sep_overlap(sphinx, fcast, obs_values, observation_objs,
     return is_overlap
 
 
- 
+# observation_objs is an unnecessary input for this function!
 def observed_ongoing_event(sphinx, fcast, obs_values, observation_objs,
         energy_key, threshold):
     """ Calculate the boolean arrays that indicate if there is an
@@ -1331,7 +1330,7 @@ def observed_ongoing_event(sphinx, fcast, obs_values, observation_objs,
             sep_event = pd.Interval(pd.Timestamp(obs['start_time'][i]),
                             pd.Timestamp(obs['end_time'][i]))
 
-        #Is the prediction window start inside of an SEP event?
+        #Does the prediction window start inside of an SEP event?
         if sep_event.overlaps(pred_win_begin):
             is_ongoing.append(True)
             sep_start = obs['start_time'][i]
@@ -1535,27 +1534,27 @@ def match_all_clear(sphinx, observation_obj, is_win_overlap,
     #observation and the all clear status was set to False, don't overwrite
     #with another observation later in the prediction window
     #Mainly relevant for long prediction windows > 24 - 48 hours
-    if sphinx.observed_all_clear.all_clear_boolean == False:
+    if sphinx.observed_all_clear.all_clear_boolean == False: # PEP-8-@@ if not sphinx.observed_all_clear.all_clear_boolean:
         return None
     
     #If already matched to an ongoing SEP event, ensure that a second
     #event in the prediction window doesn't overwrite the previous
     #match status
     if sphinx.all_clear_match_status == "Ongoing SEP Event":
-        if is_eruption_in_range != None:
+        if is_eruption_in_range != None: # PEP-8-@@ if is_eruption_in_range is not None:
             #If there's an eruption and it's not associated
             if not is_eruption_in_range:
                 return None #nothing to be done
     
     #Save thresholds in All_Clear object
-    ac = cl.All_Clear(None,observation_obj.all_clear.threshold,
+    ac = cl.All_Clear(None, observation_obj.all_clear.threshold,
         observation_obj.all_clear.threshold_units,
         observation_obj.all_clear.probability_threshold)
     sphinx.observed_all_clear = ac
     
     all_clear_status = None
     
-    if not is_win_overlap:
+    if not is_win_overlap: # this code is never touched!
         all_clear_status = None
         sphinx.all_clear_match_status = "No Matched Observation"
         return all_clear_status
@@ -1587,7 +1586,7 @@ def match_all_clear(sphinx, observation_obj, is_win_overlap,
             return all_clear_status
 
         #The eruption must occur in the right time range
-        if is_eruption_in_range != None:
+        if is_eruption_in_range != None: # PEP-8-@@ if is_eruption_in_range is not None:
             if not is_eruption_in_range:
                 all_clear_status = True
                 sphinx.observed_match_all_clear_source = observation_obj.source
@@ -2278,14 +2277,12 @@ def match_all_forecasts(all_energy_channels, model_names, obs_objs,
             
     
     """
-
     #All observed values needed for matching, organized by
     #energy channel and threshold
     #Output as a pandas dataframe containing all observed values
     print("match_all_forecasts: Compiling all observations into a dataframe: " + str(datetime.datetime.now()))
 
     obs_values = compile_all_obs(all_energy_channels, obs_objs)
-
     print("match_all_forecasts: Completed dataframe, identifying all thresholds applied to observed energy channels: " + str(datetime.datetime.now()))
 
     #Gather all thresholds applied in the observations for each energy channel
@@ -2488,7 +2485,6 @@ def match_all_forecasts(all_energy_channels, model_names, obs_objs,
                 ############ MATCHING AND EXTRACTING OBSERVED VALUES#######
                 #Loop over all observations inside the prediction window
                 for i in sphinx.overlapping_indices: #index of overlapping obs
-
                     #Bool for eruption 24 hours to a few mins before
                     #threshold crossing.
                     #None if no SEP event
