@@ -2525,7 +2525,6 @@ def match_all_forecasts(all_energy_channels, model_names, obs_objs,
             
     
     """
-    
     #All observed values needed for matching, organized by
     #energy channel and threshold
     #Output as a pandas dataframe containing all observed values
@@ -2568,7 +2567,6 @@ def match_all_forecasts(all_energy_channels, model_names, obs_objs,
                         continue
                 thresh_key = objh.threshold_to_key(fcast_thresh)
                 for i in sphinx.overlapping_indices: #index of overlapping obs
-
                     #Check if the model reports and ongoing event
                     #reports_ongoing = ongoing_status(observation_objs[i],
                     #channel, fcast_thresh)
