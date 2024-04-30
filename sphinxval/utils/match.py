@@ -1373,7 +1373,7 @@ def match_observed_onset_peak(sphinx, observation_obj, is_win_overlap,
         - The prediction window overlaps with an SEP event in any threshold -
             only a comparison when there is an SEP event
             NEED TO ADD IN COMPARISON WHEN NO SEP EVENT
-        - The last trigger/input time if before the observed peak intensity
+        - The last trigger/input time is before the observed peak intensity
 
     Input:
         
@@ -1412,7 +1412,7 @@ def match_observed_onset_peak(sphinx, observation_obj, is_win_overlap,
         peak_criteria = (peak_criteria and is_eruption_in_range)
     
     if not peak_criteria:
-        if not is_win_overlap:
+        if not is_win_overlap: # this code is never touched!
             sphinx.peak_intensity_match_status = "No Matched Observation"
         if not is_pred_sep_overlap:
             sphinx.peak_intensity_match_status = "No SEP Event"
@@ -2507,8 +2507,8 @@ def match_all_forecasts(all_energy_channels, model_names, obs_objs,
 
                     
                     #Check if the model reports and ongoing event
-#                    reports_ongoing = ongoing_status(observation_objs[i],
-#                        channel, fcast_thresh)
+                    #reports_ongoing = ongoing_status(observation_objs[i],
+                    #channel, fcast_thresh)
                     
                     ###ONSET PEAK & MAX FLUX
                     #Prediction window overlaps with observation
