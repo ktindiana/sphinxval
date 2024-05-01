@@ -75,7 +75,7 @@ def switch_error_func(metric, y_true, y_pred):
         'MAR': calc_MAR,                    # Mean Accuracy Ratio
         'MdSA': calc_MdSA,                  # Median Symmetric  Accuracy
         'spearman': calc_spearman,          # Spearman, rank order correlation coefficient
-        # 'brier': calc_brier   #Probably shouldn't be here since is a probability metric
+        # 'brier': calc_brier   #Probably shouldn't be here since is a probability metric (its also just SE)
         }.get(metric)
 
     if not callable(func):

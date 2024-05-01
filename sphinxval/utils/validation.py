@@ -2117,8 +2117,7 @@ def fluence_intuitive_metrics(df, dict, model, energy_key,
             'Predicted SEP Fluence',
             'Predicted SEP Fluence Units',
             'Fluence Match Status']]
-    sub = sub.loc[(sub['Fluence Match Status'] == 'SEP Event')]
-
+    sub = sub.loc[(sub['Fluence Match Status'] == 'SEP Event')]  
     #Find predicted None values
     noneval = pd.isna(sub['Predicted SEP Fluence'])
     #Extract only indices for Nones
