@@ -11,7 +11,7 @@ output*/*
 plots/*
 reports/*
 validation_reports/*
-tests/*
+htmlcov/*
 
 .DS_Store
 **/.DS_Store
