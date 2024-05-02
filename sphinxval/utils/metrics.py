@@ -9,6 +9,7 @@ from sklearn.metrics import brier_score_loss
 import math
 import statistics
 import sklearn.metrics as skl
+import sys
 
 __version__ = "0.7"
 __author__ = "Phil Quinn"
@@ -75,7 +76,7 @@ def switch_error_func(metric, y_true, y_pred):
         'MAR': calc_MAR,                    # Mean Accuracy Ratio
         'MdSA': calc_MdSA,                  # Median Symmetric  Accuracy
         'spearman': calc_spearman,          # Spearman, rank order correlation coefficient
-        # 'brier': calc_brier   #Probably shouldn't be here since is a probability metric
+        # 'brier': calc_brier   #Probably shouldn't be here since is a probability metric (its also just SE)
         }.get(metric)
 
     if not callable(func):
@@ -1050,7 +1051,7 @@ def check_GSS(h, f, m, n):
     
     """
     chk = check_div((h+m),n)
-    if math.isinf(chk) or math.isnan(chk):
+    if math.isinf(chk) or math.isnan(chk): # Only way to hit this is to have 0 forecasts somehow...
         return chk
     else:
        return check_div((h-(h+f)*(h+m)/n), (h+f+m-(h+f)*(h+m)/n))

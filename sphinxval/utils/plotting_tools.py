@@ -865,7 +865,7 @@ def box_plot(values, labels, x_label="Model", y_label="Metric", \
     if len(values) > 4 and len(values) <= 7:
         fig = plt.figure(figsize=(12, 6))
     if len(values) > 7:
-        fig = plt.figure(figsize=(16, 6))
+        fig = plt.figure(figsize=(16, 10))
     ax = fig.add_subplot(111)
 
     sns.boxplot(data=values, fliersize=0, meanline=True, showmeans=True, \
@@ -892,7 +892,7 @@ def box_plot(values, labels, x_label="Model", y_label="Metric", \
     sns.stripplot(data=values, linewidth=0.5)
 
     ax.set_title(title)
-    #ax.set_xlabel(x_label)
+    # ax.set_xlabel(x_label)
     ax.set_ylabel(y_label)
     ax.set_xticklabels(labels, rotation=45)
 
@@ -903,7 +903,7 @@ def box_plot(values, labels, x_label="Model", y_label="Metric", \
 
     if showplot: plt.show()
 
-    #fig.savefig(save+'.png', dpi=300, bbox_inches='tight')
+    # fig.savefig(save+'.png', dpi=300, bbox_inches='tight')
 
     if closeplot: plt.close(fig)
 
