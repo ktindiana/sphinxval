@@ -9,6 +9,7 @@ from sklearn.metrics import brier_score_loss
 import math
 import statistics
 import sklearn.metrics as skl
+import sys
 
 __version__ = "0.7"
 __author__ = "Phil Quinn"
@@ -1050,7 +1051,7 @@ def check_GSS(h, f, m, n):
     
     """
     chk = check_div((h+m),n)
-    if math.isinf(chk) or math.isnan(chk):
+    if math.isinf(chk) or math.isnan(chk): # Only way to hit this is to have 0 forecasts somehow...
         return chk
     else:
        return check_div((h-(h+f)*(h+m)/n), (h+f+m-(h+f)*(h+m)/n))

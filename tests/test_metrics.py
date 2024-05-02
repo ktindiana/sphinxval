@@ -259,6 +259,11 @@ class FluxMetricsTestCase(unittest.TestCase):
         result = np.mean(metrics.calc_LE(y_true, y_pred))
         self.assertTrue(result > 0.0)
 
+        y_true = [-10]
+        y_pred = [11]
+        with self.assertRaises(ValueError):
+            result = metrics.calc_LE(y_true, y_pred)
+
 
 #     # # Abs Log Error ################################################################################
     def test_flux_metric_absolute_log_error_calcs(self):
@@ -299,7 +304,10 @@ class FluxMetricsTestCase(unittest.TestCase):
         result = np.mean(metrics.calc_ALE(y_true, y_pred))
         self.assertTrue(result > 0.0)
 
-
+        y_true = [-10]
+        y_pred = [11]
+        with self.assertRaises(ValueError):
+            result = metrics.calc_ALE(y_true, y_pred)
 
 #     # # Squared Error ################################################################################
     def test_flux_metric_squared_error_calcs(self):
@@ -381,6 +389,10 @@ class FluxMetricsTestCase(unittest.TestCase):
         result = np.mean(metrics.calc_SLE(y_true, y_pred))
         self.assertTrue(result > 0.0)
     
+        y_true = [-10]
+        y_pred = [11]
+        with self.assertRaises(ValueError):
+            result = metrics.calc_SLE(y_true, y_pred)
     
     
 #     # # Root Mean Squared Error ################################################################################
@@ -466,7 +478,10 @@ class FluxMetricsTestCase(unittest.TestCase):
         result = np.mean(metrics.calc_RMSLE(y_true, y_pred))
         self.assertTrue(result > 0.0)
   
-
+        y_true = [-10]
+        y_pred = [11]
+        with self.assertRaises(ValueError):
+            result = metrics.calc_RMSLE(y_true, y_pred)
     
 
 #     # # Percent Error ################################################################################
@@ -507,6 +522,11 @@ class FluxMetricsTestCase(unittest.TestCase):
         hand_calc = np.mean(temp)
         result = np.mean(metrics.calc_PE(y_true, y_pred))
         self.assertTrue(result > 0.0)
+
+        y_true = [0]
+        y_pred = [11]
+        with self.assertRaises(ValueError):
+            result = metrics.calc_PE(y_true, y_pred)
 
     
 
@@ -549,7 +569,10 @@ class FluxMetricsTestCase(unittest.TestCase):
         result = np.mean(metrics.calc_APE(y_true, y_pred))
         self.assertTrue(result > 0.0)
 
-
+        y_true = [0]
+        y_pred = [11]
+        with self.assertRaises(ValueError):
+            result = metrics.calc_APE(y_true, y_pred)
 
 #     # # Symmetric Percent Error ################################################################################
     def test_flux_metric_symmetric_percent_error_calcs(self):
@@ -590,7 +613,11 @@ class FluxMetricsTestCase(unittest.TestCase):
         result = np.mean(metrics.calc_SPE(y_true, y_pred))
         self.assertTrue(result > 0.0)
     
-
+        y_true = [-11]
+        y_pred = [11]
+        with self.assertRaises(ValueError):
+            result = metrics.calc_SPE(y_true, y_pred)
+        # ValueError("Symmetric Percent Error cannot be used when predicted targets and true targets sum to zero.") 
 
 
 #     # # Symmetric Abs Percent Error ################################################################################
@@ -632,7 +659,11 @@ class FluxMetricsTestCase(unittest.TestCase):
         result = np.mean(metrics.calc_SAPE(y_true, y_pred))
         self.assertTrue(result > 0.0)
 
-
+        y_true = [0]
+        y_pred = [0]
+        with self.assertRaises(ValueError):
+            result = metrics.calc_SAPE(y_true, y_pred)
+        # ValueError("Symmetric Absolute Percent Error cannot be used when predicted targets and true targets sum to zero.") 
 
 #     # # Linear Pearson Correlation Coefficient ################################################################################
     def test_flux_metric_pearson_linear_corr_calcs(self):
@@ -729,7 +760,12 @@ class FluxMetricsTestCase(unittest.TestCase):
         hand_calc = np.mean(temp)
         result = metrics.calc_MAR(y_true, y_pred)
         self.assertEqual(result, hand_calc)
-    
+
+        y_true = [10]
+        y_pred = [-1]
+        with self.assertRaises(ValueError):
+            result = metrics.calc_MAR(y_true, y_pred)
+        
 
 
 #      # # Median Symmetric Accuracy ################################################################################
@@ -761,7 +797,10 @@ class FluxMetricsTestCase(unittest.TestCase):
         result = metrics.calc_MdSA(y_true, y_pred)
         self.assertEqual(result, hand_calc)
 
-
+        y_true = [10]
+        y_pred = [-1]
+        with self.assertRaises(ValueError):
+            result = metrics.calc_MdSA(y_true, y_pred)
 
 
 # # # Spearman Correlation Coefficient ################################################################################
@@ -779,6 +818,11 @@ class FluxMetricsTestCase(unittest.TestCase):
         result = metrics.calc_spearman(y_true, y_pred)
         self.assertEqual(result, 0)
 
+        y_true = [10, 10]
+        y_pred = [1]
+        with self.assertRaises(ValueError):
+            result = metrics.calc_spearman(y_true, y_pred)
+        # Gives error since spearman needs equal numbers of obs/pred pairs
 
 
 
@@ -848,8 +892,11 @@ class FluxMetricsTestCase(unittest.TestCase):
                 self.assertEqual(func_call, hand_calc)
             elif metric == 'spearman':
                 self.assertEqual(func_call, 0)
-            
 
+
+        metric = 'not_a_metric' # Testing the error raise       
+        with self.assertRaises(ValueError): #, msg = 'not_a_metric is an invalid metric.')
+            func_call = metrics.switch_error_func(metric, y_true, y_pred)    
 
 class ProbabilityMetricsTestCase(unittest.TestCase):
 #   # Brier Score
@@ -890,6 +937,19 @@ class ProbabilityMetricsTestCase(unittest.TestCase):
         hand_calc = np.mean(temp)
         result = np.mean(metrics.calc_brier(y_true, y_pred))
         self.assertTrue(result > 0.0)
+
+
+        y_true = [1., 1., 0., 0.]
+        y_pred = [1., None, 1., None]
+        y_true_none = [1,0]
+        y_pred_none = [1,1]
+        zipped = zip(y_pred_none, y_true_none)
+        temp = []
+        for elements in zipped:
+            temp.append((elements[0] - elements[1])**2)
+        hand_calc = np.mean(temp)
+        result = np.mean(metrics.calc_brier(y_true, y_pred))
+        self.assertEqual(result, hand_calc)
     
     
 #   # Brier Skill Score    
@@ -1450,7 +1510,18 @@ class ContigencyMetricsTestCase(unittest.TestCase):
             elif score == 'SEDS':
                 self.assertEqual(result[score], ((np.log(4/10)+np.log(3/10))/np.log(1/10)) - 1)
                 # SEDS = (log((h+f)/n)+log((h+m)/n) / log(h/n)) - 1 = (log((1+3)/10)+log((1+2)/10) / log(1/10)) - 1
-
+    
+    def test_cont_garbage(self):
+        test_GSS_garbage = metrics.check_GSS(0,0,0,0)
+        self.assertTrue(math.isnan(test_GSS_garbage))
+        
+        y_true = ['String']
+        y_pred = ['String']
+        thresh = 10
+        with self.assertRaises(ValueError):
+            result = metrics.calc_contingency(y_true, y_pred, thresh)
+       
+       
 class TimeMetricsTestCase(unittest.TestCase):
     def test_time_mean_error(self):
         y_true = [datetime.datetime.utcnow()]
@@ -1584,3 +1655,111 @@ class TimeMetricsTestCase(unittest.TestCase):
         zipped = zip(y_pred, y_true)
         result = np.median(metrics.calc_AE(y_true, y_pred))
         self.assertTrue(result > datetime.timedelta(0.0))
+
+
+class MiscTestCases(unittest.TestCase):
+    def test_calc_mean(self):
+        test_array = [0, 1, 2, 3]
+        result = metrics.calc_mean(test_array)
+        self.assertEqual(result, 3/2)
+
+        test_array = 0
+        result = metrics.calc_mean(test_array)
+        self.assertEqual(result, 0)
+
+        test_array = -1
+        result = metrics.calc_mean(test_array)
+        self.assertEqual(result, -1)
+
+    def test_arr_to_df_fails(self):
+        arr = [[1]]
+        keys = ['key_1', 'key_2']
+        with self.assertRaises(SystemExit):
+            result = metrics.arr_to_df(arr, keys)
+        # sys.exit("metrics.py: arr_to_df: input arrays must be the same length. arr (column values) and keys (column names) must match.") 
+    
+    def test_check_div_outputs(self):
+        n = 1
+        d = 1
+        result = metrics.check_div(n, d)
+        self.assertEqual(result, 1)
+
+        n = 0
+        d = 1
+        result = metrics.check_div(n, d)
+        self.assertEqual(result, 0)
+
+        n = 1
+        d = 0
+        result = metrics.check_div(n, d)
+        self.assertEqual(result, np.inf)
+
+        n = -1
+        d = 0
+        result = metrics.check_div(n, d)
+        self.assertEqual(result, -np.inf)
+
+        n = 0
+        d = 0
+        result = metrics.check_div(n, d)
+        self.assertTrue(math.isnan(result))
+
+    def test_remove_none(self):
+        arr_1 = [0]
+        arr_2 = [0]
+        result_1, result_2 = metrics.remove_none(arr_1, arr_2)
+        self.assertEqual(arr_1, result_1)
+        self.assertEqual(arr_2, result_2)
+
+        arr_1 = []
+        arr_2 = [0]
+        with self.assertRaises(SystemExit):
+            result = metrics.remove_none(arr_1, arr_2)
+
+        arr_1 = [None, 0]
+        arr_2 = [0, 0]
+        result_1, result_2 = metrics.remove_none(arr_1, arr_2)
+        self.assertEqual(result_1, [0])
+        self.assertEqual(result_2, [0])
+
+        arr_1 = [0, 0]
+        arr_2 = [None, 0]
+        result_1, result_2 = metrics.remove_none(arr_1, arr_2)
+        self.assertEqual(result_1, [0])
+        self.assertEqual(result_2, [0])
+
+        arr_1 = [0, None]
+        arr_2 = [None, 0]
+        result_1, result_2 = metrics.remove_none(arr_1, arr_2)
+        self.assertEqual(result_1, [])
+        self.assertEqual(result_2, [])
+
+    def test_remove_zero(self):
+        arr_1 = [1]
+        arr_2 = [1]
+        result_1, result_2 = metrics.remove_zero(arr_1, arr_2)
+        self.assertEqual(arr_1, result_1)
+        self.assertEqual(arr_2, result_2)
+
+        arr_1 = []
+        arr_2 = [1]
+        with self.assertRaises(SystemExit):
+            result = metrics.remove_zero(arr_1, arr_2)
+
+        arr_1 = [0., 1]
+        arr_2 = [1, 1]
+        result_1, result_2 = metrics.remove_zero(arr_1, arr_2)
+        self.assertEqual(result_1, [1])
+        self.assertEqual(result_2, [1])
+
+        arr_1 = [1, 1]
+        arr_2 = [0., 1]
+        result_1, result_2 = metrics.remove_zero(arr_1, arr_2)
+        self.assertEqual(result_1, [1])
+        self.assertEqual(result_2, [1])
+
+        arr_1 = [1, 0.]
+        arr_2 = [0., 1]
+        result_1, result_2 = metrics.remove_zero(arr_1, arr_2)
+        self.assertEqual(result_1, [])
+        self.assertEqual(result_2, [])
