@@ -7,29 +7,11 @@
 		"triggers": [
             {
                 "cme": {
-                    "start_time": "1999-12-31T23:00:00Z"
+                    "start_time": "2000-01-01T00:00:00Z"
                 }
             }
         ],
-		"inputs": [
-			{
-				"magnetogram": {
-					"observatory": "unit_test_observatory",
-					"instrument": "HMI",
-					"products": [
-						{
-							"product": "hmi.unit_test",
-							"last_data_time": "2000-01-01T00:00:00Z"
-						},
-						{
-							"product": "hmi.unit_test_2",
-							"last_data_time": "2000-01-01T00:00:01Z"
-						}
-					]	
-				}
-			}
-		],
-        "issue_time": "2000-01-01T00:17:00Z",
+        "issue_time": "2000-01-01T00:00:00Z",
         "mode": "historical",
         "forecasts": [
             {
@@ -41,10 +23,10 @@
                 "species": "proton",
                 "location": "earth",
                 "prediction_window": {
-                    "start_time": "2000-01-01T00:17:00Z",
+                    "start_time": "2000-01-01T00:21:00Z",
                     "end_time": "2000-01-01T01:00:00Z"
                 },
-                "all_clear": {
+				"all_clear": {
                     "all_clear_boolean": false,
                     "threshold": 10,
                     "threshold_units": "pfu"

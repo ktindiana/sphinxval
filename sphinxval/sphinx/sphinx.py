@@ -53,6 +53,7 @@ def validate(data_list, model_list, top=None, DoResume=False, df_pkl=""):
     #Unique identifier - issue time, triggers, prediction window - ignore for now
     #Use last prediction window for model or energy_channel to include new
     #obs_objs and model_objs organized by energy channel
+    print(data_list, model_list)
     all_energy_channels, obs_objs, model_objs =\
         vjson.load_objects_from_json(data_list, model_list)
     print("sphinx: Loaded all JSON files into Objects: " + str(datetime.datetime.now()))

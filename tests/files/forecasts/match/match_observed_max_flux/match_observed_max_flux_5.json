@@ -33,7 +33,7 @@
 			}
 		}
 		],
-        "issue_time": "",
+        "issue_time": "2000-01-01T00:31:00Z",
         "mode": "historical",
         "forecasts": [
             {

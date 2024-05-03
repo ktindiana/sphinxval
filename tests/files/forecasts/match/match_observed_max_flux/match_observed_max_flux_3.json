@@ -7,22 +7,11 @@
 		"triggers": [
             {
                 "cme": {
-                    "start_time": "1999-12-29T00:00:00Z",
-                    "lat": 0,
-                    "lon": 0,
-                    "speed": 1.0,
-                    "half_width": 45.0,
-                    "height": 10.0,
-                    "time_at_height": {
-                        "time": "1999-12-29T00:10:00Z",
-                        "height": 10.0
-                    },
-                    "coordinates": "unit_test",
-                    "catalog": "unit_test"
+                    "start_time": "1999-12-29T00:00:00Z"
                 }
             }
         ],
-        "issue_time": "",
+        "issue_time": "1999-12-29T00:00:00Z",
         "mode": "historical",
         "forecasts": [
             {

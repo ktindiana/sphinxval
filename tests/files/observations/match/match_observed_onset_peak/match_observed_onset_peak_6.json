@@ -4,7 +4,7 @@
                         "short_name": "unit_test_observatory",
                         "flux_type": "integral"
 			}, 
-                "issue_time": "",
+        "issue_time": "2000-01-01T01:00:00Z",
 		"mode": "measurement",
 		"observations": [
 			{ 
@@ -39,7 +39,9 @@
 						"threshold": 10, 
 						"threshold_units": "pfu"
 					}
-				]
+				],
+				"sep_profile": "match_observed_onset_peak_6_integral_flux.10MeV.txt"
+
 			}
 		]
 	}
