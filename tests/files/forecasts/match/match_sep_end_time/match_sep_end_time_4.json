@@ -23,7 +23,7 @@
                 "species": "proton",
                 "location": "earth",
                 "prediction_window": {
-                    "start_time": "2000-01-01T00:00:00Z",
+                    "start_time": "2000-01-01T00:21:00Z",
                     "end_time": "2000-01-01T01:00:00Z"
                 },
 				"all_clear": {

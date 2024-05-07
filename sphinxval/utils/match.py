@@ -1408,7 +1408,7 @@ def match_observed_onset_peak(sphinx, observation_obj, is_win_overlap,
         peak_criteria = (peak_criteria and is_eruption_in_range)
     
     if not peak_criteria:
-        if not is_win_overlap: # this code is never touched!
+        if not is_win_overlap: # this code is never touched! -- LS-code-comment
             sphinx.peak_intensity_match_status = "No Matched Observation"
         if not is_pred_sep_overlap:
             sphinx.peak_intensity_match_status = "No SEP Event"
@@ -1480,7 +1480,7 @@ def match_observed_max_flux(sphinx, observation_obj, is_win_overlap,
         max_criteria = (max_criteria and is_eruption_in_range)
 
     if not max_criteria:
-        if not is_win_overlap:
+        if not is_win_overlap: # this code is never touched! -- LS-code-comment
             sphinx.peak_intensity_max_match_status = "No Matched Observation"
         if not is_pred_sep_overlap:
             sphinx.peak_intensity_max_match_status = "No SEP Event"
@@ -1550,7 +1550,7 @@ def match_all_clear(sphinx, observation_obj, is_win_overlap,
     
     all_clear_status = None
     
-    if not is_win_overlap: # this code is never touched!
+    if not is_win_overlap: # this code is never touched! -- LS-code-comment
         all_clear_status = None
         sphinx.all_clear_match_status = "No Matched Observation"
         return all_clear_status
@@ -1655,7 +1655,7 @@ def match_sep_quantities(sphinx, observation_obj, thresh, is_win_overlap,
     prob = cl.Probability(None, 0.0, thresh['threshold'],
             thresh['threshold_units'])
     
-    if not is_win_overlap:
+    if not is_win_overlap: # this code is never touched! -- LS-code-comment
         sep_status = None
         sphinx.sep_match_status[thresh_key] = "No Matched Observation"
         return sep_status
@@ -1807,7 +1807,7 @@ def match_sep_end_time(sphinx, observation_obj, thresh, is_win_overlap,
     end_status = None
     
     #Prediction and observation windows must overlap
-    if not is_win_overlap:
+    if not is_win_overlap: # this code is never touched! -- LS-code-comment
         end_status = None
         sphinx.end_time_match_status[thresh_key] = "No Matched Observation"
         return end_status
@@ -1817,13 +1817,7 @@ def match_sep_end_time(sphinx, observation_obj, thresh, is_win_overlap,
         end_status = False #no SEP event, no values
         sphinx.end_time_match_status[thresh_key] = "No SEP Event"
         return end_status
-
-    #If there is an SEP event, the eruption must occur in the right time range
-    if is_eruption_in_range != None:
-        if not is_eruption_in_range:
-            sep_status = None
-            sphinx.end_time_match_status[thresh_key] = "Eruption Out of Range"
-            return sep_status
+    
     #The triggers and inputs must all be before threshold crossing
     if trigger_input_end:
         end_status = True
@@ -1832,6 +1826,13 @@ def match_sep_end_time(sphinx, observation_obj, thresh, is_win_overlap,
         end_status = None
         sphinx.end_time_match_status[thresh_key] = "Trigger/Input after Observed Phenomenon"
         return end_status
+    
+    #If there is an SEP event, the eruption must occur in the right time range
+    if is_eruption_in_range != None:
+        if not is_eruption_in_range:
+            sep_status = None
+            sphinx.end_time_match_status[thresh_key] = "Eruption Out of Range"
+            return sep_status
     
     #Matched End Time
 #    print("Observed SEP end time matched:")
@@ -2472,20 +2473,20 @@ def setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_o
                     #Bool for eruption 24 hours to a few mins before
                     #threshold crossing.
                     #None if no SEP event
-                    sphinx.is_eruption_in_range[thresh_key][i] = eruption_in_range(td_eruption_thresh_cross[i])
+                    sphinx.is_eruption_in_range[thresh_key][i] = eruption_in_range(sphinx.td_eruption_thresh_cross[thresh_key][i])
                           
 
                     #Is the last trigger or input before the threshold crossing
                     #None if no SEP event
-                    sphinx.trigger_input_start[thresh_key][i] = last_before_start(is_trigger_before_start[i],
-                        is_input_before_start[i])
+                    sphinx.trigger_input_start[thresh_key][i] = last_before_start(sphinx.is_trigger_before_start[thresh_key][i],
+                        sphinx.is_input_before_start[thresh_key][i])
                     
                     
                     #Is the last trigger or input before the SEP end
                     #None if no SEP event
-                    sphinx.trigger_input_end[thresh_key][i] = last_before_end(is_trigger_before_end[i],
-                        is_input_before_end[i])
-            
+                    sphinx.trigger_input_end[thresh_key][i] = last_before_end(sphinx.is_trigger_before_end[thresh_key][i],
+                        sphinx.is_input_before_end[thresh_key][i])
+
             matched_sphinx[fcast.short_name][energy_key].append(sphinx)
     return matched_sphinx, observed_sep_events
 
