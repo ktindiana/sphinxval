@@ -4,8 +4,13 @@
 __pycache__/
 **/__pycache__/
 *.bat
+.coverage
+.pytest-cache
+htmlcov.zip
+htmlcov/
 lists/*
 data/*
+junk/*
 model/*
 output*/*
 plots/*

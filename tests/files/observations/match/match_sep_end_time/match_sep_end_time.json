@@ -1,0 +1,69 @@
+{
+	"sep_observation_submission": {
+		"observatory": {
+                        "short_name": "unit_test_observatory",
+                        "flux_type": "integral"
+			}, 
+        "issue_time": "2000-01-01T01:00:00Z",
+		"mode": "measurement",
+		"observations": [
+			{ 
+                "species": "proton",
+                "location": "earth",
+				"energy_channel": {
+					"min": 10, 
+					"max": -1, 
+					"units": "MeV"
+				},
+				"observation_window": {
+					"start_time": "2000-01-01T00:00:00Z", 
+					"end_time": "2000-01-01T01:00:00Z"
+				}, 
+				"all_clear": {
+					"all_clear_boolean": false, 
+					"threshold": 10, 
+					"threshold_units": "pfu"
+				},
+				"threshold_crossings": [
+                    {
+                        "crossing_time": "2000-01-01T00:15:00Z",
+                        "threshold": 10,
+                        "threshold_units": "pfu"
+                    }
+                ],
+				"event_lengths": [
+					{
+						"start_time": "2000-01-01T00:15:00Z", 
+						"end_time": "2000-01-01T00:20:00Z", 
+						"threshold": 10, 
+						"threshold_units": "pfu"
+					}
+				],
+				"sep_profile": "match_sep_end_time_integral_flux.10MeV.txt",
+				"fluences": 
+				[
+				{
+					"fluence": 1,
+					"units": "cm^-2*sr^-1"
+				}
+				],
+				"fluence_spectrum":
+				[
+				{
+					"energy_min": 1.0,
+					"energy_max": -1,
+					"fluence": 1.0
+				},
+				{	"energy_min": 2.0,
+					"energy_max": -1,
+					"fluence": 2.0
+				},
+				{	"energy_min": 3.0,
+					"energy_max": -1,
+					"fluence": 3.0
+				}
+				]
+			}
+		]
+	}
+}

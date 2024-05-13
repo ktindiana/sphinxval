@@ -245,8 +245,6 @@ def forecast_object_from_json(fcast_json, energy_channel):
     
     return fcast
 
-    
-
 def load_objects_from_json(data_list, model_list):
     """ Read in a list of observations (data_list) and
         list of forecasts (model_list) and save them as
@@ -269,8 +267,9 @@ def load_objects_from_json(data_list, model_list):
             the forecast jsons
         
     """
+    print(read_list_of_jsons(data_list))
     obs_jsons = read_json_list(read_list_of_jsons(data_list))
-    model_jsons = read_json_list(read_list_of_jsons(model_list))
+    model_jsons = read_json_list(read_list_of_jsons(model_list))    
     
     #Find energy channels available in the OBSERVATIONS
     #Only channels with observed values will be validated

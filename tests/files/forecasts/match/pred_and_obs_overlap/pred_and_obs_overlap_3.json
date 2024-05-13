@@ -1,0 +1,26 @@
+{
+    "sep_forecast_submission": {
+        "model": {
+            "short_name": "unittest"
+        },
+        "issue_time": "2024-01-01T00:00:00Z",
+        "forecasts": [
+            {
+                "energy_channel": {
+                    "min": 10,
+                    "max": -1,
+                    "units": "MeV"
+                },
+                "prediction_window": {
+                    "start_time": "2000-02-01T00:00:00Z",
+                    "end_time": "2000-02-02T00:00:00Z"
+                },
+                "all clear": {
+                    "all_clear_boolean": false,
+                    "threshold": 10,
+                    "threshold_units": "pfu"
+                }
+            }
+        ]
+    }
+}
