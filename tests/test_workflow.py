@@ -116,29 +116,27 @@ class TestPredAndObsOverlap(unittest.TestCase):
         self.assertEqual(match.pred_and_obs_overlap(forecast, self.obs), [False], 
                          'Forecast/Observation objects with non-overlapping prediction/observation windows marked as overlapping.') 
 
-# sphinx.py --> match.match_all_forecasts --> match.match_all_clear
-class TestMatchAllClear(unittest.TestCase):
+class LoadMatch(unittest.TestCase):
     """
-    Unit test class for match_all_clear function in match.py
-    """        
+    Class for loading main observation, SPHINX objects
+    """
+    def load_verbosity(self):
+        self.verbosity = utility_get_verbosity()
     
-    # sphinx.py --> match.match_all_forecasts --> match.match_all_clear
-    def setUp(self):
-        """
-        Prepares observation object and establishes verbosity level.
-        """
-        self.energy_channel = {'min' : 10, 'max' : -1, 'units' : 'MeV'}
+    def load_energy(self, energy_channel):
+        self.energy_channel = energy_channel
         self.energy_key = objh.energy_channel_to_key(self.energy_channel)
         self.all_energy_channels = [self.energy_key] 
-        self.observation_json = './tests/files/observations/match/match_all_clear/match_all_clear.json'
+        
+    def load_observation(self, observation_json):
+        self.observation_json = observation_json
         self.observation = utility_load_observation(self.observation_json, self.energy_channel)
         self.observation_objects = {self.energy_key : [self.observation]}
         self.observation_values = match.compile_all_obs(self.all_energy_channels, self.observation_objects)
         self.threshold = self.observation_values[self.energy_key]['thresholds'][0]
         self.threshold_key = objh.threshold_to_key(self.threshold)
-        self.verbosity = utility_get_verbosity()
 
-    def utility_load_sphinx_and_inputs(self, forecast, all_forecast_thresholds):
+    def load_sphinx_and_inputs(self, forecast, all_forecast_thresholds):
         """
         Loads inputs and SPHINX object to test match.match_all_clear() function.
         """
@@ -239,21 +237,244 @@ class TestMatchAllClear(unittest.TestCase):
                        'is_eruption_in_range_dict'         : is_eruption_in_range_dict,
                        'trigger_input_start_dict'          : trigger_input_start_dict,
                        'trigger_input_end_dict'            : trigger_input_end_dict}
-        return sphinx, input_dicts
-
+        return sphinx, input_dicts, is_win_overlap
+    
     def utility_print_docstring(self, function):
         if self.verbosity == 2:
             print('\n//----------------------------------------------------')
             print(function.__doc__)
 
-    def utility_print_inputs(self, sphinx, input_dicts, forecast_threshold_index, i):
+# sphinx.py --> match.match_all_forecasts --> match.match_observed_onset_peak
+class TestMatchObservedOnsetPeak(LoadMatch):
+    """
+    Unit test class for match_observed_onset_peak function in match.py
+    """
+    def setUp(self):
+        energy_channel = {'min': 10, 'max': -1, 'units': 'MeV'}
+        observation_json = './tests/files/observations/match/match_observed_onset_peak/match_observed_onset_peak.json'
+        self.load_verbosity()
+        self.load_energy(energy_channel)
+        self.load_observation(observation_json)
+    
+    def utility_print_inputs(self, sphinx, input_dicts, is_win_overlap, forecast_threshold_index, i):
+        if self.verbosity == 2:
+            print('')
+            print('===== PRINT INPUTS =====')
+            print('sphinx.peak_intensity_match_status =', sphinx.peak_intensity_match_status)
+            print('is_trigger_before_onset_peak =', input_dicts['is_trigger_before_onset_peak_dict'][forecast_threshold_index][i])
+            print('is_input_before_onset_peak =', input_dicts['is_input_before_onset_peak_dict'][forecast_threshold_index][i]) 
+            print('is_win_overlap =', is_win_overlap[i], '(always True)')
+            print('is_pred_sep_overlap =', input_dicts['is_pred_sep_overlap_dict'][forecast_threshold_index][i])
+            print('is_eruption_in_range =', input_dicts['is_eruption_in_range_dict'][forecast_threshold_index][i])
+            print('==========')
+            print('')
+            
+    def utility_print_outputs(self, sphinx, function_evaluations):
+        if self.verbosity == 2:
+            print('')
+            print('===== PRINT OUTPUTS =====')
+            print('sphinx.observed_match_peak_intensity_source =', sphinx.observed_match_peak_intensity_source)
+            print('sphinx.observed_peak_intensity =', sphinx.observed_peak_intensity)
+            print('sphinx.peak_intensity_match_status =', sphinx.peak_intensity_match_status)
+            print('function_evaluations =', function_evaluations)
+            print('==========')
+            print('')
+            print('----------------------------------------------------//\n\n\n\n\n\n')
+        
+    def utility_test_match_observed_onset_peak(self, function, forecast_json):
+        """
+        Obtains SPHINX object and function evaluations given the forecast JSON.
+        """
+        self.utility_print_docstring(function)
+        forecast = utility_load_forecast(forecast_json, self.energy_channel)
+        # BUILD UP SPHINX OBJECT USING FORECAST AND OBSERVATION JSONS
+        all_forecast_thresholds = forecast.identify_all_thresholds()
+        sphinx, input_dicts, is_win_overlap = self.load_sphinx_and_inputs(forecast, all_forecast_thresholds)
+        function_evaluations = []
+        for forecast_threshold_index in range(len(all_forecast_thresholds)):
+            for i in sphinx.overlapping_indices:
+                self.utility_print_inputs(sphinx, input_dicts, is_win_overlap, forecast_threshold_index, i)
+                function_evaluation = match.match_observed_onset_peak(sphinx,
+                                                                      self.observation_objects[self.energy_key][i],
+                                                                      is_win_overlap[i],
+                                                                      input_dicts['is_eruption_in_range_dict'][forecast_threshold_index][i],
+                                                                      input_dicts['is_trigger_before_onset_peak_dict'][forecast_threshold_index][i],
+                                                                      input_dicts['is_input_before_onset_peak_dict'][forecast_threshold_index][i],
+                                                                      input_dicts['is_pred_sep_overlap_dict'][forecast_threshold_index][i])
+                function_evaluations.append(function_evaluation)
+        self.utility_print_outputs(sphinx, function_evaluations)
+        return sphinx, function_evaluations
+        
+    @make_docstring_printable
+    def test_match_observed_onset_peak_1(this, self):
+        """
+The forecast/observation pair has the following attributes:
+   -- Prediction window overlaps with observation window
+        prediction window start:  2000-01-01T00:00:00Z
+        prediction window end:    2000-01-01T01:00:00Z
+        observation window start: 2000-01-01T00:00:00Z
+        observation window end:   2000-01-01T01:00:00Z
+   -- The last eruption occurred between 48 hours and 15 minutes prior to threshold crossing
+        CME start:                2000-01-01T00:00:00Z
+        threshold crossing:       2000-01-01T00:16:00Z
+   -- The prediction window overlaps with an SEP event
+        SEP start:                2000-01-01T00:16:00Z
+        SEP end:                  2000-01-01T00:35:00Z
+The function should evaluate to [True]
+sphinx.peak_intensity_match_status should be 'SEP Event'
+        """
+        forecast_json = './tests/files/forecasts/match/match_observed_onset_peak/match_observed_onset_peak_1.json'
+        sphinx, function_evaluations = self.utility_test_match_observed_onset_peak(this, forecast_json)
+        self.assertEqual(sphinx.observed_match_peak_intensity_source, self.observation.source, '')
+        self.assertEqual(sphinx.observed_peak_intensity, self.observation.peak_intensity, '')
+        self.assertEqual(sphinx.peak_intensity_match_status, 'SEP Event', '')
+        self.assertEqual(function_evaluations, [True], '')
+        
+    @make_docstring_printable
+    def test_match_observed_onset_peak_2(this, self):
+        """
+The forecast/observation pair has the following attributes:
+   -- Prediction window overlaps with observation window
+        prediction window start:  2000-01-01T00:36:00Z
+        prediction window end:    2000-01-01T01:30:00Z
+        observation window start: 2000-01-01T00:00:00Z
+        observation window end:   2000-01-01T01:00:00Z
+   -- The last eruption occurred between 48 hours and 15 minutes prior to threshold crossing
+        CME start:                2000-01-01T00:00:00Z
+        threshold crossing:       2000-01-01T00:16:00Z
+   -- The prediction window does not overlap with an SEP event
+        SEP start:                2000-01-01T00:16:00Z
+        SEP end:                  2000-01-01T00:35:00Z
+The function should evaluate to [False]
+sphinx.peak_intensity_match_status should be 'No SEP Event'
+        """
+        forecast_json = './tests/files/forecasts/match/match_observed_onset_peak/match_observed_onset_peak_2.json'
+        sphinx, function_evaluations = self.utility_test_match_observed_onset_peak(this, forecast_json)
+        self.assertEqual(function_evaluations, [False], '')
+        self.assertEqual(sphinx.observed_match_peak_intensity_source, None, '')
+        self.assertEqual(sphinx.peak_intensity_match_status, 'No SEP Event', '')
+    
+    @make_docstring_printable
+    def test_match_observed_onset_peak_3(this, self):
+        """
+The forecast/observation pair has the following attributes:
+   -- Prediction window overlaps with observation window
+        prediction window start:  2000-01-01T00:00:00Z
+        prediction window end:    2000-01-01T01:00:00Z
+        observation window start: 2000-01-01T00:00:00Z
+        observation window end:   2000-01-01T01:00:00Z
+   -- The last eruption was out of range, > 48 hours prior to threshold crossing
+        CME start:                1999-12-29T00:00:00Z
+        threshold crossing:       2000-01-01T00:16:00Z
+   -- The prediction window overlaps with an SEP event
+        SEP start:                2000-01-01T00:16:00Z
+        SEP end:                  2000-01-01T00:35:00Z
+The function should evaluate to [False]
+sphinx.peak_intensity_match_status should be 'Eruption Out of Range'
+        """
+        forecast_json = './tests/files/forecasts/match/match_observed_onset_peak/match_observed_onset_peak_3.json'
+        sphinx, function_evaluations = self.utility_test_match_observed_onset_peak(this, forecast_json)
+        self.assertEqual(function_evaluations, [False], '')
+        self.assertEqual(sphinx.observed_match_peak_intensity_source, None, '')
+        self.assertEqual(sphinx.peak_intensity_match_status, 'Eruption Out of Range', '')
+    
+    @make_docstring_printable
+    def test_match_observed_onset_peak_4(this, self):
+        """
+The forecast/observation pair has the following attributes:
+   -- Prediction window overlaps with observation window
+        prediction window start:  2000-01-01T00:36:00Z
+        prediction window end:    2000-01-01T01:30:00Z
+        observation window start: 2000-01-01T00:00:00Z
+        observation window end:   2000-01-01T01:00:00Z
+   -- The last eruption occurred after the onset peak time
+        CME start:                2000-01-01T00:31:00Z
+        peak time:                2000-01-01T00:30:00Z
+   -- The prediction window overlaps with an SEP event
+        SEP start:                2000-01-01T00:16:00Z
+        SEP end:                  2000-01-01T00:35:00Z
+The function should evaluate to [False]
+sphinx.peak_intensity_match_status should be 'Trigger/Input after Observed Phenomenon'
+        """
+        forecast_json = './tests/files/forecasts/match/match_observed_onset_peak/match_observed_onset_peak_4.json'
+        sphinx, function_evaluations = self.utility_test_match_observed_onset_peak(this, forecast_json)
+        self.assertEqual(function_evaluations, [False], '')
+        self.assertEqual(sphinx.observed_match_peak_intensity_source, None, '')
+        self.assertEqual(sphinx.peak_intensity_match_status, 'Trigger/Input after Observed Phenomenon', '')
+    
+    @make_docstring_printable
+    def test_match_observed_onset_peak_5(this, self):
+        """
+The forecast/observation pair has the following attributes:
+   -- Prediction window overlaps with observation window
+        prediction window start:  2000-01-01T00:36:00Z
+        prediction window end:    2000-01-01T01:30:00Z
+        observation window start: 2000-01-01T00:00:00Z
+        observation window end:   2000-01-01T01:00:00Z
+   -- The trigger occurred after the onset peak time
+        magnetogram last data:    2000-01-01T00:31:00Z
+        peak time:                2000-01-01T00:30:00Z
+   -- The prediction window overlaps with an SEP event
+        SEP start:                2000-01-01T00:16:00Z
+        SEP end:                  2000-01-01T00:35:00Z
+The function should evaluate to [False]
+sphinx.peak_intensity_match_status should be 'Trigger/Input after Observed Phenomenon'
+        """
+        forecast_json = './tests/files/forecasts/match/match_observed_onset_peak/match_observed_onset_peak_5.json'
+        sphinx, function_evaluations = self.utility_test_match_observed_onset_peak(this, forecast_json)
+        self.assertEqual(function_evaluations, [False], '')
+        self.assertEqual(sphinx.observed_match_peak_intensity_source, None, '')
+        self.assertEqual(sphinx.peak_intensity_match_status, 'Trigger/Input after Observed Phenomenon', '')
+    
+    @make_docstring_printable
+    def test_match_observed_onset_peak_6(this, self):
+        """
+The forecast/observation pair has the following attributes:
+   -- Prediction window overlaps with both observation windows
+        prediction window start:    2000-01-01T00:00:00Z
+        prediction window end:      2000-01-01T01:00:00Z
+        observation windows start:  2000-01-01T00:00:00Z
+        observation windows end:    2000-01-01T01:00:00Z
+   -- The last eruption occurred between 48 hours and 15 minutes prior to threshold crossing
+        CME start:                  2000-01-01T00:00:00Z
+        peak time 1:                2000-01-01T00:30:00Z
+        peak time 2:                2000-01-01T00:31:00Z
+   -- The prediction window overlaps with an SEP event
+        SEP start:                2000-01-01T00:16:00Z
+        SEP end:                  2000-01-01T00:35:00Z
+The function should evaluate to [True, None] (forecast matches to first )
+sphinx.peak_intensity_match_status should be 'SEP Event'
+        """
+        observation_json = './tests/files/observations/match/match_observed_onset_peak/match_observed_onset_peak_6.json'
+        observation = utility_load_observation(observation_json, self.energy_channel) # SAME ENERGY CHANNEL
+        self.observation_objects[self.energy_key].append(observation)
+        self.observation_values = match.compile_all_obs(self.all_energy_channels, self.observation_objects)
+        forecast_json = './tests/files/forecasts/match/match_observed_onset_peak/match_observed_onset_peak_6.json'
+        sphinx, function_evaluations = self.utility_test_match_observed_onset_peak(this, forecast_json)
+        self.assertEqual(function_evaluations, [True, None], '')
+        self.assertEqual(sphinx.peak_intensity_match_status, 'SEP Event', '')
+
+# sphinx.py --> match.match_all_forecasts --> match.match_all_clear
+class TestMatchAllClear(LoadMatch):
+    """
+    Unit test class for match_all_clear function in match.py
+    """        
+    def setUp(self):
+        energy_channel = {'min': 10, 'max': -1, 'units': 'MeV'}
+        observation_json = './tests/files/observations/match/match_all_clear/match_all_clear.json'
+        self.load_verbosity()
+        self.load_energy(energy_channel)
+        self.load_observation(observation_json)
+    
+    # sphinx.py --> match.match_all_forecasts --> match.match_all_clear
+    def utility_print_inputs(self, sphinx, input_dicts, is_win_overlap, forecast_threshold_index, i):
         if self.verbosity == 2:
             print('')
             print('===== PRINT INPUTS =====')
             print('sphinx.observed_all_clear.all_clear_boolean =', sphinx.observed_all_clear.all_clear_boolean)
             print('sphinx.all_clear_match_status =', sphinx.all_clear_match_status)
             print('is_eruption_in_range =', input_dicts['is_eruption_in_range_dict'][forecast_threshold_index][i])
-            print('is_win_overlap =', True, '(it must be)')
+            print('is_win_overlap =', is_win_overlap[i], '(always True)')
             print('is_sep_ongoing =', input_dicts['is_sep_ongoing_dict'][forecast_threshold_index][i])
             print('trigger_input_start =', input_dicts['trigger_input_start_dict'][forecast_threshold_index][i])
             print('contains_thresh_cross =', input_dicts['contains_thresh_cross_dict'][forecast_threshold_index][i])
@@ -279,14 +500,14 @@ class TestMatchAllClear(unittest.TestCase):
         forecast = utility_load_forecast(forecast_json, self.energy_channel)
         # BUILD UP SPHINX OBJECT USING FORECAST AND OBSERVATION JSONS
         all_forecast_thresholds = forecast.identify_all_thresholds()
-        sphinx, input_dicts = self.utility_load_sphinx_and_inputs(forecast, all_forecast_thresholds)
+        sphinx, input_dicts, is_win_overlap = self.load_sphinx_and_inputs(forecast, all_forecast_thresholds)
         function_evaluations = []
         for forecast_threshold_index in range(len(all_forecast_thresholds)):
             for i in sphinx.overlapping_indices:
-                self.utility_print_inputs(sphinx, input_dicts, forecast_threshold_index, i)
+                self.utility_print_inputs(sphinx, input_dicts, is_win_overlap, forecast_threshold_index, i)
                 function_evaluation = match.match_all_clear(sphinx,
                                                             self.observation_objects[self.energy_key][i],
-                                                            True,
+                                                            is_win_overlap[i],
                                                             input_dicts['is_eruption_in_range_dict'][forecast_threshold_index][i],
                                                             input_dicts['trigger_input_start_dict'][forecast_threshold_index][i],
                                                             input_dicts['contains_thresh_cross_dict'][forecast_threshold_index][i],
