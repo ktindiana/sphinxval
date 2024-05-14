@@ -41,8 +41,6 @@
 					}
 				],
 				"sep_profile": "match_observed_onset_peak_6_integral_flux.10MeV.txt"
-
+				]
 			}
-		]
-	}
 }
