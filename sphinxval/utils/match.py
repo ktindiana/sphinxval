@@ -2015,7 +2015,7 @@ def calculate_derived_quantities(sphinx):
     
     pw_st = sphinx.prediction.prediction_window_start
     pw_end = sphinx.prediction.prediction_window_end
-    if pw_st == None or pw_end == None:
+    if pw_st == None or pw_end == None: # this code is never touched! LS-code-comment
         return status
     
     #Predicted values to compare to, so continue
@@ -2301,6 +2301,7 @@ def setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_o
         observation_objs = obs_objs[energy_key] #Observation objects
         forecasts = model_objs[energy_key] #all forecasts for channel
         for fcast in forecasts:
+            print(energy_key, fcast.short_name, fcast.source)
             #One SPHINX object contains all matching information and
             #predicted and observed values (and all thresholds)
             sphinx = objh.initialize_sphinx(fcast)
@@ -2409,7 +2410,7 @@ def setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_o
                 #in contains_thresh_cross and is_*_before* arrays
                 #will be in an array in the same order as the
                 #thresholds
-                sphinx.thresholds.append(f_thresh) #threshold in observation
+                sphinx.thresholds.append(fcast_thresh) #threshold in observation
                 sphinx.add_threshold(fcast_thresh)
                 thresh_key = objh.threshold_to_key(fcast_thresh)
 
@@ -2565,6 +2566,12 @@ def match_all_forecasts(all_energy_channels, model_names, obs_objs,
                                 "observational threshold " + str(fcast_thresh))
                     else:
                         continue
+                        
+                #Check if this threshold is present in the observations
+                #Can only be compared if present in both
+                if fcast_thresh not in obs_values[energy_key]['thresholds']:
+                    continue        
+                
                 thresh_key = objh.threshold_to_key(fcast_thresh)
                 for i in sphinx.overlapping_indices: #index of overlapping obs
                     #Check if the model reports and ongoing event
@@ -2637,7 +2644,7 @@ def match_all_forecasts(all_energy_channels, model_names, obs_objs,
 
             #Save the SPHINX object with all of the forecasted and matched
             #observation values to a dictionary organized by energy channel
-            #sphinx.match_report()
+            sphinx.match_report()
             matched_sphinx[fcast.short_name][energy_key][forecast_index] = sphinx
             last_fcast_shortname = fcast.short_name + ''
             last_energy_key = energy_key + ''
