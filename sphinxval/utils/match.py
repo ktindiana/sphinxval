@@ -2481,7 +2481,6 @@ def setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_o
                     sphinx.trigger_input_start[thresh_key][i] = last_before_start(sphinx.is_trigger_before_start[thresh_key][i],
                         sphinx.is_input_before_start[thresh_key][i])
                     
-                    
                     #Is the last trigger or input before the SEP end
                     #None if no SEP event
                     sphinx.trigger_input_end[thresh_key][i] = last_before_end(sphinx.is_trigger_before_end[thresh_key][i],
@@ -2525,6 +2524,7 @@ def match_all_forecasts(all_energy_channels, model_names, obs_objs,
             
     
     """
+    
     #All observed values needed for matching, organized by
     #energy channel and threshold
     #Output as a pandas dataframe containing all observed values
