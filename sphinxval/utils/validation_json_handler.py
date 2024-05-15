@@ -35,6 +35,13 @@ def read_in_json(filename):
     """Read in json file """
     with open(filename) as f:
         info = json.load(f)
+        
+        if info == {}:
+            return info
+        if verbose:
+            print("read in " + filename)
+        info.update({'filename':filename})
+         
     return info
 
 def make_ccmc_zulu_time(dt):
@@ -180,9 +187,7 @@ def read_json_list(json_files, verbose=True):
         json_info = read_in_json(json_fname)
         if json_info == {}:
             continue
-        if verbose:
-            print("read in " + json_fname)
-        json_info.update({'filename':json_fname})
+
         all_json.append(json_info)
     return all_json
 
