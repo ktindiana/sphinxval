@@ -1083,7 +1083,7 @@ class Forecast():
             return self.valid
             
         if last_trigger_time == None and last_input_time == None:
-            self.valid = None
+            self.valid = False
             if verbose:
                 print("Trigger timing data not available.")
             return self.valid
