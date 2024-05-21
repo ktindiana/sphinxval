@@ -135,7 +135,9 @@ def initialize_dict():
             "Predicted Point Intensity Time": [],
 
             "Predicted Time Profile": [],
-            "Time Profile Match Status": []}
+            "Time Profile Match Status": [],
+            
+            "Last Data Time to Issue Time": []}
 
     return dict
 
@@ -403,7 +405,8 @@ def fill_dict_row(sphinx, dict, energy_key, thresh_key, profname_dict):
         dict["Predicted SEP Duration"].append(pred_duration)
     except:
         dict["Predicted SEP Duration"].append(None)
-        
+    
+    dict["Last Data Time to Issue Time"].append(sphinx.prediction.last_data_time_to_issue_time())
 
 
 def prepare_outdirs():
@@ -2462,7 +2465,7 @@ def end_time_intuitive_metrics(df, dict, model, energy_key,
 def duration_intuitive_metrics(df, dict, model, energy_key, thresh_key,
     validation_type):
     """ Extract the appropriate predictions and calculate metrics
-        Start Time
+        Duration
 
     """
     val_type = ["", "All", "First", "Last"]
@@ -3448,6 +3451,68 @@ def awt_metrics(df, dict, model, energy_key, thresh_key, validation_type):
 
 
 
+def last_data_to_issue_intuitive_metrics(df, dict, model, energy_key, thresh_key,
+    validation_type):
+    """ Extract the appropriate values and calculate metrics
+        Last data time ingested in the forecast to the forecast issue time
+
+    """
+    val_type = ["", "All"]
+    if validation_type not in val_type:
+        return
+    
+    #Select rows to calculate metrics
+    sub = df.loc[(df['Model'] == model) & (df['Energy Channel Key'] ==
+        energy_key) & (df['Threshold Key'] == thresh_key)]
+
+    sub = sub[['Model','Energy Channel Key', 'Threshold Key',
+            'Mismatch Allowed',
+            'Prediction Energy Channel Key', 'Prediction Threshold Key',
+            'Forecast Source',
+            'Prediction Window Start', 'Prediction Window End',
+            'Observed SEP Threshold Crossing Time',
+            'Last Data Time to Issue Time']]
+
+    #Find predicted None values
+    noneval = pd.isna(sub['Last Data Time to Issue Time'])
+    #Extract only indices for Nones
+    #True indicates that peak intensity was a None value
+    noneval = noneval.loc[noneval == True]
+    noneval = noneval.index.to_list()
+    if len(noneval) > 0:
+        for ix in noneval:
+            sub = sub.drop(index=ix)
+
+
+    if sub.empty:
+        return
+
+    mismatch = bool(sub.iloc[0]['Mismatch Allowed'])
+    pred_energy_key = str(sub.iloc[0]['Prediction Energy Channel Key'])
+    pred_thresh_key = str(sub.iloc[0]['Prediction Threshold Key'])
+
+    thresh_fnm = make_thresh_fname(thresh_key)
+    fnm = "last_data_time_to_issue_time_selections_" + model + "_" + energy_key.strip() \
+            + "_" + thresh_fnm
+    if mismatch:
+        fnm = fnm + "_mm"
+    if validation_type != "" and validation_type != "All":
+        fnm = fnm + "_" + validation_type
+    write_df(sub, fnm)
+
+    td = sub['Last Data Time to Issue Time'].to_list()
+    abs_td = [abs(x) for x in td]
+
+    ME = statistics.mean(td)
+    MedE = statistics.median(td)
+    MAE = statistics.mean(abs_td)
+    MedAE = statistics.median(abs_td)
+    
+    fill_time_metrics_dict(dict, model, energy_key, thresh_key,
+    pred_energy_key, pred_thresh_key, ME, MedE, MAE, MedAE)
+
+
+
 def pretty(d, indent=0):
    for key, value in d.items():
       print('\t' * indent + str(key))
@@ -3513,6 +3578,7 @@ def calculate_intuitive_metrics(df, model_names, all_energy_channels,
     peak_intensity_max_time_dict = initialize_time_dict() #All, First, Last
     max_dict = initialize_flux_dict() #max in prediction window #All only
     awt_dict = initialize_awt_dict() #Advanced Warning Time #All, First
+    last_data_to_issue_dict = initialize_time_dict() #All
     
     for model in model_names:
         for ek in all_energy_channels:
@@ -3546,6 +3612,8 @@ def calculate_intuitive_metrics(df, model_names, all_energy_channels,
                 max_flux_in_pred_win_metrics(df, max_dict, model,ek,tk,
                     validation_type)
                 awt_metrics(df, awt_dict, model, ek, tk, validation_type)
+                last_data_to_issue_intuitive_metrics(df, last_data_to_issue_dict,model,ek,tk,
+                    validation_type)
 
 
     print("calculate_intuitive_validation: Completed calculating all metrics for " + validation_type + ": " + str(datetime.datetime.now()))
@@ -3565,6 +3633,7 @@ def calculate_intuitive_metrics(df, model_names, all_energy_channels,
     time_profile_metrics_df = pd.DataFrame(profile_dict)
     max_metrics_df = pd.DataFrame(max_dict)
     awt_metrics_df = pd.DataFrame(awt_dict)
+    last_data_to_issue_metrics_df = pd.DataFrame(last_data_to_issue_dict)
 
     valtype = ""
     if validation_type != "" and validation_type != "All":
@@ -3599,6 +3668,8 @@ def calculate_intuitive_metrics(df, model_names, all_energy_channels,
         write_df(max_metrics_df, "max_flux_in_pred_win_metrics" + valtype)
     if not awt_metrics_df.empty:
         write_df(awt_metrics_df, "awt_metrics" + valtype)
+    if not last_data_to_issue_metrics_df.empty:
+        write_df(last_data_to_issue_metrics_df, "last_data_to_issue_time_metrics" + valtype)
 
     print("calculate_intuitive_validation: Wrote out all metrics for " + validation_type + " to file: " + str(datetime.datetime.now()))
 

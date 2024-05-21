@@ -1026,6 +1026,38 @@ class Forecast():
         return last_time
 
 
+    def last_data_time_to_issue_time(self):
+        """ Calculate the difference between the last input/trigger data time
+            and the issue time.
+            
+            This time includes data availability, human-in-the-loop processing,
+            and model run-time.
+            
+        """
+        
+        last_trigger_time, last_eruption_time = self.last_trigger_time()
+        last_input_time = self.last_input_time()
+        
+        last_time = None
+        if last_trigger_time != None:
+            last_time = last_trigger_time
+            
+        if last_input_time != None:
+            if last_time == None:
+                last_time = last_input_time
+            else:
+                last_time = max(last_time, last_input_time)
+                
+        if last_time == None:
+            return pd.NaT
+            
+        diff = (self.issue_time - last_time).total_seconds()/(60.) #minutes
+        
+        return diff
+
+
+
+
     def valid_forecast(self, verbose=False):
         """ Check that the triggers and inputs are at the same time of
             or before the start of the prediction window. The prediction
