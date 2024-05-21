@@ -15,6 +15,7 @@ import unittest
 import sys
 import pprint
 import pandas as pd
+import json
 
 """ 
 utils/test_match.py contains subroutines to run unit tests on match.py functions
@@ -61,6 +62,20 @@ def utility_get_verbosity():
         verbosity = 1
     return verbosity
 
+def utility_get_unique_dicts(dict_list):
+    """
+    Extracts the unique dictionaries from a list of dictionaries.
+    """
+    unique_set = set()
+    unique_list = []
+    for i in range(0, len(dict_list)):
+        frozen_set = frozenset(dict_list[i].items())
+        if frozen_set not in unique_set:
+            unique_set.add(frozen_set)
+            unique_list.append(dict_list[i])
+    return unique_list
+    
+
 def make_docstring_printable(function):
     """
     Decorator method @make_docstring_printable.
@@ -91,21 +106,38 @@ class LoadMatch(unittest.TestCase):
         self.threshold = self.observation_values[self.energy_key]['thresholds'][0]
         self.threshold_key = objh.threshold_to_key(self.threshold)
 
+    def load_matched_sphinx_and_inputs(self, forecasts, all_forecast_thresholds):
+        """
+        Loads inputs and SPHINX object to test match.py functions.
+        """
+        forecast_objects = {}
+        forecast_objects[self.energy_key] = []
+        for i in range(0, len(forecasts)):
+            forecast_objects[self.energy_key].append(forecasts[i])
+        model_names = ['unit_test']
+        matched_sphinx = {}
+        matched_sphinx, observed_sep_events = match.setup_match_all_forecasts(self.all_energy_channels, 
+                                                            self.observation_objects,
+                                                            self.observation_values,
+                                                            forecast_objects, 
+                                                            model_names)
+        return matched_sphinx, observed_sep_events
+
     def load_sphinx_and_inputs(self, forecast, all_forecast_thresholds):
         """
-        Loads inputs and SPHINX object to test match.match_all_clear() function.
+        Loads inputs and SPHINX object to test match.py functions.
         """
         sphinx = objh.initialize_sphinx(forecast)
         forecast_objects = {self.energy_key : [forecast]}
         model_names = ['unit_test']
         matched_sphinx = {}
-        matched_sphinx, _ = match.setup_match_all_forecasts(self.all_energy_channels, 
+        matched_sphinx, observed_sep_events = match.setup_match_all_forecasts(self.all_energy_channels, 
                                                             self.observation_objects,
                                                             self.observation_values,
                                                             forecast_objects, 
                                                             model_names)
         sphinx = matched_sphinx['unit_test'][self.energy_key][0]
-        return sphinx
+        return sphinx, observed_sep_events
     
     def utility_print_docstring(self, function):
         if self.verbosity == 2:
@@ -219,7 +251,7 @@ class TestMatchObservedOnsetPeak(LoadMatch):
         forecast = utility_load_forecast(forecast_json, self.energy_channel)
         # BUILD UP SPHINX OBJECT USING FORECAST AND OBSERVATION JSONS
         all_forecast_thresholds = forecast.identify_all_thresholds()
-        sphinx = self.load_sphinx_and_inputs(forecast, all_forecast_thresholds)
+        sphinx, _ = self.load_sphinx_and_inputs(forecast, all_forecast_thresholds)
         function_evaluations = []
         for forecast_threshold_index in range(len(all_forecast_thresholds)):
             forecast_threshold = all_forecast_thresholds[forecast_threshold_index]
@@ -246,7 +278,7 @@ class TestMatchObservedOnsetPeak(LoadMatch):
                 prediction window end:    2000-01-01T01:00:00Z
                 observation window start: 2000-01-01T00:00:00Z
                 observation window end:   2000-01-01T01:00:00Z
-           -- The last eruption occurred between 48 hours and 15 minutes prior to threshold crossing
+           -- The last eruption occurred between 24 hours and 8 minutes prior to threshold crossing
                 CME start:                2000-01-01T00:00:00Z
                 threshold crossing:       2000-01-01T00:16:00Z
            -- The prediction window overlaps with an SEP event
@@ -271,7 +303,7 @@ class TestMatchObservedOnsetPeak(LoadMatch):
                 prediction window end:    2000-01-01T01:30:00Z
                 observation window start: 2000-01-01T00:00:00Z
                 observation window end:   2000-01-01T01:00:00Z
-           -- The last eruption occurred between 48 hours and 15 minutes prior to threshold crossing
+           -- The last eruption occurred between 24 hours and 8 minutes prior to threshold crossing
                 CME start:                2000-01-01T00:00:00Z
                 threshold crossing:       2000-01-01T00:16:00Z
            -- The prediction window does not overlap with an SEP event
@@ -295,7 +327,7 @@ class TestMatchObservedOnsetPeak(LoadMatch):
                 prediction window end:    2000-01-01T01:00:00Z
                 observation window start: 2000-01-01T00:00:00Z
                 observation window end:   2000-01-01T01:00:00Z
-           -- The last eruption was out of range, > 48 hours prior to threshold crossing
+           -- The last eruption was out of range, > 24 hours prior to threshold crossing
                 CME start:                1999-12-29T00:00:00Z
                 threshold crossing:       2000-01-01T00:16:00Z
            -- The prediction window overlaps with an SEP event
@@ -367,7 +399,7 @@ class TestMatchObservedOnsetPeak(LoadMatch):
                 prediction window end:      2000-01-01T01:00:00Z
                 observation windows start:  2000-01-01T00:00:00Z
                 observation windows end:    2000-01-01T01:00:00Z
-           -- The last eruption occurred between 48 hours and 15 minutes prior to threshold crossing
+           -- The last eruption occurred between 24 hours and 8 minutes prior to threshold crossing
                 CME start:                  2000-01-01T00:00:00Z
                 peak time 1:                2000-01-01T00:30:00Z
                 peak time 2:                2000-01-01T00:31:00Z
@@ -432,7 +464,7 @@ class TestMatchObservedMaxFlux(LoadMatch):
         forecast = utility_load_forecast(forecast_json, self.energy_channel)
         # BUILD UP SPHINX OBJECT USING FORECAST AND OBSERVATION JSONS
         all_forecast_thresholds = forecast.identify_all_thresholds()
-        sphinx = self.load_sphinx_and_inputs(forecast, all_forecast_thresholds)
+        sphinx, _ = self.load_sphinx_and_inputs(forecast, all_forecast_thresholds)
         function_evaluations = []
         for forecast_threshold_index in range(len(all_forecast_thresholds)):
             forecast_threshold = all_forecast_thresholds[forecast_threshold_index]
@@ -459,7 +491,7 @@ class TestMatchObservedMaxFlux(LoadMatch):
                 prediction window end:    2000-01-01T01:00:00Z
                 observation window start: 2000-01-01T00:00:00Z
                 observation window end:   2000-01-01T01:00:00Z
-           -- The last eruption occurred between 48 hours and 15 minutes prior to threshold crossing
+           -- The last eruption occurred between 24 hours and 8 minutes prior to threshold crossing
                 CME start:                2000-01-01T00:00:00Z
                 threshold crossing:       2000-01-01T00:16:00Z
            -- The prediction window overlaps with an SEP event
@@ -484,7 +516,7 @@ class TestMatchObservedMaxFlux(LoadMatch):
                 prediction window end:    2000-01-01T01:30:00Z
                 observation window start: 2000-01-01T00:00:00Z
                 observation window end:   2000-01-01T01:00:00Z
-           -- The last eruption occurred between 48 hours and 15 minutes prior to threshold crossing
+           -- The last eruption occurred between 24 hours and 8 minutes prior to threshold crossing
                 CME start:                2000-01-01T00:00:00Z
                 threshold crossing:       2000-01-01T00:16:00Z
            -- The prediction window does not overlap with an SEP event
@@ -508,7 +540,7 @@ class TestMatchObservedMaxFlux(LoadMatch):
                 prediction window end:    2000-01-01T01:00:00Z
                 observation window start: 2000-01-01T00:00:00Z
                 observation window end:   2000-01-01T01:00:00Z
-           -- The last eruption was out of range, > 48 hours prior to threshold crossing
+           -- The last eruption was out of range, > 24 hours prior to threshold crossing
                 CME start:                1999-12-29T00:00:00Z
                 threshold crossing:       2000-01-01T00:16:00Z
            -- The prediction window overlaps with an SEP event
@@ -580,7 +612,7 @@ class TestMatchObservedMaxFlux(LoadMatch):
                 prediction window end:      2000-01-01T01:00:00Z
                 observation windows start:  2000-01-01T00:00:00Z
                 observation windows end:    2000-01-01T01:00:00Z
-           -- The last eruption occurred between 48 hours and 15 minutes prior to threshold crossing
+           -- The last eruption occurred between 24 hours and 8 minutes prior to threshold crossing
                 CME start:                  2000-01-01T00:00:00Z
                 peak time 1:                2000-01-01T00:30:00Z
                 peak time 2:                2000-01-01T00:31:00Z
@@ -644,7 +676,7 @@ class TestMatchAllClear(LoadMatch):
         forecast = utility_load_forecast(forecast_json, self.energy_channel)
         # BUILD UP SPHINX OBJECT USING FORECAST AND OBSERVATION JSONS
         all_forecast_thresholds = forecast.identify_all_thresholds()
-        sphinx = self.load_sphinx_and_inputs(forecast, all_forecast_thresholds)
+        sphinx, _ = self.load_sphinx_and_inputs(forecast, all_forecast_thresholds)
         function_evaluations = []
         for forecast_threshold_index in range(len(all_forecast_thresholds)):
             forecast_threshold = all_forecast_thresholds[forecast_threshold_index]
@@ -866,6 +898,60 @@ class TestMatchAllClear(LoadMatch):
         self.assertEqual(sphinx.all_clear_match_status, 'SEP Event', '')
         self.assertEqual(sphinx.observed_all_clear.all_clear_boolean, False, '')
         self.assertEqual(function_evaluations, [False, None], '')
+        
+    @make_docstring_printable
+    def test_match_all_clear_9(this, self):
+        """
+        The forecast/observation pair has the following attributes:
+            -- Prediction window overlaps with observation window
+                prediction window start: 2000-01-01T00:18:00Z
+                prediction window end:   2000-01-01T01:00:00Z
+                observation window start: 2000-01-01T00:00:00Z
+                observation window end:   2000-01-01T01:00:00Z
+           -- Ongoing SEP event at the start of the prediction window
+                event start:            2000-01-01T00:15:00Z
+                event end:              2000-01-01T00:20:00Z
+           -- The trigger (CME observation) for the forecast occurred after the threshold crossing.
+                CME start: 2000-01-01T00:17:00Z
+           -- The threshold crossing was not observed within the prediction window
+                threshold crossing:       2000-01-01T00:15:00Z
+        The function should evaluate to [None]
+        """
+        forecast_json = './tests/files/forecasts/match/match_all_clear/match_all_clear_9.json'
+        sphinx, function_evaluations = self.utility_test_match_all_clear(this, forecast_json)
+        self.assertEqual(sphinx.all_clear_match_status, 'Ongoing SEP Event', '')
+
+    @make_docstring_printable
+    def test_match_all_clear_10(this, self):
+        """
+        The forecast/observation pair has the following attributes:
+           -- Prediction window overlaps with observation window
+                prediction window start:  2000-01-01T00:18:00Z
+                prediction window end:    2000-01-01T01:00:00Z
+                observation window start: 2000-01-01T00:25:00Z
+                observation window end:   2000-01-01T01:00:00Z
+           -- The trigger (CME observation) for the forecast occurred after the first, and before the second threshold crossing
+                CME start:                2000-01-01T00:17:00Z
+           -- There are two SEP events in the prediction window. One of the events is ongoing at the start of the prediction window.
+                event 1 start:            2000-01-01T00:15:00Z
+                event 1 end:              2000-01-01T00:20:00Z
+                event 2 start:            2000-01-01T00:40:00Z
+                event 2 end:              2000-01-01T00:59:00Z
+           -- The second threshold crossing was observed within the prediction window
+                threshold crossing:       2000-01-01T00:40:00Z
+           The function should evaluate to [None, False] (the prediction window is entirely outside of the first event's above threshold period; the second event is correctly identified as All Clear = False)
+        sphinx.all_clear_match_status should end up as 'SEP Event'
+        sphinx.observed_all_clear.all_clear_boolean should be False from second forecast-observation match
+        """
+        observation_json = './tests/files/observations/match/match_all_clear/match_all_clear_10.json'
+        observation = utility_load_observation(observation_json, self.energy_channel) # SAME ENERGY CHANNEL
+        self.observation_objects[self.energy_key].append(observation)
+        self.observation_values = match.compile_all_obs(self.all_energy_channels, self.observation_objects)        
+        forecast_json = './tests/files/forecasts/match/match_all_clear/match_all_clear_10.json'
+        sphinx, function_evaluations = self.utility_test_match_all_clear(this, forecast_json)
+        self.assertEqual(sphinx.all_clear_match_status, 'SEP Event', '')
+        self.assertEqual(sphinx.observed_all_clear.all_clear_boolean, False, '')
+        self.assertEqual(function_evaluations, [None, False], '')
 
 class TestMatchSEPQuantities(LoadMatch):
     """
@@ -910,7 +996,7 @@ class TestMatchSEPQuantities(LoadMatch):
         forecast = utility_load_forecast(forecast_json, self.energy_channel)
         # BUILD UP SPHINX OBJECT USING FORECAST AND OBSERVATION JSONS
         all_forecast_thresholds = forecast.identify_all_thresholds()
-        sphinx = self.load_sphinx_and_inputs(forecast, all_forecast_thresholds)
+        sphinx, _ = self.load_sphinx_and_inputs(forecast, all_forecast_thresholds)
         function_evaluations = []
         for forecast_threshold_index in range(len(all_forecast_thresholds)):
             forecast_threshold = all_forecast_thresholds[forecast_threshold_index]
@@ -938,7 +1024,7 @@ class TestMatchSEPQuantities(LoadMatch):
                 prediction window end:    2000-01-01T01:00:00Z
                 observation window start: 2000-01-01T00:00:00Z
                 observation window end:   2000-01-01T01:00:00Z
-           -- An eruption occurred less than 48 hours and more than/equal to 15 minutes prior to the threshold crossing
+           -- An eruption occurred less than 24 hours and more than/equal to 8 minutes prior to the threshold crossing
                 CME start:                2000-01-01T00:00:00Z
            -- A SEP event occurs in the prediction window
                 SEP start:                2000-01-01T00:15:00Z
@@ -962,7 +1048,7 @@ class TestMatchSEPQuantities(LoadMatch):
                 prediction window end:    2000-01-01T01:00:00Z
                 observation window start: 2000-01-01T00:00:00Z
                 observation window end:   2000-01-01T01:00:00Z
-           -- An eruption more than 48 hours prior to the threshold crossing
+           -- An eruption more than 24 hours prior to the threshold crossing
                 CME start:                1999-12-29T00:00:00Z
            -- A SEP event occurs in the prediction window
                 SEP start:                2000-01-01T00:15:00Z
@@ -1123,7 +1209,7 @@ class TestMatchSEPEndTime(LoadMatch):
         forecast = utility_load_forecast(forecast_json, self.energy_channel)
         # BUILD UP SPHINX OBJECT USING FORECAST AND OBSERVATION JSONS
         all_forecast_thresholds = forecast.identify_all_thresholds()
-        sphinx = self.load_sphinx_and_inputs(forecast, all_forecast_thresholds)
+        sphinx, _ = self.load_sphinx_and_inputs(forecast, all_forecast_thresholds)
         function_evaluations = []
         for forecast_threshold_index in range(len(all_forecast_thresholds)):
             forecast_threshold = all_forecast_thresholds[forecast_threshold_index]
@@ -1150,7 +1236,7 @@ class TestMatchSEPEndTime(LoadMatch):
                 prediction window end:    2000-01-01T01:00:00Z
                 observation window start: 2000-01-01T00:00:00Z
                 observation window end:   2000-01-01T01:00:00Z
-           -- An eruption occurred less than 48 hours and more than/equal to 15 minutes prior to the threshold crossing
+           -- An eruption occurred less than 24 hours and more than/equal to 8 minutes prior to the threshold crossing
                 CME start:                2000-01-01T00:00:00Z
            -- A SEP event occurs in the prediction window
                 SEP start:                2000-01-01T00:15:00Z
@@ -1174,7 +1260,7 @@ class TestMatchSEPEndTime(LoadMatch):
                 prediction window end:    2000-01-01T01:00:00Z
                 observation window start: 2000-01-01T00:00:00Z
                 observation window end:   2000-01-01T01:00:00Z
-           -- An eruption more than 48 hours prior to the threshold crossing
+           -- An eruption more than 24 hours prior to the threshold crossing
                 CME start:                1999-12-29T00:00:00Z
            -- A SEP event occurs in the prediction window
                 SEP start:                2000-01-01T00:15:00Z
@@ -1247,7 +1333,7 @@ class TestMatchSEPEndTime(LoadMatch):
                 prediction window end:    2000-01-01T01:00:00Z
                 observation window start: 2000-01-01T00:00:00Z
                 observation window end:   2000-01-01T01:00:00Z
-           -- An eruption occurred less than 48 hours and more than/equal to 15 minutes prior to the threshold crossing
+           -- An eruption occurred less than 24 hours and more than/equal to 8 minutes prior to the threshold crossing
                 CME start:                2000-01-01T00:00:00Z
            -- A SEP event occurs in the prediction window
                 SEP start:                2000-01-01T00:15:00Z
@@ -1295,3 +1381,305 @@ class TestMatchSEPEndTime(LoadMatch):
         sphinx, function_evaluations = self.utility_test_match_sep_end_time(this, forecast_json)
         self.assertEqual(sphinx.end_time_match_status[self.threshold_key], 'SEP Event', '')
         self.assertEqual(function_evaluations, [True, None], '')
+    
+    @make_docstring_printable
+    def test_match_sep_end_time_7(this, self):
+        """
+        Tests the function's ability to recognize 'fluence_spectrum' entries in observation JSON.
+        """
+        forecast_json = './tests/files/forecasts/match/match_sep_end_time/match_sep_end_time_7.json'
+        sphinx, _ = self.utility_test_match_sep_end_time(this, forecast_json)
+        self.assertEqual(sphinx.observed_fluence_spectrum[self.threshold_key].label, 'fluence_spectrum', '')        
+        
+class TestCalculateDerivedQuantities(LoadMatch):
+    """
+    Unit test class for calculate_derived_quantities function in match.py
+    """   
+    def setUp(self):
+        energy_channel = {'min': 10, 'max': -1, 'units': 'MeV'}
+        observation_json = './tests/files/observations/match/calculate_derived_quantities/calculate_derived_quantities.json'
+        self.load_verbosity()
+        self.load_energy(energy_channel)
+        self.load_observation(observation_json)
+    
+    # sphinx.py --> match.match_all_forecasts --> match.calculate_derived_quantities
+    def utility_print_inputs(self, sphinx, forecast_threshold_key, i):
+        if self.verbosity == 2:
+            print('')
+            print('===== PRINT INPUTS =====')
+            print('sphinx.prediction.point_intensity.intensity =', sphinx.prediction.point_intensity.intensity)
+            print('sphinx.prediction.peak_intensity.intensity =', sphinx.prediction.peak_intensity.intensity)
+            print('sphinx.prediction.peak_intensity_max.intensity =', sphinx.prediction.peak_intensity_max.intensity)
+            print('sphinx.prediction.prediction_window_start =', sphinx.prediction.prediction_window_start)
+            print('sphinx.prediction.prediction_window_end =', sphinx.prediction.prediction_window_end)
+            print('sphinx.end_time_match_status =', sphinx.end_time_match_status)
+            print('sphinx.prediction.peak_intensity.units =', sphinx.prediction.peak_intensity.units)
+            print('sphinx.prediction.peak_intensity_max.units =', sphinx.prediction.peak_intensity_max.units)
+            print('sphinx.prediction.point_intensity.time =', sphinx.prediction.point_intensity.time)
+            print('sphinx.prediction.point_intensity.units =', sphinx.prediction.point_intensity.units)
+            print('==========')
+            print('')
+            
+    def utility_print_outputs(self, sphinx, function_evaluations):
+        if self.verbosity == 2:
+            print('')
+            print('===== PRINT OUTPUTS =====')
+            print('sphinx.observed_max_flux_in_prediction_window.intensity =', sphinx.observed_max_flux_in_prediction_window.intensity)
+            print('sphinx.observed_max_flux_in_prediction_window.time =', sphinx.observed_max_flux_in_prediction_window.time)
+            print('sphinx.max_flux_in_prediction_window_match_status =', sphinx.max_flux_in_prediction_window_match_status)
+            print('sphinx.observed_max_flux_in_prediction_window.units =', sphinx.observed_max_flux_in_prediction_window.units)
+            print('sphinx.observed_point_intensity.intensity =', sphinx.observed_point_intensity.intensity)
+            print('sphinx.observed_point_intensity.time =', sphinx.observed_point_intensity.time)
+            print('sphinx.observed_point_intensity.units =', sphinx.observed_point_intensity.units)
+            print('function_evaluations =', function_evaluations)
+            print('==========')
+            print('')
+            print('----------------------------------------------------//\n\n\n\n\n\n')
+    
+    def utility_test_calculate_derived_quantities(self, function, forecast_json):
+        """
+        Obtains SPHINX object and function evaluations given the forecast JSON.
+        """
+        self.utility_print_docstring(function)
+        forecast = utility_load_forecast(forecast_json, self.energy_channel)
+        # BUILD UP SPHINX OBJECT USING FORECAST AND OBSERVATION JSONS
+        all_forecast_thresholds = forecast.identify_all_thresholds()
+        sphinx, observed_sep_events = self.load_sphinx_and_inputs(forecast, all_forecast_thresholds)
+        function_evaluations = []
+        for forecast_threshold_index in range(len(all_forecast_thresholds)):
+            forecast_threshold = all_forecast_thresholds[forecast_threshold_index]
+            forecast_threshold_key = objh.threshold_to_key(forecast_threshold)
+            for i in sphinx.overlapping_indices:
+                self.utility_print_inputs(sphinx, forecast_threshold_key, i)
+                _ = match.match_observed_onset_peak(sphinx,
+                                                    self.observation_objects[self.energy_key][i],
+                                                    sphinx.is_win_overlap[i],
+                                                    sphinx.is_eruption_in_range[forecast_threshold_key][i],
+                                                    sphinx.is_trigger_before_onset_peak[i],
+                                                    sphinx.is_input_before_onset_peak[i],
+                                                    sphinx.is_pred_sep_overlap[forecast_threshold_key][i])
+                _ = match.match_observed_max_flux(sphinx,
+                                                  self.observation_objects[self.energy_key][i],
+                                                  sphinx.is_win_overlap[i],
+                                                  sphinx.is_eruption_in_range[forecast_threshold_key][i],
+                                                  sphinx.is_trigger_before_max_time[i],
+                                                  sphinx.is_input_before_max_time[i],
+                                                  sphinx.is_pred_sep_overlap[forecast_threshold_key][i])
+                _ = match.match_all_clear(sphinx,
+                                          self.observation_objects[self.energy_key][i],
+                                          sphinx.is_win_overlap[i],
+                                          sphinx.is_eruption_in_range[forecast_threshold_key][i],
+                                          sphinx.trigger_input_start[forecast_threshold_key][i],
+                                          sphinx.contains_thresh_cross[forecast_threshold_key][i],
+                                          sphinx.is_sep_ongoing[forecast_threshold_key][i])
+                sep_status = match.match_sep_quantities(sphinx,
+                                               self.observation_objects[self.energy_key][i],
+                                               forecast_threshold,
+                                               sphinx.is_win_overlap[i],
+                                               sphinx.is_eruption_in_range[forecast_threshold_key][i],
+                                               sphinx.trigger_input_start[forecast_threshold_key][i],
+                                               sphinx.contains_thresh_cross[forecast_threshold_key][i],
+                                               sphinx.is_sep_ongoing[forecast_threshold_key][i])
+                if sep_status == True:
+                    print(observed_sep_events)
+                    if sphinx.observed_threshold_crossing[forecast_threshold_key].crossing_time not in observed_sep_events[forecast.short_name][self.energy_key][forecast_threshold_key]:
+                        observed_sep_events[forecast.short_name][self.energy_key][forecast_threshold_key].append(sphinx.observed_threshold_crossing[forecast_threshold_key].crossing_time)
+                _ = match.match_sep_end_time(sphinx,
+                                             self.observation_objects[self.energy_key][i],
+                                             forecast_threshold,
+                                             sphinx.is_win_overlap[i],
+                                             sphinx.is_eruption_in_range[forecast_threshold_key][i],
+                                             sphinx.trigger_input_end[forecast_threshold_key][i],
+                                             sphinx.is_pred_sep_overlap[forecast_threshold_key][i])
+                function_evaluation = match.calculate_derived_quantities(sphinx)
+                function_evaluations.append(function_evaluation)
+        self.utility_print_outputs(sphinx, function_evaluations)
+        return sphinx, function_evaluations
+    
+    
+    @make_docstring_printable
+    def test_calculate_derived_quantities_1(this, self):
+        """
+        The forecast/observation pair has the following attributes:
+            There are no "intensity" metrics in the forecast JSON. The function should evaluate to [None].
+        """
+        forecast_json = './tests/files/forecasts/match/calculate_derived_quantities/calculate_derived_quantities_1.json'
+        sphinx, function_evaluations = self.utility_test_calculate_derived_quantities(this, forecast_json)
+        self.assertEqual(function_evaluations, [None], '')
+    
+    @make_docstring_printable
+    def test_calculate_derived_quantities_2(this, self):
+        """
+        The forecast/observation pair has the following attributes:
+            There is now a "point_intensity" dictionary in the forecast JSON.
+            The members of the dictionary are 'intensity' and 'time'. 
+            The function should evaluate to [True].
+        """
+        forecast_json = './tests/files/forecasts/match/calculate_derived_quantities/calculate_derived_quantities_2.json'
+        sphinx, function_evaluations = self.utility_test_calculate_derived_quantities(this, forecast_json)
+        self.assertEqual(function_evaluations, [True], '') # WE REACHED status = True
+        self.assertEqual(sphinx.observed_max_flux_in_prediction_window.intensity, 10.0, '')
+        self.assertEqual(sphinx.observed_max_flux_in_prediction_window.time, vjson.zulu_to_time('2000-01-01T00:15:00Z'), '')
+        self.assertEqual(sphinx.max_flux_in_prediction_window_match_status, sphinx.end_time_match_status, '')
+        self.assertEqual(sphinx.observed_point_intensity.intensity, 10.0, '')
+        self.assertEqual(sphinx.observed_point_intensity.time, vjson.zulu_to_time('2000-01-01T00:15:00Z'), '')
+        self.assertEqual(sphinx.observed_point_intensity.units, sphinx.prediction.point_intensity.units, '')
+        
+    @make_docstring_printable
+    def test_calculate_derived_quantities_3(this, self):
+        """
+        The forecast/observation pair has the following attributes:
+            No prediction window specified.
+            The function should evaluate to [None].
+        """
+        forecast_json = './tests/files/forecasts/match/calculate_derived_quantities/calculate_derived_quantities_3.json'
+        sphinx, function_evaluations = self.utility_test_calculate_derived_quantities(this, forecast_json)
+        self.assertEqual(function_evaluations, [None], '')
+        
+    @make_docstring_printable
+    def test_calculate_derived_quantities_4(this, self):
+        """
+        The forecast/observation pair has the following attributes:
+            There is a "peak_intensity" dictionary in the forecast JSON.
+            The only member of the dictionary is 'intensity'.
+            The function should evaluate to [True].
+        """
+        forecast_json = './tests/files/forecasts/match/calculate_derived_quantities/calculate_derived_quantities_4.json'
+        sphinx, function_evaluations = self.utility_test_calculate_derived_quantities(this, forecast_json)
+        self.assertEqual(function_evaluations, [True], '')
+        
+    @make_docstring_printable
+    def test_calculate_derived_quantities_5(this, self):
+        """
+        The forecast/observation pair has the following attributes:
+            There is a "peak_intensity" dictionary in the forecast JSON.
+            There is also a "peak_intensity_max" dictionary in the forecast JSON.
+            The only member of the dictionary is 'intensity'.
+            The function should evaluate to [True].
+        """
+        forecast_json = './tests/files/forecasts/match/calculate_derived_quantities/calculate_derived_quantities_5.json'
+        sphinx, function_evaluations = self.utility_test_calculate_derived_quantities(this, forecast_json)
+        self.assertEqual(function_evaluations, [True], '')
+
+ 
+class TestReviseEruptionMatches(LoadMatch):
+    """
+    Unit test class for calculate_derived_quantities function in match.py
+    """   
+    def setUp(self):
+        energy_channel = {'min': 10, 'max': -1, 'units': 'MeV'}
+        observation_json = './tests/files/observations/match/revise_eruption_matches/revise_eruption_matches.json'
+        self.load_verbosity()
+        self.load_energy(energy_channel)
+        self.load_observation(observation_json)
+    
+    def utility_test_revise_eruption_matches(self, function, forecast_jsons):
+        """
+        Obtains SPHINX object and function evaluations given the forecast JSON.
+        """
+        self.utility_print_docstring(function)
+        forecast_threshold_list = []
+        forecasts = []
+        for i in range(0, len(forecast_jsons)):
+            forecast = utility_load_forecast(forecast_jsons[i], self.energy_channel)
+            forecasts.append(forecast)
+            this_forecast_thresholds = forecast.identify_all_thresholds()
+            for j in range(0, len(this_forecast_thresholds)):
+                forecast_threshold_list.append(this_forecast_thresholds[j])
+        all_forecast_thresholds = utility_get_unique_dicts(forecast_threshold_list)
+        matched_sphinx, observed_sep_events = self.load_matched_sphinx_and_inputs(forecasts, all_forecast_thresholds)
+        #sphinx, observed_sep_events = self.load_sphinx_and_inputs(forecast, all_forecast_thresholds)
+        initial_matched_sphinx = matched_sphinx.copy()
+        function_evaluations = []
+        for forecast_threshold_index in range(len(all_forecast_thresholds)):
+            forecast_threshold = all_forecast_thresholds[forecast_threshold_index]
+            forecast_threshold_key = objh.threshold_to_key(forecast_threshold)
+            sphinx = matched_sphinx[forecast.short_name][self.energy_key][forecast_threshold_index]
+            for i in sphinx.overlapping_indices:
+                _ = match.match_observed_onset_peak(sphinx,
+                                                    self.observation_objects[self.energy_key][i],
+                                                    sphinx.is_win_overlap[i],
+                                                    sphinx.is_eruption_in_range[forecast_threshold_key][i],
+                                                    sphinx.is_trigger_before_onset_peak[i],
+                                                    sphinx.is_input_before_onset_peak[i],
+                                                    sphinx.is_pred_sep_overlap[forecast_threshold_key][i])
+                _ = match.match_observed_max_flux(sphinx,
+                                                  self.observation_objects[self.energy_key][i],
+                                                  sphinx.is_win_overlap[i],
+                                                  sphinx.is_eruption_in_range[forecast_threshold_key][i],
+                                                  sphinx.is_trigger_before_max_time[i],
+                                                  sphinx.is_input_before_max_time[i],
+                                                  sphinx.is_pred_sep_overlap[forecast_threshold_key][i])
+                _ = match.match_all_clear(sphinx,
+                                          self.observation_objects[self.energy_key][i],
+                                          sphinx.is_win_overlap[i],
+                                          sphinx.is_eruption_in_range[forecast_threshold_key][i],
+                                          sphinx.trigger_input_start[forecast_threshold_key][i],
+                                          sphinx.contains_thresh_cross[forecast_threshold_key][i],
+                                          sphinx.is_sep_ongoing[forecast_threshold_key][i])
+                sep_status = match.match_sep_quantities(sphinx,
+                                               self.observation_objects[self.energy_key][i],
+                                               forecast_threshold,
+                                               sphinx.is_win_overlap[i],
+                                               sphinx.is_eruption_in_range[forecast_threshold_key][i],
+                                               sphinx.trigger_input_start[forecast_threshold_key][i],
+                                               sphinx.contains_thresh_cross[forecast_threshold_key][i],
+                                               sphinx.is_sep_ongoing[forecast_threshold_key][i])
+                if sep_status == True:
+                    print(observed_sep_events)
+                    if sphinx.observed_threshold_crossing[forecast_threshold_key].crossing_time not in observed_sep_events[forecast.short_name][self.energy_key][forecast_threshold_key]:
+                        observed_sep_events[forecast.short_name][self.energy_key][forecast_threshold_key].append(sphinx.observed_threshold_crossing[forecast_threshold_key].crossing_time)
+                _ = match.match_sep_end_time(sphinx,
+                                             self.observation_objects[self.energy_key][i],
+                                             forecast_threshold,
+                                             sphinx.is_win_overlap[i],
+                                             sphinx.is_eruption_in_range[forecast_threshold_key][i],
+                                             sphinx.trigger_input_end[forecast_threshold_key][i],
+                                             sphinx.is_pred_sep_overlap[forecast_threshold_key][i])
+                function_evaluation = match.calculate_derived_quantities(sphinx)
+                function_evaluations.append(function_evaluation)
+        #self.utility_print_inputs(matched_sphinx, observed_sep_events)
+        matched_sphinx[forecast.short_name][self.energy_key][forecast_threshold_index] = sphinx
+        match.revise_eruption_matches(matched_sphinx, self.all_energy_channels, self.observation_values, ['unit_test'], observed_sep_events)
+        #self.utility_print_outputs(matched_sphinx)
+        return matched_sphinx, initial_matched_sphinx
+    
+    @make_docstring_printable
+    def test_revise_eruption_matches_1(this, self):
+        """
+        The forecast does not use eruptions as triggers.
+        The matched_sphinx object should be completely unchanged.
+        """
+        forecast_jsons = ['./tests/files/forecasts/match/revise_eruption_matches/revise_eruption_matches_1.json']
+        matched_sphinx, initial_matched_sphinx = self.utility_test_revise_eruption_matches(this, forecast_jsons)
+        self.assertEqual(matched_sphinx, initial_matched_sphinx, '')
+        
+    @make_docstring_printable
+    def test_revise_eruption_matches_2(this, self):
+        """
+        The forecast uses CME start time as a trigger.
+        The matched_sphinx object should be completely unchanged, as there is only one forecast.
+        """
+        forecast_jsons = ['./tests/files/forecasts/match/revise_eruption_matches/revise_eruption_matches_2.json']
+        matched_sphinx, initial_matched_sphinx = self.utility_test_revise_eruption_matches(this, forecast_jsons)
+        self.assertEqual(matched_sphinx, initial_matched_sphinx, '')
+    
+    @make_docstring_printable
+    def test_revise_eruption_matches_3(this, self):
+        """
+        The forecast uses CME start time as a trigger.
+        The matched_sphinx object should be completely unchanged.
+        There is one forecast who's CME occurs prior to the observed 
+            threshold crossing in two observation files under consideration,
+            but the 
+        """
+        forecast_jsons = ['./tests/files/forecasts/match/revise_eruption_matches/revise_eruption_matches_3_1.json',
+                          './tests/files/forecasts/match/revise_eruption_matches/revise_eruption_matches_3_2.json']
+        matched_sphinx, initial_matched_sphinx = self.utility_test_revise_eruption_matches(this, forecast_jsons)
+        self.assertEqual(matched_sphinx, initial_matched_sphinx, '')
+    
+    
+    
+    
+        
+      

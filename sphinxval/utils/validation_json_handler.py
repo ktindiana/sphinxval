@@ -187,7 +187,9 @@ def read_json_list(json_files, verbose=True):
         json_info = read_in_json(json_fname, verbose)
         if json_info == {}:
             continue
-
+        if verbose:
+            print("read in " + json_fname)
+        json_info.update({'filename':json_fname})
         all_json.append(json_info)
     return all_json
 
@@ -272,7 +274,6 @@ def load_objects_from_json(data_list, model_list):
             the forecast jsons
         
     """
-    #print(read_list_of_jsons(data_list))
     obs_jsons = read_json_list(read_list_of_jsons(data_list))
     model_jsons = read_json_list(read_list_of_jsons(model_list))    
     

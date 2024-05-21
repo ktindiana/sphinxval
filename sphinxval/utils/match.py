@@ -2129,7 +2129,7 @@ def revise_eruption_matches(matched_sphinx, all_energy_channels, obs_values,
         None, but the objects inside matched_sphinx will be updated.
         
     """
-    print("\n====== REVISING MATCHES WITH FLARE/CME TRIGGERS ======")
+    #print("\n====== REVISING MATCHES WITH FLARE/CME TRIGGERS ======")
     for model in model_names:
         #if the model doesn't use eruptions as triggers, then this
         #doesn't apply
@@ -2138,8 +2138,8 @@ def revise_eruption_matches(matched_sphinx, all_energy_channels, obs_values,
 
         for energy_key in all_energy_channels:
             for threshold in obs_values[energy_key]['thresholds']:
-                print("Checking whether to revise matching for " + model
-                + ", " + str(energy_key) + ", " + str(threshold))
+                #print("Checking whether to revise matching for " + model
+                #+ ", " + str(energy_key) + ", " + str(threshold))
                 #Pull out all the observed SEP events inside of the
                 #model prediction windows for a given energy channel
                 #and threshold. Want to identify if multiple predictions
@@ -2166,12 +2166,13 @@ def revise_eruption_matches(matched_sphinx, all_energy_channels, obs_values,
                     obs_thresh_cross =\
                         spx_df['observed_threshold_crossing_time'].tolist()
 
-
+                    print(obs_thresh_cross)
                     idx_event = [ix for ix in range(len(obs_thresh_cross)) if obs_thresh_cross[ix] == pd.Timestamp(sep)]
-                    
+                    print(idx_event)
                     #If no or only one match, nothing to do
                     if len(idx_event) == 0 or len(idx_event) == 1: continue
                 
+                    print('made it here 2')
                     #Time differences are saved in order of the observation
                     #files that fell inside the predictions windows. Identify
                     #the correct entry by comparing with filename of the

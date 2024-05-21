@@ -1021,6 +1021,7 @@ class ProbabilityMetricsTestCase(unittest.TestCase):
         y_true = [0.0, 1.0, 1.0, 1.0]
         y_pred = [0.0, 0.1, 0.2, 0.3]
         result = metrics.calc_pearson(y_true, y_pred, 'linear')
+        print('here: ', result)
         self.assertTrue(result[0] > 0.0)
 
         y_true = [0.0, 1.0, 1.0, 1.0]
