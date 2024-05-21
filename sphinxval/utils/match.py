@@ -384,8 +384,8 @@ def observed_time_in_pred_win(fcast, obs_values, obs_key, energy_key):
     """ Find whether an observed time occurred inside of the prediction
         window across all of the observations
         
-        Returns boolean indicating whether the threshold was
-        actively crossed inside of the prediction window.
+        Returns boolean indicating whether the observed time
+        is inside of the prediction window.
     
     Input:
     
@@ -393,7 +393,7 @@ def observed_time_in_pred_win(fcast, obs_values, obs_key, energy_key):
         :obs_df: (dict of pandas DataFrames) for a single
             energy channel and all observed threshold.
         :obs_key: (string) identifies which time in the pandas
-            Dataframe should be compared, 'threshold_crossing_time'
+            Dataframe should be compared, e.g. 'threshold_crossing_time'
             
     Output:
         
@@ -413,7 +413,7 @@ def observed_time_in_pred_win(fcast, obs_values, obs_key, energy_key):
     #Extract pandas dataframe for correct energy and threshold
     obs_df = obs_values[energy_key]['dataframes'][0] #all obs for threshold
 
-    #Check if a threshold crossing is contained inside of the
+    #Check if a time is contained inside of the
     #prediction window; returns False if pd.NaT
     contains_obs_time = (obs_df[obs_key] >= pd.Timestamp(pred_win_st)) \
         & (obs_df[obs_key] < pd.Timestamp(pred_win_end))
@@ -556,9 +556,9 @@ def is_time_before_thresh(time, obs_values, obs_key, energy_key, threshold):
     is_before = is_before.values.tolist()
 
     #Check for Not a Time values
-    nat = [ix for ix in range(len(list(time_diff))) if pd.isnull(time_diff[ix])]
-    for ix in nat:
-        is_before[ix] = None
+    nat = [ii for ii in range(len(list(time_diff))) if pd.isnull(time_diff[ii])]
+    for ii in nat:
+        is_before[ii] = None
             
     return is_before
 
@@ -975,7 +975,7 @@ def before_threshold_crossing(sphinx, fcast, obs_values, observation_objs,
 def before_sep_end(sphinx, fcast, obs_values, observation_objs,
         energy_key, thresh):
     """ Calculate the boolean arrays to indicate if the triggers and inputs
-        occurred prior to a threshold crossing.
+        occurred prior to the end of an SEP event.
         
         Load information into sphinx object.
         
@@ -996,13 +996,13 @@ def before_sep_end(sphinx, fcast, obs_values, observation_objs,
         obs_values and observation_objs
         
         :td_trigger_thresh_cross: (float array) hours between last trigger time
-            and threshold crossing time
+            and SEP end time
         :is_trigger_before_start: (boolean array) indicates if trigger is
-            before the threshold was crossed
+            before the SEP end time
         :td_input_thresh_cross: (float array) hours between last input time
-            and threshold crossing time
+            and SEP end time
         :is_input_before_start: (boolean array) indicates if input is
-            before the threshold was crossed
+            before the SEP end time
 
  
     """
@@ -1224,8 +1224,8 @@ def pred_win_sep_overlap(sphinx, fcast, obs_values, observation_objs,
         For all output, indices of arrays match with indices of
         obs_values and observation_objs
         
-        :is_ongoing_event: (boolean array) indicates if
-            the prediction window starts while an event is ongoing
+        :is_overlap: (boolean array) indicates if an observed SEP
+            event is occuring within the prediction window
             
     """
     
@@ -1246,7 +1246,10 @@ def pred_win_sep_overlap(sphinx, fcast, obs_values, observation_objs,
     #Check if time is before
     obs = obs_values[energy_key]['dataframes'][ix]
     
-    #Check if prediction window starts inside of an observed SEP event
+    #Check if an observed SEP event is within any part of the prediction window
+    #Prescribed logic includes prediction windows that span the observed SEP start,
+    #that are fully contained within the observed SEP event, and span the
+    #observed SEP end.
     overlap_start = (obs['start_time'] >= pd.Timestamp(pred_win_st))\
         & (obs['start_time'] < pd.Timestamp(pred_win_end))
     overlap_end = (obs['end_time'] >= pd.Timestamp(pred_win_st))\
@@ -1365,7 +1368,7 @@ def match_observed_onset_peak(sphinx, observation_obj, is_win_overlap,
         If identified, save the observed peak_intensity to the SPHINX object.
        
         - Prediction window overlaps with observation
-        - Last eruption within 48 hrs - 15 mins before threshold crossing
+        - Last eruption within specific range before threshold crossing
         - The prediction window overlaps with an SEP event in any threshold -
             only a comparison when there is an SEP event
             NEED TO ADD IN COMPARISON WHEN NO SEP EVENT
@@ -1438,7 +1441,7 @@ def match_observed_max_flux(sphinx, observation_obj, is_win_overlap,
         If identified, save the observed peak_intensity_max to the SPHINX object.
        
         - Prediction window overlaps with observation
-        - Last eruption within 48 hrs - 15 mins before threshold crossing
+        - Last eruption within specified range before threshold crossing
         - The prediction window overlaps with an SEP event in any threshold -
             only a comparison when there is an SEP event
             NEED TO ADD IN COMPARISON WHEN NO SEP EVENT
@@ -1530,7 +1533,7 @@ def match_all_clear(sphinx, observation_obj, is_win_overlap,
     #observation and the all clear status was set to False, don't overwrite
     #with another observation later in the prediction window
     #Mainly relevant for long prediction windows > 24 - 48 hours
-    if sphinx.observed_all_clear.all_clear_boolean == False: # PEP-8-@@ if not sphinx.observed_all_clear.all_clear_boolean:
+    if sphinx.observed_all_clear.all_clear_boolean == False: #stated explicitly
         return None
     
     #If already matched to an ongoing SEP event, ensure that a second
@@ -1541,6 +1544,8 @@ def match_all_clear(sphinx, observation_obj, is_win_overlap,
             #If there's an eruption and it's not associated
             if not is_eruption_in_range:
                 return None #nothing to be done
+            #If there is an eruption in range with a second event in the prediction
+            #window, then continue on with the logic
     
     #Save thresholds in All_Clear object
     ac = cl.All_Clear(None, observation_obj.all_clear.threshold,
@@ -1557,7 +1562,7 @@ def match_all_clear(sphinx, observation_obj, is_win_overlap,
         
     #Prediction and observation windows overlap
     #If ongoing SEP event at start of prediction window, no match
-    if is_sep_ongoing:
+    if is_sep_ongoing: #can be True, False, None
         all_clear_status = None
         sphinx.observed_match_all_clear_source = observation_obj.source
         sphinx.all_clear_match_status = "Ongoing SEP Event"
@@ -1565,7 +1570,7 @@ def match_all_clear(sphinx, observation_obj, is_win_overlap,
     
     #If there is no threshold crossing in prediction window,
     #then observed all clear is True
-    if not contains_thresh_cross:
+    if not contains_thresh_cross: #can only be True or False
         sphinx.all_clear_match_status = "No SEP Event"
         all_clear_status = True
     
@@ -1610,12 +1615,12 @@ def match_sep_quantities(sphinx, observation_obj, thresh, is_win_overlap,
         The SEP quantities returned are all related to the start time of
         the SEP event. This requires that the forecast come in prior to the
         threshold crossing.
-        - start time, threshold crossing time, fluence, fluence spectrum
+        - start time, threshold crossing time, probability
        
        Matching:
         - Prediction window overlaps with observation
         - There is no ongoing SEP event at the start of the prediction window
-        - Last eruption within 48 hrs - 15 mins before threshold crossing
+        - Last eruption within specified time range before threshold crossing
         - The last trigger/input time is before the threshold crossing
 
     Input:
