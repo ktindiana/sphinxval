@@ -114,13 +114,13 @@ class LoadMatch(unittest.TestCase):
         forecast_objects[self.energy_key] = []
         for i in range(0, len(forecasts)):
             forecast_objects[self.energy_key].append(forecasts[i])
-        model_names = ['unit_test']
+        self.model_names = ['unit_test']
         matched_sphinx = {}
         matched_sphinx, observed_sep_events = match.setup_match_all_forecasts(self.all_energy_channels, 
                                                             self.observation_objects,
                                                             self.observation_values,
                                                             forecast_objects, 
-                                                            model_names)
+                                                            self.model_names)
         return matched_sphinx, observed_sep_events
 
     def load_sphinx_and_inputs(self, forecast, all_forecast_thresholds):
@@ -129,13 +129,13 @@ class LoadMatch(unittest.TestCase):
         """
         sphinx = objh.initialize_sphinx(forecast)
         forecast_objects = {self.energy_key : [forecast]}
-        model_names = ['unit_test']
+        self.model_names = ['unit_test']
         matched_sphinx = {}
         matched_sphinx, observed_sep_events = match.setup_match_all_forecasts(self.all_energy_channels, 
                                                             self.observation_objects,
                                                             self.observation_values,
                                                             forecast_objects, 
-                                                            model_names)
+                                                            self.model_names)
         sphinx = matched_sphinx['unit_test'][self.energy_key][0]
         return sphinx, observed_sep_events
     
@@ -745,6 +745,7 @@ class TestMatchAllClear(LoadMatch):
     @make_docstring_printable
     def test_match_all_clear_3(this, self):
         """
+        REVISION NEEDED? -- Should we allow forecasts whose prediction window extends to times prior to their issue time?
         The forecast/observation pair has the following attributes:
            -- Prediction window overlaps with observation window
                 prediction window start:  2000-01-01T00:00:00Z # Is this even possible? Do any forecasts declare prediction windows that happened prior to the issue time?
@@ -769,6 +770,7 @@ class TestMatchAllClear(LoadMatch):
     @make_docstring_printable
     def test_match_all_clear_4(this, self):
         """
+        REVISION NEEDED? -- Should we allow forecasts with issue times that precede the latest trigger/input time included in the file?
         The forecast/observation pair has the following attributes:
            -- Prediction window overlaps with observation window
                 prediction window start:  2000-01-01T00:00:00Z
@@ -845,6 +847,7 @@ class TestMatchAllClear(LoadMatch):
     @make_docstring_printable
     def test_match_all_clear_7(this, self):
         """
+        REVISION NEEDED? -- Should we allow forecasts to have an empty trigger/input block?
         The forecast/observation pair has the following attributes:
            -- Prediction window overlaps with observation window
                 prediction window start:  2000-01-01T00:17:00Z
@@ -1436,66 +1439,87 @@ class TestCalculateDerivedQuantities(LoadMatch):
             print('')
             print('----------------------------------------------------//\n\n\n\n\n\n')
     
-    def utility_test_calculate_derived_quantities(self, function, forecast_json):
+    def utility_test_calculate_derived_quantities(self, function, forecast_jsons):
         """
-        Obtains SPHINX object and function evaluations given the forecast JSON.
+        Obtains matched_sphinx object and function evaluations given the forecast JSON.
         """
         self.utility_print_docstring(function)
-        forecast = utility_load_forecast(forecast_json, self.energy_channel)
-        # BUILD UP SPHINX OBJECT USING FORECAST AND OBSERVATION JSONS
-        all_forecast_thresholds = forecast.identify_all_thresholds()
-        sphinx, observed_sep_events = self.load_sphinx_and_inputs(forecast, all_forecast_thresholds)
         function_evaluations = []
-        for forecast_threshold_index in range(len(all_forecast_thresholds)):
-            forecast_threshold = all_forecast_thresholds[forecast_threshold_index]
-            forecast_threshold_key = objh.threshold_to_key(forecast_threshold)
-            for i in sphinx.overlapping_indices:
-                self.utility_print_inputs(sphinx, forecast_threshold_key, i)
-                _ = match.match_observed_onset_peak(sphinx,
-                                                    self.observation_objects[self.energy_key][i],
-                                                    sphinx.is_win_overlap[i],
-                                                    sphinx.is_eruption_in_range[forecast_threshold_key][i],
-                                                    sphinx.is_trigger_before_onset_peak[i],
-                                                    sphinx.is_input_before_onset_peak[i],
-                                                    sphinx.is_pred_sep_overlap[forecast_threshold_key][i])
-                _ = match.match_observed_max_flux(sphinx,
-                                                  self.observation_objects[self.energy_key][i],
-                                                  sphinx.is_win_overlap[i],
-                                                  sphinx.is_eruption_in_range[forecast_threshold_key][i],
-                                                  sphinx.is_trigger_before_max_time[i],
-                                                  sphinx.is_input_before_max_time[i],
-                                                  sphinx.is_pred_sep_overlap[forecast_threshold_key][i])
-                _ = match.match_all_clear(sphinx,
-                                          self.observation_objects[self.energy_key][i],
-                                          sphinx.is_win_overlap[i],
-                                          sphinx.is_eruption_in_range[forecast_threshold_key][i],
-                                          sphinx.trigger_input_start[forecast_threshold_key][i],
-                                          sphinx.contains_thresh_cross[forecast_threshold_key][i],
-                                          sphinx.is_sep_ongoing[forecast_threshold_key][i])
-                sep_status = match.match_sep_quantities(sphinx,
-                                               self.observation_objects[self.energy_key][i],
-                                               forecast_threshold,
-                                               sphinx.is_win_overlap[i],
-                                               sphinx.is_eruption_in_range[forecast_threshold_key][i],
-                                               sphinx.trigger_input_start[forecast_threshold_key][i],
-                                               sphinx.contains_thresh_cross[forecast_threshold_key][i],
-                                               sphinx.is_sep_ongoing[forecast_threshold_key][i])
-                if sep_status == True:
-                    print(observed_sep_events)
-                    if sphinx.observed_threshold_crossing[forecast_threshold_key].crossing_time not in observed_sep_events[forecast.short_name][self.energy_key][forecast_threshold_key]:
-                        observed_sep_events[forecast.short_name][self.energy_key][forecast_threshold_key].append(sphinx.observed_threshold_crossing[forecast_threshold_key].crossing_time)
-                _ = match.match_sep_end_time(sphinx,
-                                             self.observation_objects[self.energy_key][i],
-                                             forecast_threshold,
-                                             sphinx.is_win_overlap[i],
-                                             sphinx.is_eruption_in_range[forecast_threshold_key][i],
-                                             sphinx.trigger_input_end[forecast_threshold_key][i],
-                                             sphinx.is_pred_sep_overlap[forecast_threshold_key][i])
-                function_evaluation = match.calculate_derived_quantities(sphinx)
-                function_evaluations.append(function_evaluation)
-        self.utility_print_outputs(sphinx, function_evaluations)
-        return sphinx, function_evaluations
-    
+        forecast_threshold_list = []
+        forecasts = []
+        for i in range(0, len(forecast_jsons)):
+            forecast = utility_load_forecast(forecast_jsons[i], self.energy_channel)
+            forecasts.append(forecast)
+            this_forecast_thresholds = forecast.identify_all_thresholds()
+            for j in range(0, len(this_forecast_thresholds)):
+                forecast_threshold_list.append(this_forecast_thresholds[j])
+        all_forecast_thresholds = utility_get_unique_dicts(forecast_threshold_list)
+        matched_sphinx, observed_sep_events = self.load_matched_sphinx_and_inputs(forecasts, all_forecast_thresholds)
+        initial_matched_sphinx = matched_sphinx.copy()
+        function_evaluations = []
+        last_fcast_shortname = ''
+        energy_key = self.energy_key
+        observation_objs = self.observation_objects[self.energy_key]
+        for fcast in forecasts:
+            if fcast.short_name != last_fcast_shortname or energy_key != last_energy_key:
+                forecast_index = 0
+            fcast.valid_forecast(verbose=True)
+            if fcast.valid == False:
+                continue
+            sphinx = matched_sphinx[fcast.short_name][energy_key][forecast_index]
+            all_fcast_thresholds = fcast.identify_all_thresholds()
+            for f_thresh in all_fcast_thresholds:
+                fcast_thresh = f_thresh
+                if sphinx.mismatch:
+                    if f_thresh == cfg.mm_pred_threshold:
+                        fcast_thresh = cfg.mm_obs_threshold
+                    else:
+                        continue
+                if fcast_thresh not in self.observation_values[energy_key]['thresholds']:
+                    continue        
+                thresh_key = objh.threshold_to_key(fcast_thresh)
+                for i in sphinx.overlapping_indices:
+                    peak_criteria = match.match_observed_onset_peak(sphinx,
+                        observation_objs[i], sphinx.is_win_overlap[i],
+                        sphinx.is_eruption_in_range[thresh_key][i],
+                        sphinx.is_trigger_before_onset_peak[i],
+                        sphinx.is_input_before_onset_peak[i], 
+                        sphinx.is_pred_sep_overlap[thresh_key][i])
+                    max_criteria = match.match_observed_max_flux(sphinx,
+                        observation_objs[i], sphinx.is_win_overlap[i],
+                        sphinx.is_eruption_in_range[thresh_key][i], 
+                        sphinx.is_trigger_before_max_time[i],
+                        sphinx.is_input_before_max_time[i], 
+                        sphinx.is_pred_sep_overlap[thresh_key][i])
+                    all_clear_status = match.match_all_clear(sphinx,
+                        observation_objs[i], sphinx.is_win_overlap[i],
+                        sphinx.is_eruption_in_range[thresh_key][i], 
+                        sphinx.trigger_input_start[thresh_key][i],
+                        sphinx.contains_thresh_cross[thresh_key][i], 
+                        sphinx.is_sep_ongoing[thresh_key][i])
+                    sep_status = match.match_sep_quantities(sphinx, observation_objs[i], fcast_thresh, sphinx.is_win_overlap[i],
+                        sphinx.is_eruption_in_range[thresh_key][i], 
+                        sphinx.trigger_input_start[thresh_key][i],
+                        sphinx.contains_thresh_cross[thresh_key][i], 
+                        sphinx.is_sep_ongoing[thresh_key][i])
+                    if sep_status == True:
+                        if sphinx.observed_threshold_crossing[thresh_key].crossing_time\
+                        not in observed_sep_events[fcast.short_name][energy_key][thresh_key]:
+                            observed_sep_events[fcast.short_name][energy_key][thresh_key].append(sphinx.observed_threshold_crossing[thresh_key].crossing_time)
+                    end_status = match.match_sep_end_time(sphinx, observation_objs[i], 
+                        fcast_thresh, 
+                        sphinx.is_win_overlap[i],
+                        sphinx.is_eruption_in_range[thresh_key][i], 
+                        sphinx.trigger_input_end[thresh_key][i],
+                        sphinx.is_pred_sep_overlap[thresh_key][i])
+                    function_evaluation = match.calculate_derived_quantities(sphinx)
+                    function_evaluations.append(function_evaluation)
+            matched_sphinx[fcast.short_name][energy_key][forecast_index] = sphinx
+            last_fcast_shortname = fcast.short_name + ''
+            last_energy_key = energy_key + ''
+            forecast_index += 1
+        self.utility_print_outputs(matched_sphinx, function_evaluations)
+        return matched_sphinx, function_evaluations
     
     @make_docstring_printable
     def test_calculate_derived_quantities_1(this, self):
@@ -1503,8 +1527,8 @@ class TestCalculateDerivedQuantities(LoadMatch):
         The forecast/observation pair has the following attributes:
             There are no "intensity" metrics in the forecast JSON. The function should evaluate to [None].
         """
-        forecast_json = './tests/files/forecasts/match/calculate_derived_quantities/calculate_derived_quantities_1.json'
-        sphinx, function_evaluations = self.utility_test_calculate_derived_quantities(this, forecast_json)
+        forecast_json = ['./tests/files/forecasts/match/calculate_derived_quantities/calculate_derived_quantities_1.json']
+        matched_sphinx, function_evaluations = self.utility_test_calculate_derived_quantities(this, forecast_json)
         self.assertEqual(function_evaluations, [None], '')
     
     @make_docstring_printable
@@ -1515,15 +1539,15 @@ class TestCalculateDerivedQuantities(LoadMatch):
             The members of the dictionary are 'intensity' and 'time'. 
             The function should evaluate to [True].
         """
-        forecast_json = './tests/files/forecasts/match/calculate_derived_quantities/calculate_derived_quantities_2.json'
-        sphinx, function_evaluations = self.utility_test_calculate_derived_quantities(this, forecast_json)
+        forecast_jsons = ['./tests/files/forecasts/match/calculate_derived_quantities/calculate_derived_quantities_2.json']
+        matched_sphinx, function_evaluations = self.utility_test_calculate_derived_quantities(this, forecast_jsons)
         self.assertEqual(function_evaluations, [True], '') # WE REACHED status = True
-        self.assertEqual(sphinx.observed_max_flux_in_prediction_window.intensity, 10.0, '')
-        self.assertEqual(sphinx.observed_max_flux_in_prediction_window.time, vjson.zulu_to_time('2000-01-01T00:15:00Z'), '')
-        self.assertEqual(sphinx.max_flux_in_prediction_window_match_status, sphinx.end_time_match_status, '')
-        self.assertEqual(sphinx.observed_point_intensity.intensity, 10.0, '')
-        self.assertEqual(sphinx.observed_point_intensity.time, vjson.zulu_to_time('2000-01-01T00:15:00Z'), '')
-        self.assertEqual(sphinx.observed_point_intensity.units, sphinx.prediction.point_intensity.units, '')
+        self.assertEqual(matched_sphinx['unit_test'][self.energy_key][0].observed_max_flux_in_prediction_window.intensity, 10.0, '')
+        self.assertEqual(matched_sphinx['unit_test'][self.energy_key][0].observed_max_flux_in_prediction_window.time, vjson.zulu_to_time('2000-01-01T00:15:00Z'), '')
+        self.assertEqual(matched_sphinx['unit_test'][self.energy_key][0].max_flux_in_prediction_window_match_status, matched_sphinx['unit_test'][self.energy_key][0].end_time_match_status, '')
+        self.assertEqual(matched_sphinx['unit_test'][self.energy_key][0].observed_point_intensity.intensity, 10.0, '')
+        self.assertEqual(matched_sphinx['unit_test'][self.energy_key][0].observed_point_intensity.time, vjson.zulu_to_time('2000-01-01T00:15:00Z'), '')
+        self.assertEqual(matched_sphinx['unit_test'][self.energy_key][0].observed_point_intensity.units, matched_sphinx['unit_test'][self.energy_key][0].prediction.point_intensity.units, '')
         
     @make_docstring_printable
     def test_calculate_derived_quantities_3(this, self):
@@ -1532,8 +1556,8 @@ class TestCalculateDerivedQuantities(LoadMatch):
             No prediction window specified.
             The function should evaluate to [None].
         """
-        forecast_json = './tests/files/forecasts/match/calculate_derived_quantities/calculate_derived_quantities_3.json'
-        sphinx, function_evaluations = self.utility_test_calculate_derived_quantities(this, forecast_json)
+        forecast_jsons = ['./tests/files/forecasts/match/calculate_derived_quantities/calculate_derived_quantities_3.json']
+        matched_sphinx, function_evaluations = self.utility_test_calculate_derived_quantities(this, forecast_jsons)
         self.assertEqual(function_evaluations, [None], '')
         
     @make_docstring_printable
@@ -1544,8 +1568,8 @@ class TestCalculateDerivedQuantities(LoadMatch):
             The only member of the dictionary is 'intensity'.
             The function should evaluate to [True].
         """
-        forecast_json = './tests/files/forecasts/match/calculate_derived_quantities/calculate_derived_quantities_4.json'
-        sphinx, function_evaluations = self.utility_test_calculate_derived_quantities(this, forecast_json)
+        forecast_jsons = ['./tests/files/forecasts/match/calculate_derived_quantities/calculate_derived_quantities_4.json']
+        matched_sphinx, function_evaluations = self.utility_test_calculate_derived_quantities(this, forecast_jsons)
         self.assertEqual(function_evaluations, [True], '')
         
     @make_docstring_printable
@@ -1557,8 +1581,8 @@ class TestCalculateDerivedQuantities(LoadMatch):
             The only member of the dictionary is 'intensity'.
             The function should evaluate to [True].
         """
-        forecast_json = './tests/files/forecasts/match/calculate_derived_quantities/calculate_derived_quantities_5.json'
-        sphinx, function_evaluations = self.utility_test_calculate_derived_quantities(this, forecast_json)
+        forecast_jsons = ['./tests/files/forecasts/match/calculate_derived_quantities/calculate_derived_quantities_5.json']
+        matched_sphinx, function_evaluations = self.utility_test_calculate_derived_quantities(this, forecast_jsons)
         self.assertEqual(function_evaluations, [True], '')
 
  
@@ -1572,7 +1596,7 @@ class TestReviseEruptionMatches(LoadMatch):
         self.load_verbosity()
         self.load_energy(energy_channel)
         self.load_observation(observation_json)
-    
+        
     def utility_test_revise_eruption_matches(self, function, forecast_jsons):
         """
         Obtains SPHINX object and function evaluations given the forecast JSON.
@@ -1588,62 +1612,70 @@ class TestReviseEruptionMatches(LoadMatch):
                 forecast_threshold_list.append(this_forecast_thresholds[j])
         all_forecast_thresholds = utility_get_unique_dicts(forecast_threshold_list)
         matched_sphinx, observed_sep_events = self.load_matched_sphinx_and_inputs(forecasts, all_forecast_thresholds)
-        #sphinx, observed_sep_events = self.load_sphinx_and_inputs(forecast, all_forecast_thresholds)
         initial_matched_sphinx = matched_sphinx.copy()
         function_evaluations = []
-        for forecast_threshold_index in range(len(all_forecast_thresholds)):
-            forecast_threshold = all_forecast_thresholds[forecast_threshold_index]
-            forecast_threshold_key = objh.threshold_to_key(forecast_threshold)
-            sphinx = matched_sphinx[forecast.short_name][self.energy_key][forecast_threshold_index]
-            for i in sphinx.overlapping_indices:
-                _ = match.match_observed_onset_peak(sphinx,
-                                                    self.observation_objects[self.energy_key][i],
-                                                    sphinx.is_win_overlap[i],
-                                                    sphinx.is_eruption_in_range[forecast_threshold_key][i],
-                                                    sphinx.is_trigger_before_onset_peak[i],
-                                                    sphinx.is_input_before_onset_peak[i],
-                                                    sphinx.is_pred_sep_overlap[forecast_threshold_key][i])
-                _ = match.match_observed_max_flux(sphinx,
-                                                  self.observation_objects[self.energy_key][i],
-                                                  sphinx.is_win_overlap[i],
-                                                  sphinx.is_eruption_in_range[forecast_threshold_key][i],
-                                                  sphinx.is_trigger_before_max_time[i],
-                                                  sphinx.is_input_before_max_time[i],
-                                                  sphinx.is_pred_sep_overlap[forecast_threshold_key][i])
-                _ = match.match_all_clear(sphinx,
-                                          self.observation_objects[self.energy_key][i],
-                                          sphinx.is_win_overlap[i],
-                                          sphinx.is_eruption_in_range[forecast_threshold_key][i],
-                                          sphinx.trigger_input_start[forecast_threshold_key][i],
-                                          sphinx.contains_thresh_cross[forecast_threshold_key][i],
-                                          sphinx.is_sep_ongoing[forecast_threshold_key][i])
-                sep_status = match.match_sep_quantities(sphinx,
-                                               self.observation_objects[self.energy_key][i],
-                                               forecast_threshold,
-                                               sphinx.is_win_overlap[i],
-                                               sphinx.is_eruption_in_range[forecast_threshold_key][i],
-                                               sphinx.trigger_input_start[forecast_threshold_key][i],
-                                               sphinx.contains_thresh_cross[forecast_threshold_key][i],
-                                               sphinx.is_sep_ongoing[forecast_threshold_key][i])
-                if sep_status == True:
-                    print(observed_sep_events)
-                    if sphinx.observed_threshold_crossing[forecast_threshold_key].crossing_time not in observed_sep_events[forecast.short_name][self.energy_key][forecast_threshold_key]:
-                        observed_sep_events[forecast.short_name][self.energy_key][forecast_threshold_key].append(sphinx.observed_threshold_crossing[forecast_threshold_key].crossing_time)
-                _ = match.match_sep_end_time(sphinx,
-                                             self.observation_objects[self.energy_key][i],
-                                             forecast_threshold,
-                                             sphinx.is_win_overlap[i],
-                                             sphinx.is_eruption_in_range[forecast_threshold_key][i],
-                                             sphinx.trigger_input_end[forecast_threshold_key][i],
-                                             sphinx.is_pred_sep_overlap[forecast_threshold_key][i])
-                function_evaluation = match.calculate_derived_quantities(sphinx)
-                function_evaluations.append(function_evaluation)
-        #self.utility_print_inputs(matched_sphinx, observed_sep_events)
-        matched_sphinx[forecast.short_name][self.energy_key][forecast_threshold_index] = sphinx
-        match.revise_eruption_matches(matched_sphinx, self.all_energy_channels, self.observation_values, ['unit_test'], observed_sep_events)
-        #self.utility_print_outputs(matched_sphinx)
+        last_fcast_shortname = ''
+        observation_objs = self.observation_objects[self.energy_key]
+        for fcast in forecasts:
+            if fcast.short_name != last_fcast_shortname or self.energy_key != last_energy_key:
+                forecast_index = 0
+            fcast.valid_forecast(verbose=True)
+            if fcast.valid == False:
+                continue
+            sphinx = matched_sphinx[fcast.short_name][self.energy_key][forecast_index]
+            all_fcast_thresholds = fcast.identify_all_thresholds()
+            for f_thresh in all_fcast_thresholds:
+                fcast_thresh = f_thresh
+                if sphinx.mismatch:
+                    if f_thresh == cfg.mm_pred_threshold:
+                        fcast_thresh = cfg.mm_obs_threshold
+                    else:
+                        continue
+                if fcast_thresh not in self.observation_values[self.energy_key]['thresholds']:
+                    continue        
+                thresh_key = objh.threshold_to_key(fcast_thresh)
+                for i in sphinx.overlapping_indices:
+                    peak_criteria = match.match_observed_onset_peak(sphinx,
+                        observation_objs[i], sphinx.is_win_overlap[i],
+                        sphinx.is_eruption_in_range[thresh_key][i],
+                        sphinx.is_trigger_before_onset_peak[i],
+                        sphinx.is_input_before_onset_peak[i], 
+                        sphinx.is_pred_sep_overlap[thresh_key][i])
+                    max_criteria = match.match_observed_max_flux(sphinx,
+                        observation_objs[i], sphinx.is_win_overlap[i],
+                        sphinx.is_eruption_in_range[thresh_key][i], 
+                        sphinx.is_trigger_before_max_time[i],
+                        sphinx.is_input_before_max_time[i], 
+                        sphinx.is_pred_sep_overlap[thresh_key][i])
+                    all_clear_status = match.match_all_clear(sphinx,
+                        observation_objs[i], sphinx.is_win_overlap[i],
+                        sphinx.is_eruption_in_range[thresh_key][i], 
+                        sphinx.trigger_input_start[thresh_key][i],
+                        sphinx.contains_thresh_cross[thresh_key][i], 
+                        sphinx.is_sep_ongoing[thresh_key][i])
+                    sep_status = match.match_sep_quantities(sphinx, observation_objs[i], fcast_thresh, sphinx.is_win_overlap[i],
+                        sphinx.is_eruption_in_range[thresh_key][i], 
+                        sphinx.trigger_input_start[thresh_key][i],
+                        sphinx.contains_thresh_cross[thresh_key][i], 
+                        sphinx.is_sep_ongoing[thresh_key][i])
+                    if sep_status == True:
+                        if sphinx.observed_threshold_crossing[thresh_key].crossing_time\
+                        not in observed_sep_events[fcast.short_name][self.energy_key][thresh_key]:
+                            observed_sep_events[fcast.short_name][self.energy_key][thresh_key].append(sphinx.observed_threshold_crossing[thresh_key].crossing_time)
+                    end_status = match.match_sep_end_time(sphinx, observation_objs[i], 
+                        fcast_thresh, 
+                        sphinx.is_win_overlap[i],
+                        sphinx.is_eruption_in_range[thresh_key][i], 
+                        sphinx.trigger_input_end[thresh_key][i],
+                        sphinx.is_pred_sep_overlap[thresh_key][i])
+                    derived_status = match.calculate_derived_quantities(sphinx)
+            matched_sphinx[fcast.short_name][self.energy_key][forecast_index] = sphinx
+            last_fcast_shortname = fcast.short_name + ''
+            last_energy_key = self.energy_key + ''
+            forecast_index += 1
+        match.revise_eruption_matches(matched_sphinx, self.all_energy_channels, self.observation_values, self.model_names, observed_sep_events)        
         return matched_sphinx, initial_matched_sphinx
-    
+        
     @make_docstring_printable
     def test_revise_eruption_matches_1(this, self):
         """
@@ -1676,6 +1708,7 @@ class TestReviseEruptionMatches(LoadMatch):
         forecast_jsons = ['./tests/files/forecasts/match/revise_eruption_matches/revise_eruption_matches_3_1.json',
                           './tests/files/forecasts/match/revise_eruption_matches/revise_eruption_matches_3_2.json']
         matched_sphinx, initial_matched_sphinx = self.utility_test_revise_eruption_matches(this, forecast_jsons)
+        print(matched_sphinx['unit_test'][self.energy_key][0])
         self.assertEqual(matched_sphinx, initial_matched_sphinx, '')
     
     

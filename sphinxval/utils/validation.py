@@ -227,8 +227,11 @@ def fill_dict_row(sphinx, dict, energy_key, thresh_key, profname_dict):
     if mismatch:
         pred_energy_key = objh.energy_channel_to_key(config.mm_pred_energy_channel)
         pred_thresh_key = objh.threshold_to_key(config.mm_pred_threshold)
-    
+   
+    print('CONTINGENCY: ', sphinx.all_clear_match_status) 
     pred_all_clear, ac_match_status = sphinx.return_predicted_all_clear()
+    print('CONTINGENCY: ', sphinx.all_clear_match_status)
+    print(ac_match_status)
     pred_prob, prob_match_status = sphinx.return_predicted_probability(thresh_key)
     pred_thresh_cross, tc_match_status =\
         sphinx.return_predicted_threshold_crossing_time(thresh_key)

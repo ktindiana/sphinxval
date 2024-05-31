@@ -31,7 +31,7 @@ __email__ = "kathryn.whitman@nasa.gov"
   
 """
 
-def read_in_json(filename, verbose=True):
+def read_in_json(filename, verbose=False):
     """Read in json file """
     with open(filename) as f:
         info = json.load(f)
@@ -179,7 +179,7 @@ def read_list_of_jsons(filename):
             json_files.append(json_fname)
     return json_files
 
-def read_json_list(json_files, verbose=True):
+def read_json_list(json_files, verbose=False):
     """Read all of the json files in to a list containing each json entry.
     """
     all_json = []

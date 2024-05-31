@@ -92,7 +92,6 @@ def read_single_time_profile(filename):
         print("read_time_profile: Cannot read file!! Exiting. \"" + filename +"\"")
         return dates, fluxes
 
-    print('read_single_time_profile: Reading in file ' + filename)
     with open(filename) as ofile:
         for row in ofile:
             if row == '': continue

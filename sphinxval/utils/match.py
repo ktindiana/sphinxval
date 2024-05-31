@@ -250,7 +250,7 @@ def create_matched_model_array(objs, threshold):
             needed for revising matched forecasts
 
     """
-    
+    print('create_matched_model_array: ', objs, threshold)
     #Extract information into arrays to make a pandas dataframe
     #for each threshold and save into a dictionary with the
     #key that matches the index of the associated threshold
@@ -264,6 +264,11 @@ def create_matched_model_array(objs, threshold):
     #time and time difference between eruption used by model and
     #threshold crossing time
     for obj in objs:
+        print(obj.observed_match_all_clear_source)
+        print('prediction_observation_windows_overlap: ', obj.prediction_observation_windows_overlap)
+        print('observed_match_sep_source: ', obj.observed_match_sep_source[thresh_key])
+        print('observed_threshold_crossing: ', obj.observed_threshold_crossing[thresh_key].crossing_time)
+        print('time_difference_eruptions_threshold_crossing: ', obj.time_difference_eruptions_threshold_crossing[thresh_key])
         try:
             obs_arr = obj.prediction_observation_windows_overlap
             match_sep = obj.observed_match_sep_source[thresh_key]
@@ -274,7 +279,8 @@ def create_matched_model_array(objs, threshold):
             matched_sep_source.append(match_sep)
             observed_thresh_cross.append(obs_thresh_cross)
             td_eruption_thresh_cross.append(td)
-        except:
+            
+        except: # FOR WHAT EXCEPTION? THIS IS A DANGEROUS PRACTICE-- LS-code-comment
             matched_obs.append([None])
             matched_sep_source.append(None)
             observed_thresh_cross.append(pd.NaT)
@@ -1747,10 +1753,12 @@ def match_sep_quantities(sphinx, observation_obj, thresh, is_win_overlap,
     #FOR IDENTIFIED SEP EVENTS;  match status = "SEP Event"
     #Threshold Crossing
     threshold_crossing_time = None
+    print('observation_obj.threshold_crossings = ', observation_obj.threshold_crossings)
     for th in observation_obj.threshold_crossings:
         if th.threshold != thresh['threshold']:
             continue
         sphinx.observed_match_sep_source[thresh_key] = observation_obj.source
+        print('observed_threshold_crossing (set) = ', th)
         sphinx.observed_threshold_crossing[thresh_key] = th
  
  
@@ -2156,23 +2164,28 @@ def revise_eruption_matches(matched_sphinx, all_energy_channels, obs_values,
                 #Keys 'matched_observations', 'matched_sep',
                 #'td_eruption_thresh_cross' and
                 #'observed_threshold_crossing_time'
-                #Dataframe indices match the indices in matched_sphinx
+                #Dataframe indices match the indices in matched_sphinx                
+                
                 spx_df =\
                 create_matched_model_array(matched_sphinx[model][energy_key],
                 threshold)
 
                 #Identify the forecasts matched to the same SEP event
+                print(obs_sep)
                 for sep in obs_sep:
                     obs_thresh_cross =\
                         spx_df['observed_threshold_crossing_time'].tolist()
 
+                    print(spx_df['matched_observations'].iloc[0][0].source)
                     print(obs_thresh_cross)
                     idx_event = [ix for ix in range(len(obs_thresh_cross)) if obs_thresh_cross[ix] == pd.Timestamp(sep)]
-                    print(idx_event)
                     #If no or only one match, nothing to do
+                    print('made it here 1')
+                    print(idx_event)
                     if len(idx_event) == 0 or len(idx_event) == 1: continue
                 
                     print('made it here 2')
+                    print(idx_event)
                     #Time differences are saved in order of the observation
                     #files that fell inside the predictions windows. Identify
                     #the correct entry by comparing with filename of the
@@ -2307,7 +2320,6 @@ def setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_o
         observation_objs = obs_objs[energy_key] #Observation objects
         forecasts = model_objs[energy_key] #all forecasts for channel
         for fcast in forecasts:
-            print(energy_key, fcast.short_name, fcast.source)
             #One SPHINX object contains all matching information and
             #predicted and observed values (and all thresholds)
             sphinx = objh.initialize_sphinx(fcast)
@@ -2497,6 +2509,7 @@ def setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_o
                     #None if no SEP event
                     sphinx.trigger_input_end[thresh_key][i] = last_before_end(sphinx.is_trigger_before_end[thresh_key][i],
                         sphinx.is_input_before_end[thresh_key][i])
+                        
 
             matched_sphinx[fcast.short_name][energy_key].append(sphinx)
             print("setup_match_all_forecasts: Model: " + sphinx.prediction.short_name)
@@ -2563,7 +2576,6 @@ def match_all_forecasts(all_energy_channels, model_names, obs_objs,
 
     matched_sphinx, observed_sep_events = setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_objs, model_names)
     
-    
     for model in model_names:
         for energy_key in all_energy_channels:
             observation_objs = obs_objs[energy_key] #Observation objects
@@ -2582,7 +2594,8 @@ def match_all_forecasts(all_energy_channels, model_names, obs_objs,
                         #Check if the model reports and ongoing event
                         #reports_ongoing = ongoing_status(observation_objs[i],
                         #channel, fcast_thresh)
-                        
+                       
+ 
                         ###ONSET PEAK & MAX FLUX
                         #Prediction window overlaps with observation
                         #Last eruption within appropriate time range before

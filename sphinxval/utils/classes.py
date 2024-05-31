@@ -1229,7 +1229,7 @@ class Observation():
         """
         is_good, dataD = vjson.check_observation_json(full_json, self.energy_channel)
         if not is_good: return
-        
+
         self.short_name = full_json['sep_observation_submission']['observatory']['short_name']
         issue_time = full_json['sep_observation_submission']['issue_time']
         if isinstance(issue_time,str):
@@ -1327,6 +1327,7 @@ class Observation():
                 threshold_units = vjson.dict_to_threshold_crossing(cross)
                 self.threshold_crossings.append(Threshold_Crossing(
                 crossing_time, uncertainty, threshold, threshold_units))
+                print('crossing_time = ', crossing_time)
                     
         return
 
