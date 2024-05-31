@@ -272,7 +272,7 @@ def load_objects_from_json(data_list, model_list):
             the forecast jsons
         
     """
-    print(read_list_of_jsons(data_list))
+    #print(read_list_of_jsons(data_list))
     obs_jsons = read_json_list(read_list_of_jsons(data_list))
     model_jsons = read_json_list(read_list_of_jsons(model_list))    
     
@@ -318,11 +318,11 @@ def load_objects_from_json(data_list, model_list):
             
 
     #Load json objects
+    fcast_index = 0 #indicates order in which forecast read in; should maintain order throughout
     for json in model_jsons:
         short_name = json["sep_forecast_submission"]["model"]["short_name"]
         for channel in all_energy_channels:
             key = objh.energy_channel_to_key(channel)
-             
             obj = forecast_object_from_json(json, channel)
 #            print("Trying " + obj.source)
 #            print("Prediction window start: " + str(obj.prediction_window_start))
@@ -330,7 +330,9 @@ def load_objects_from_json(data_list, model_list):
             if obj.prediction_window_start != None:
                 model_objs[key].append(obj)
 #                print("Adding " + obj.source + " to dictionary under key " + key)
-
+                obj.index = fcast_index
+                fcast_index += 1 #each forecast object gets a unique index value for tracking
+            
             #If mismatched observation and prediction energy channels
             #enabled, then find the correct prediction energy channel
             #to load.
@@ -339,9 +341,12 @@ def load_objects_from_json(data_list, model_list):
                     if channel == cfg.mm_obs_energy_channel:
                         pred_channel = cfg.mm_pred_energy_channel
                         obj = forecast_object_from_json(json, pred_channel)
+
                         #skip if energy block wasn't present in json
                         if obj.prediction_window_start != None:
                             model_objs[cfg.mm_energy_key].append(obj)
+                            obj.index = fcast_index
+                            fcast_index += 1 #each forecast object gets a unique index value 
 #                            print("Adding " + obj.source + " to dictionary under key " + cfg.mm_energy_key)
 
     #Convert all_energy_channels to an array of string keys

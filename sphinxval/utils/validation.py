@@ -251,18 +251,19 @@ def fill_dict_row(sphinx, dict, energy_key, thresh_key, profname_dict):
     pred_time_profile = sphinx.prediction.sep_profile
     #Add path .txt files
     if pred_time_profile != None and pred_time_profile != '':
-        #From dictionary created by searching subdirectories
-        if profname_dict != None:
-            try:
-                pred_time_profile = profname_dict[pred_time_profile]
-            except:
-                sys.exit('fill_dict_row: Cannot locate time profile file ' + pred_time_profile)
-                #print('fill_dict_row: Cannot local time profile file ' + pred_time_profile)
-                #pred_time_profile = None
-                
-        #json file path because in same directory
-        else:
+        #First check if time profile is in the same directory as the json
+        if os.path.isfile(os.path.join(sphinx.prediction.path, pred_time_profile)):
             pred_time_profile = os.path.join(sphinx.prediction.path, pred_time_profile)
+        else:
+            #From dictionary created by searching subdirectories
+            if profname_dict != None:
+                try:
+                    pred_time_profile = profname_dict[pred_time_profile]
+                except:
+                    #sys.exit('fill_dict_row: Cannot locate time profile file ' + pred_time_profile)
+                    print('fill_dict_row: Cannot local time profile file ' + pred_time_profile)
+                    pred_time_profile = None
+                
 
     tp_match_status = et_match_status
         
