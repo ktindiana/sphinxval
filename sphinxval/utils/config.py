@@ -44,15 +44,18 @@ e_units = vunits.convert_string_to_units("MeV")
 #"pfu" or "cm^-2*sr^-1*s^-1"(integral)
 #"MeV^-1*s^-1*cm^-2*sr^-1" (differential)
 t_units = vunits.convert_string_to_units("pfu")
+t2_units = vunits.convert_string_to_units("MeV^-1*s^-1*cm^-2*sr^-1")
 
 ######SET MODEL INFO#####
-#mm_model = "REleASE" #Model short name contains this string
+mm_model = "REleASE" #Model short name contains this string
+mm_pred_energy_channel = {"min": 15.8, "max": 39.8, "units": e_units}
+mm_pred_threshold = {"threshold": 0.1, "threshold_units": t2_units}
 #mm_pred_energy_channel = {"min": 28.2, "max": 50.1, "units": e_units}
 #mm_pred_threshold = {"threshold": 0.1, "threshold_units": t_units}
 
-mm_model = "UNSPELL" #Model short name contains this string
-mm_pred_energy_channel = {"min": 5, "max": -1, "units": e_units}
-mm_pred_threshold = {"threshold": 5, "threshold_units": t_units}
+#mm_model = "UNSPELL" #Model short name contains this string
+#mm_pred_energy_channel = {"min": 5, "max": -1, "units": e_units}
+#mm_pred_threshold = {"threshold": 5, "threshold_units": t_units}
 
 ######SET OBSERVATION INFO#######
 #mm_obs_energy_channel = {"min": 25, "max": 40.9, "units": e_units}

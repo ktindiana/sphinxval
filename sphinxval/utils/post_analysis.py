@@ -24,42 +24,43 @@ scoreboard_models = ["ASPECS", "iPATH", "MagPy", "SEPMOD",
                     "SEPSTER", "SPRINTS", "UMASEP"]
 
 #If not empty, add metrics to the contingency metrics analysis
-add_contingency = {
-"Model": ['UMASEP-10 single',
-            'UMASEP-100 single',
-            'MagPy_SHARP_HMI_CEA single',
-            'SPRINTS Post Eruptive 0-24 hrs single',
-            'SPRINTS Post Eruptive 0-24 hrs single'],
-            #'SWPC Day 2 >50%'],
-"Energy Channel": ['min.10.0.max.-1.0.units.MeV',
-            'min.100.0.max.-1.0.units.MeV',
-            'min.10.0.max.-1.0.units.MeV',
-            'min.10.0.max.-1.0.units.MeV',
-            'min.100.0.max.-1.0.units.MeV'],
-            #'min.10.0.max.-1.0.units.MeV'],
-"Threshold": ['threshold.10.0.units.1 / (cm2 s sr)',
-            'threshold.1.0.units.1 / (cm2 s sr)',
-            'threshold.10.0.units.1 / (cm2 s sr)',
-            'threshold.10.0.units.1 / (cm2 s sr)',
-            'threshold.1.0.units.1 / (cm2 s sr)'],
-            #'threshold.10.0.units.1 / (cm2 s sr)'],
-"Prediction Energy Channel": ['min.10.0.max.-1.0.units.MeV',
-            'min.100.0.max.-1.0.units.MeV',
-            'min.10.0.max.-1.0.units.MeV',
-            'min.10.0.max.-1.0.units.MeV',
-            'min.100.0.max.-1.0.units.MeV'],
-            #'min.10.0.max.-1.0.units.MeV'],
-"Prediction Threshold": ['threshold.10.0.units.1 / (cm2 s sr)',
-            'threshold.1.0.units.1 / (cm2 s sr)',
-            'threshold.10.0.units.1 / (cm2 s sr)',
-            'threshold.10.0.units.1 / (cm2 s sr)',
-            'threshold.1.0.units.1 / (cm2 s sr)'],
-            #'threshold.10.0.units.1 / (cm2 s sr)'],
-"Hits": [30, 16, 4, 19, 0], #2], #Hits
-"False Alarms": [1, 4, 2, 7, 1], #14], #False Alarms
-"Correct Negatives": [29, 41, 27, 23, 29], #3842],  #Correct negatives
-"Misses": [2, 1, 29, 10, 14]#, 39] #Misses
-}
+add_contingency = {}
+#add_contingency = {
+#"Model": ['UMASEP-10 single',
+#            'UMASEP-100 single',
+#            'MagPy_SHARP_HMI_CEA single',
+#            'SPRINTS Post Eruptive 0-24 hrs single',
+#            'SPRINTS Post Eruptive 0-24 hrs single'],
+#            #'SWPC Day 2 >50%'],
+#"Energy Channel": ['min.10.0.max.-1.0.units.MeV',
+#            'min.100.0.max.-1.0.units.MeV',
+#            'min.10.0.max.-1.0.units.MeV',
+#            'min.10.0.max.-1.0.units.MeV',
+#            'min.100.0.max.-1.0.units.MeV'],
+#            #'min.10.0.max.-1.0.units.MeV'],
+#"Threshold": ['threshold.10.0.units.1 / (cm2 s sr)',
+#            'threshold.1.0.units.1 / (cm2 s sr)',
+#            'threshold.10.0.units.1 / (cm2 s sr)',
+#            'threshold.10.0.units.1 / (cm2 s sr)',
+#            'threshold.1.0.units.1 / (cm2 s sr)'],
+#            #'threshold.10.0.units.1 / (cm2 s sr)'],
+#"Prediction Energy Channel": ['min.10.0.max.-1.0.units.MeV',
+#            'min.100.0.max.-1.0.units.MeV',
+#            'min.10.0.max.-1.0.units.MeV',
+#            'min.10.0.max.-1.0.units.MeV',
+#            'min.100.0.max.-1.0.units.MeV'],
+#            #'min.10.0.max.-1.0.units.MeV'],
+#"Prediction Threshold": ['threshold.10.0.units.1 / (cm2 s sr)',
+#            'threshold.1.0.units.1 / (cm2 s sr)',
+#            'threshold.10.0.units.1 / (cm2 s sr)',
+#            'threshold.10.0.units.1 / (cm2 s sr)',
+#            'threshold.1.0.units.1 / (cm2 s sr)'],
+#            #'threshold.10.0.units.1 / (cm2 s sr)'],
+#"Hits": [30, 16, 4, 19, 0], #2], #Hits
+#"False Alarms": [1, 4, 2, 7, 1], #14], #False Alarms
+#"Correct Negatives": [29, 41, 27, 23, 29], #3842],  #Correct negatives
+#"Misses": [2, 1, 29, 10, 14]#, 39] #Misses
+#}
 
 add_probability = {}
 

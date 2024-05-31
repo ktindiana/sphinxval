@@ -477,7 +477,7 @@ class Forecast():
         self.issue_time = None
         self.valid = None #indicates whether prediction window starts
                           #at the same time or after triggers/inputs
-
+        self.index = None   #indicates order read in by SPHINX
         
         #General info
         self.species = None
@@ -2089,6 +2089,12 @@ class SPHINX:
         
         #Thresholds must match
         if pred_threshold != obs_threshold:
+            print("No Matching Threshold!!!")
+            print(self.prediction.short_name)
+            print(self.prediction.source)
+            print(self.energy_channel)
+            print("Predicted: " + str(pred_threshold))
+            print("Observed: " + str(obs_threshold))
             predicted = None
             match_status = "No Matching Threshold"
             return predicted, match_status
