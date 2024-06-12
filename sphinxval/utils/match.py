@@ -264,11 +264,6 @@ def create_matched_model_array(objs, threshold):
     #time and time difference between eruption used by model and
     #threshold crossing time
     for obj in objs:
-        print(obj.observed_match_all_clear_source)
-        print('prediction_observation_windows_overlap: ', obj.prediction_observation_windows_overlap)
-        print('observed_match_sep_source: ', obj.observed_match_sep_source[thresh_key])
-        print('observed_threshold_crossing: ', obj.observed_threshold_crossing[thresh_key].crossing_time)
-        print('time_difference_eruptions_threshold_crossing: ', obj.time_difference_eruptions_threshold_crossing[thresh_key])
         try:
             obs_arr = obj.prediction_observation_windows_overlap
             match_sep = obj.observed_match_sep_source[thresh_key]
@@ -295,9 +290,7 @@ def create_matched_model_array(objs, threshold):
                'td_eruption_thresh_cross': td_eruption_thresh_cross,
                'observed_threshold_crossing_time': observed_thresh_cross
     }
-    df = pd.DataFrame(data=pd_dict)
-#    print(df)
-        
+    df = pd.DataFrame(data=pd_dict)        
     return df
 
 
@@ -2169,30 +2162,24 @@ def revise_eruption_matches(matched_sphinx, all_energy_channels, obs_values,
                 spx_df =\
                 create_matched_model_array(matched_sphinx[model][energy_key],
                 threshold)
-
                 #Identify the forecasts matched to the same SEP event
-                print(obs_sep)
+                
                 for sep in obs_sep:
                     obs_thresh_cross =\
                         spx_df['observed_threshold_crossing_time'].tolist()
 
-                    print(spx_df['matched_observations'].iloc[0][0].source)
-                    print(obs_thresh_cross)
                     idx_event = [ix for ix in range(len(obs_thresh_cross)) if obs_thresh_cross[ix] == pd.Timestamp(sep)]
                     #If no or only one match, nothing to do
-                    print('made it here 1')
-                    print(idx_event)
                     if len(idx_event) == 0 or len(idx_event) == 1: continue
                 
-                    print('made it here 2')
-                    print(idx_event)
                     #Time differences are saved in order of the observation
                     #files that fell inside the predictions windows. Identify
                     #the correct entry by comparing with filename of the
                     #matched sep observations
                     sep_source = spx_df['matched_sep'].take(idx_event).tolist()
                     matched_obs = spx_df['matched_observations'].take(idx_event).tolist()
-
+                    print('sep_source = ', sep_source)
+                    
                     #Time difference between eruptions and threshold crossing
                     #Negative values are before threshold crossings (in hours)
                     td_eruptions_array =\
@@ -2200,7 +2187,7 @@ def revise_eruption_matches(matched_sphinx, all_energy_channels, obs_values,
 
                     td_eruptions = []
                     for j in range(len(idx_event)):
-                        if sep_source[j] == None:
+                        if sep_source[j] == None: # CANNOT REACH THIS CODE AS None IS ONLY ASSIGNED TO OBSERVATIONS THAT THROW AN AMBIGUOUS EXCEPTION IN create_matched_model_array() -- LS-code-comment
                             td_eruptions.append(None)
                             continue
                         
@@ -2219,7 +2206,7 @@ def revise_eruption_matches(matched_sphinx, all_energy_channels, obs_values,
 
                     # If all td_eruptions  were None, then best_eruption will be a nan
                     # In this case no unmatching is necessary
-                    if np.isnan(best_eruption):
+                    if np.isnan(best_eruption): # CANNOT REACH THIS CODE AS None IS ONLY ASSIGNED TO OBSERVATIONS THAT THROW AN AMBIGUOUS EXCEPTION IN create_matched_model_array() -- LS-code-comment
                         continue
 
                     #If all the time differences are the same, then the
@@ -2236,7 +2223,6 @@ def revise_eruption_matches(matched_sphinx, all_energy_channels, obs_values,
                     #SEP event, so keep both. e.g. March 7, 2012, e.g. slight change
                     #in CME start time when CME refit
                     adj_idx = [ix for ix in range(len(td_eruptions)) if td_eruptions[ix] < (best_eruption - 3.0)]
-                    sphx_idx = []
                     for ix in adj_idx:
                         sphx_idx = idx_event[ix]
 
@@ -2512,12 +2498,14 @@ def setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_o
                         
 
             matched_sphinx[fcast.short_name][energy_key].append(sphinx)
+            '''
             print("setup_match_all_forecasts: Model: " + sphinx.prediction.short_name)
             print("setup_match_all_forecasts: Forecast energy channel: " + str(sphinx.prediction.energy_channel))
             print("setup_match_all_forecasts: Prediction Thresholds: " + str(all_fcast_thresholds))
             print("setup_match_all_forecasts: Observed Thresholds: " + str(sphinx.thresholds))
             print("setup_match_all_forecasts: Prediction index: " + str(sphinx.prediction.index))
             print("setup_match_all_forecasts: Forecast index (position in matched_sphinx): " + str(len(matched_sphinx[fcast.short_name][energy_key]) - 1))
+            '''
  
     return matched_sphinx, observed_sep_events
 
