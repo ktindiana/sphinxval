@@ -1327,7 +1327,6 @@ class Observation():
                 threshold_units = vjson.dict_to_threshold_crossing(cross)
                 self.threshold_crossings.append(Threshold_Crossing(
                 crossing_time, uncertainty, threshold, threshold_units))
-                print('crossing_time = ', crossing_time)
                     
         return
 

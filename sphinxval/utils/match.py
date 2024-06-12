@@ -250,7 +250,6 @@ def create_matched_model_array(objs, threshold):
             needed for revising matched forecasts
 
     """
-    print('create_matched_model_array: ', objs, threshold)
     #Extract information into arrays to make a pandas dataframe
     #for each threshold and save into a dictionary with the
     #key that matches the index of the associated threshold
@@ -1746,12 +1745,10 @@ def match_sep_quantities(sphinx, observation_obj, thresh, is_win_overlap,
     #FOR IDENTIFIED SEP EVENTS;  match status = "SEP Event"
     #Threshold Crossing
     threshold_crossing_time = None
-    print('observation_obj.threshold_crossings = ', observation_obj.threshold_crossings)
     for th in observation_obj.threshold_crossings:
         if th.threshold != thresh['threshold']:
             continue
         sphinx.observed_match_sep_source[thresh_key] = observation_obj.source
-        print('observed_threshold_crossing (set) = ', th)
         sphinx.observed_threshold_crossing[thresh_key] = th
  
  
@@ -2178,7 +2175,6 @@ def revise_eruption_matches(matched_sphinx, all_energy_channels, obs_values,
                     #matched sep observations
                     sep_source = spx_df['matched_sep'].take(idx_event).tolist()
                     matched_obs = spx_df['matched_observations'].take(idx_event).tolist()
-                    print('sep_source = ', sep_source)
                     
                     #Time difference between eruptions and threshold crossing
                     #Negative values are before threshold crossings (in hours)
@@ -2498,14 +2494,13 @@ def setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_o
                         
 
             matched_sphinx[fcast.short_name][energy_key].append(sphinx)
-            '''
             print("setup_match_all_forecasts: Model: " + sphinx.prediction.short_name)
             print("setup_match_all_forecasts: Forecast energy channel: " + str(sphinx.prediction.energy_channel))
             print("setup_match_all_forecasts: Prediction Thresholds: " + str(all_fcast_thresholds))
             print("setup_match_all_forecasts: Observed Thresholds: " + str(sphinx.thresholds))
             print("setup_match_all_forecasts: Prediction index: " + str(sphinx.prediction.index))
             print("setup_match_all_forecasts: Forecast index (position in matched_sphinx): " + str(len(matched_sphinx[fcast.short_name][energy_key]) - 1))
-            '''
+            
  
     return matched_sphinx, observed_sep_events
 
