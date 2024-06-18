@@ -18,29 +18,40 @@
 				"observation_window": {
 					"start_time": "2000-01-01T00:00:00Z", 
 					"end_time": "2000-01-01T01:00:00Z"
-				}, 
+				},
 				"peak_intensity": {
 					"intensity": 3000,
 					"units": "pfu",
-					"time": "2000-01-01T00:31:00Z",
+					"time": "2000-01-01T00:30:00Z",
 					"uncertainty": 300
+				},
+				"peak_intensity_max": {
+					"intensity": 3000,
+					"units": "pfu",
+					"time": "2000-01-01T00:30:00Z",
+					"uncertainty": 300
+				},
+				"all_clear": {
+					"all_clear_boolean": false, 
+					"threshold": 10, 
+					"threshold_units": "pfu"
 				},
 				"threshold_crossings": [
                     {
-                        "crossing_time": "2000-01-01T00:16:00Z",
+                        "crossing_time": "2000-01-01T00:15:00Z",
                         "threshold": 10,
                         "threshold_units": "pfu"
                     }
                 ],
 				"event_lengths": [
 					{
-						"start_time": "2000-01-01T00:16:00Z", 
-						"end_time": "2000-01-01T00:35:00Z", 
+						"start_time": "2000-01-01T00:15:00Z", 
+						"end_time": "2000-01-01T00:20:00Z", 
 						"threshold": 10, 
 						"threshold_units": "pfu"
 					}
 				],
-				"sep_profile": "match_observed_onset_peak_6_integral_flux.10MeV.txt"
+				"sep_profile": "match_all_clear_integral_flux.10MeV.txt"
 			}
 		]
 	}
