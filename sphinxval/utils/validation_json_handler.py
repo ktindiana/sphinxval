@@ -345,8 +345,8 @@ def load_objects_from_json(data_list, model_list):
                         #skip if energy block wasn't present in json
                         if obj.prediction_window_start != None:
                             model_objs[cfg.mm_energy_key].append(obj)
-                            obj.index = fcast_index
-                            fcast_index += 1 #each forecast object gets a unique index value 
+#                            obj.index = fcast_index
+#                            fcast_index += 1 #each forecast object gets a unique index value 
 #                            print("Adding " + obj.source + " to dictionary under key " + cfg.mm_energy_key)
 
     #Convert all_energy_channels to an array of string keys

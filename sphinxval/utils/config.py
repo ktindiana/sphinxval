@@ -47,7 +47,7 @@ t_units = vunits.convert_string_to_units("pfu")
 t2_units = vunits.convert_string_to_units("MeV^-1*s^-1*cm^-2*sr^-1")
 
 ######SET MODEL INFO#####
-mm_model = "REleASE" #Model short name contains this string
+mm_model = None #"REleASE" #Model short name contains this string
 mm_pred_energy_channel = {"min": 15.8, "max": 39.8, "units": e_units}
 mm_pred_threshold = {"threshold": 0.1, "threshold_units": t2_units}
 #mm_pred_energy_channel = {"min": 28.2, "max": 50.1, "units": e_units}
