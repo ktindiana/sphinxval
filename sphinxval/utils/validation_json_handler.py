@@ -31,7 +31,7 @@ __email__ = "kathryn.whitman@nasa.gov"
   
 """
 
-def read_in_json(filename, verbose=True):
+def read_in_json(filename, verbose=False):
     """Read in json file """
     with open(filename) as f:
         info = json.load(f)
@@ -179,7 +179,7 @@ def read_list_of_jsons(filename):
             json_files.append(json_fname)
     return json_files
 
-def read_json_list(json_files, verbose=True):
+def read_json_list(json_files, verbose=False):
     """Read all of the json files in to a list containing each json entry.
     """
     all_json = []
@@ -187,7 +187,9 @@ def read_json_list(json_files, verbose=True):
         json_info = read_in_json(json_fname, verbose)
         if json_info == {}:
             continue
-
+        if verbose:
+            print("read in " + json_fname)
+        json_info.update({'filename':json_fname})
         all_json.append(json_info)
     return all_json
 
@@ -272,7 +274,6 @@ def load_objects_from_json(data_list, model_list):
             the forecast jsons
         
     """
-    #print(read_list_of_jsons(data_list))
     obs_jsons = read_json_list(read_list_of_jsons(data_list))
     model_jsons = read_json_list(read_list_of_jsons(model_list))    
     

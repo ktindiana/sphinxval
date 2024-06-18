@@ -47,22 +47,59 @@
 					"units": "cm^-2*sr^-1"
 				}
 				],
-				"fluence_spectrum":
+				"fluence_spectra": 
 				[
-				{
-					"energy_min": 1.0,
-					"energy_max": -1,
-					"fluence": 1.0
-				},
-				{	"energy_min": 2.0,
-					"energy_max": -1,
-					"fluence": 2.0
-				},
-				{	"energy_min": 3.0,
-					"energy_max": -1,
-					"fluence": 3.0
-				}
-				]
+                    {
+                        "start_time": "2000-01-01T00:00:00Z",
+                        "end_time": "2000-01-01T01:00:00Z",
+                        "threshold_start": 10,
+                        "threshold_end": 10.0,
+                        "threshold_units": "pfu",
+                        "fluence_units": "cm^-2",
+                        "fluence_spectrum": [
+                            {
+                                "energy_min": 10,
+                                "energy_max": -1,
+                                "fluence": 48164717.042900056
+                            },
+                            {
+                                "energy_min": 30,
+                                "energy_max": -1,
+                                "fluence": 4081302.8322026255
+                            },
+                            {
+                                "energy_min": 50,
+                                "energy_max": -1,
+                                "fluence": 1734361.2120210445
+                            },
+                            {
+                                "energy_min": 60,
+                                "energy_max": -1,
+                                "fluence": 1375666.226549952
+                            },
+                            {
+                                "energy_min": 100,
+                                "energy_max": -1,
+                                "fluence": 712673.3596612744
+                            },
+                            {
+                                "energy_min": 300,
+                                "energy_max": -1,
+                                "fluence": 50322.976116271515
+                            },
+                            {
+                                "energy_min": 500,
+                                "energy_max": -1,
+                                "fluence": 15022.402405808478
+                            },
+                            {
+                                "energy_min": 750,
+                                "energy_max": -1,
+                                "fluence": 3886.0244487844298
+                            }
+                        ]
+                    }
+                ]
 			}
 		]
 	}
