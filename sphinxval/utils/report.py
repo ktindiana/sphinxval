@@ -6,12 +6,16 @@ pd.set_option('mode.chained_assignment', None)
 import datetime
 import os
 import pickle
+import logging
 
 import markdown
 import PyPDF2 as pdf
 import glob
 
 from . import config 
+
+#Create logger
+logger = logging.getLogger(__name__)
 
 def formatting_function(value):
     condition = True
@@ -695,7 +699,7 @@ def convert_markdown_to_html(text, model, validation_reference=False):
     if validation_reference:
         None
     else:
-        print('Generating HTML report...' + model + '...' + str(datetime.datetime.now()))
+        logger.info('Generating HTML report...' + model)
     text = text.split('\n')
     
     # REPLACE TABLES
@@ -865,13 +869,13 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
             report_exists = False
             if all_clear:
                 ### build the all clear skill scores
-                print(appendages[j])
+                logger.debug(appendages[j])
                 all_clear_filename = output_dir__ + 'all_clear_metrics' + appendages[j] + '.pkl'
                 if os.path.exists(all_clear_filename):
                     validation_text += '* All Clear\n'
                     report_exists = True
                     appendage_set_list.append(appendages[j])
-                    print(appendage_set_list)
+                    logger.debug(appendage_set_list)
                     markdown_text += build_all_clear_skill_scores_section(all_clear_filename, model, sphinx_dataframe, appendage=appendages[j])
                 validation_reference_subtext_string, validation_reference_flag_dict = construct_validation_reference_sheet(validation_reference_subtext, validation_reference_flag_dict, 'All Clear', 
                                                                                                                            config.referencepath + '/validation_reference_sheet_contingency_metrics.csv',
@@ -1156,7 +1160,7 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
         a = open(html_filename, 'w')
         a.write(html_text)
         a.close()
-        print('    Complete')
+        logger.info('    Complete')
         
         
         

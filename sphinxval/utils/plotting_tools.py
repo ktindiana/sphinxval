@@ -14,8 +14,8 @@ from math import log10
 from cycler import cycle
 from pandas.plotting import register_matplotlib_converters
 import sys
+import logging
 
-__version__ = "0.6"
 __author__ = "Phil Quinn, Kathryn Whitman"
 __maintainer__ = "Phil Quinn"
 __email__ = "philip.r.quinn@nasa.gov"
@@ -32,6 +32,8 @@ __email__ = "philip.r.quinn@nasa.gov"
 #2021-09-03, changes in 0.6: Set a limiting value or 1e-4 on the
 #   axes in correlation_plot
 
+#Create logger
+logger = logging.getLogger(__name__)
 
 def plot_marginals(y_true, y_pred, scale="linear", x_label="Observations", \
                    y_label="Forecast", thresh=None, save="marginal_plot", \
@@ -90,9 +92,11 @@ def plot_marginals(y_true, y_pred, scale="linear", x_label="Observations", \
     y_pred = check_array(y_pred, force_all_finite=True, ensure_2d=False)
 
     if (scale == "log") and ((y_true < 0).any() or (y_pred < 0).any()):
+        logger.error("Values cannot be negative on a logarithmic scale")
         raise ValueError("Values cannot be negative on a logarithmic scale")
 
     if scale not in ("linear", "log"):
+        logger.error("Scale must either be 'linear' or 'log'")
         raise ValueError("Scale must either be 'linear' or 'log'")
 
     #plt.style.use('dark_background')
@@ -284,8 +288,10 @@ def plot_metric_profile(date, metric, labels, mean, title=None, x_min=None, \
     if x_min != None and x_max != None:
 
         if not isinstance(x_min, datetime.datetime):
+            logger.error("x_min must be datetime object.")
             raise TypeError("x_min must be datetime object.")
         if not isinstance(x_max, datetime.datetime):
+            logger.error("x_max must be datetime object.")
             raise TypeError("x_max must be datetime object.")
         ax.set_xlim(x_min, x_max)
 
@@ -434,8 +440,10 @@ def plot_time_profile(date, values, labels, dy=None, dyl=None, dyh=None,
     if x_min != None and x_max != None:
 
         if not isinstance(x_min, datetime.datetime):
+            logger.error("x_min must be datetime object.")
             raise TypeError("x_min must be datetime object.")
         if not isinstance(x_max, datetime.datetime):
+            logger.error("x_max must be datetime object.")
             raise TypeError("x_max must be datetime object.")
         ax.set_xlim(x_min, x_max)
         
@@ -661,8 +669,8 @@ def correlation_plot(obs_values, model_values, plot_title,
         try:
             model_np = np.log10(np.array(model_clean))
         except:
-            print("Bad model value in log conversion for correlation plot is " + str(model_values) + "for plot titled " + plot_title)
-            sys.exit()
+            logger.error("Bad model value in log conversion for correlation plot is " + str(model_values) + "for plot titled " + plot_title)
+            raise ValueError("Bad model value in log conversion for correlation plot is " + str(model_values) + "for plot titled " + plot_title)
     
 
     #CORRELATION
@@ -781,6 +789,7 @@ def plot_scores_thresholds(thresholds, scores, labels, x_scale='log', \
     """
 
     if x_scale not in ("linear", "log"):
+        logger.error("Scale must either be 'linear' or 'log'")
         raise ValueError("Scale must either be 'linear' or 'log'")
 
     plt.style.use('dark_background')

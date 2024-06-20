@@ -8,8 +8,8 @@ from . import object_handler as objh
 from . import config as cfg
 import datetime
 import pandas as pd
+import logging
 
-__version__ = "0.1"
 __author__ = "Katie Whitman"
 __maintainer__ = "Katie Whitman"
 __email__ = "kathryn.whitman@nasa.gov"
@@ -17,6 +17,9 @@ __email__ = "kathryn.whitman@nasa.gov"
 """ Classes to manage SEP model forecasts and prepared observations.
 
 """
+
+#Create logger
+logger = logging.getLogger(__name__)
 
 
 #####CLASSES############
@@ -663,10 +666,6 @@ class Forecast():
             
             if 'sep_profile' in dataD:
                 self.sep_profile = dataD['sep_profile']
-#                if 'ASPECS' in self.short_name:
-#                    pth = self.path
-#                    pth = pth.split("/")
-#                    self.sep_profile = "../../../Profile/" + pth[len(pth)-3] + "/" + pth[len(pth)-2] + "/" + dataD['sep_profile']
             
             if 'prediction_window' in dataD:
                 self.prediction_window_start = dataD['prediction_window']['start_time']
@@ -1079,13 +1078,13 @@ class Forecast():
         if self.issue_time == None:
             self.valid = None
             if verbose:
-                print("Issue time not available.")
+                logger.warning("Issue time not available.")
             return self.valid
             
         if last_trigger_time == None and last_input_time == None:
             self.valid = False
             if verbose:
-                print("Trigger timing data not available.")
+                logger.warning("Trigger and input timing data not available.")
             return self.valid
 
         self.valid = True
@@ -1098,14 +1097,14 @@ class Forecast():
                 self.valid = False
 
         if verbose and not self.valid:
-            print("Invalid forecast. "
+            logger.warning("Invalid forecast. "
                   "Issue time (" + str(self.issue_time) + ") must start after last "
                   "trigger (" + str(last_trigger_time) + ") or input time ("
                   + str(last_input_time) + ").")
 
         return self.valid
 
-
+    #NOT USED
     def print_forecast_values(self):
         print()
         print("--- " + self.source + " -----")
@@ -1391,7 +1390,7 @@ class Observation():
         return all_thresholds
 
 
-
+    #NOT USED
     def print_observed_values(self):
         print()
         print("--- " + self.source + " -----")
@@ -1626,7 +1625,7 @@ class SPHINX:
         return
 
 
-
+    #NOT USED
     def match_criteria():
         """ Print matching criteria to match up observations to
             each predicted quantity.
@@ -1654,349 +1653,566 @@ class SPHINX:
 
         """
 
-        print("\n")
-        print("=================== Matching Report =========================")
-        print("-------------------------------------------------------------")
-        print("Model and Prediction Information")
-        print("-------------------------------------------------------------")
-        print("  Model: " + self.prediction.short_name)
-        print("  Original prediction source: " + self.prediction.source)
-        print("  Prediction Issue time: " + str(self.prediction.issue_time))
-        print("  Energy Channel: " + str(self.energy_channel))
-        print("  User allowed mismatch: " + str(self.mismatch))
+        msg += ("\n")
+        msg += ("=================== Matching Report =========================" + "\n")
+        msg += ("-------------------------------------------------------------" + "\n")
+        msg += ("Model and Prediction Information" + "\n")
+        msg += ("-------------------------------------------------------------" + "\n")
+        msg += ("  Model: " + self.prediction.short_name + "\n")
+        msg += ("  Original prediction source: " + self.prediction.source + "\n")
+        msg += ("  Prediction Issue time: " + str(self.prediction.issue_time) + "\n")
+        msg += ("  Energy Channel: " + str(self.energy_channel) + "\n")
+        msg += ("  User allowed mismatch: " + str(self.mismatch) + "\n")
         
-        print("-------------------------------------------------------------")
-        print("All Observations overlapping with the Prediction Window")
-        print("-------------------------------------------------------------")
-        print("  Prediction Window: "
+        msg += ("-------------------------------------------------------------" + "\n")
+        msg += ("All Observations overlapping with the Prediction Window" + "\n")
+        msg += ("-------------------------------------------------------------" + "\n")
+        msg += ("  Prediction Window: "
             + str(self.prediction.prediction_window_start) + " to "
-            + str(self.prediction.prediction_window_end))
-        print("  Observations that overlapped with Prediction Window:")
+            + str(self.prediction.prediction_window_end) + "\n")
+        msg += ("  Observations that overlapped with Prediction Window:" + "\n")
         if self.prediction_observation_windows_overlap == []:
-            print("  No matching observations were found.")
+            msg += ("  No matching observations were found." + "\n")
         else:
-            print("  Observation Sources: ")
+            msg += ("  Observation Sources: " + "\n")
             for obs in self.prediction_observation_windows_overlap:
-                print("  " + obs.source)
-            print("  Observed Time Profiles: ")
+                msg += ("  " + obs.source + "\n")
+            msg += ("  Observed Time Profiles: " + "\n")
             for prof in self.observed_sep_profiles:
-                print("  " + prof)
+                msg += ("  " + prof + "\n")
 
-        print("-------------------------------------------------------------")
-        print("Prediction Eruption/Trigger/Input Timing")
-        print("None = no trigger or input used by model")
-        print("-------------------------------------------------------------")
-        print("  Prediction last eruption time: "
-                + str(self.last_eruption_time))
-        print("  Prediction last trigger time: " + str(self.last_trigger_time))
-        print("  Prediction last input time: " + str(self.last_input_time))
+        msg += ("-------------------------------------------------------------" + "\n")
+        msg += ("Prediction Eruption/Trigger/Input Timing" + "\n")
+        msg += ("None = no trigger or input used by model" + "\n")
+        msg += ("-------------------------------------------------------------" + "\n")
+        msg += ("  Prediction last eruption time: "
+                + str(self.last_eruption_time) + "\n")
+        msg += ("  Prediction last trigger time: " + str(self.last_trigger_time) + "\n")
+        msg += ("  Prediction last input time: " + str(self.last_input_time) + "\n")
 
-        print("-------------------------------------------------------------")
-        print("Thresholds Applied to the Energy Channel")
-        print("All values below related to thresholds are in the order of\n"
-            "the matched observations first and thresholds second.")
-        print("-------------------------------------------------------------")
+        msg += ("-------------------------------------------------------------" + "\n")
+        msg += ("Thresholds Applied to the Energy Channel" + "\n")
+        msg += ("All values below related to thresholds are in the order of\n"
+            "the matched observations first and thresholds second." + "\n")
+        msg += ("-------------------------------------------------------------" + "\n")
         if self.thresholds == []:
-            print("  No thresholds were present in both predictions and "
-                "observations.")
+            msg += ("  No thresholds were present in both predictions and "
+                "observations." + "\n")
         else:
             for thresh in self.thresholds:
-                print("  " + str(thresh))
+                msg += ("  " + str(thresh) + "\n")
                 
                 
 
-        print("-------------------------------------------------------------")
-        print("Were thresholds crossed inside of the Prediction Window?")
-        print("Entries are in order of observations and thresholds.")
-        print("-------------------------------------------------------------")
+        msg += ("-------------------------------------------------------------" + "\n")
+        msg += ("Were thresholds crossed inside of the Prediction Window?" + "\n")
+        msg += ("Entries are in order of observations and thresholds." + "\n")
+        msg += ("-------------------------------------------------------------" + "\n")
         if self.threshold_crossed_in_pred_win == []:
-            print("  No thresholds were present in both predictions and "
-                "observations.")
+            msg += ("  No thresholds were present in both predictions and "
+                "observations." + "\n")
         else:
             for thresh in self.thresholds:
                 thresh_key = objh.threshold_to_key(thresh)
-                print(" Threshold: " + str(thresh))
-                print(" Match Status: " + self.sep_match_status[thresh_key])
-                print("  " + str(self.threshold_crossed_in_pred_win[thresh_key]))
-                print("  Observed threshold crossing times (NaT = no threshold crossing present \n"
-                    "  that satisfied matching criteria): ")
-                print("  " + str(self.observed_threshold_crossing[thresh_key].crossing_time))
+                msg += (" Threshold: " + str(thresh) + "\n")
+                msg += (" Match Status: " + self.sep_match_status[thresh_key] + "\n")
+                msg += ("  " + str(self.threshold_crossed_in_pred_win[thresh_key]) + "\n")
+                msg += ("  Observed threshold crossing times (NaT = no threshold crossing present \n"
+                    "  that satisfied matching criteria): " + "\n")
+                msg += ("  " + str(self.observed_threshold_crossing[thresh_key].crossing_time) + "\n")
             
 
-        print("-------------------------------------------------------------")
-        print("Was the Eruption (flare/CME) before Threshold Crossing?")
-        print("None = no flare/CME information used by model")
-        print("False = flare/CME after threshold crossing")
-        print("True = flare/CME before threshold crossing")
-        print("-------------------------------------------------------------")
+        msg += ("-------------------------------------------------------------" + "\n")
+        msg += ("Was the Eruption (flare/CME) before Threshold Crossing?" + "\n")
+        msg += ("None = no flare/CME information used by model" + "\n")
+        msg += ("False = flare/CME after threshold crossing" + "\n")
+        msg += ("True = flare/CME before threshold crossing" + "\n")
+        msg += ("-------------------------------------------------------------" + "\n")
         if self.eruptions_before_threshold_crossing == []:
-            print("  No eruption information used by model.")
+            msg += ("  No eruption information used by model." + "\n")
         else:
             for thresh in self.thresholds:
                 thresh_key = objh.threshold_to_key(thresh)
-                print(" Threshold: " + str(thresh))
-                print("  "
-                + str(self.eruptions_before_threshold_crossing[thresh_key]))
-                print("  Time difference (hrs) (eruption time - threshold "
-                    "crossing time):")
-                print("  " +
-                str(self.time_difference_eruptions_threshold_crossing[thresh_key]))
+                msg += (" Threshold: " + str(thresh) + "\n")
+                msg += ("  "
+                + str(self.eruptions_before_threshold_crossing[thresh_key]) + "\n")
+                msg += ("  Time difference (hrs) (eruption time - threshold "
+                    "crossing time):" + "\n")
+                msg += ("  " +
+                str(self.time_difference_eruptions_threshold_crossing[thresh_key]) + "\n")
 
-        print("-------------------------------------------------------------")
-        print("Were all Triggers before Threshold Crossing? ")
-        print("None = no triggers used by model or no thresholds crossed")
-        print("False = triggers after threshold crossing")
-        print("True = triggers before threshold crossing")
-        print("-------------------------------------------------------------")
+        msg += ("-------------------------------------------------------------" + "\n")
+        msg += ("Were all Triggers before Threshold Crossing? " + "\n")
+        msg += ("None = no triggers used by model or no thresholds crossed" + "\n")
+        msg += ("False = triggers after threshold crossing" + "\n")
+        msg += ("True = triggers before threshold crossing" + "\n")
+        msg += ("-------------------------------------------------------------" + "\n")
         if self.triggers_before_threshold_crossing == []:
-            print("  No triggers used by model.")
+            msg += ("  No triggers used by model." + "\n")
         else:
             for thresh in self.thresholds:
                 thresh_key = objh.threshold_to_key(thresh)
-                print(" Threshold: " + str(thresh))
-                print("  " + str(self.triggers_before_threshold_crossing[thresh_key]))
+                msg += (" Threshold: " + str(thresh) + "\n")
+                msg += ("  " + str(self.triggers_before_threshold_crossing[thresh_key]) + "\n")
 
-        print("-------------------------------------------------------------")
-        print("Were all Inputs before Threshold Crossing?")
-        print("None = no inputs used by model or no thresholds crossed")
-        print("False = inputs after threshold crossing")
-        print("True = inputs before threshold crossing")
-        print("-------------------------------------------------------------")
+        msg += ("-------------------------------------------------------------" + "\n")
+        msg += ("Were all Inputs before Threshold Crossing?" + "\n")
+        msg += ("None = no inputs used by model or no thresholds crossed" + "\n")
+        msg += ("False = inputs after threshold crossing" + "\n")
+        msg += ("True = inputs before threshold crossing" + "\n")
+        msg += ("-------------------------------------------------------------" + "\n")
         if self.inputs_before_threshold_crossing == []:
-            print("  No inputs used by model.")
+            msg += ("  No inputs used by model." + "\n")
         else:
             for thresh in self.thresholds:
                 thresh_key = objh.threshold_to_key(thresh)
-                print(" Threshold: " + str(thresh))
+                msg += (" Threshold: " + str(thresh) + "\n")
 
-                print("  " + str(self.inputs_before_threshold_crossing[thresh_key]))
+                msg += ("  " + str(self.inputs_before_threshold_crossing[thresh_key]) + "\n")
         
-        print("-------------------------------------------------------------")
-        print("Is the last Trigger before the Onset Peak (peak_intensity)?")
-        print("None = no triggers used by model or no SEP event.")
-        print("-------------------------------------------------------------")
+        msg += ("-------------------------------------------------------------" + "\n")
+        msg += ("Is the last Trigger before the Onset Peak (peak_intensity)?" + "\n")
+        msg += ("None = no triggers used by model or no SEP event." + "\n")
+        msg += ("-------------------------------------------------------------" + "\n")
         if self.triggers_before_peak_intensity == []:
-            print("  No triggers used by model.")
+            msg += ("  No triggers used by model." + "\n")
         else:
-            print("  " + str(self.triggers_before_peak_intensity))
-            print("  Time difference (hrs) (last trigger - onset peak time):")
-            print("  " + str(self.time_difference_triggers_peak_intensity))
+            msg += ("  " + str(self.triggers_before_peak_intensity))
+            msg += ("  Time difference (hrs) (last trigger - onset peak time):" + "\n")
+            msg += ("  " + str(self.time_difference_triggers_peak_intensity))
 
-        print("-------------------------------------------------------------")
-        print("Is the last Input before the Onset Peak (peak_intensity)?")
-        print("None = no inputs used by model or no SEP event.")
-        print("-------------------------------------------------------------")
+        msg += ("-------------------------------------------------------------" + "\n")
+        msg += ("Is the last Input before the Onset Peak (peak_intensity)?" + "\n")
+        msg += ("None = no inputs used by model or no SEP event." + "\n")
+        msg += ("-------------------------------------------------------------" + "\n")
         if self.inputs_before_peak_intensity == []:
-            print("  No inputs used by model.")
+            msg += ("  No inputs used by model." + "\n")
         else:
-            print("  " + str(self.inputs_before_peak_intensity))
-            print("  Time difference (hrs) (last input - onset peak time):")
-            print("  " + str(self.time_difference_inputs_peak_intensity))
+            msg += ("  " + str(self.inputs_before_peak_intensity) + "\n")
+            msg += ("  Time difference (hrs) (last input - onset peak time):" + "\n")
+            msg += ("  " + str(self.time_difference_inputs_peak_intensity) + "\n")
 
-        print("-------------------------------------------------------------")
-        print("Is the last Trigger before the Max Flux (peak_intensity_max)?")
-        print("**If no SEP event, Max Flux is the maximum value in the observation.")
-        print("None = no triggers used by model ")
-        print("-------------------------------------------------------------")
+        msg += ("-------------------------------------------------------------" + "\n")
+        msg += ("Is the last Trigger before the Max Flux (peak_intensity_max)?" + "\n")
+        msg += ("**If no SEP event, Max Flux is the maximum value in the observation." + "\n")
+        msg += ("None = no triggers used by model " + "\n")
+        msg += ("-------------------------------------------------------------" + "\n")
         if self.triggers_before_peak_intensity_max == []:
-            print("  No triggers used by model.")
+            msg += ("  No triggers used by model." + "\n")
         else:
-            print("  " + str(self.triggers_before_peak_intensity_max))
-            print("  Time difference (hrs) (last trigger - max flux time):")
-            print("  " + str(self.time_difference_triggers_peak_intensity_max))
+            msg += ("  " + str(self.triggers_before_peak_intensity_max) + "\n")
+            msg += ("  Time difference (hrs) (last trigger - max flux time):" + "\n")
+            msg += ("  " + str(self.time_difference_triggers_peak_intensity_max) + "\n")
 
-        print("-------------------------------------------------------------")
-        print("Is the last Input before the Max Flux (peak_intensity_max)?")
-        print("**If no SEP event, Max Flux is the maximum value in the observation.")
-        print("None = no inputs used by model ")
-        print("-------------------------------------------------------------")
+        msg += ("-------------------------------------------------------------" + "\n")
+        msg += ("Is the last Input before the Max Flux (peak_intensity_max)?" + "\n")
+        msg += ("**If no SEP event, Max Flux is the maximum value in the observation." + "\n")
+        msg += ("None = no inputs used by model " + "\n")
+        msg += ("-------------------------------------------------------------" + "\n")
         if self.inputs_before_peak_intensity_max == []:
-            print("  No inputs used by model.")
+            msg += ("  No inputs used by model." + "\n")
         else:
-            print("  " + str(self.inputs_before_peak_intensity_max))
-            print("  Time difference (hrs) (last input - max flux time):")
-            print("  " + str(self.time_difference_inputs_peak_intensity_max))
+            msg += ("  " + str(self.inputs_before_peak_intensity_max) + "\n")
+            msg += ("  Time difference (hrs) (last input - max flux time):" + "\n")
+            msg += ("  " + str(self.time_difference_inputs_peak_intensity_max) + "\n")
 
-        print("-------------------------------------------------------------")
-        print("Is the last Trigger before the SEP End Time?")
-        print("None = no triggers used by model or no SEP event.")
-        print("-------------------------------------------------------------")
+        msg += ("-------------------------------------------------------------" + "\n")
+        msg += ("Is the last Trigger before the SEP End Time?" + "\n")
+        msg += ("None = no triggers used by model or no SEP event." + "\n")
+        msg += ("-------------------------------------------------------------" + "\n")
         if self.triggers_before_sep_end == []:
-            print("  No triggers used by model.")
+            msg += ("  No triggers used by model." + "\n")
         else:
             for thresh in self.thresholds:
                 thresh_key = objh.threshold_to_key(thresh)
-                print(" Threshold: " + str(thresh))
+                msg += (" Threshold: " + str(thresh) + "\n")
 
-                print("  " + str(self.triggers_before_sep_end[thresh_key]))
-                print("  Time difference (hrs) (last trigger - SEP end time):")
-                print("  " +
-                str(self.time_difference_triggers_sep_end[thresh_key]))
+                msg += ("  " + str(self.triggers_before_sep_end[thresh_key]) + "\n")
+                msg += ("  Time difference (hrs) (last trigger - SEP end time):" + "\n")
+                msg += ("  " +
+                str(self.time_difference_triggers_sep_end[thresh_key]) + "\n")
 
-        print("-------------------------------------------------------------")
-        print("Is the last Input before the SEP End Time?")
-        print("None = no inputs used by model or no SEP event.")
-        print("-------------------------------------------------------------")
+        msg += ("-------------------------------------------------------------" + "\n")
+        msg += ("Is the last Input before the SEP End Time?" + "\n")
+        msg += ("None = no inputs used by model or no SEP event." + "\n")
+        msg += ("-------------------------------------------------------------" + "\n")
         if self.inputs_before_sep_end == []:
-            print("  No inputs used by model.")
+            msg += ("  No inputs used by model." + "\n")
         else:
             for thresh in self.thresholds:
                 thresh_key = objh.threshold_to_key(thresh)
-                print(" Threshold: " + str(thresh))
+                msg += (" Threshold: " + str(thresh) + "\n")
 
-                print("  " + str(self.inputs_before_sep_end[thresh_key]))
-                print("  Time difference (hrs) (last input - SEP end time):")
-                print("  " +
-                str(self.time_difference_inputs_sep_end[thresh_key]))
+                msg += ("  " + str(self.inputs_before_sep_end[thresh_key]) + "\n")
+                msg += ("  Time difference (hrs) (last input - SEP end time):" + "\n")
+                msg += ("  " +
+                str(self.time_difference_inputs_sep_end[thresh_key]) + "\n")
 
-        print("-------------------------------------------------------------")
-        print("Does the Prediction Window overlap at all with an observed SEP event?")
-        print("-------------------------------------------------------------")
+        msg += ("-------------------------------------------------------------" + "\n")
+        msg += ("Does the Prediction Window overlap at all with an observed SEP event?" + "\n")
+        msg += ("-------------------------------------------------------------" + "\n")
         if self.prediction_window_sep_overlap == []:
-            print("  No SEP events.")
+            msg += ("  No SEP events." + "\n")
         else:
             for thresh in self.thresholds:
                 thresh_key = objh.threshold_to_key(thresh)
-                print(" Threshold: " + str(thresh))
+                msg += (" Threshold: " + str(thresh) + "\n")
 
-                print("  " + str(self.prediction_window_sep_overlap[thresh_key]))
+                msg += ("  " + str(self.prediction_window_sep_overlap[thresh_key]) + "\n")
 
-        print("-------------------------------------------------------------")
-        print("Is there an ongoing observed SEP event at start of prediction window?")
-        print("None = no SEP event present in the observation file.")
-        print("-------------------------------------------------------------")
+        msg += ("-------------------------------------------------------------" + "\n")
+        msg += ("Is there an ongoing observed SEP event at start of prediction window?" + "\n")
+        msg += ("None = no SEP event present in the observation file." + "\n")
+        msg += ("-------------------------------------------------------------" + "\n")
         if self.observed_ongoing_events == []:
-            print("  No SEP events.")
+            msg += ("  No SEP events." + "\n")
         else:
             for thresh in self.thresholds:
                 thresh_key = objh.threshold_to_key(thresh)
-                print(" Threshold: " + str(thresh))
+                msg += (" Threshold: " + str(thresh) + "\n")
 
-                print("  " + str(self.observed_ongoing_events[thresh_key]))
+                msg += ("  " + str(self.observed_ongoing_events[thresh_key]) + "\n")
 
-        print("================= MATCHED OBSERVED VALUES ===================")
+        msg += ("================= MATCHED OBSERVED VALUES ===================" + "\n")
 
-        print("-------------------------------------------------------------")
-        print("Observed All Clear (True = No SEP, False = SEP)")
-        print("If True, will list last matched observation.")
-        print("None = ongoing SEP event at start of the prediction window")
-        print("-------------------------------------------------------------")
-        print("  Matched observation: " + str(self.observed_match_all_clear_source))
-        print("  Match Status: " + self.all_clear_match_status)
-        print("  Observed All Clear Status: "
-            + str(self.observed_all_clear.all_clear_boolean))
-        print("  All Clear Threshold: " + str(self.observed_all_clear.threshold))
-        print("  All Clear Threshold Units: "
-            + str(self.observed_all_clear.threshold_units))
+        msg += ("-------------------------------------------------------------" + "\n")
+        msg += ("Observed All Clear (True = No SEP, False = SEP)" + "\n")
+        msg += ("If True, will list last matched observation." + "\n")
+        msg += ("None = ongoing SEP event at start of the prediction window" + "\n")
+        msg += ("-------------------------------------------------------------" + "\n")
+        msg += ("  Matched observation: " + str(self.observed_match_all_clear_source) + "\n")
+        msg += ("  Match Status: " + self.all_clear_match_status + "\n")
+        msg += ("  Observed All Clear Status: "
+            + str(self.observed_all_clear.all_clear_boolean) + "\n")
+        msg += ("  All Clear Threshold: " + str(self.observed_all_clear.threshold) + "\n")
+        msg += ("  All Clear Threshold Units: "
+            + str(self.observed_all_clear.threshold_units) + "\n")
 
-        print("-------------------------------------------------------------")
-        print("Observed Point Flux (point_intensity), Derived Quantity")
-        print("None = no SEP event or no match with an observation")
-        print("Note that matching with an SEP event does not affect the ")
-        print("calculation of the metrics.")
-        print("-------------------------------------------------------------")
-        print("  Derived from observations: " +
-            str(self.observed_sep_profiles))
-        print("  Intensity: " + str(self.observed_point_intensity.intensity))
-        print("  Units: " + str(self.observed_point_intensity.units))
-        print("  Time: " + str(self.observed_point_intensity.time))
+        msg += ("-------------------------------------------------------------" + "\n")
+        msg += ("Observed Point Flux (point_intensity), Derived Quantity" + "\n")
+        msg += ("None = no SEP event or no match with an observation" + "\n")
+        msg += ("Note that matching with an SEP event does not affect the " + "\n")
+        msg += ("calculation of the metrics." + "\n")
+        msg += ("-------------------------------------------------------------" + "\n")
+        msg += ("  Derived from observations: " +
+            str(self.observed_sep_profiles) + "\n")
+        msg += ("  Intensity: " + str(self.observed_point_intensity.intensity) + "\n")
+        msg += ("  Units: " + str(self.observed_point_intensity.units) + "\n")
+        msg += ("  Time: " + str(self.observed_point_intensity.time) + "\n")
 
-        print("-------------------------------------------------------------")
-        print("Observed Onset Peak (peak_intensity)")
-        print("None = no SEP event or no match with an observation")
-        print("-------------------------------------------------------------")
-        print("  Matched observation: " +
-            str(self.observed_match_peak_intensity_source))
-        print("  Match Status: " + self.peak_intensity_match_status)
-        print("  Intensity: " + str(self.observed_peak_intensity.intensity))
-        print("  Units: " + str(self.observed_peak_intensity.units))
-        print("  Time: " + str(self.observed_peak_intensity.time))
+        msg += ("-------------------------------------------------------------" + "\n")
+        msg += ("Observed Onset Peak (peak_intensity)" + "\n")
+        msg += ("None = no SEP event or no match with an observation" + "\n")
+        msg += ("-------------------------------------------------------------" + "\n")
+        msg += ("  Matched observation: " +
+            str(self.observed_match_peak_intensity_source) + "\n")
+        msg += ("  Match Status: " + self.peak_intensity_match_status + "\n")
+        msg += ("  Intensity: " + str(self.observed_peak_intensity.intensity) + "\n")
+        msg += ("  Units: " + str(self.observed_peak_intensity.units) + "\n")
+        msg += ("  Time: " + str(self.observed_peak_intensity.time) + "\n")
 
-        print("-------------------------------------------------------------")
-        print("Observed Max Flux (peak_intensity_max)")
-        print("None = no SEP event or no match with an observation")
-        print("-------------------------------------------------------------")
-        print("  Matched observation: " +
-            str(self.observed_match_peak_intensity_max_source))
-        print("  Match Status: " + self.peak_intensity_max_match_status)
-        print("  Intensity: " + str(self.observed_peak_intensity_max.intensity))
-        print("  Units: " + str(self.observed_peak_intensity_max.units))
-        print("  Time: " + str(self.observed_peak_intensity_max.time))
+        msg += ("-------------------------------------------------------------" + "\n")
+        msg += ("Observed Max Flux (peak_intensity_max)" + "\n")
+        msg += ("None = no SEP event or no match with an observation" + "\n")
+        msg += ("-------------------------------------------------------------" + "\n")
+        msg += ("  Matched observation: " +
+            str(self.observed_match_peak_intensity_max_source) + "\n")
+        msg += ("  Match Status: " + self.peak_intensity_max_match_status + "\n")
+        msg += ("  Intensity: " + str(self.observed_peak_intensity_max.intensity) + "\n")
+        msg += ("  Units: " + str(self.observed_peak_intensity_max.units) + "\n")
+        msg += ("  Time: " + str(self.observed_peak_intensity_max.time) + "\n")
         
-        print("-------------------------------------------------------------")
-        print("Observed Max Flux in the Prediction Window ")
-        print("(peak_intensity_max), Derived Quantity")
-        print("None = no SEP event or no match with an observation")
-        print("Note that matching with an SEP event does not affect the ")
-        print("calculation of the metrics.")
-        print("-------------------------------------------------------------")
-        print("  Derived from observations: " +
-            str(self.observed_sep_profiles))
-        print("  Intensity: " + str(self.observed_max_flux_in_prediction_window.intensity))
-        print("  Units: " + str(self.observed_max_flux_in_prediction_window.units))
-        print("  Time: " + str(self.observed_max_flux_in_prediction_window.time))
+        msg += ("-------------------------------------------------------------" + "\n")
+        msg += ("Observed Max Flux in the Prediction Window " + "\n")
+        msg += ("(peak_intensity_max), Derived Quantity" + "\n")
+        msg += ("None = no SEP event or no match with an observation" + "\n")
+        msg += ("Note that matching with an SEP event does not affect the " + "\n")
+        msg += ("calculation of the metrics." + "\n")
+        msg += ("-------------------------------------------------------------" + "\n")
+        msg += ("  Derived from observations: " +
+            str(self.observed_sep_profiles) + "\n")
+        msg += ("  Intensity: " + str(self.observed_max_flux_in_prediction_window.intensity) + "\n")
+        msg += ("  Units: " + str(self.observed_max_flux_in_prediction_window.units) + "\n")
+        msg += ("  Time: " + str(self.observed_max_flux_in_prediction_window.time) + "\n")
 
-        print("-------------------------------------------------------------")
-        print("Observed SEP Event Probability: ")
-        print("None = no match with an observation, ongoing event, or "
+        msg += ("-------------------------------------------------------------" + "\n")
+        msg += ("Observed SEP Event Probability: " + "\n")
+        msg += ("None = no match with an observation, ongoing event, or "
                 "threshold crossed in prediction window but the last "
-                "trigger or input is after the threshold crossing.")
-        print("0.0 = no SEP event (threshold crossing) in prediction window")
-        print("1.0 = SEP event (threshold crossing) in prediction window")
-        print("-------------------------------------------------------------")
+                "trigger or input is after the threshold crossing." + "\n")
+        msg += ("0.0 = no SEP event (threshold crossing) in prediction window" + "\n")
+        msg += ("1.0 = SEP event (threshold crossing) in prediction window" + "\n")
+        msg += ("-------------------------------------------------------------" + "\n")
         for thresh in self.thresholds:
             thresh_key = objh.threshold_to_key(thresh)
-            print(" Threshold: " + str(thresh))
-            print("  Match Status: " + self.sep_match_status[thresh_key])
-            print("  Matched observation: " + str(self.observed_probability_source[thresh_key]))
-            print("  Probability: "
-            + str(self.observed_probability[thresh_key].probability_value))
+            msg += (" Threshold: " + str(thresh) + "\n")
+            msg += ("  Match Status: " + self.sep_match_status[thresh_key] + "\n")
+            msg += ("  Matched observation: " + str(self.observed_probability_source[thresh_key]) + "\n")
+            msg += ("  Probability: "
+            + str(self.observed_probability[thresh_key].probability_value) + "\n")
 
-        print("-------------------------------------------------------------")
-        print("Observed SEP Event Start Time: ")
-        print("None = no SEP event or no match with an observation")
-        print("NaT = no SEP event or no match with an observation")
-        print("-------------------------------------------------------------")
+        msg += ("-------------------------------------------------------------" + "\n")
+        msg += ("Observed SEP Event Start Time: " + "\n")
+        msg += ("None = no SEP event or no match with an observation" + "\n")
+        msg += ("NaT = no SEP event or no match with an observation" + "\n")
+        msg += ("-------------------------------------------------------------" + "\n")
         for thresh in self.thresholds:
             thresh_key = objh.threshold_to_key(thresh)
-            print(" Threshold: " + str(thresh))
-            print("  Match Status: " + self.sep_match_status[thresh_key])
-            print("  Matched observation: " + str(self.observed_match_sep_source[thresh_key]))
-            print("  Threshold crossing time: "
-                + str(self.observed_threshold_crossing[thresh_key].crossing_time))
-            print("  Start time: " + str(self.observed_start_time[thresh_key]))
+            msg += (" Threshold: " + str(thresh) + "\n")
+            msg += ("  Match Status: " + self.sep_match_status[thresh_key] + "\n")
+            msg += ("  Matched observation: " + str(self.observed_match_sep_source[thresh_key]) + "\n")
+            msg += ("  Threshold crossing time: "
+                + str(self.observed_threshold_crossing[thresh_key].crossing_time) + "\n")
+            msg += ("  Start time: " + str(self.observed_start_time[thresh_key]) + "\n")
 
 
-        print("-------------------------------------------------------------")
-        print("Observed SEP Event End Times and Event Characteristics: ")
-        print("NaT = no SEP event or no match with an observation")
-        print("-------------------------------------------------------------")
+        msg += ("-------------------------------------------------------------" + "\n")
+        msg += ("Observed SEP Event End Times and Event Characteristics: " + "\n")
+        msg += ("NaT = no SEP event or no match with an observation" + "\n")
+        msg += ("-------------------------------------------------------------" + "\n")
         for thresh in self.thresholds:
             thresh_key = objh.threshold_to_key(thresh)
-            print(" Threshold: " + str(thresh))
-            print("  Match Status: " + self.end_time_match_status[thresh_key])
-            print("  Matched observation: " + str(self.observed_match_sep_source[thresh_key]))
-            print("  End time: " + str(self.observed_end_time[thresh_key]))
-            print("  Duration in hours (derived): " + str(self.observed_duration[thresh_key]))
-            print("  Channel fluence: " + str(self.observed_fluence[thresh_key].fluence))
-            print("  Fluence Spectrum: " + str(self.observed_fluence_spectrum[thresh_key].fluence_spectrum))
+            msg += (" Threshold: " + str(thresh) + "\n")
+            msg += ("  Match Status: " + self.end_time_match_status[thresh_key] + "\n")
+            msg += ("  Matched observation: " + str(self.observed_match_sep_source[thresh_key]) + "\n")
+            msg += ("  End time: " + str(self.observed_end_time[thresh_key]) + "\n")
+            msg += ("  Duration in hours (derived): " + str(self.observed_duration[thresh_key]) + "\n")
+            msg += ("  Channel fluence: " + str(self.observed_fluence[thresh_key].fluence) + "\n")
+            msg += ("  Fluence Spectrum: " + str(self.observed_fluence_spectrum[thresh_key].fluence_spectrum) + "\n")
 
 
-        print("-------------------------------------------------------------")
-        print("Observed SEP Time Profile: ")
-        print("None = no SEP event or no match with an observation")
-        print("-------------------------------------------------------------")
+        msg += ("-------------------------------------------------------------" + "\n")
+        msg += ("Observed SEP Time Profile: " + "\n")
+        msg += ("None = no SEP event or no match with an observation" + "\n")
+        msg += ("-------------------------------------------------------------" + "\n")
         for thresh in self.thresholds:
             thresh_key = objh.threshold_to_key(thresh)
-            print(" Threshold: " + str(thresh))
-            print("  Match Status: " + self.time_profile_match_status[thresh_key])
-            print("  Matched observation: " + str(self.observed_match_sep_source[thresh_key]))
-            print("  Time Profile: " + str(self.observed_time_profile[thresh_key]))
+            msg += (" Threshold: " + str(thresh) + "\n")
+            msg += ("  Match Status: " + self.time_profile_match_status[thresh_key] + "\n")
+            msg += ("  Matched observation: " + str(self.observed_match_sep_source[thresh_key]) + "\n")
+            msg += ("  Time Profile: " + str(self.observed_time_profile[thresh_key]) + "\n")
                 
-        print("================== END REPORT ===============================")
+        msg += ("================== END REPORT ===============================" + "\n")
 
-        return
+        return msg
 
+
+
+    def match_report_streamlined(self):
+        """ Generate a report describing all of the steps involved in the
+            matching and information about the prediction and observations.
+
+            OUTPUT:
+            
+                :msg: (string) returns full match report as a string;
+                    print, write to file, or log to view properly
+        """
+        msg = ""
+        msg += ("\n")
+        msg += ("=================== Matching Report =========================\n")
+        msg += ("  Model: " + self.prediction.short_name + "\n")
+        msg += ("  Original prediction source: " + self.prediction.source + "\n")
+        msg += ("  Prediction Issue time: " + str(self.prediction.issue_time) + "\n")
+        msg += ("  Energy Channel: " + str(self.energy_channel) + "\n")
+        msg += ("  User allowed mismatch: " + str(self.mismatch) + "\n")
+        
+        msg += ("\n")
+        msg += ("All Observations overlapping with the Prediction Window" + "\n")
+        msg += ("-------------------------------------------------------------" + "\n")
+        msg += ("  Prediction Window: "
+            + str(self.prediction.prediction_window_start) + " to "
+            + str(self.prediction.prediction_window_end) + "\n")
+        msg += ("  Observations that overlapped with Prediction Window:" + "\n")
+        if self.prediction_observation_windows_overlap == []:
+            msg += ("  No matching observations were found." + "\n")
+        else:
+            msg += ("  Observation Sources: " + "\n")
+            for obs in self.prediction_observation_windows_overlap:
+                msg += ("  " + obs.source)
+            msg += ("  Observed Time Profiles: " + "\n")
+            for prof in self.observed_sep_profiles:
+                msg += ("  " + prof)
+
+        msg += ("\n")
+        msg += ("Prediction Eruption/Trigger/Input Timing" + "\n")
+        msg += ("-------------------------------------------------------------" + "\n")
+        msg += ("  Prediction last eruption time: "
+                + str(self.last_eruption_time) + "\n")
+        msg += ("  Prediction last trigger time: " + str(self.last_trigger_time) + "\n")
+        msg += ("  Prediction last input time: " + str(self.last_input_time) + "\n")
+
+        msg += ("\n")
+        msg += ("Thresholds Applied to the Energy Channel" + "\n")
+        msg += ("-------------------------------------------------------------" + "\n")
+        if self.thresholds == []:
+            msg += ("  No thresholds were present in both predictions and "
+                "observations." + "\n")
+        else:
+            for thresh in self.thresholds:
+                msg += ("  " + str(thresh) + "\n")
+                
+                
+
+        msg += ("\n")
+        msg += ("Were thresholds crossed inside of the Prediction Window?" + "\n")
+        msg += ("-------------------------------------------------------------" + "\n")
+        if self.threshold_crossed_in_pred_win == []:
+            msg += ("  No thresholds were present in both predictions and "
+                "observations." + "\n")
+        else:
+            for thresh in self.thresholds:
+                thresh_key = objh.threshold_to_key(thresh)
+                msg += (" Threshold: " + str(thresh) + "\n")
+                msg += (" Match Status: " + self.sep_match_status[thresh_key] + "\n")
+                msg += ("  " + str(self.threshold_crossed_in_pred_win[thresh_key]) + "\n")
+                msg += ("  Observed times (NaT = no crossing: " + "\n")
+                msg += ("  " + str(self.observed_threshold_crossing[thresh_key].crossing_time) + "\n")
+            
+
+        if self.eruptions_before_threshold_crossing == []:
+            msg += ("Eruption & Threshold Crossing: No eruption information used by model." + "\n")
+        else:
+            msg += ("\n")
+            msg += ("Was the Eruption (flare/CME) before Threshold Crossing?" + "\n")
+            msg += ("-------------------------------------------------------------" + "\n")
+            for thresh in self.thresholds:
+                thresh_key = objh.threshold_to_key(thresh)
+                msg += (" Threshold: " + str(thresh) + "\n")
+                msg += ("  "
+                + str(self.eruptions_before_threshold_crossing[thresh_key]) + "\n")
+                msg += ("  Time diff (hrs) (eruption time - crossing):" + "\n")
+                msg += ("  " +
+                str(self.time_difference_eruptions_threshold_crossing[thresh_key]) + "\n")
+
+        if self.triggers_before_threshold_crossing == []:
+            msg += ("Trigger & Threshold Crossing: No triggers used by model." + "\n")
+        else:
+            msg += ("\n")
+            msg += ("Were all Triggers before Threshold Crossing? " + "\n")
+            msg += ("-------------------------------------------------------------" + "\n")
+            for thresh in self.thresholds:
+                thresh_key = objh.threshold_to_key(thresh)
+                msg += (" Threshold: " + str(thresh) + "\n")
+                msg += ("  " + str(self.triggers_before_threshold_crossing[thresh_key]) + "\n")
+
+
+        if self.inputs_before_threshold_crossing == []:
+            msg += ("Inputs & Threshold Crossing: No inputs used by model." + "\n")
+        else:
+            msg += ("\n")
+            msg += ("Were all Inputs before Threshold Crossing?" + "\n")
+            msg += ("-------------------------------------------------------------" + "\n")
+            for thresh in self.thresholds:
+                thresh_key = objh.threshold_to_key(thresh)
+                msg += (" Threshold: " + str(thresh) + "\n")
+
+                msg += ("  " + str(self.inputs_before_threshold_crossing[thresh_key]) + "\n")
+        
+        
+        if self.triggers_before_peak_intensity == []:
+            msg += ("Trigger & Onset Peak: No triggers used by model." + "\n")
+        else:
+            msg += ("\n")
+            msg += ("Is the last Trigger before the Onset Peak (peak_intensity)?" + "\n")
+            msg += ("-------------------------------------------------------------" + "\n")
+            msg += ("  " + str(self.triggers_before_peak_intensity) + "\n")
+            msg += ("  Time difference (hrs) (last trigger - onset peak time):" + "\n")
+            msg += ("  " + str(self.time_difference_triggers_peak_intensity) + "\n")
+
+
+        if self.inputs_before_peak_intensity == []:
+            msg += ("Inputer & Onset Peak: No inputs used by model." + "\n")
+        else:
+            msg += ("\n")
+            msg += ("Is the last Input before the Onset Peak (peak_intensity)?" + "\n")
+            msg += ("-------------------------------------------------------------" + "\n")
+            msg += ("  " + str(self.inputs_before_peak_intensity) + "\n")
+            msg += ("  Time difference (hrs) (last input - onset peak time):" + "\n")
+            msg += ("  " + str(self.time_difference_inputs_peak_intensity) + "\n")
+
+
+        if self.triggers_before_peak_intensity_max == []:
+            msg += ("Triggers & Max Flux: No triggers used by model." + "\n")
+        else:
+            msg += ("\n")
+            msg += ("Is the last Trigger before the Max Flux (peak_intensity_max)?" + "\n")
+            msg += ("**If no SEP event, Max Flux is the maximum value in the observation period." + "\n")
+            msg += ("-------------------------------------------------------------" + "\n")
+            msg += ("  " + str(self.triggers_before_peak_intensity_max) + "\n")
+            msg += ("  Time difference (hrs) (last trigger - max flux time):" + "\n")
+            msg += ("  " + str(self.time_difference_triggers_peak_intensity_max) + "\n")
+
+
+        if self.inputs_before_peak_intensity_max == []:
+            msg += ("Inputs & Max Flux: No inputs used by model." + "\n")
+        else:
+            msg += ("\n")
+            msg += ("Is the last Input before the Max Flux (peak_intensity_max)?" + "\n")
+            msg += ("**If no SEP event, Max Flux is the maximum value in the observation period." + "\n")
+            msg += ("-------------------------------------------------------------" + "\n")
+            msg += ("  " + str(self.inputs_before_peak_intensity_max) + "\n")
+            msg += ("  Time difference (hrs) (last input - max flux time):" + "\n")
+            msg += ("  " + str(self.time_difference_inputs_peak_intensity_max) + "\n")
+
+
+        if self.triggers_before_sep_end == []:
+            msg += ("Trigger & SEP End Time: No triggers used by model." + "\n")
+        else:
+            msg += ("\n")
+            msg += ("Is the last Trigger before the SEP End Time?" + "\n")
+            msg += ("-------------------------------------------------------------" + "\n")
+            for thresh in self.thresholds:
+                thresh_key = objh.threshold_to_key(thresh)
+                msg += (" Threshold: " + str(thresh) + "\n")
+
+                msg += ("  " + str(self.triggers_before_sep_end[thresh_key]) + "\n")
+                msg += ("  Time difference (hrs) (last trigger - SEP end time):" + "\n")
+                msg += ("  " +
+                str(self.time_difference_triggers_sep_end[thresh_key]) + "\n")
+
+
+        if self.inputs_before_sep_end == []:
+            msg += ("Input & SEP End Time: No inputs used by model." + "\n")
+        else:
+            msg += ("\n")
+            msg += ("Is the last Input before the SEP End Time?" + "\n")
+            msg += ("-------------------------------------------------------------" + "\n")
+            for thresh in self.thresholds:
+                thresh_key = objh.threshold_to_key(thresh)
+                msg += (" Threshold: " + str(thresh) + "\n")
+
+                msg += ("  " + str(self.inputs_before_sep_end[thresh_key]) + "\n")
+                msg += ("  Time difference (hrs) (last input - SEP end time):" + "\n")
+                msg += ("  " +
+                str(self.time_difference_inputs_sep_end[thresh_key]) + "\n")
+
+        msg += ("\n")
+        msg += ("Does the Prediction Window overlap at all with an observed SEP event?" + "\n")
+        msg += ("-------------------------------------------------------------" + "\n")
+        if self.prediction_window_sep_overlap == []:
+            msg += ("  No SEP events." + "\n")
+        else:
+            for thresh in self.thresholds:
+                thresh_key = objh.threshold_to_key(thresh)
+                msg += (" Threshold: " + str(thresh) + "\n")
+
+                msg += ("  " + str(self.prediction_window_sep_overlap[thresh_key]) + "\n")
+
+        msg += ("\n")
+        msg += ("Is there an ongoing observed SEP event at start of prediction window?" + "\n")
+        msg += ("-------------------------------------------------------------" + "\n")
+        if self.observed_ongoing_events == []:
+            msg += ("  No SEP events." + "\n")
+        else:
+            for thresh in self.thresholds:
+                thresh_key = objh.threshold_to_key(thresh)
+                msg += (" Threshold: " + str(thresh) + "\n")
+
+                msg += ("  " + str(self.observed_ongoing_events[thresh_key]) + "\n")
+                
+        msg += ("================== END REPORT ===============================" + "\n")
+
+        return msg
 
 
 
@@ -2089,12 +2305,12 @@ class SPHINX:
         
         #Thresholds must match
         if pred_threshold != obs_threshold:
-            print("No Matching Threshold!!!")
-            print(self.prediction.short_name)
-            print(self.prediction.source)
-            print(self.energy_channel)
-            print("Predicted: " + str(pred_threshold))
-            print("Observed: " + str(obs_threshold))
+            logger.warning("No Matching Threshold!!!")
+            logger.warning(self.prediction.short_name)
+            logger.warning(self.prediction.source)
+            logger.warning(self.energy_channel)
+            logger.warning("Predicted: " + str(pred_threshold))
+            logger.warning("Observed: " + str(obs_threshold))
             predicted = None
             match_status = "No Matching Threshold"
             return predicted, match_status
@@ -2119,18 +2335,6 @@ class SPHINX:
                         tk = cfg.mm_obs_tk
                         
         return tk
-
-
-#    def mismatch_thresh_key(self, obs_thresh_key):
-#        """ Check if observed threshold should be matched up with a
-#            different predicted threshold. Make a new thresh key.
-#            
-#        """
-#        if cfg.do_mismatch and cfg.mm_model in self.prediction.short_name:
-#            if obs_thresh_key == cfg.mm_obs_tk:
-#                tk = cfg.mm_pred_tk
-#                        
-#        return tk
 
 
     def return_predicted_probability(self, thresh_key):
