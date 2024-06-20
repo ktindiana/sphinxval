@@ -9,8 +9,8 @@ import zulu
 from . import units_handler as vunits #validation units
 import os
 import sys
+import logging
 
-__version__ = "0.1"
 __author__ = "Katie Whitman"
 __maintainer__ = "Katie Whitman"
 __email__ = "kathryn.whitman@nasa.gov"
@@ -19,6 +19,9 @@ __email__ = "kathryn.whitman@nasa.gov"
 #   version of validation_json_handler.py, starting with
 #   only the subroutines needed for the approach in SPHINX.
 
+
+#Create logger
+logger = logging.getLogger(__name__)
 
 """ validation_jason_handler.py
     provides all of the information needed to read the JSON
@@ -39,7 +42,7 @@ def read_in_json(filename, verbose=False):
         if info == {}:
             return info
         if verbose:
-            print("read in " + filename)
+            logger.info("read in " + filename)
         info.update({'filename':filename})
          
     return info
@@ -89,7 +92,7 @@ def zulu_to_time(zt):
         return 0
         
     if 'Z' not in zt or 'T' not in zt:
-        print(f"WARNING: zulu_to_time: Time '{zt}' not in proper format. Returning None.")
+        logger.warning(f"Time '{zt}' not in proper format. Returning None.")
         return None
     
     strzt = zt.split('T')
@@ -125,7 +128,7 @@ def write_json(template, filename):
     if not os.path.isfile(filename):
         return False
 
-    print("Wrote SEP values to json file --> " + filename)
+    logger.info("Wrote SEP values to json file --> " + filename)
     return True
 
 
@@ -188,7 +191,7 @@ def read_json_list(json_files, verbose=False):
         if json_info == {}:
             continue
         if verbose:
-            print("read in " + json_fname)
+            logger.info("read in " + json_fname)
         json_info.update({'filename':json_fname})
         all_json.append(json_info)
     return all_json
@@ -302,20 +305,21 @@ def load_objects_from_json(data_list, model_list):
         for channel in all_energy_channels:
             key = objh.energy_channel_to_key(channel)
             obj = observation_object_from_json(json, channel)
-#            print("Trying " + obj.source)
-#            print("Observation window start: " + str(obj.observation_window_start))
+            
+            logger.debug("Trying " + obj.source)
+            logger.debug("Observation window start: " + str(obj.observation_window_start))
             #skip if energy block wasn't present in json
             if obj.observation_window_start != None:
                 obs_objs[key].append(obj)
- #               print("Adding " + obj.source + " to dictionary under "
- #                   "key " + key)
+                logger.debug("Adding " + obj.source + " to dictionary under "
+                    "key " + key)
         
             if cfg.do_mismatch:
                 if key == cfg.mm_obs_ek:
                     obj = observation_object_from_json(json, channel)
                     if obj.observation_window_start != None:
                         obs_objs[cfg.mm_energy_key].append(obj)
-#                        print("Adding " + obj.source + " to dictionary under key " + cfg.mm_energy_key)
+                        logger.debug("Adding " + obj.source + " to dictionary under key " + cfg.mm_energy_key)
             
 
     #Load json objects
@@ -325,12 +329,12 @@ def load_objects_from_json(data_list, model_list):
         for channel in all_energy_channels:
             key = objh.energy_channel_to_key(channel)
             obj = forecast_object_from_json(json, channel)
-#            print("Trying " + obj.source)
-#            print("Prediction window start: " + str(obj.prediction_window_start))
+            logger.debug("Trying " + obj.source)
+            logger.debug("Prediction window start: " + str(obj.prediction_window_start))
             #skip if energy block wasn't present in json
             if obj.prediction_window_start != None:
                 model_objs[key].append(obj)
-#                print("Adding " + obj.source + " to dictionary under key " + key)
+                logger.debug("Adding " + obj.source + " to dictionary under key " + key)
                 obj.index = fcast_index
                 fcast_index += 1 #each forecast object gets a unique index value for tracking
             
@@ -385,15 +389,15 @@ def check_forecast_json(full_json, energy_channel):
     is_good = True
     dataD = {}
     if full_json == {} or full_json == None:
-#        print("check_forecast_json: Empty forecast json for  "
-#            + full_json['filename'] +
-#            ". Initializing all to None.")
+        logger.debug("Empty forecast json for  "
+            + full_json['filename'] +
+            ". Initializing all to None.")
         dataD = {}
         is_good = False
     
     if 'sep_forecast_submission' not in full_json:
-#        print("check_forecast_json: Check that you have passed a "
-#            "forecast json? Initializing all to None.")
+        logger.debug("Check that you have passed a "
+            "forecast json? Initializing all to None.")
         dataD = {}
         is_good = False
         
@@ -403,18 +407,18 @@ def check_forecast_json(full_json, energy_channel):
             jsonD = full_json['sep_forecast_submission']['forecasts']
             dataD = extract_block(jsonD, energy_channel)
             if dataD == None:
-#                print("check_forecast_json: Requested energy "
-#                    "channel " + str(energy_channel) +
-#                    "not found in forecast json"
-#                    + full_json['filename'] +
-#                    ". Initializing all to None.")
+                logger.debug("Requested energy "
+                    "channel " + str(energy_channel) +
+                    "not found in forecast json"
+                    + full_json['filename'] +
+                    ". Initializing all to None.")
                 dataD = {}
                 
         else:
-#            print("check_forecast_json: forecast block not "
-#                    "found in forecast json"
-#                    + full_json['filename'] +
-#                    ". Initializing all to None.")
+            logger.debug("forecast block not "
+                    "found in forecast json"
+                    + full_json['filename'] +
+                    ". Initializing all to None.")
             dataD = {}
             
     return is_good, dataD
@@ -438,17 +442,17 @@ def check_observation_json(full_json, energy_channel):
     is_good = True
     dataD = {}
     if full_json == {} or full_json == None:
-#        print("check_observation_json: Empty observation json "
-#                + full_json['filename'] +
-#                ". Initializing all to None.")
+        logger.debug("Empty observation json "
+                + full_json['filename'] +
+                ". Initializing all to None.")
         dataD = {}
         is_good = False
     
     if 'sep_observation_submission' not in full_json:
-#        print("check_observation_json: Check that you have passed an "
-#            "observation json? "
-#            + full_json['filename'] +
-#            ". Initializing all to None.")
+        logger.debug("Check that you have passed an "
+            "observation json? "
+            + full_json['filename'] +
+            ". Initializing all to None.")
         dataD = {}
         is_good = False
         
@@ -458,17 +462,17 @@ def check_observation_json(full_json, energy_channel):
             jsonD = full_json['sep_observation_submission']['observations']
             dataD = extract_block(jsonD, energy_channel)
             if dataD == None:
-#                print("check_observation_json: Requested energy "
-#                    "channel " + str(energy_channel) +
-#                    "not found in observation json "
-#                    + full_json['filename'] +
-#                    ". Initializing all to None.")
+                logger.debug("Requested energy "
+                    "channel " + str(energy_channel) +
+                    "not found in observation json "
+                    + full_json['filename'] +
+                    ". Initializing all to None.")
                 dataD = {}
         else:
-#            print("check_observation_json: observation block not "
-#                    "found in observation json"
-#                    + full_json['filename'] +
-#                    ". Initializing all to None.")
+            logger.debug("observation block not "
+                    "found in observation json"
+                    + full_json['filename'] +
+                    ". Initializing all to None.")
             dataD = {}
             
     return is_good, dataD
@@ -669,7 +673,7 @@ def dict_to_flare(flareD):
                 noaa_region = int(noaa_region)
             except ValueError as e:
                 # Ignore invalid regions (e.g. "") with warning
-                print("Warning: invalid noaa_region in flare trigger")
+                logger.warning("Invalid noaa_region in flare trigger")
        
     return last_data_time, start_time, peak_time, end_time, location,\
         lat, lon, intensity, integrated_intensity, noaa_region
@@ -1289,5 +1293,5 @@ def generate_profile_dict(top):
                 profname_dict.update({file: os.path.join(path,file)})
     
     bytes = sys.getsizeof(profname_dict)/1024**2 #MB
-    print("generate_profile_dict: Filesize of generated dictionary: " + str(bytes) + " MB")
+    logger.info("Filesize of generated dictionary: " + str(bytes) + " MB")
     return profname_dict

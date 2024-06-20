@@ -3,8 +3,8 @@ from . import units_handler as vunits
 import sys
 import datetime
 from astropy import units as u
+import logging
 
-__version__ = "0.1"
 __author__ = "Katie Whitman"
 __maintainer__ = "Katie Whitman"
 __email__ = "kathryn.whitman@nasa.gov"
@@ -13,6 +13,9 @@ __email__ = "kathryn.whitman@nasa.gov"
     with class objects defined in utils/classes.py.
     
 """
+
+#Create logger
+logger = logging.getLogger(__name__)
 
 def build_model_list(all_model):
     """ Identify all of the models represented in the list from the entry in
@@ -38,8 +41,8 @@ def build_model_list(all_model):
             if name not in model_names:
                 model_names.append(name)
 
-    print("build_model_list: All models identified are: ")
-    print(model_names)
+    logger.info("All models identified are: ")
+    logger.info(model_names)
     
     return model_names
 

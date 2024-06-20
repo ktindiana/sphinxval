@@ -3,10 +3,10 @@ import sys
 from astropy import units as u
 import math
 
-__version__ = "0.1" #2022-02-14
 __author__ = "Katie Whitman"
 __maintainer__ = "Katie Whitman"
 __email__ = "kathryn.whitman@nasa.gov"
+
 
 def about_units_handler():
     """ units_handler.py handles the units of all the validated

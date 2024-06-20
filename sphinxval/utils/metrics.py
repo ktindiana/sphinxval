@@ -10,8 +10,8 @@ import math
 import statistics
 import sklearn.metrics as skl
 import sys
+import logging
 
-__version__ = "0.7"
 __author__ = "Phil Quinn"
 __maintainer__ = "Kathryn Whitman"
 __email__ = "kathryn.whitman@nasa.gov"
@@ -28,9 +28,10 @@ __email__ = "kathryn.whitman@nasa.gov"
 
 '''Contains functions for calculating various metrics used
     for comparing modeled forecast results to observations.
-    Written on 2020-07-17.
-    Updated 2022-02-07.
 '''
+
+#Create logger
+logger = logging.getLogger(__name__)
 
 def switch_error_func(metric, y_true, y_pred):
     """
@@ -80,6 +81,7 @@ def switch_error_func(metric, y_true, y_pred):
         }.get(metric)
 
     if not callable(func):
+        logger.error(str(metric) + " is an invalid metric.")
         raise ValueError(str(metric) + " is an invalid metric.")
 
     error = func(y_true, y_pred)
@@ -217,6 +219,8 @@ def calc_LE(y_true, y_pred):
     y_pred = check_array(y_pred, force_all_finite=True, ensure_2d=False)
 
     if (y_true < 0).any() or (y_pred < 0).any():
+        logger.error("Logarithmic Error cannot be used when "
+                         "targets contain negative values.")
         raise ValueError("Logarithmic Error cannot be used when "
                          "targets contain negative values.")
 
@@ -258,6 +262,8 @@ def calc_ALE(y_true, y_pred):
     y_pred = check_array(y_pred, force_all_finite=True, ensure_2d=False)
 
     if (y_true < 0).any() or (y_pred < 0).any():
+        logger.error("Absolute Logarithmic Error cannot be used when "
+                         "targets contain negative values.")
         raise ValueError("Absolute Logarithmic Error cannot be used when "
                          "targets contain negative values.")
 
@@ -336,6 +342,8 @@ def calc_SLE(y_true, y_pred):
     y_pred = check_array(y_pred, force_all_finite=True, ensure_2d=False)
 
     if (y_true < 0).any() or (y_pred < 0).any():
+        logger.error("Squared Logarithmic Error cannot be used when "
+                         "targets contain negative values.")
         raise ValueError("Squared Logarithmic Error cannot be used when "
                          "targets contain negative values.")
 
@@ -421,6 +429,8 @@ def calc_RMSLE(y_true, y_pred):
     y_pred = check_array(y_pred, force_all_finite=True, ensure_2d=False)
 
     if (y_true < 0).any() or (y_pred < 0).any():
+        logger.error("Squared Logarithmic Error cannot be used when "
+                         "targets contain negative values.")
         raise ValueError("Squared Logarithmic Error cannot be used when "
                          "targets contain negative values.")
 
@@ -466,6 +476,8 @@ def calc_PE(y_true, y_pred):
     y_pred = check_array(y_pred, force_all_finite=True, ensure_2d=False)
 
     if (y_true == 0).any():
+        logger.error("Percent Error cannot be used when "
+                         "targets contain values of zero.")
         raise ValueError("Percent Error cannot be used when "
                          "targets contain values of zero.")
 
@@ -507,6 +519,8 @@ def calc_APE(y_true, y_pred):
     y_pred = check_array(y_pred, force_all_finite=True, ensure_2d=False)
 
     if (y_true == 0).any():
+        logger.error("Absolute Percent Error cannot be used when "
+                         "targets contain values of zero.")
         raise ValueError("Absolute Percent Error cannot be used when "
                          "targets contain values of zero.")
 
@@ -630,6 +644,8 @@ def calc_SPE(y_true, y_pred):
     y_pred = check_array(y_pred, force_all_finite=True, ensure_2d=False)
 
     if (y_true + y_pred == 0).any():
+        logger.error("Symmetric Percent Error cannot be used when "
+                         "predicted targets and true targets sum to zero.")
         raise ValueError("Symmetric Percent Error cannot be used when "
                          "predicted targets and true targets sum to zero.")
 
@@ -671,6 +687,8 @@ def calc_SAPE(y_true, y_pred):
     y_pred = check_array(y_pred, force_all_finite=True, ensure_2d=False)
 
     if (np.abs(y_true) + np.abs(y_pred) == 0).any():
+        logger.error("Symmetric Absolute Percent Error cannot be used when "
+                         "predicted targets and true targets sum to zero.")
         raise ValueError("Symmetric Absolute Percent Error cannot be used when "
                          "predicted targets and true targets sum to zero.")
 
@@ -905,6 +923,8 @@ def calc_MAR(y_true, y_pred):
     y_pred = check_array(y_pred, force_all_finite=True, ensure_2d=False)
 
     if (y_true < 0).any() or (y_pred < 0).any():
+        logger.error("Mean Accuracy Ratio cannot be used when "
+                         "targets contain negative values.")
         raise ValueError("Mean Accuracy Ratio cannot be used when "
                          "targets contain negative values.")
 
@@ -949,6 +969,8 @@ def calc_MdSA(y_true, y_pred):
     y_pred = check_array(y_pred, force_all_finite=True, ensure_2d=False)
 
     if (y_true < 0).any() or (y_pred < 0).any():
+        logger.error("Median symmetric accuracy cannot be used when "
+                         "targets contain negative values.")
         raise ValueError("Median symmetric accuracy cannot be used when "
                          "targets contain negative values.")
 
@@ -1110,6 +1132,7 @@ def arr_to_df(arr, keys):
     """
 
     if len(arr) != len(keys):
+        logger.error("Input arrays must be the same length. arr (column values) and keys (column names) must match.")
         sys.exit("metrics.py: arr_to_df: input arrays must be the same length. arr (column values) and keys (column names) must match.")
 
     dict = {}
@@ -1323,6 +1346,7 @@ def remove_none(obs, model):
     '''
     #Error checking
     if len(obs) != len(model):
+        logger.error('Both input arrays must be the same length! Exiting.')
         sys.exit('remove_none: Both input arrays must be the same length! '
                 'Exiting.')
     #Clean None values from observations and remove correponding entries in
@@ -1405,6 +1429,7 @@ def remove_zero(obs, model):
     '''
     #Error checking
     if len(obs) != len(model):
+        logger.error('Both input arrays must be the same length! Exiting.')
         sys.exit('remove_zero: Both input arrays must be the same length! '
                 'Exiting.')
     #Clean None values from observations and remove correponding entries in

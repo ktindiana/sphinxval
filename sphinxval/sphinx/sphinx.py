@@ -2,16 +2,36 @@ from ..utils import validation_json_handler as vjson
 from ..utils import config as cfg
 from ..utils import object_handler as objh
 from ..utils import validation as valid
-from ..utils import tools
 from ..utils import match
 from ..utils import resume
 from ..utils import report
+from ..log import QueueListenerHandler
 import datetime
 import pickle
 import logging
 import sys
 import os
+import pathlib
+import json
 
+logging.getLogger("MARKDOWN").setLevel(logging.WARNING)
+logging.getLogger("matplotlib").setLevel(logging.WARNING)
+
+#Create logger
+logger = logging.getLogger(__name__)
+
+
+def setup_logging():
+    config_file = pathlib.Path('sphinxval/log/log_config.json')
+    with open(config_file) as f_in:
+        config = json.load(f_in)
+    logging.config.dictConfig(config)
+
+#    "queue_listener":{
+#        "class": "QueueListenerHandler",
+#        "handlers": ["cfg://handlers.user_file"],
+#        "respect_handler_level": true
+#        }
     
 def validate(data_list, model_list, top=None, DoResume=False, df_pkl=""):
     """ Validate ingests a list of observations (data_list) and a
@@ -44,7 +64,8 @@ def validate(data_list, model_list, top=None, DoResume=False, df_pkl=""):
             None
             
     """
-    print("sphinx: Starting SPHINX Validation and reading in files: " + str(datetime.datetime.now()))
+    setup_logging()
+    logger.info("Starting SPHINX Validation and reading in files.")
 
 
 ###RESUME WILL DETERMINE WHICH OBJECTS CONTINUE ON - inside
@@ -55,7 +76,7 @@ def validate(data_list, model_list, top=None, DoResume=False, df_pkl=""):
     #obs_objs and model_objs organized by energy channel
     all_energy_channels, obs_objs, model_objs =\
         vjson.load_objects_from_json(data_list, model_list)
-    print("sphinx: Loaded all JSON files into Objects: " + str(datetime.datetime.now()))
+    logger.info("Loaded all JSON files into Objects.")
 
     #Dictionary containing the location of all the .txt files
     #in the subdirectories below top.
@@ -63,12 +84,11 @@ def validate(data_list, model_list, top=None, DoResume=False, df_pkl=""):
     profname_dict = None
     if top != None:
         profname_dict = vjson.generate_profile_dict(top)
-        print("sphinx: Generated dictionary of all txt files in " + top \
-            + ": " + str(datetime.datetime.now()))
+        logger.info("Generated dictionary of all txt files in " + top)
 
     #Identify the unique models represented in the forecasts
     model_names = objh.build_model_list(model_objs)
-    print("sphinx: Built model list: " + str(datetime.datetime.now()))
+    logger.info("Built model list.")
     
     #### RESUME ####
     #If resuming, check for last prediction window times for each
@@ -78,12 +98,12 @@ def validate(data_list, model_list, top=None, DoResume=False, df_pkl=""):
     #by SPHINX and was input as a starting point by the user.
     r_df = None
     if DoResume:
-        print("sphinx: Resume selected. Reading in previous dataframe: "
-            + df_pkl + " at time " + str(datetime.datetime.now()))
+        logger.info("Resume selected. Reading in previous dataframe: "
+            + df_pkl)
         r_df = resume.read_in_df(df_pkl)
         model_objs = resume.check_fcast_for_resume(r_df, model_objs)
-        print("sphinx: Completed reading in previous dataframe and checking for new forecasts only: "
-            + df_pkl + " at time " + str(datetime.datetime.now()))
+        logger.info("Completed reading in previous dataframe and checking for new forecasts only: "
+            + df_pkl)
     ################
     
     
@@ -92,14 +112,14 @@ def validate(data_list, model_list, top=None, DoResume=False, df_pkl=""):
     #a dictionary organized by model, energy channel, and threshold with the
     #unique SEP events that were present inside of the forecast prediction
     #windows (observed_sep_events).
-    print("sphinx: Starting matching process: " + str(datetime.datetime.now()))
+    logger.info("Starting matching process.")
     matched_sphinx, all_observed_thresholds, observed_sep_events =\
         match.match_all_forecasts(all_energy_channels, model_names,
             obs_objs, model_objs)
-    print("sphinx: Completed matching process and starting intuitive validation: " + str(datetime.datetime.now()))
+    logger.info("Completed matching process and starting intuitive validation.")
 
 
     #Perform intuitive validation
     valid.intuitive_validation(matched_sphinx, model_names,
         all_energy_channels, all_observed_thresholds, observed_sep_events, profname_dict, DoResume, r_df)
-    print("sphinx: Completed validation: " + str(datetime.datetime.now()))
+    logger.info("Completed validation.")

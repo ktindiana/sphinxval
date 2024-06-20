@@ -6,8 +6,8 @@ import datetime
 import os
 import csv
 import sys
+import logging
 
-__version__ = "0.6"
 __author__ = "Phil Quinn, Kathryn Whitman"
 __maintainer__ = "Kathryn Whitman"
 __email__ = "kwhitman@nasa.gov"
@@ -35,18 +35,23 @@ __email__ = "kwhitman@nasa.gov"
 #2022-02-07, changes in 0.6: Adding RMSE and RMSLE for time profile
 #   assessment
 
+#Create logger
+logger = logging.getLogger(__name__)
+
 def read_generic_time_profile(filename):
     '''Reads in any comma-separated time profile values.
         The first column must have the datetime in
         YYYY-MM-DD HH:MM:SS format.
         The remaining columns must have values with time.
     '''
-    if not os.path.exists(filename):
-        sys.exit("read_generic_time_profile: Cannot read file!! Exiting. \"" + filename +"\"")
-
-    print('read_generic_time_profile: Reading in file ' + filename)
     dates = []
     profiles = []
+    if not os.path.exists(filename):
+        logger.warning("Cannot read file!! \"" + filename +"\"")
+        return dates, profiles
+
+    logger.info('Reading in file ' + filename)
+    
     with open(filename) as csvfile:
         readCSV = csv.reader(csvfile, delimiter=',')
         #Define arrays that hold dates
@@ -89,7 +94,7 @@ def read_single_time_profile(filename):
     dates = []
     fluxes = []
     if not os.path.exists(filename):
-        print("read_time_profile: Cannot read file!! Exiting. \"" + filename +"\"")
+        logger.warning("Cannot read file!! \"" + filename +"\"")
         return dates, fluxes
 
     with open(filename) as ofile:
@@ -126,10 +131,10 @@ def read_time_profile(filename):
     dates = []
     fluxes = []
     if not os.path.exists(filename):
-        print("read_time_profile: Cannot read file!! Exiting. \"" + filename +"\"")
+        logger.warning("Cannot read file!! \"" + filename +"\"")
         return dates, channels, fluxes
 
-    print('read_time_profile: Reading in file ' + filename)
+    logger.info('Reading in file ' + filename)
     Nchan = -1
     with open(filename) as csvfile:
         readCSV = csv.reader(csvfile, delimiter=',')
@@ -148,7 +153,7 @@ def read_time_profile(filename):
 
             #Check that the correct channels were identified
             if Nchan == -1 or Nchan == 0:
-                print("read_time_profile: Could not find header specifying "
+                logger.warning("Could not find header specifying "
                         "integral flux channels.")
                 return dates, channels, fluxes
 
@@ -200,6 +205,7 @@ def interp_timeseries(x_true, y_true, scale_true, x_pred):
     elif scale_true == "linear":
         pass
     else:
+        logger.error("scale_true must be 'linear' or 'log'.")
         raise ValueError("scale_true must be 'linear' or 'log'.")
     
     ynew = []

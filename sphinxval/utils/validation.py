@@ -17,9 +17,8 @@ import scipy
 from pandas.api.types import is_datetime64_any_dtype as is_datetime
 import sklearn.metrics as skl
 import os.path
+import logging
 
-
-__version__ = "0.1"
 __author__ = "Katie Whitman"
 __maintainer__ = "Katie Whitman"
 __email__ = "kathryn.whitman@nasa.gov"
@@ -28,6 +27,9 @@ __email__ = "kathryn.whitman@nasa.gov"
     they have been matched to observations.
     
 """
+
+#Create logger
+logger = logging.getLogger(__name__)
 
 ######### DATAFRAMES CONTAINING OBSERVATIONS AND PREDICTIONS ######
 
@@ -261,7 +263,7 @@ def fill_dict_row(sphinx, dict, energy_key, thresh_key, profname_dict):
                     pred_time_profile = profname_dict[pred_time_profile]
                 except:
                     #sys.exit('fill_dict_row: Cannot locate time profile file ' + pred_time_profile)
-                    print('fill_dict_row: Cannot local time profile file ' + pred_time_profile)
+                    logger.warning('Cannot local time profile file ' + pred_time_profile)
                     pred_time_profile = None
                 
 
@@ -423,7 +425,7 @@ def prepare_outdirs():
 
 
 
-def write_df(df, name, log=True):
+def write_df(df, name, verbose=True):
     """Writes a pandas dataframe to the standard location in multiple formats
     """
     dataformats = (('pkl',  getattr(df, 'to_pickle'), {}),
@@ -431,8 +433,8 @@ def write_df(df, name, log=True):
     for ext, write_func, kwargs in dataformats:
         filepath = os.path.join(config.outpath, ext, name + '.' + ext)
         write_func(filepath, **kwargs)
-        if log:
-            print('Wrote', filepath)
+        if verbose:
+            logger.debug('Wrote ' + filepath)
 
 
 
@@ -448,7 +450,7 @@ def fill_df(matched_sphinx, model_names, all_energy_channels,
     #as appropriate
     for model in model_names:
         for ek in all_energy_channels:
-            print("---Model: " + model + ", Energy Channel: " + ek)
+            logger.info("---Model: " + model + ", Energy Channel: " + ek)
             for sphinx in matched_sphinx[model][ek]:
                 for tk in all_obs_thresholds[ek]:
                     fill_dict_row(sphinx, dict, ek, tk, profname_dict)
@@ -1854,7 +1856,7 @@ def peak_intensity_max_intuitive_metrics(df, dict, model, energy_key,
         if sub.empty:
             return
         
-        print("peak_intensity_max_intuitive_metrics: Model " + model +
+        logger.debug("Model " + model +
                 " did not explicitly "
                 "include a peak_intensity_max field. Comparing "
                 "peak_intensity to observed max flux.")
@@ -2028,7 +2030,7 @@ def max_flux_in_pred_win_metrics(df, dict, model, energy_key,
  
         peak_key = 'Predicted SEP Peak Intensity (Onset Peak)'
 
-        print("max_flux_in_pred_win: Model " + model + " did not explicitly "
+        logger.debug("Model " + model + " did not explicitly "
             "include a peak_intensity_max field. Comparing peak_intensity to "
             "observed max flux in the prediction window.")
 
@@ -2818,9 +2820,9 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
     model_names = sub['Model'].to_list()
     energy_chan = sub['Energy Channel Key'].to_list()
 
-    print("Extracted SEP start and end times")
-    print(obs_st)
-    print(obs_et)
+    logger.debug("Extracted SEP start and end times")
+    logger.debug(obs_st)
+    logger.debug(obs_et)
     
     sepE = []
     sepAE = []
@@ -2843,12 +2845,12 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
     figname = ""
     tpfigname = ""
     for i in range(len(obs_profs)):
-        print("Time profile of " + pred_profs[i] + " compared to observations.")
+        logger.info("Time profile of " + pred_profs[i] + " compared to observations.")
         all_obs_dates = []
         all_obs_flux = []
         #Read in and combine time profiles of observations inside
         #prediction window
-        print("======NAMES OF OBSERVED TIME PROFILE++++")
+        logger.info("======NAMES OF OBSERVED TIME PROFILE++++")
         obs_fnames = obs_profs[i].strip().split(",")
         for j in range(len(obs_fnames)):
             dt, flx = profile.read_single_time_profile(obs_fnames[j])
@@ -2880,7 +2882,7 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
             pred_dates)
         
         #Trim the time profiles to the observed start and end time
-        print("Trimming between " + str(obs_st[i]) + " and " + str(obs_et[i]))
+        logger.info("Trimming between " + str(obs_st[i]) + " and " + str(obs_et[i]))
         trim_pred_dates, trim_pred_flux = profile.trim_profile(obs_st[i],
                 obs_et[i], pred_dates, pred_flux)
         trim_obs_dates, trim_obs_flux = profile.trim_profile(obs_st[i],
@@ -3584,6 +3586,8 @@ def calculate_intuitive_metrics(df, model_names, all_energy_channels,
     for model in model_names:
         for ek in all_energy_channels:
             for tk in all_observed_thresholds[ek]:
+                logging.info("Calculating metrics for " + model + ", " + ek + ", " + tk)
+                
                 probability_intuitive_metrics(df, probability_dict,model,ek,tk,
                     validation_type)
                 point_intensity_intuitive_metrics(df, point_intensity_dict,
@@ -3616,8 +3620,7 @@ def calculate_intuitive_metrics(df, model_names, all_energy_channels,
                 last_data_to_issue_intuitive_metrics(df, last_data_to_issue_dict,model,ek,tk,
                     validation_type)
 
-
-    print("calculate_intuitive_validation: Completed calculating all metrics for " + validation_type + ": " + str(datetime.datetime.now()))
+    logger.info("Completed calculating all metrics.")
 
     prob_metrics_df = pd.DataFrame(probability_dict)
     point_intensity_metrics_df = pd.DataFrame(point_intensity_dict)
@@ -3672,7 +3675,7 @@ def calculate_intuitive_metrics(df, model_names, all_energy_channels,
     if not last_data_to_issue_metrics_df.empty:
         write_df(last_data_to_issue_metrics_df, "last_data_to_issue_time_metrics" + valtype)
 
-    print("calculate_intuitive_validation: Wrote out all metrics for " + validation_type + " to file: " + str(datetime.datetime.now()))
+    logger.info("Wrote out all metrics.")
 
 
 
@@ -3729,43 +3732,43 @@ def intuitive_validation(matched_sphinx, model_names, all_energy_channels,
     
     
     """
-    print("intuitive_validation: Beginning validation process: " + str(datetime.datetime.now()))
+    logger.info("Beginning validation process.")
     # Make sure the output directories exist
     prepare_outdirs()
     
     #For each model and predicted quantity, create arrays of paired up values
     #so can calculate metrics
-    print("intuitive_validation: Filling dataframe with information from matched sphinx objects: " + str(datetime.datetime.now()))
+    logger.info("Filling dataframe with information from matched sphinx objects.")
 
     df = fill_df(matched_sphinx, model_names, all_energy_channels,
             all_observed_thresholds, profname_dict, DoResume)
  
-    print("intuitive_validation: Completed filling dataframe (and possibly writing): " + str(datetime.datetime.now()))
+    logger.info("Completed filling dataframe (and possibly writing). ")
 
     ###RESUME WILL APPEND DF TO PREVIOUS DF
-    print("Resume boolean is " + str(DoResume))
+    logger.info("Resume boolean is " + str(DoResume))
     if DoResume:
-        print("intuitive_validation: Resuming from a previous run. Concatenating new dataframe and previous dataframe: " + str(datetime.datetime.now()))
+        logger.info("Resuming from a previous run. Concatenating new dataframe and previous dataframe. ")
  
         df = pd.concat([r_df, df], ignore_index=True)
 
-        print("intuitive_validation: Completed concatenation. Writing out to file: " + str(datetime.datetime.now()))
+        logger.info("Completed concatenation. Writing out to file.")
 
         write_df(df, "SPHINX_dataframe")
 
-        print("intuitive_validation: Completed writing SPHINX_dataframe to file: " + str(datetime.datetime.now()))
+        logger.info("Completed writing SPHINX_dataframe to file.")
 
         model_names = resume.identify_unique(df, 'Model')
         all_energy_channels = resume.identify_unique(df, 'Energy Channel Key')
         all_observed_thresholds = resume.identify_thresholds_per_energy_channel(df)
 
-    print("intuitive_validation: Calculating metrics from dataframe: " + str(datetime.datetime.now()))
+    logger.info("Calculating metrics from dataframe.")
  
  
     validation_type = ["All", "First", "Last", "Max", "Mean"]
     for type in validation_type:
-        print("Starting validation of " + type +" forecasts. " + str(datetime.datetime.now()))
+        logger.info("Starting validation of " + type +" forecasts.")
         calculate_intuitive_metrics(df, model_names, all_energy_channels,
                 all_observed_thresholds, type)
  
-    print("intuitive_validation: Validation process complete: " + str(datetime.datetime.now()))
+    logger.info("intuitive_validation: Validation process complete.")

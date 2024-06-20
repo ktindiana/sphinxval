@@ -2,8 +2,8 @@ import sys
 import datetime
 import pandas as pd
 import pickle
+import logging
 
-__version__ = "0.1"
 __author__ = "Katie Whitman"
 __maintainer__ = "Katie Whitman"
 __email__ = "kathryn.whitman@nasa.gov"
@@ -13,6 +13,8 @@ __email__ = "kathryn.whitman@nasa.gov"
     
 """
 
+#Create logger
+logger = logging.getLogger(__name__)
 
 def read_in_df(filename):
     """ Read in pickle file containing SPHINX dataframe.
@@ -102,12 +104,12 @@ def last_prediction_windows(df):
     df_pred_win = pd.DataFrame()
    
     for model in models:
-        #print(model)
+        logger.info(model)
         sub = df.loc[(df['Model'] == model)]
         if sub.empty: continue
                 
         for ek in energy_channels:
-            print(ek)
+            logger.info(ek)
             sub_p = sub.loc[(sub['Energy Channel Key'] == ek)]
             if sub_p.empty: continue
  
@@ -147,7 +149,7 @@ def check_fcast_for_resume(df, model_objs):
     """
 
     pw = last_prediction_windows(df)
-    print(pw)
+    logger.info(pw)
     select_objs = {}
 
     energy_keys = list(model_objs.keys())
@@ -168,9 +170,9 @@ def check_fcast_for_resume(df, model_objs):
             #If model not already present, then new information and
             #want to add
             if sub.empty:
-                #print("check_fcast_for_resume: Model " + model +
-                #    " not present in previous data frame. "
-                #    "Appending all forecasts.")
+                logger.debug("Model " + model +
+                    " not present in previous data frame. "
+                    "Appending all forecasts.")
                 select_objs[ek].append(obj)
                 continue
             
@@ -178,10 +180,10 @@ def check_fcast_for_resume(df, model_objs):
             #if energy channel not already present, then new information
             #and want to add
             if sub.empty:
-                #print("check_fcast_for_resume: Model " + model +
-                #    " and energy channel " + ek +
-                #    " not present in previous data frame. "
-                #    "Appending all forecasts.")
+                logger.debug("Model " + model +
+                    " and energy channel " + ek +
+                    " not present in previous data frame. "
+                    "Appending all forecasts.")
                 select_objs[ek].append(obj)
                 continue
             
@@ -190,13 +192,13 @@ def check_fcast_for_resume(df, model_objs):
             #window in the input dataframe for that model and energy
             #channel
             ref_pred_win_st = sub['Prediction Window Start'].iloc[0]
-            #print("check_fcast_for_resume: Model " + model +
-            #    " and energy channel " + ek + " last prediction "
-             #   "window start " + str(ref_pred_win_st))
-            #print("Current forecast prediction window "
-            #        + str(pred_win_st))
+            logger.debug("Model " + model +
+                " and energy channel " + ek + " last prediction "
+                "window start " + str(ref_pred_win_st))
+            logger.debug("Current forecast prediction window "
+                    + str(pred_win_st))
             if pred_win_st > ref_pred_win_st:
-                #print("Keeping forecast")
+                logger.debug("Keeping forecast")
                 select_objs[ek].append(obj)
     
     return select_objs
