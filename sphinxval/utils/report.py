@@ -11,6 +11,8 @@ import logging
 import markdown
 import PyPDF2 as pdf
 import glob
+import bs4
+import base64
 
 from . import config 
 
@@ -738,7 +740,30 @@ def get_plot_type(plot_string):
     else:
         plot_type = 'None'
     return plot_type
-    
+
+def convert_pdf_to_base64(pdf_path):
+    with open(pdf_path, 'rb') as pdf_file:
+        pdf_bytes = pdf_file.read()
+        base64_pdf = base64.b64encode(pdf_bytes).decode('utf-8')
+    return base64_pdf
+
+def embed_pdf_files_in_html(html_content, output_html_path):
+    soup = bs4.BeautifulSoup(html_content, 'html.parser')
+    embed_tags = soup.find_all('embed')
+
+    for embed in embed_tags:
+        embed_src = embed.get('src')
+        if embed_src.endswith('.pdf'):
+            pdf_path = embed_src
+
+            html_dir = os.path.dirname('reports/')
+            pdf_path = os.path.normpath(os.path.join(html_dir, pdf_path))
+            base64_pdf = convert_pdf_to_base64(pdf_path)
+            embed['src'] = 'data:application/pdf;base64,' + base64_pdf
+   
+    return str(soup) 
+
+ 
 # FINAL RESULT
 def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
     global output_dir__
@@ -1161,14 +1186,16 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
         
         for j in range(0, len(appendage_set_list)):
             html_text += add_tab(appendage_set_list[j].replace('_', ''), markdown_texts[appendage_set_list[j]], model)
-        
-        
+                
         validation_reference_text_html = add_collapsible_segment_start('Validation Reference Sheet', '')
         validation_reference_text_html += validation_reference_subtext_html
         validation_reference_text_html += add_collapsible_segment_end()
         #html_text += convert_markdown_to_html(validation_reference_text_html, model)
         html_filename = config.reportpath + '/' + model + '_report.html'
-        a = open(html_filename, 'w')
+
+        # CONVERT TO BASE64
+        html_text = embed_pdf_files_in_html(html_text, html_filename)
+        a = open(html_filename, 'w', encoding='utf-8')
         a.write(html_text)
         a.close()
         logger.info('    Complete')
