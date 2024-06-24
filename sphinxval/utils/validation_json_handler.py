@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
   
 """
 
-def read_in_json(filename, verbose=False):
+def read_in_json(filename, verbose=True):
     """Read in json file """
     with open(filename) as f:
         info = json.load(f)
@@ -42,7 +42,7 @@ def read_in_json(filename, verbose=False):
         if info == {}:
             return info
         if verbose:
-            logger.info("read in " + filename)
+            logger.debug("read in " + filename)
         info.update({'filename':filename})
          
     return info
@@ -182,7 +182,7 @@ def read_list_of_jsons(filename):
             json_files.append(json_fname)
     return json_files
 
-def read_json_list(json_files, verbose=False):
+def read_json_list(json_files, verbose=True):
     """Read all of the json files in to a list containing each json entry.
     """
     all_json = []
@@ -191,7 +191,7 @@ def read_json_list(json_files, verbose=False):
         if json_info == {}:
             continue
         if verbose:
-            logger.info("read in " + json_fname)
+            logger.debug("read in " + json_fname)
         json_info.update({'filename':json_fname})
         all_json.append(json_info)
     return all_json
