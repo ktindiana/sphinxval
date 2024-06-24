@@ -1,7 +1,7 @@
 from . import units_handler as vunits
 from . import object_handler as objh
 import os
-
+import git
 
 datapath = './data'
 modelpath = './model'
@@ -85,4 +85,9 @@ in_percent = ["Mean Percent Error (MPE)",
               "Median Symmetric Accuracy (MdSA)",
               "Mean Accuracy Ratio (MAR)"]
 
-
+# SAVES THE CURRENT GIT COMMIT SHA HASH FOR LATER USE
+git_repo = git.Repo(search_parent_directories=True)
+git_commit_sha = git_repo.head.object.hexsha
+git_is_dirty = git_repo.is_dirty()
+git_changed_files = [item.a_path for item in git_repo.index.diff(None)]
+git_untracked_files = git_repo.untracked_files
