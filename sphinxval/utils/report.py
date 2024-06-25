@@ -328,7 +328,7 @@ def append_plot_string_list(plot_string_list, plot_file_string_list, plot_string
         plot_file_string_list.append(plot_file_string)
     else:    
         if relative_path_plots__:
-            plot_string = os.path.relpath(plot_string_, 'reports/')
+            plot_string = os.path.relpath(plot_string_, config.reportpath.split('/')[-1] + '/')
             plot_file_string = os.path.relpath(plot_string_, '.')
         else:
             plot_string = os.path.abspath(plot_string_)
@@ -356,7 +356,7 @@ def build_plot_string_list(data, current_index):
         else:
             for i in range(0, len(time_profile_plot_string_list)):
                 if relative_path_plots__:
-                    plot_string = os.path.relpath(time_profile_plot_string_list[i], 'reports/')
+                    plot_string = os.path.relpath(time_profile_plot_string_list[i], config.reportpath.split('/')[-1] + '/')
                     plot_file_string = os.path.relpath(time_profile_plot_string_list[i], '.')
                 else:
                     plot_string = os.path.abspath(time_profile_plot_string_list[i])
@@ -756,7 +756,7 @@ def embed_pdf_files_in_html(html_content, output_html_path):
         if embed_src.endswith('.pdf'):
             pdf_path = embed_src
 
-            html_dir = os.path.dirname('reports/')
+            html_dir = os.path.dirname(config.reportpath)
             pdf_path = os.path.normpath(os.path.join(html_dir, pdf_path))
             base64_pdf = convert_pdf_to_base64(pdf_path)
             embed['src'] = 'data:application/pdf;base64,' + base64_pdf
