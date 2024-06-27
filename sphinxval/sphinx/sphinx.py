@@ -22,6 +22,10 @@ logger = logging.getLogger(__name__)
 
 
 def setup_logging():
+    # Create the logs/ directory if it does not yet exist
+    if not os.path.exists(cfg.logpath):
+        os.mkdir(cfg.logpath)
+
     config_file = pathlib.Path('sphinxval/log/log_config.json')
     with open(config_file) as f_in:
         config = json.load(f_in)

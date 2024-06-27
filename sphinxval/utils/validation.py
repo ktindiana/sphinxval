@@ -418,12 +418,10 @@ def prepare_outdirs():
     for datafmt in ('pkl', 'csv', 'plots'):
         outdir = os.path.join(config.outpath, datafmt)
         if not os.path.isdir(outdir):
-            os.mkdir(outdir)
-    
+            os.mkdir(outdir) 
+
     if not os.path.isdir(config.reportpath):
         os.mkdir(config.reportpath)
-
-
 
 def write_df(df, name, verbose=True):
     """Writes a pandas dataframe to the standard location in multiple formats
