@@ -8,6 +8,7 @@ modelpath = './model'
 outpath = './output'
 referencepath = './reference'
 reportpath = './reports'
+logpath = './logs'
 
 #Advanced Warning Time
 awt_cut = 96

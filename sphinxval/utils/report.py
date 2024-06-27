@@ -756,7 +756,7 @@ def embed_pdf_files_in_html(html_content, output_html_path):
         if embed_src.endswith('.pdf'):
             pdf_path = embed_src
 
-            html_dir = os.path.dirname(config.reportpath)
+            html_dir = os.path.abspath(config.reportpath)
             pdf_path = os.path.normpath(os.path.join(html_dir, pdf_path))
             base64_pdf = convert_pdf_to_base64(pdf_path)
             embed['src'] = 'data:application/pdf;base64,' + base64_pdf
