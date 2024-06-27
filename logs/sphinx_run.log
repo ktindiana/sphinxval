@@ -1,13 +1,13 @@
-2024-06-27 15:08:13 - [INFO] sphinx.validate: Starting SPHINX Validation and reading in files.
-2024-06-27 15:08:13 - [INFO] sphinx.validate: Loaded all JSON files into Objects.
-2024-06-27 15:08:13 - [INFO] object_handler.build_model_list: All models identified are: 
-2024-06-27 15:08:13 - [INFO] object_handler.build_model_list: ['MagPy_SHARP_HMI_CEA', 'SEPMOD']
-2024-06-27 15:08:13 - [INFO] sphinx.validate: Built model list.
-2024-06-27 15:08:13 - [INFO] sphinx.validate: Starting matching process.
-2024-06-27 15:08:13 - [INFO] match.match_all_forecasts: Compiling all observations into a dataframe.
-2024-06-27 15:08:13 - [INFO] match.match_all_forecasts: Completed dataframe, identifying all thresholds applied to observed energy channels.
-2024-06-27 15:08:13 - [INFO] match.match_all_forecasts: Starting matching process. Setting up dictionary for observed SEP events to go into a list for each model.
-2024-06-27 15:08:13 - [INFO] match.match_all_forecasts: 
+2024-06-27 15:26:06 - [INFO] sphinx.validate: Starting SPHINX Validation and reading in files.
+2024-06-27 15:26:06 - [INFO] sphinx.validate: Loaded all JSON files into Objects.
+2024-06-27 15:26:06 - [INFO] object_handler.build_model_list: All models identified are: 
+2024-06-27 15:26:06 - [INFO] object_handler.build_model_list: ['MagPy_SHARP_HMI_CEA', 'SEPMOD']
+2024-06-27 15:26:06 - [INFO] sphinx.validate: Built model list.
+2024-06-27 15:26:06 - [INFO] sphinx.validate: Starting matching process.
+2024-06-27 15:26:06 - [INFO] match.match_all_forecasts: Compiling all observations into a dataframe.
+2024-06-27 15:26:06 - [INFO] match.match_all_forecasts: Completed dataframe, identifying all thresholds applied to observed energy channels.
+2024-06-27 15:26:06 - [INFO] match.match_all_forecasts: Starting matching process. Setting up dictionary for observed SEP events to go into a list for each model.
+2024-06-27 15:26:06 - [INFO] match.match_all_forecasts: 
 =================== Matching Report =========================
   Model: MagPy_SHARP_HMI_CEA
   Original prediction source: ./model/unittest/MAGPY/MagPy-HMI-SHARP-Vector.20110306T2100.20110306T2100.json
@@ -108,7 +108,7 @@ Is there an ongoing observed SEP event at start of prediction window?
   [None, False]
 ================== END REPORT ===============================
 
-2024-06-27 15:08:13 - [INFO] match.match_all_forecasts: 
+2024-06-27 15:26:06 - [INFO] match.match_all_forecasts: 
 =================== Matching Report =========================
   Model: SEPMOD
   Original prediction source: ./model/unittest/SEPMOD/SEPMOD_integral.2011-03-07T003000Z.json
@@ -209,7 +209,7 @@ Is there an ongoing observed SEP event at start of prediction window?
   [False, None]
 ================== END REPORT ===============================
 
-2024-06-27 15:08:13 - [INFO] match.match_all_forecasts: 
+2024-06-27 15:26:06 - [INFO] match.match_all_forecasts: 
 =================== Matching Report =========================
   Model: SEPMOD
   Original prediction source: ./model/unittest/SEPMOD/SEPMOD_integral.2011-03-07T003000Z.json
@@ -310,7 +310,7 @@ Is there an ongoing observed SEP event at start of prediction window?
   [None, None]
 ================== END REPORT ===============================
 
-2024-06-27 15:08:13 - [INFO] match.match_all_forecasts: 
+2024-06-27 15:26:06 - [INFO] match.match_all_forecasts: 
 =================== Matching Report =========================
   Model: SEPMOD
   Original prediction source: ./model/unittest/SEPMOD/SEPMOD_integral.2011-03-07T003000Z.json
@@ -411,7 +411,7 @@ Is there an ongoing observed SEP event at start of prediction window?
   [False, None]
 ================== END REPORT ===============================
 
-2024-06-27 15:08:13 - [INFO] match.match_all_forecasts: 
+2024-06-27 15:26:07 - [INFO] match.match_all_forecasts: 
 =================== Matching Report =========================
   Model: SEPMOD
   Original prediction source: ./model/unittest/SEPMOD/SEPMOD_integral.2011-03-07T003000Z.json
@@ -512,84 +512,84 @@ Is there an ongoing observed SEP event at start of prediction window?
   [None, None]
 ================== END REPORT ===============================
 
-2024-06-27 15:08:13 - [INFO] sphinx.validate: Completed matching process and starting intuitive validation.
-2024-06-27 15:08:13 - [INFO] validation.intuitive_validation: Beginning validation process.
-2024-06-27 15:08:13 - [INFO] validation.intuitive_validation: Filling dataframe with information from matched sphinx objects.
-2024-06-27 15:08:13 - [INFO] validation.fill_df: ---Model: MagPy_SHARP_HMI_CEA, Energy Channel: min.10.0.max.-1.0.units.MeV
-2024-06-27 15:08:13 - [INFO] validation.fill_df: ---Model: MagPy_SHARP_HMI_CEA, Energy Channel: min.100.0.max.-1.0.units.MeV
-2024-06-27 15:08:13 - [INFO] validation.fill_df: ---Model: MagPy_SHARP_HMI_CEA, Energy Channel: min.30.0.max.-1.0.units.MeV
-2024-06-27 15:08:13 - [INFO] validation.fill_df: ---Model: MagPy_SHARP_HMI_CEA, Energy Channel: min.50.0.max.-1.0.units.MeV
-2024-06-27 15:08:13 - [INFO] validation.fill_df: ---Model: SEPMOD, Energy Channel: min.10.0.max.-1.0.units.MeV
-2024-06-27 15:08:13 - [INFO] validation.fill_df: ---Model: SEPMOD, Energy Channel: min.100.0.max.-1.0.units.MeV
-2024-06-27 15:08:13 - [INFO] validation.fill_df: ---Model: SEPMOD, Energy Channel: min.30.0.max.-1.0.units.MeV
-2024-06-27 15:08:13 - [INFO] validation.fill_df: ---Model: SEPMOD, Energy Channel: min.50.0.max.-1.0.units.MeV
-2024-06-27 15:08:13 - [INFO] validation.intuitive_validation: Completed filling dataframe (and possibly writing). 
-2024-06-27 15:08:13 - [INFO] validation.intuitive_validation: Resume boolean is False
-2024-06-27 15:08:13 - [INFO] validation.intuitive_validation: Calculating metrics from dataframe.
-2024-06-27 15:08:13 - [INFO] validation.intuitive_validation: Starting validation of All forecasts.
-2024-06-27 15:08:13 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for MagPy_SHARP_HMI_CEA, min.10.0.max.-1.0.units.MeV, threshold.10.0.units.1 / (cm2 s sr)
-2024-06-27 15:08:13 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for MagPy_SHARP_HMI_CEA, min.100.0.max.-1.0.units.MeV, threshold.1.0.units.1 / (cm2 s sr)
-2024-06-27 15:08:13 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for MagPy_SHARP_HMI_CEA, min.30.0.max.-1.0.units.MeV, threshold.1.0.units.1 / (cm2 s sr)
-2024-06-27 15:08:13 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for MagPy_SHARP_HMI_CEA, min.50.0.max.-1.0.units.MeV, threshold.1.0.units.1 / (cm2 s sr)
-2024-06-27 15:08:13 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for SEPMOD, min.10.0.max.-1.0.units.MeV, threshold.10.0.units.1 / (cm2 s sr)
-2024-06-27 15:08:14 - [INFO] validation.time_profile_intuitive_metrics: Time profile of ./model/unittest/SEPMOD/SEPMOD_integral.2011-03-07T003000Z.2023-08-25T160037Z.10MeV.txt compared to observations.
-2024-06-27 15:08:14 - [INFO] validation.time_profile_intuitive_metrics: ======NAMES OF OBSERVED TIME PROFILE++++
-2024-06-27 15:08:14 - [INFO] validation.time_profile_intuitive_metrics: Trimming between 2011-03-08 01:05:00 and 2011-03-10 03:40:00
-2024-06-27 15:08:15 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for SEPMOD, min.100.0.max.-1.0.units.MeV, threshold.1.0.units.1 / (cm2 s sr)
-2024-06-27 15:08:15 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for SEPMOD, min.30.0.max.-1.0.units.MeV, threshold.1.0.units.1 / (cm2 s sr)
-2024-06-27 15:08:15 - [INFO] validation.time_profile_intuitive_metrics: Time profile of ./model/unittest/SEPMOD/SEPMOD_integral.2011-03-07T003000Z.2023-08-25T160037Z.30.0MeV.txt compared to observations.
-2024-06-27 15:08:15 - [INFO] validation.time_profile_intuitive_metrics: ======NAMES OF OBSERVED TIME PROFILE++++
-2024-06-27 15:08:15 - [INFO] validation.time_profile_intuitive_metrics: Trimming between 2011-03-08 00:45:00 and 2011-03-09 03:35:00
-2024-06-27 15:08:15 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for SEPMOD, min.50.0.max.-1.0.units.MeV, threshold.1.0.units.1 / (cm2 s sr)
-2024-06-27 15:08:15 - [INFO] validation.calculate_intuitive_metrics: Completed calculating all metrics.
-2024-06-27 15:08:16 - [INFO] validation.calculate_intuitive_metrics: Wrote out all metrics.
-2024-06-27 15:08:16 - [INFO] validation.intuitive_validation: Starting validation of First forecasts.
-2024-06-27 15:08:16 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for MagPy_SHARP_HMI_CEA, min.10.0.max.-1.0.units.MeV, threshold.10.0.units.1 / (cm2 s sr)
-2024-06-27 15:08:16 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for MagPy_SHARP_HMI_CEA, min.100.0.max.-1.0.units.MeV, threshold.1.0.units.1 / (cm2 s sr)
-2024-06-27 15:08:16 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for MagPy_SHARP_HMI_CEA, min.30.0.max.-1.0.units.MeV, threshold.1.0.units.1 / (cm2 s sr)
-2024-06-27 15:08:16 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for MagPy_SHARP_HMI_CEA, min.50.0.max.-1.0.units.MeV, threshold.1.0.units.1 / (cm2 s sr)
-2024-06-27 15:08:16 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for SEPMOD, min.10.0.max.-1.0.units.MeV, threshold.10.0.units.1 / (cm2 s sr)
-2024-06-27 15:08:16 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for SEPMOD, min.100.0.max.-1.0.units.MeV, threshold.1.0.units.1 / (cm2 s sr)
-2024-06-27 15:08:16 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for SEPMOD, min.30.0.max.-1.0.units.MeV, threshold.1.0.units.1 / (cm2 s sr)
-2024-06-27 15:08:16 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for SEPMOD, min.50.0.max.-1.0.units.MeV, threshold.1.0.units.1 / (cm2 s sr)
-2024-06-27 15:08:16 - [INFO] validation.calculate_intuitive_metrics: Completed calculating all metrics.
-2024-06-27 15:08:16 - [INFO] validation.calculate_intuitive_metrics: Wrote out all metrics.
-2024-06-27 15:08:16 - [INFO] validation.intuitive_validation: Starting validation of Last forecasts.
-2024-06-27 15:08:16 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for MagPy_SHARP_HMI_CEA, min.10.0.max.-1.0.units.MeV, threshold.10.0.units.1 / (cm2 s sr)
-2024-06-27 15:08:16 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for MagPy_SHARP_HMI_CEA, min.100.0.max.-1.0.units.MeV, threshold.1.0.units.1 / (cm2 s sr)
-2024-06-27 15:08:16 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for MagPy_SHARP_HMI_CEA, min.30.0.max.-1.0.units.MeV, threshold.1.0.units.1 / (cm2 s sr)
-2024-06-27 15:08:16 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for MagPy_SHARP_HMI_CEA, min.50.0.max.-1.0.units.MeV, threshold.1.0.units.1 / (cm2 s sr)
-2024-06-27 15:08:16 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for SEPMOD, min.10.0.max.-1.0.units.MeV, threshold.10.0.units.1 / (cm2 s sr)
-2024-06-27 15:08:16 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for SEPMOD, min.100.0.max.-1.0.units.MeV, threshold.1.0.units.1 / (cm2 s sr)
-2024-06-27 15:08:16 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for SEPMOD, min.30.0.max.-1.0.units.MeV, threshold.1.0.units.1 / (cm2 s sr)
-2024-06-27 15:08:16 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for SEPMOD, min.50.0.max.-1.0.units.MeV, threshold.1.0.units.1 / (cm2 s sr)
-2024-06-27 15:08:16 - [INFO] validation.calculate_intuitive_metrics: Completed calculating all metrics.
-2024-06-27 15:08:16 - [INFO] validation.calculate_intuitive_metrics: Wrote out all metrics.
-2024-06-27 15:08:16 - [INFO] validation.intuitive_validation: Starting validation of Max forecasts.
-2024-06-27 15:08:16 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for MagPy_SHARP_HMI_CEA, min.10.0.max.-1.0.units.MeV, threshold.10.0.units.1 / (cm2 s sr)
-2024-06-27 15:08:16 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for MagPy_SHARP_HMI_CEA, min.100.0.max.-1.0.units.MeV, threshold.1.0.units.1 / (cm2 s sr)
-2024-06-27 15:08:16 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for MagPy_SHARP_HMI_CEA, min.30.0.max.-1.0.units.MeV, threshold.1.0.units.1 / (cm2 s sr)
-2024-06-27 15:08:16 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for MagPy_SHARP_HMI_CEA, min.50.0.max.-1.0.units.MeV, threshold.1.0.units.1 / (cm2 s sr)
-2024-06-27 15:08:16 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for SEPMOD, min.10.0.max.-1.0.units.MeV, threshold.10.0.units.1 / (cm2 s sr)
-2024-06-27 15:08:16 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for SEPMOD, min.100.0.max.-1.0.units.MeV, threshold.1.0.units.1 / (cm2 s sr)
-2024-06-27 15:08:16 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for SEPMOD, min.30.0.max.-1.0.units.MeV, threshold.1.0.units.1 / (cm2 s sr)
-2024-06-27 15:08:16 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for SEPMOD, min.50.0.max.-1.0.units.MeV, threshold.1.0.units.1 / (cm2 s sr)
-2024-06-27 15:08:16 - [INFO] validation.calculate_intuitive_metrics: Completed calculating all metrics.
-2024-06-27 15:08:16 - [INFO] validation.calculate_intuitive_metrics: Wrote out all metrics.
-2024-06-27 15:08:16 - [INFO] validation.intuitive_validation: Starting validation of Mean forecasts.
-2024-06-27 15:08:16 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for MagPy_SHARP_HMI_CEA, min.10.0.max.-1.0.units.MeV, threshold.10.0.units.1 / (cm2 s sr)
-2024-06-27 15:08:16 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for MagPy_SHARP_HMI_CEA, min.100.0.max.-1.0.units.MeV, threshold.1.0.units.1 / (cm2 s sr)
-2024-06-27 15:08:16 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for MagPy_SHARP_HMI_CEA, min.30.0.max.-1.0.units.MeV, threshold.1.0.units.1 / (cm2 s sr)
-2024-06-27 15:08:16 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for MagPy_SHARP_HMI_CEA, min.50.0.max.-1.0.units.MeV, threshold.1.0.units.1 / (cm2 s sr)
-2024-06-27 15:08:16 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for SEPMOD, min.10.0.max.-1.0.units.MeV, threshold.10.0.units.1 / (cm2 s sr)
-2024-06-27 15:08:16 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for SEPMOD, min.100.0.max.-1.0.units.MeV, threshold.1.0.units.1 / (cm2 s sr)
-2024-06-27 15:08:16 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for SEPMOD, min.30.0.max.-1.0.units.MeV, threshold.1.0.units.1 / (cm2 s sr)
-2024-06-27 15:08:16 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for SEPMOD, min.50.0.max.-1.0.units.MeV, threshold.1.0.units.1 / (cm2 s sr)
-2024-06-27 15:08:16 - [INFO] validation.calculate_intuitive_metrics: Completed calculating all metrics.
-2024-06-27 15:08:16 - [INFO] validation.calculate_intuitive_metrics: Wrote out all metrics.
-2024-06-27 15:08:16 - [INFO] validation.intuitive_validation: intuitive_validation: Validation process complete.
-2024-06-27 15:08:16 - [INFO] sphinx.validate: Completed validation.
-2024-06-27 15:08:16 - [INFO] report.convert_markdown_to_html: Generating HTML report...MagPy_SHARP_HMI_CEA...All
-2024-06-27 15:08:16 - [INFO] report.report:     Complete
-2024-06-27 15:08:16 - [INFO] report.convert_markdown_to_html: Generating HTML report...SEPMOD...All
-2024-06-27 15:08:16 - [INFO] report.report:     Complete
+2024-06-27 15:26:07 - [INFO] sphinx.validate: Completed matching process and starting intuitive validation.
+2024-06-27 15:26:07 - [INFO] validation.intuitive_validation: Beginning validation process.
+2024-06-27 15:26:07 - [INFO] validation.intuitive_validation: Filling dataframe with information from matched sphinx objects.
+2024-06-27 15:26:07 - [INFO] validation.fill_df: ---Model: MagPy_SHARP_HMI_CEA, Energy Channel: min.10.0.max.-1.0.units.MeV
+2024-06-27 15:26:07 - [INFO] validation.fill_df: ---Model: MagPy_SHARP_HMI_CEA, Energy Channel: min.100.0.max.-1.0.units.MeV
+2024-06-27 15:26:07 - [INFO] validation.fill_df: ---Model: MagPy_SHARP_HMI_CEA, Energy Channel: min.30.0.max.-1.0.units.MeV
+2024-06-27 15:26:07 - [INFO] validation.fill_df: ---Model: MagPy_SHARP_HMI_CEA, Energy Channel: min.50.0.max.-1.0.units.MeV
+2024-06-27 15:26:07 - [INFO] validation.fill_df: ---Model: SEPMOD, Energy Channel: min.10.0.max.-1.0.units.MeV
+2024-06-27 15:26:07 - [INFO] validation.fill_df: ---Model: SEPMOD, Energy Channel: min.100.0.max.-1.0.units.MeV
+2024-06-27 15:26:07 - [INFO] validation.fill_df: ---Model: SEPMOD, Energy Channel: min.30.0.max.-1.0.units.MeV
+2024-06-27 15:26:07 - [INFO] validation.fill_df: ---Model: SEPMOD, Energy Channel: min.50.0.max.-1.0.units.MeV
+2024-06-27 15:26:07 - [INFO] validation.intuitive_validation: Completed filling dataframe (and possibly writing). 
+2024-06-27 15:26:07 - [INFO] validation.intuitive_validation: Resume boolean is False
+2024-06-27 15:26:07 - [INFO] validation.intuitive_validation: Calculating metrics from dataframe.
+2024-06-27 15:26:07 - [INFO] validation.intuitive_validation: Starting validation of All forecasts.
+2024-06-27 15:26:07 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for MagPy_SHARP_HMI_CEA, min.10.0.max.-1.0.units.MeV, threshold.10.0.units.1 / (cm2 s sr)
+2024-06-27 15:26:07 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for MagPy_SHARP_HMI_CEA, min.100.0.max.-1.0.units.MeV, threshold.1.0.units.1 / (cm2 s sr)
+2024-06-27 15:26:07 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for MagPy_SHARP_HMI_CEA, min.30.0.max.-1.0.units.MeV, threshold.1.0.units.1 / (cm2 s sr)
+2024-06-27 15:26:07 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for MagPy_SHARP_HMI_CEA, min.50.0.max.-1.0.units.MeV, threshold.1.0.units.1 / (cm2 s sr)
+2024-06-27 15:26:07 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for SEPMOD, min.10.0.max.-1.0.units.MeV, threshold.10.0.units.1 / (cm2 s sr)
+2024-06-27 15:26:07 - [INFO] validation.time_profile_intuitive_metrics: Time profile of ./model/unittest/SEPMOD/SEPMOD_integral.2011-03-07T003000Z.2023-08-25T160037Z.10MeV.txt compared to observations.
+2024-06-27 15:26:07 - [INFO] validation.time_profile_intuitive_metrics: ======NAMES OF OBSERVED TIME PROFILE++++
+2024-06-27 15:26:07 - [INFO] validation.time_profile_intuitive_metrics: Trimming between 2011-03-08 01:05:00 and 2011-03-10 03:40:00
+2024-06-27 15:26:08 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for SEPMOD, min.100.0.max.-1.0.units.MeV, threshold.1.0.units.1 / (cm2 s sr)
+2024-06-27 15:26:08 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for SEPMOD, min.30.0.max.-1.0.units.MeV, threshold.1.0.units.1 / (cm2 s sr)
+2024-06-27 15:26:08 - [INFO] validation.time_profile_intuitive_metrics: Time profile of ./model/unittest/SEPMOD/SEPMOD_integral.2011-03-07T003000Z.2023-08-25T160037Z.30.0MeV.txt compared to observations.
+2024-06-27 15:26:08 - [INFO] validation.time_profile_intuitive_metrics: ======NAMES OF OBSERVED TIME PROFILE++++
+2024-06-27 15:26:08 - [INFO] validation.time_profile_intuitive_metrics: Trimming between 2011-03-08 00:45:00 and 2011-03-09 03:35:00
+2024-06-27 15:26:09 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for SEPMOD, min.50.0.max.-1.0.units.MeV, threshold.1.0.units.1 / (cm2 s sr)
+2024-06-27 15:26:09 - [INFO] validation.calculate_intuitive_metrics: Completed calculating all metrics.
+2024-06-27 15:26:09 - [INFO] validation.calculate_intuitive_metrics: Wrote out all metrics.
+2024-06-27 15:26:09 - [INFO] validation.intuitive_validation: Starting validation of First forecasts.
+2024-06-27 15:26:09 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for MagPy_SHARP_HMI_CEA, min.10.0.max.-1.0.units.MeV, threshold.10.0.units.1 / (cm2 s sr)
+2024-06-27 15:26:09 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for MagPy_SHARP_HMI_CEA, min.100.0.max.-1.0.units.MeV, threshold.1.0.units.1 / (cm2 s sr)
+2024-06-27 15:26:09 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for MagPy_SHARP_HMI_CEA, min.30.0.max.-1.0.units.MeV, threshold.1.0.units.1 / (cm2 s sr)
+2024-06-27 15:26:09 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for MagPy_SHARP_HMI_CEA, min.50.0.max.-1.0.units.MeV, threshold.1.0.units.1 / (cm2 s sr)
+2024-06-27 15:26:09 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for SEPMOD, min.10.0.max.-1.0.units.MeV, threshold.10.0.units.1 / (cm2 s sr)
+2024-06-27 15:26:09 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for SEPMOD, min.100.0.max.-1.0.units.MeV, threshold.1.0.units.1 / (cm2 s sr)
+2024-06-27 15:26:09 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for SEPMOD, min.30.0.max.-1.0.units.MeV, threshold.1.0.units.1 / (cm2 s sr)
+2024-06-27 15:26:09 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for SEPMOD, min.50.0.max.-1.0.units.MeV, threshold.1.0.units.1 / (cm2 s sr)
+2024-06-27 15:26:09 - [INFO] validation.calculate_intuitive_metrics: Completed calculating all metrics.
+2024-06-27 15:26:09 - [INFO] validation.calculate_intuitive_metrics: Wrote out all metrics.
+2024-06-27 15:26:09 - [INFO] validation.intuitive_validation: Starting validation of Last forecasts.
+2024-06-27 15:26:09 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for MagPy_SHARP_HMI_CEA, min.10.0.max.-1.0.units.MeV, threshold.10.0.units.1 / (cm2 s sr)
+2024-06-27 15:26:09 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for MagPy_SHARP_HMI_CEA, min.100.0.max.-1.0.units.MeV, threshold.1.0.units.1 / (cm2 s sr)
+2024-06-27 15:26:09 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for MagPy_SHARP_HMI_CEA, min.30.0.max.-1.0.units.MeV, threshold.1.0.units.1 / (cm2 s sr)
+2024-06-27 15:26:09 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for MagPy_SHARP_HMI_CEA, min.50.0.max.-1.0.units.MeV, threshold.1.0.units.1 / (cm2 s sr)
+2024-06-27 15:26:09 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for SEPMOD, min.10.0.max.-1.0.units.MeV, threshold.10.0.units.1 / (cm2 s sr)
+2024-06-27 15:26:09 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for SEPMOD, min.100.0.max.-1.0.units.MeV, threshold.1.0.units.1 / (cm2 s sr)
+2024-06-27 15:26:09 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for SEPMOD, min.30.0.max.-1.0.units.MeV, threshold.1.0.units.1 / (cm2 s sr)
+2024-06-27 15:26:09 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for SEPMOD, min.50.0.max.-1.0.units.MeV, threshold.1.0.units.1 / (cm2 s sr)
+2024-06-27 15:26:09 - [INFO] validation.calculate_intuitive_metrics: Completed calculating all metrics.
+2024-06-27 15:26:09 - [INFO] validation.calculate_intuitive_metrics: Wrote out all metrics.
+2024-06-27 15:26:09 - [INFO] validation.intuitive_validation: Starting validation of Max forecasts.
+2024-06-27 15:26:09 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for MagPy_SHARP_HMI_CEA, min.10.0.max.-1.0.units.MeV, threshold.10.0.units.1 / (cm2 s sr)
+2024-06-27 15:26:09 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for MagPy_SHARP_HMI_CEA, min.100.0.max.-1.0.units.MeV, threshold.1.0.units.1 / (cm2 s sr)
+2024-06-27 15:26:09 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for MagPy_SHARP_HMI_CEA, min.30.0.max.-1.0.units.MeV, threshold.1.0.units.1 / (cm2 s sr)
+2024-06-27 15:26:09 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for MagPy_SHARP_HMI_CEA, min.50.0.max.-1.0.units.MeV, threshold.1.0.units.1 / (cm2 s sr)
+2024-06-27 15:26:09 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for SEPMOD, min.10.0.max.-1.0.units.MeV, threshold.10.0.units.1 / (cm2 s sr)
+2024-06-27 15:26:09 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for SEPMOD, min.100.0.max.-1.0.units.MeV, threshold.1.0.units.1 / (cm2 s sr)
+2024-06-27 15:26:09 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for SEPMOD, min.30.0.max.-1.0.units.MeV, threshold.1.0.units.1 / (cm2 s sr)
+2024-06-27 15:26:09 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for SEPMOD, min.50.0.max.-1.0.units.MeV, threshold.1.0.units.1 / (cm2 s sr)
+2024-06-27 15:26:09 - [INFO] validation.calculate_intuitive_metrics: Completed calculating all metrics.
+2024-06-27 15:26:09 - [INFO] validation.calculate_intuitive_metrics: Wrote out all metrics.
+2024-06-27 15:26:09 - [INFO] validation.intuitive_validation: Starting validation of Mean forecasts.
+2024-06-27 15:26:09 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for MagPy_SHARP_HMI_CEA, min.10.0.max.-1.0.units.MeV, threshold.10.0.units.1 / (cm2 s sr)
+2024-06-27 15:26:09 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for MagPy_SHARP_HMI_CEA, min.100.0.max.-1.0.units.MeV, threshold.1.0.units.1 / (cm2 s sr)
+2024-06-27 15:26:09 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for MagPy_SHARP_HMI_CEA, min.30.0.max.-1.0.units.MeV, threshold.1.0.units.1 / (cm2 s sr)
+2024-06-27 15:26:09 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for MagPy_SHARP_HMI_CEA, min.50.0.max.-1.0.units.MeV, threshold.1.0.units.1 / (cm2 s sr)
+2024-06-27 15:26:09 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for SEPMOD, min.10.0.max.-1.0.units.MeV, threshold.10.0.units.1 / (cm2 s sr)
+2024-06-27 15:26:09 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for SEPMOD, min.100.0.max.-1.0.units.MeV, threshold.1.0.units.1 / (cm2 s sr)
+2024-06-27 15:26:09 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for SEPMOD, min.30.0.max.-1.0.units.MeV, threshold.1.0.units.1 / (cm2 s sr)
+2024-06-27 15:26:09 - [INFO] validation.calculate_intuitive_metrics: Calculating metrics for SEPMOD, min.50.0.max.-1.0.units.MeV, threshold.1.0.units.1 / (cm2 s sr)
+2024-06-27 15:26:09 - [INFO] validation.calculate_intuitive_metrics: Completed calculating all metrics.
+2024-06-27 15:26:09 - [INFO] validation.calculate_intuitive_metrics: Wrote out all metrics.
+2024-06-27 15:26:09 - [INFO] validation.intuitive_validation: intuitive_validation: Validation process complete.
+2024-06-27 15:26:09 - [INFO] sphinx.validate: Completed validation.
+2024-06-27 15:26:09 - [INFO] report.convert_markdown_to_html: Generating HTML report...MagPy_SHARP_HMI_CEA...All
+2024-06-27 15:26:09 - [INFO] report.report:     Complete
+2024-06-27 15:26:09 - [INFO] report.convert_markdown_to_html: Generating HTML report...SEPMOD...All
+2024-06-27 15:26:10 - [INFO] report.report:     Complete
