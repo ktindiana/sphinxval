@@ -42,7 +42,7 @@ def read_in_json(filename, verbose=True):
         if info == {}:
             return info
         if verbose:
-            logger.debug("read in " + filename)
+            logger.info("read in " + filename)
         info.update({'filename':filename})
          
     return info
