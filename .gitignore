@@ -17,6 +17,8 @@ plots/*
 reports/*
 validation_reports/*
 htmlcov/*
+logs/*
+
 
 .DS_Store
 **/.DS_Store
