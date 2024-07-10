@@ -1019,9 +1019,9 @@ def box_plot_metrics(df, metric_names, highlight,
 #        ax.text(i, means[i], "\u03BC=" + str(np.round(means[i], 2)), size='large',\
 #                color='k', weight='semibold', horizontalalignment='center', \
 #                verticalalignment=vmean)
-#        ax.text(i, medians[i], "Median =" + str(np.round(medians[i], 2)), size='large', \
-#                color='b', weight='semibold', horizontalalignment='center', \
-#                verticalalignment=vmed)
+        ax.text(i, medians[i], "      " + str(np.round(medians[i], 2)), size='large', \
+                color='b', weight='semibold', horizontalalignment='center', \
+                verticalalignment=vmed)
 
 
     ax.set_title(title)
