@@ -131,43 +131,6 @@ def write_json(template, filename):
     logger.info("Wrote SEP values to json file --> " + filename)
     return True
 
-
-def get_path(filepath):
-    """Get the path of where the json files are located.
-        filepath is a complete filename with path, e.g.:
-        
-            * model/ASPECS/sep_values_ASPECS_CME_50_integral_2012_3_7.json
-            * data/sep_values_GOES-13_integral_2012_3_7.json
-            
-        Returns the path, e.g.:
-            
-            * model/ASPECS/
-            * data/
-            
-        INPUTS:
-        
-        :filepath: (string) full filename with path to the json file;
-            it is stored inside the json file when read in by read_file_list
-            
-        OUTPUTS:
-        
-        :path: (string) only the path portion of the string with the
-            json filename removed
-        
-        
-    """
-    spltpath = filepath.split('/')
-    path = ''
-    for entry in spltpath:
-        if '.json' not in entry:
-            path = path + entry + '/'
-        
-    if filepath[0] == '/':
-        path = '/' + path
-        
-    return path
-
-
 ###### SUBROUTINES TO READ JSONS AND CREATE CLASS OBJECTS ##########
 def read_list_of_jsons(filename):
     """Read all of the json files in to a list.
