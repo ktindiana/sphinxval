@@ -290,7 +290,7 @@ def build_all_clear_skill_scores_section(filename, model, sphinx_dataframe, appe
         misses = data.iloc[i]["All Clear 'False Negatives' (Misses)"]
         contingency_table_values = [hits, false_alarms, correct_negatives, misses]
         contingency_table_string = build_contingency_table(*contingency_table_values)
-        selections_filename = output_dir__ + 'all_clear_selections_' + model + '_' + data.iloc[i]['Energy Channel'] + '_threshold_' + obs_threshold.rstrip(' pfu') + mismatch_allowed_string + appendage + '.pkl'
+        selections_filename = os.path.join(output_dir__, 'all_clear_selections_' + model + '_' + data.iloc[i]['Energy Channel'] + '_threshold_' + obs_threshold.rstrip(' pfu') + mismatch_allowed_string + appendage + '.pkl')
         subset_list = ['Prediction Window Start', 'Prediction Window End']
         subset_list = append_subset_list(selections_filename, subset_list, 'Prediction Window End', 'Units')
         info_string_, n_events, limit_message = build_info_events_table(selections_filename, sphinx_dataframe, subset_list, {})
@@ -328,7 +328,8 @@ def append_plot_string_list(plot_string_list, plot_file_string_list, plot_string
         plot_file_string_list.append(plot_file_string)
     else:    
         if relative_path_plots__:
-            plot_string = os.path.relpath(plot_string_, config.reportpath.split('/')[-1] + '/')
+            #plot_string = os.path.relpath(plot_string_, config.reportpath.split('/')[-1] + '/')
+            plot_string = os.path.relpath(plot_string_, os.path.basename(config.reportpath))
             plot_file_string = os.path.relpath(plot_string_, '.')
         else:
             plot_string = os.path.abspath(plot_string_)
@@ -357,6 +358,7 @@ def build_plot_string_list(data, current_index):
             for i in range(0, len(time_profile_plot_string_list)):
                 if relative_path_plots__:
                     plot_string = os.path.relpath(time_profile_plot_string_list[i], config.reportpath.split('/')[-1] + '/')
+                    plot_string = os.path.relpath(time_profile_plot_string_list[i], os.path.basename(config.reportpath))
                     plot_file_string = os.path.relpath(time_profile_plot_string_list[i], '.')
                 else:
                     plot_string = os.path.abspath(time_profile_plot_string_list[i])
@@ -447,7 +449,7 @@ def build_section(filename, model, sphinx_dataframe, metric_label_start, section
         text += add_collapsible_segment_start(section_title + ' Metrics', '')
     for i in range(0, number_rows):
         threshold_string, energy_threshold, obs_threshold, pred_threshold, mismatch_allowed_string = build_threshold_string(data, i)
-        selections_filename = output_dir__ + section_tag + '_selections_' + model + '_' + data.iloc[i]['Energy Channel'] + '_threshold_' + obs_threshold.rstrip(' pfu') + mismatch_allowed_string + appendage + '.pkl'
+        selections_filename = os.path.join(output_dir__, section_tag + '_selections_' + model + '_' + data.iloc[i]['Energy Channel'] + '_threshold_' + obs_threshold.rstrip(' pfu') + mismatch_allowed_string + appendage + '.pkl')
         subset_list = ['Prediction Window Start', 'Prediction Window End']
         subset_list = append_subset_list(selections_filename, subset_list, 'Prediction Window End', 'Units')
         info_string_, n_events, limit_message = build_info_events_table(selections_filename, sphinx_dataframe, subset_list, rename_dict)
@@ -496,7 +498,8 @@ def construct_validation_reference_sheet(vr_subtext, vr_flag_dict, vr_flag, vr_f
         # This block adds the AWT image to the reference section. Currently has the flag for Time but change to AWT for when AWT is 
         # actually being calculated (it was not for my testing)
         if vr_flag == 'Time':
-            plot_string_ = "./reference/AWT_image"
+            #plot_string_ = "./reference/AWT_image"
+            plot_string_ = os.path.join(config.referencepath, 'AWT_image')
             plot_string = os.path.abspath(plot_string_)
             plot_file_string = plot_string + ''
             vr_subtext += '![](' +  plot_string + ')\n\n'
@@ -772,7 +775,8 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
     # get all model metrics
     # analyze the output directory
     if output_dir is None:
-        output_dir__ = config.outpath + '/pkl/'
+        #output_dir__ = config.outpath + '/pkl/'
+        output_dir__ = os.path.join(config.outpath, 'pkl')
     else:
         output_dir__ = output_dir   
 
@@ -787,7 +791,7 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
         os.mkdir(config.reportpath)
  
     # obtain sphinx dataframe
-    sphinx_dataframe = pd.read_pickle(output_dir__ + 'SPHINX_dataframe.pkl')
+    sphinx_dataframe = pd.read_pickle(os.path.join(output_dir__, 'SPHINX_dataframe.pkl'))
 
     # grab all models
     models = list(set(sphinx_dataframe['Model']))
@@ -906,7 +910,7 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
             if all_clear:
                 ### build the all clear skill scores
                 logger.debug(appendages[j])
-                all_clear_filename = output_dir__ + 'all_clear_metrics' + appendages[j] + '.pkl'
+                all_clear_filename = os.path.join(output_dir__, 'all_clear_metrics' + appendages[j] + '.pkl')
                 if os.path.exists(all_clear_filename):
                     validation_text += '* All Clear\n'
                     report_exists = True
@@ -914,9 +918,9 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
                     logger.debug(appendage_set_list)
                     markdown_text += build_all_clear_skill_scores_section(all_clear_filename, model, sphinx_dataframe, appendage=appendages[j])
                 validation_reference_subtext_string, validation_reference_flag_dict = construct_validation_reference_sheet(validation_reference_subtext, validation_reference_flag_dict, 'All Clear', 
-                                                                                                                           config.referencepath + '/validation_reference_sheet_contingency_metrics.csv',
-                                                                                                                           config.referencepath + '/validation_reference_sheet_contingency_skills.csv',
-                                                                                                                           config.referencepath + '/validation_reference_sheet_contingency_plots.csv')
+                                                                                                                           os.path.join(config.referencepath, 'validation_reference_sheet_contingency_metrics.csv'),
+                                                                                                                           os.path.join(config.referencepath, 'validation_reference_sheet_contingency_skills.csv'),
+                                                                                                                           os.path.join(config.referencepath, 'validation_reference_sheet_contingency_plots.csv'))
                 validation_reference_subtext = validation_reference_subtext_string
 
             if awt:
@@ -925,14 +929,14 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
                 section_title = 'Advanced Warning Time'
                 section_tag = 'awt'
                 metrics_description_string = 'N/A'
-                section_filename = output_dir__ + section_tag + '_metrics' + appendages[j] + '.pkl'
+                section_filename = os.path.join(output_dir__, section_tag + '_metrics' + appendages[j] + '.pkl')
                 if os.path.exists(section_filename):
                     validation_text += '* ' + section_title + '\n'
                     report_exists = True
                     appendage_set_list.append(appendages[j])
                     markdown_text += build_section_awt(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
                 validation_reference_subtext_string, validation_reference_flag_dict = construct_validation_reference_sheet(validation_reference_subtext, validation_reference_flag_dict, 'AWT', 
-                                                                                                                           config.referencepath + '/validation_reference_sheet_awt_metrics.csv',
+                                                                                                                           os.path.join(config.referencepath, 'validation_reference_sheet_awt_metrics.csv'),
                                                                                                                            None,
                                                                                                                            None)
                 validation_reference_subtext += validation_reference_subtext_string
@@ -943,16 +947,16 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
                 section_title = 'Peak Intensity (Onset Peak)'
                 section_tag = 'peak_intensity'
                 metrics_description_string = "Correlation coefficients and regression lines indicate association.<br>Metrics involving error indicate bias. Positive values indicate model overprediction and negative values indicate model underprediction.<br>Metrics involving absolute error or squared error indicate accuracy.\n"
-                section_filename = output_dir__ + section_tag + '_metrics' + appendages[j] + '.pkl'
+                section_filename = os.path.join(output_dir__, section_tag + '_metrics' + appendages[j] + '.pkl')
                 if os.path.exists(section_filename):
                     validation_text += '* ' + section_title + '\n'
                     report_exists = True
                     appendage_set_list.append(appendages[j])
                     markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
                 validation_reference_subtext_string, validation_reference_flag_dict = construct_validation_reference_sheet(validation_reference_subtext, validation_reference_flag_dict, 'Flux', 
-                                                                                                                           config.referencepath + '/validation_reference_sheet_flux_metrics.csv',
+                                                                                                                           os.path.join(config.referencepath, 'validation_reference_sheet_flux_metrics.csv'),
                                                                                                                            None,
-                                                                                                                           config.referencepath + '/validation_reference_sheet_flux_plots.csv')
+                                                                                                                           os.path.join(config.referencepath, 'validation_reference_sheet_flux_plots.csv'))
                 validation_reference_subtext = validation_reference_subtext_string
                 
             if peak_intensity_max:
@@ -961,16 +965,16 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
                 section_title = 'Peak Intensity Max (Max Flux)'
                 section_tag = 'peak_intensity_max'
                 metrics_description_string = "Correlation coefficients and regression lines indicate association.<br>Metrics involving error indicate bias. Positive values indicate model overprediction and negative values indicate model underprediction.<br>Metrics involving absolute error or squared error indicate accuracy.\n"
-                section_filename = output_dir__ + section_tag + '_metrics' + appendages[j] + '.pkl'
+                section_filename = os.path.join(output_dir__, section_tag + '_metrics' + appendages[j] + '.pkl')
                 if os.path.exists(section_filename):
                     validation_text += '* ' + section_title + '\n'
                     report_exists = True
                     appendage_set_list.append(appendages[j])
                     markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
                 validation_reference_subtext_string, validation_reference_flag_dict = construct_validation_reference_sheet(validation_reference_subtext, validation_reference_flag_dict, 'Flux', 
-                                                                                                                           config.referencepath + '/validation_reference_sheet_flux_metrics.csv',
+                                                                                                                           os.path.join(config.referencepath, 'validation_reference_sheet_flux_metrics.csv'),
                                                                                                                            None,
-                                                                                                                           config.referencepath + '/validation_reference_sheet_flux_plots.csv')
+                                                                                                                           os.path.join(config.referencepath, 'validation_reference_sheet_flux_plots.csv'))
                 validation_reference_subtext = validation_reference_subtext_string
                 
             if peak_intensity_time:
@@ -979,14 +983,14 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
                 section_title = 'Peak Intensity (Onset Peak) Time'
                 section_tag = 'peak_intensity_time'
                 metrics_description_string = "Metrics for Predicted Time - Observed Time are in hours.<br>Negative values indicate predicted time is earlier than observed.<br>Positive values indicate predicted time is later than observed.\n"
-                section_filename = output_dir__ + section_tag + '_metrics' + appendages[j] + '.pkl'
+                section_filename = os.path.join(output_dir__, section_tag + '_metrics' + appendages[j] + '.pkl')
                 if os.path.exists(section_filename):
                     validation_text += '* ' + section_title + '\n'
                     report_exists = True
                     appendage_set_list.append(appendages[j])
                     markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
                 validation_reference_subtext_string, validation_reference_flag_dict = construct_validation_reference_sheet(validation_reference_subtext, validation_reference_flag_dict, 'Time', 
-                                                                                                                           config.referencepath + '/validation_reference_sheet_time_metrics.csv',
+                                                                                                                           os.path.join(config.referencepath, 'validation_reference_sheet_time_metrics.csv'),
                                                                                                                            None,
                                                                                                                            None)
                 validation_reference_subtext = validation_reference_subtext_string
@@ -997,14 +1001,14 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
                 section_title = 'Peak Intensity Max (Max Flux) Time'
                 section_tag = 'peak_intensity_max_time'
                 metrics_description_string = "Metrics for Predicted Time - Observed Time are in hours.<br>Negative values indicate predicted time is earlier than observed.<br>Positive values indicate predicted time is later than observed.\n"
-                section_filename = output_dir__ + section_tag + '_metrics' + appendages[j] + '.pkl'
+                section_filename = os.path.join(output_dir__, section_tag + '_metrics' + appendages[j] + '.pkl')
                 if os.path.exists(section_filename):
                     validation_text += '* ' + section_title + '\n'
                     report_exists = True
                     appendage_set_list.append(appendages[j])
                     markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
                 validation_reference_subtext_string, validation_reference_flag_dict = construct_validation_reference_sheet(validation_reference_subtext, validation_reference_flag_dict, 'Time', 
-                                                                                                                           config.referencepath + '/validation_reference_sheet_time_metrics.csv',
+                                                                                                                           os.path.join(config.referencepath, 'validation_reference_sheet_time_metrics.csv'),
                                                                                                                            None,
                                                                                                                            None)
                 validation_reference_subtext = validation_reference_subtext_string
@@ -1016,14 +1020,14 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
                 section_tag = 'threshold_crossing_time'
                 alt_section_tag = 'threshold_crossing'
                 metrics_description_string = "Metrics for Predicted Time - Observed Time are in hours.<br>Negative values indicate predicted time is earlier than observed.<br>Positive values indicate predicted time is later than observed.\n"
-                section_filename = output_dir__ + alt_section_tag + '_metrics' + appendages[j] + '.pkl'
+                section_filename = os.path.join(output_dir__, alt_section_tag + '_metrics' + appendages[j] + '.pkl')
                 if os.path.exists(section_filename):
                     validation_text += '* ' + section_title + '\n'
                     report_exists = True
                     appendage_set_list.append(appendages[j])
                     markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
                 validation_reference_subtext_string, validation_reference_flag_dict = construct_validation_reference_sheet(validation_reference_subtext, validation_reference_flag_dict, 'Time', 
-                                                                                                                           config.referencepath + '/validation_reference_sheet_time_metrics.csv',
+                                                                                                                           os.path.join(config.referencepath, 'validation_reference_sheet_time_metrics.csv'),
                                                                                                                            None,
                                                                                                                            None)
                 validation_reference_subtext = validation_reference_subtext_string
@@ -1034,16 +1038,16 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
                 section_title = 'Fluence'
                 section_tag = 'fluence'
                 metrics_description_string = "Correlation coefficients and regression lines indicate association.<br>Metrics involving error indicate bias. Positive values indicate model overprediction and negative values indicate model underprediction.<br>Metrics involving absolute error or squared error indicate accuracy.\n"
-                section_filename = output_dir__ + section_tag + '_metrics' + appendages[j] + '.pkl'
+                section_filename = os.path.join(output_dir__, section_tag + '_metrics' + appendages[j] + '.pkl')
                 if os.path.exists(section_filename):
                     validation_text += '* ' + section_title + '\n'
                     report_exists = True
                     appendage_set_list.append(appendages[j])
                     markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
                 validation_reference_subtext_string, validation_reference_flag_dict = construct_validation_reference_sheet(validation_reference_subtext, validation_reference_flag_dict, 'Flux', 
-                                                                                                                           config.referencepath + '/validation_reference_sheet_flux_metrics.csv',
+                                                                                                                           os.path.join(config.referencepath, 'validation_reference_sheet_flux_metrics.csv'),
                                                                                                                            None,
-                                                                                                                           config.referencepath + '/validation_reference_sheet_flux_plots.csv')
+                                                                                                                           os.path.join(config.referencepath, 'validation_reference_sheet_flux_plots.csv'))
                 validation_reference_subtext = validation_reference_subtext_string
             
             if max_flux_in_pred_win:
@@ -1052,16 +1056,16 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
                 section_title = 'Max Flux in Prediction Window'
                 section_tag = 'max_flux_in_pred_win'
                 metrics_description_string = "Correlation coefficients and regression lines indicate association.<br>Metrics involving error indicate bias. Positive values indicate model overprediction and negative values indicate model underprediction.<br>Metrics involving absolute error or squared error indicate accuracy.\n"
-                section_filename = output_dir__ + section_tag + '_metrics' + appendages[j] + '.pkl'
+                section_filename = os.path.join(output_dir__, section_tag + '_metrics' + appendages[j] + '.pkl')
                 if os.path.exists(section_filename):
                     validation_text += '* ' + section_title + '\n'
                     report_exists = True
                     appendage_set_list.append(appendages[j])
                     markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
                 validation_reference_subtext_string, validation_reference_flag_dict = construct_validation_reference_sheet(validation_reference_subtext, validation_reference_flag_dict, 'Flux', 
-                                                                                                                           config.referencepath + '/validation_reference_sheet_flux_metrics.csv',
+                                                                                                                           os.path.join(config.referencepath + 'validation_reference_sheet_flux_metrics.csv'),
                                                                                                                            None,
-                                                                                                                           config.referencepath + '/validation_reference_sheet_flux_plots.csv')
+                                                                                                                           os.path.join(config.referencepath, 'validation_reference_sheet_flux_plots.csv'))
                 validation_reference_subtext = validation_reference_subtext_string
                 
             
@@ -1071,16 +1075,16 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
                 section_title = 'Probability'
                 section_tag = 'probability'
                 metrics_description_string = ""
-                section_filename = output_dir__ + section_tag + '_metrics' + appendages[j] + '.pkl'
+                section_filename = os.path.join(output_dir__, section_tag + '_metrics' + appendages[j] + '.pkl')
                 if os.path.exists(section_filename):
                     validation_text += '* ' + section_title + '\n'
                     report_exists = True
                     appendage_set_list.append(appendages[j])
                     markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
                 validation_reference_subtext_string, validation_reference_flag_dict = construct_validation_reference_sheet(validation_reference_subtext, validation_reference_flag_dict, 'Probability', 
-                                                                                                                           config.referencepath + '/validation_reference_sheet_probability_metrics.csv',
-                                                                                                                           config.referencepath + '/validation_reference_sheet_probability_skills.csv',
-                                                                                                                           config.referencepath + '/validation_reference_sheet_probability_plots.csv')
+                                                                                                                           os.path.join(config.referencepath, 'validation_reference_sheet_probability_metrics.csv'),
+                                                                                                                           os.path.join(config.referencepath, 'validation_reference_sheet_probability_skills.csv'),
+                                                                                                                           os.path.join(config.referencepath, 'validation_reference_sheet_probability_plots.csv'))
                 validation_reference_subtext = validation_reference_subtext_string
                 
             if start_time:
@@ -1089,14 +1093,14 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
                 section_title = 'Start Time'
                 section_tag = 'start_time'
                 metrics_description_string = "Metrics for Predicted Time - Observed Time are in hours.<br>Negative values indicate predicted time is earlier than observed.<br>Positive values indicate predicted time is later than observed.\n"
-                section_filename = output_dir__ + section_tag + '_metrics' + appendages[j] + '.pkl'
+                section_filename = os.path.join(output_dir__, section_tag + '_metrics' + appendages[j] + '.pkl')
                 if os.path.exists(section_filename):
                     validation_text += '* ' + section_title + '\n'
                     report_exists = True
                     appendage_set_list.append(appendages[j])
                     markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
                 validation_reference_subtext_string, validation_reference_flag_dict = construct_validation_reference_sheet(validation_reference_subtext, validation_reference_flag_dict, 'Time', 
-                                                                                                                           config.referencepath + '/validation_reference_sheet_time_metrics.csv',
+                                                                                                                           os.path.join(config.referencepath, 'validation_reference_sheet_time_metrics.csv'),
                                                                                                                            None,
                                                                                                                            None)
                 validation_reference_subtext = validation_reference_subtext_string
@@ -1107,14 +1111,14 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
                 section_title = 'Duration'
                 section_tag = 'duration'
                 metrics_description_string = "Duration is calculated in hours.<br> Metrics involving error indicate bias. Positive values indicate model overprediction and negative values indicate model underprediction.<br>Metrics involving absolute error indicate accuracy.\n"
-                section_filename = output_dir__ + section_tag + '_metrics' + appendages[j] + '.pkl'
+                section_filename = os.path.join(output_dir__, section_tag + '_metrics' + appendages[j] + '.pkl')
                 if os.path.exists(section_filename):
                     validation_text += '* ' + section_title + '\n'
                     report_exists = True
                     appendage_set_list.append(appendages[j])
                     markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
                 validation_reference_subtext_string, validation_reference_flag_dict = construct_validation_reference_sheet(validation_reference_subtext, validation_reference_flag_dict, 'Time', 
-                                                                                                                           config.referencepath + '/validation_reference_sheet_time_metrics.csv',
+                                                                                                                           os.path.join(config.referencepath, 'validation_reference_sheet_time_metrics.csv'),
                                                                                                                            None,
                                                                                                                            None)
                 validation_reference_subtext = validation_reference_subtext_string
@@ -1125,14 +1129,14 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
                 section_title = 'End Time'
                 section_tag = 'end_time'
                 metrics_description_string = "Metrics for Predicted Time - Observed Time are in hours.<br>Negative values indicate predicted time is earlier than observed.<br>Positive values indicate predicted time is later than observed.\n"
-                section_filename = output_dir__ + section_tag + '_metrics' + appendages[j] + '.pkl'
+                section_filename = os.path.join(output_dir__, section_tag + '_metrics' + appendages[j] + '.pkl')
                 if os.path.exists(section_filename):
                     validation_text += '* ' + section_title + '\n'
                     report_exists = True
                     appendage_set_list.append(appendages[j])
                     markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
                 validation_reference_subtext_string, validation_reference_flag_dict = construct_validation_reference_sheet(validation_reference_subtext, validation_reference_flag_dict, 'Time', 
-                                                                                                                           config.referencepath + '/validation_reference_sheet_time_metrics.csv',
+                                                                                                                           os.path.join(config.referencepath, 'validation_reference_sheet_time_metrics.csv'),
                                                                                                                            None,
                                                                                                                            None)
                 validation_reference_subtext = validation_reference_subtext_string
@@ -1144,22 +1148,23 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
                 section_tag = 'time_profile'            
                 metrics_description_string = "Correlation plots are created fro each predicted time profile and may be viewed in the output/plots directory.<br>Metrics are calculated from overlapping portions of predicted and observed time profiles, highlighted in red and orange in the Time Profile plots.<br>Metrics involving error indicate bias. Positive values indicate model overprediction and negative values indicate model underprediction.<br>Metrics involving absolute error or squared error indicate accuracy.\n"
                 skip_label_list = ['Time Profile Selection Plot']
-                section_filename = output_dir__ + section_tag + '_metrics' + appendages[j] + '.pkl'
+                section_filename = os.path.join(output_dir__, section_tag + '_metrics' + appendages[j] + '.pkl')
                 if os.path.exists(section_filename):
                     validation_text += '* ' + section_title + '\n'
                     report_exists = True
                     appendage_set_list.append(appendages[j])
                     markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, skip_label_list=skip_label_list, appendage=appendages[j])        
                 validation_reference_subtext_string, validation_reference_flag_dict = construct_validation_reference_sheet(validation_reference_subtext, validation_reference_flag_dict, 'Flux', 
-                                                                                                                           config.referencepath + '/validation_reference_sheet_flux_metrics.csv',
+                                                                                                                           os.path.join(config.referencepath, 'validation_reference_sheet_flux_metrics.csv'),
                                                                                                                            None,
-                                                                                                                           config.referencepath + '/validation_reference_sheet_flux_plots.csv')
+                                                                                                                           os.path.join(config.referencepath, 'validation_reference_sheet_flux_plots.csv'))
                 validation_reference_subtext = validation_reference_subtext_string
             
             ### BUILD THE VALIDATION REFERENCE SHEET AND FINALIZE
             validation_text = add_collapsible_segment(validation_header, validation_text)
             markdown_text = info_text + validation_text + markdown_text
-            markdown_filename = config.reportpath + '/' + model + '_report' + appendages[j] + '.md'
+            #markdown_filename = config.reportpath + '/' + model + '_report' + appendages[j] + '.md'
+            markdown_filename = os.path.join(config.reportpath, model + '_report' + appendages[j] + '.md')
             appendage_set_list = list(set(appendage_set_list))
 
             validation_reference_text = add_collapsible_segment_start('Validation Reference Sheet', '')
@@ -1191,7 +1196,8 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
         validation_reference_text_html += validation_reference_subtext_html
         validation_reference_text_html += add_collapsible_segment_end()
         #html_text += convert_markdown_to_html(validation_reference_text_html, model)
-        html_filename = config.reportpath + '/' + model + '_report.html'
+        #html_filename = config.reportpath + '/' + model + '_report.html'
+        html_filename = os.path.join(config.reportpath, model + '_report.html')
 
         # CONVERT TO BASE64
         html_text = embed_pdf_files_in_html(html_text, html_filename)
