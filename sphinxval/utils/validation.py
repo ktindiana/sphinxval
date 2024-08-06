@@ -56,6 +56,8 @@ def initialize_dict():
             "Forecast Issue Time":[],
             "Prediction Window Start": [],
             "Prediction Window End": [],
+            
+            #OBSERVATIONS
             "Number of CMEs": [],
             "CME Start Time": [], #Timestamp of 1st
                 #coronagraph image CME is visible in
@@ -104,7 +106,33 @@ def initialize_dict():
             "Observed Max Flux in Prediction Window": [],
             "Observed Max Flux in Prediction Window Units": [],
             "Observed Max Flux in Prediction Window Time": [],
-
+            
+            #MATCHING INFORMATION
+            "Observation Sources": [], #Obs and pred windows overlap
+            "Last Eruption Time": [], #Last time for flare/CME
+            "Last Trigger Time": [],
+            "Last Input Time": [],
+            "Threshold Crossed in Prediction Window": [],
+            "Eruption before Threshold Crossed": [],
+            "Time Difference between Eruption and Threshold Crossing": [],
+            "Triggers before Threshold Crossing": [],
+            "Inputs before Threshold Crossing": [],
+            "Triggers before Peak Intensity": [],
+            "Time Difference between Triggers and Peak Intensity": [],
+            "Inputs before Peak Intensity": [],
+            "Time Difference between Inputs and Peak Intensity": [],
+            "Triggers before Peak Intensity Max": [],
+            "Time Difference between Triggers and Peak Intensity Max": [],
+            "Inputs before Peak Intensity Max": [],
+            "Time Difference between Inputs and Peak Intensity Max": [],
+            "Triggers before SEP End": [],
+            "Time Difference between Triggers and SEP End": [],
+            "Inputs before SEP End": [],
+            "Time Difference between Inputs and SEP End": [],
+            "Prediction Window Overlap with Observed SEP Event": [],
+            "Ongoing SEP Event": [],
+            
+            #PREDICTIONS
             "Predicted SEP All Clear": [],
             "All Clear Match Status": [],
             "Predicted SEP Probability": [],
@@ -369,6 +397,92 @@ def fill_dict_row(sphinx, dict, energy_key, thresh_key, profname_dict):
         dict["Observed SEP Fluence Spectrum Units"].append(sphinx.observed_fluence_spectrum[thresh_key].fluence_units)
     except:
         dict["Observed SEP Fluence Spectrum Units"].append(None)
+
+
+            #MATCHING INFORMATION
+    dict["Observation Sources"].append(sphinx.prediction_observation_windows_overlap)
+    dict["Last Eruption Time"].append(sphinx.last_eruption_time)
+    dict["Last Trigger Time"].append(sphinx.last_trigger_time)
+    dict["Last Input Time"].append(sphinx.last_input_time)
+    
+    try:
+        dict["Threshold Crossed in Prediction Window"].append(sphinx.threshold_crossed_in_pred_win[thresh_key])
+    except:
+        dict["Threshold Crossed in Prediction Window"].append(None)
+        
+    try:
+        dict["Eruption before Threshold Crossed"].append(sphinx.eruptions_before_threshold_crossing[thresh_key])
+        dict["Time Difference between Eruption and Threshold Crossing"].append(sphinx.time_difference_eruptions_threshold_crossing[thresh_key])
+    except:
+        dict["Eruption before Threshold Crossed"].append(None)
+        dict["Time Difference between Eruption and Threshold Crossing"].append(None)
+    
+
+    
+    try:
+        dict["Triggers before Threshold Crossing"].append(sphinx.triggers_before_threshold_crossing[thresh_key])
+    except:
+        dict["Triggers before Threshold Crossing"].append(None)
+    
+    
+    try:
+        dict["Inputs before Threshold Crossing"].append(sphinx.inputs_before_threshold_crossing[thresh_key])
+    except:
+        dict["Inputs before Threshold Crossing"].append(None)
+
+
+    if len(sphinx.triggers_before_peak_intensity) == 0:
+        dict["Triggers before Peak Intensity"].append(None)
+        dict["Time Difference between Triggers and Peak Intensity"].append(None)
+    else:
+        dict["Triggers before Peak Intensity"].append(sphinx.triggers_before_peak_intensity)
+        dict["Time Difference between Triggers and Peak Intensity"].append(sphinx.time_difference_triggers_peak_intensity)
+
+    
+    if len(sphinx.inputs_before_peak_intensity) == 0:
+        dict["Inputs before Peak Intensity"].append(None)
+        dict["Time Difference between Inputs and Peak Intensity"].append(None)
+    else:
+        dict["Inputs before Peak Intensity"].append(sphinx.inputs_before_peak_intensity)
+        dict["Time Difference between Inputs and Peak Intensity"].append(sphinx.time_difference_inputs_peak_intensity)
+    
+    if len(sphinx.triggers_before_peak_intensity_max) == 0:
+        dict["Triggers before Peak Intensity Max"].append(None)
+        dict["Time Difference between Triggers and Peak Intensity Max"].append(None)
+    else:
+        dict["Triggers before Peak Intensity Max"].append(sphinx.triggers_before_peak_intensity_max)
+        dict["Time Difference between Triggers and Peak Intensity Max"].append(self.time_difference_triggers_peak_intensity_max)
+    
+    if len(sphinx.inputs_before_peak_intensity_max) == 0:
+        dict["Inputs before Peak Intensity Max"].append(None)
+        dict["Time Difference between Inputs and Peak Intensity Max"].append(None)
+    else:
+        dict["Inputs before Peak Intensity Max"].append(sphinx.inputs_before_peak_intensity_max)
+        dict["Time Difference between Inputs and Peak Intensity Max"].append(sphinx.time_difference_inputs_peak_intensity_max)
+
+    try:
+        dict["Triggers before SEP End"].append(sphinx.triggers_before_sep_end[thresh_key])
+        dict["Time Difference between Triggers and SEP End"].append(sphinx.time_difference_triggers_sep_end[thresh_key])
+    except:
+        dict["Triggers before SEP End"].append(None)
+        dict["Time Difference between Triggers and SEP End"].append(None)
+    
+    try:
+        dict["Inputs before SEP End"].append(sphinx.inputs_before_sep_end[thresh_key])
+        dict["Time Difference between Inputs and SEP End"].append(sphinx.time_difference_inputs_sep_end[thresh_key])
+    except:
+        dict["Inputs before SEP End"].append(None)
+        dict["Time Difference between Inputs and SEP End"].append(None)
+        
+    try:
+        dict["Prediction Window Overlap with Observed SEP Event"].append(sphinx.prediction_window_sep_overlap[thresh_key])
+    except:
+        dict["Prediction Window Overlap with Observed SEP Event"].append(None)
+    
+    try:
+        dict["Ongoing SEP Event"].append(sphinx.observed_ongoing_events[thresh_key])
+    except:
+        dict["Ongoing SEP Event"].append(None)
 
 
     dict["Predicted SEP All Clear"].append(pred_all_clear)
