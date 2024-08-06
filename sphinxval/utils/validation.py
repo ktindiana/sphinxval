@@ -549,6 +549,34 @@ def write_df(df, name, verbose=True):
             logger.debug('Wrote ' + filepath)
 
 
+def check_for_duplicates(df):
+    """ Check dataframe for duplicate entries. Issue warning and remove
+        repeated forecasts.
+        
+        Forecasts will be considered duplicate if all fields in the
+        dataframe are exactly the same.
+        
+        Output:
+        
+            :df: (dataframe) with unique entries
+        
+    """
+    #Create a hash for each row of the dataframe
+    hash = pd.util.hash_pandas_object(df, index=False)
+    duplicates = hash.duplicated()
+    dup = pd.DataFrame(duplicates)
+    
+    #Duplicated entries
+    dup_df = df.loc[(dup[0] == True)]
+    for entry in dup_df["Forecast Source"]:
+        logging.warning("DUPLICATE: " + str(entry) + " is a duplicated forecast. Removing." )
+    
+    #Keep only the entries that are marked as False for duplicates
+    unique_df = df.loc[(dup[0] == False)]
+    
+    return unique_df
+
+
 
 def fill_df(matched_sphinx, model_names, all_energy_channels,
     all_obs_thresholds, profname_dict, DoResume):
@@ -571,6 +599,9 @@ def fill_df(matched_sphinx, model_names, all_energy_channels,
     df = pd.DataFrame(dict)
     #Sort by prediction window start so in time order for AWT, etc
     df = df.sort_values(by=["Model","Energy Channel Key","Threshold Key","Prediction Window Start"],ascending=[True, True, True, True])
+    
+    #Check for duplicated forecasts and remove
+    df = check_for_duplicates(df)
     
     if not DoResume: write_df(df, "SPHINX_dataframe")
     return df
