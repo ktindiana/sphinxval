@@ -5,7 +5,6 @@ from ..utils import validation as valid
 from ..utils import match
 from ..utils import resume
 from ..utils import report
-from ..log import QueueListenerHandler
 import datetime
 import pickle
 import logging
@@ -31,12 +30,7 @@ def setup_logging():
         config = json.load(f_in)
     logging.config.dictConfig(config)
 
-#    "queue_listener":{
-#        "class": "QueueListenerHandler",
-#        "handlers": ["cfg://handlers.user_file"],
-#        "respect_handler_level": true
-#        }
-    
+
 def validate(data_list, model_list, top=None, DoResume=False, df_pkl=""):
     """ Validate ingests a list of observations (data_list) and a
         list of predictions (model_list).
