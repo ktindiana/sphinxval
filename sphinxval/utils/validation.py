@@ -108,7 +108,6 @@ def initialize_dict():
             "Observed Max Flux in Prediction Window Time": [],
             
             #MATCHING INFORMATION
-            "Observation Sources": [], #Obs and pred windows overlap
             "Last Eruption Time": [], #Last time for flare/CME
             "Last Trigger Time": [],
             "Last Input Time": [],
@@ -400,7 +399,6 @@ def fill_dict_row(sphinx, dict, energy_key, thresh_key, profname_dict):
 
 
             #MATCHING INFORMATION
-    dict["Observation Sources"].append(sphinx.prediction_observation_windows_overlap)
     dict["Last Eruption Time"].append(sphinx.last_eruption_time)
     dict["Last Trigger Time"].append(sphinx.last_trigger_time)
     dict["Last Input Time"].append(sphinx.last_input_time)
@@ -431,34 +429,14 @@ def fill_dict_row(sphinx, dict, energy_key, thresh_key, profname_dict):
         dict["Inputs before Threshold Crossing"].append(None)
 
 
-    if len(sphinx.triggers_before_peak_intensity) == 0:
-        dict["Triggers before Peak Intensity"].append(None)
-        dict["Time Difference between Triggers and Peak Intensity"].append(None)
-    else:
-        dict["Triggers before Peak Intensity"].append(sphinx.triggers_before_peak_intensity)
-        dict["Time Difference between Triggers and Peak Intensity"].append(sphinx.time_difference_triggers_peak_intensity)
-
-    
-    if len(sphinx.inputs_before_peak_intensity) == 0:
-        dict["Inputs before Peak Intensity"].append(None)
-        dict["Time Difference between Inputs and Peak Intensity"].append(None)
-    else:
-        dict["Inputs before Peak Intensity"].append(sphinx.inputs_before_peak_intensity)
-        dict["Time Difference between Inputs and Peak Intensity"].append(sphinx.time_difference_inputs_peak_intensity)
-    
-    if len(sphinx.triggers_before_peak_intensity_max) == 0:
-        dict["Triggers before Peak Intensity Max"].append(None)
-        dict["Time Difference between Triggers and Peak Intensity Max"].append(None)
-    else:
-        dict["Triggers before Peak Intensity Max"].append(sphinx.triggers_before_peak_intensity_max)
-        dict["Time Difference between Triggers and Peak Intensity Max"].append(self.time_difference_triggers_peak_intensity_max)
-    
-    if len(sphinx.inputs_before_peak_intensity_max) == 0:
-        dict["Inputs before Peak Intensity Max"].append(None)
-        dict["Time Difference between Inputs and Peak Intensity Max"].append(None)
-    else:
-        dict["Inputs before Peak Intensity Max"].append(sphinx.inputs_before_peak_intensity_max)
-        dict["Time Difference between Inputs and Peak Intensity Max"].append(sphinx.time_difference_inputs_peak_intensity_max)
+    dict["Triggers before Peak Intensity"].append(sphinx.triggers_before_peak_intensity)
+    dict["Time Difference between Triggers and Peak Intensity"].append(sphinx.time_difference_triggers_peak_intensity)
+    dict["Inputs before Peak Intensity"].append(sphinx.inputs_before_peak_intensity)
+    dict["Time Difference between Inputs and Peak Intensity"].append(sphinx.time_difference_inputs_peak_intensity)
+    dict["Triggers before Peak Intensity Max"].append(sphinx.triggers_before_peak_intensity_max)
+    dict["Time Difference between Triggers and Peak Intensity Max"].append(sphinx.time_difference_triggers_peak_intensity_max)
+    dict["Inputs before Peak Intensity Max"].append(sphinx.inputs_before_peak_intensity_max)
+    dict["Time Difference between Inputs and Peak Intensity Max"].append(sphinx.time_difference_inputs_peak_intensity_max)
 
     try:
         dict["Triggers before SEP End"].append(sphinx.triggers_before_sep_end[thresh_key])
@@ -549,7 +527,7 @@ def write_df(df, name, verbose=True):
             logger.debug('Wrote ' + filepath)
 
 
-def check_for_duplicates(df):
+def remove_duplicates(df):
     """ Check dataframe for duplicate entries. Issue warning and remove
         repeated forecasts.
         
@@ -561,8 +539,28 @@ def check_for_duplicates(df):
             :df: (dataframe) with unique entries
         
     """
+    #Extract key rows from the df that uniquely identify a forecast
+    #Cannot use all df entries, because the hash command cannot hash lists.
+    sub = df[["Model", "Energy Channel Key", "Threshold Key", "Mismatch Allowed",
+            "Prediction Energy Channel Key", "Prediction Threshold Key", "Forecast Source",
+            "Forecast Path", "Forecast Issue Time", "Prediction Window Start",
+            "Prediction Window End", "Number of CMEs","CME Start Time", "CME Liftoff Time",
+            "CME Latitude", "CME Longitude", "CME Speed", "CME Half Width", "CME PA",
+            "Number of Flares", "Flare Latitude", "Flare Longitude", "Flare Start Time",
+            "Flare Peak Time", "Flare End Time", "Flare Last Data Time", "Flare Intensity",
+            "Flare Integrated Intensity", "Flare NOAA AR", "Observatory", "Observed SEP All Clear",
+            "Predicted SEP All Clear", "All Clear Match Status", "Predicted SEP Probability",
+            "Probability Match Status", "Predicted SEP Threshold Crossing Time",
+            "Threshold Crossing Time Match Status", "Predicted SEP Start Time",
+            "Start Time Match Status", "Predicted SEP End Time", "End Time Match Status",
+            "Predicted SEP Duration", "Duration Match Status", "Predicted SEP Fluence",
+            "Fluence Match Status", "Predicted SEP Peak Intensity (Onset Peak)",
+            "Peak Intensity Match Status", "Predicted SEP Peak Intensity Max (Max Flux)",
+            "Peak Intensity Max Match Status", "Predicted Point Intensity", "Predicted Time Profile",
+            "Time Profile Match Status", "Last Data Time to Issue Time"]]
+    
     #Create a hash for each row of the dataframe
-    hash = pd.util.hash_pandas_object(df, index=False)
+    hash = pd.util.hash_pandas_object(sub, index=False)
     duplicates = hash.duplicated()
     dup = pd.DataFrame(duplicates)
     
@@ -600,8 +598,16 @@ def fill_df(matched_sphinx, model_names, all_energy_channels,
     #Sort by prediction window start so in time order for AWT, etc
     df = df.sort_values(by=["Model","Energy Channel Key","Threshold Key","Prediction Window Start"],ascending=[True, True, True, True])
     
+#    #TEST TEST TEST
+#    name = "TEST_Duplicate_DF"
+#    write_df(df, name)
+#    filepath = os.path.join(config.outpath, 'csv', name + '.csv')
+#    df_in = pd.read_csv(filepath, parse_dates=True)
+    
+    df = pd.concat([df,df_in], ignore_index = True)
+    
     #Check for duplicated forecasts and remove
-    df = check_for_duplicates(df)
+    df = remove_duplicates(df)
     
     if not DoResume: write_df(df, "SPHINX_dataframe")
     return df

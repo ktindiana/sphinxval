@@ -100,7 +100,7 @@ def validate(data_list, model_list, top=None, DoResume=False, df_pkl=""):
         logger.info("Resume selected. Reading in previous dataframe: "
             + df_pkl)
         r_df = resume.read_in_df(df_pkl)
-        model_objs = resume.check_fcast_for_resume(r_df, model_objs)
+        model_objs = resume.check_fcast_for_resume(r_df, model_objs) #exclude fcasts
         logger.info("Completed reading in previous dataframe and checking for new forecasts only: "
             + df_pkl)
     ################

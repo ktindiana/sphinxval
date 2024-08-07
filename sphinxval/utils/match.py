@@ -2339,7 +2339,8 @@ def setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_o
             #Check that forecast prediction window is after last trigger/input
             fcast.valid_forecast(verbose=True)
             if fcast.valid == False:
-                logger.warning("Skipping invalid " + fcast.source)
+                logger.warning("FORECAST NOT VALID: Removing " + fcast.source
+                    + " from validation analysis.")
                 continue
                 
 

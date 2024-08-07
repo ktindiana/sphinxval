@@ -2292,6 +2292,10 @@ class SPHINX:
         #Check if forecast for all clear
         predicted = self.prediction.all_clear.all_clear_boolean
         match_status = self.all_clear_match_status
+        
+        if predicted == None:
+            match_status = "No Prediction Provided"
+            return predicted, match_status
 
         pred_threshold = {'threshold': self.prediction.all_clear.threshold,
             'threshold_units': self.prediction.all_clear.threshold_units}
