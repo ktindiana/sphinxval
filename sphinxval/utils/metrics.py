@@ -1110,6 +1110,57 @@ def check_SEDS(h, f, m, n):
         seds = chk - 1
         return seds
 
+# F_beta Score
+def calc_fbeta(h, m, f):
+    """
+    Inputs
+    h = hits
+    m = misses
+    f = false alarms
+
+
+    Formula
+    -------
+    F_beta = ((1+beta^2)*h)/((1+beta^2)*h+f+m*beta^2)
+    beta = 0.5, 1, 2
+
+    Notes
+    -------
+    F1 Score (Beta = 1) is the harmonic mean of precision and recall
+    When Beta = 2 the recall is weighted higher than precision and when Beta = 0.5 precision is weighted higher.
+    """
+    beta = [0.5, 1, 2]
+    score = {}
+    for value in beta:
+        score[value] = ((1+value**2)*h) / ((1+value**2)*h+f+m*value**2)
+
+
+    return score
+
+def calc_PT(h, m, f, c):
+    """
+    Prevalence Threshold 
+    Presented as a percentage?
+    """
+    score = check_div(np.sqrt(check_div(h, h+m)*check_div(f, f+c))- check_div(f, f+c), check_div(h, h+m)-check_div(f, f+c))
+    return score
+
+def calc_MCC(h, m, f, c):
+    """
+    Matthew's Correlation Coefficnet
+    Phi Coefficient
+    For binary classification ranges from -1 to 1, perfect score is 1
+
+    Formula
+    -------
+    MCC = (h*c-f*m)/Sqrt((h+f)*(h+m)*(c+f)*(c+m))
+
+    Notes
+    -------
+    The Pearson correlation reduces to the Phi Coefficient for a 2x2 confusion (contigency) matrix
+    """
+    score = check_div(h*c-f*m, np.sqrt((h+f)*(h+m)*(c+f)*(c+m)))
+    return score
 
 
 def arr_to_df(arr, keys):
@@ -1164,6 +1215,7 @@ def contingency_scores(h,m,f,c):
         Hit Rate (H) = h/(h+m)
         False Alarm Ratio (FAR) = f/(f+h)
         False Alarm Rate (F) = f/(f+c)
+        False Negative Rate (FNR) = m/(h+m)
         Frequency of Hits (FOH) = h/(h+f)
         Frequency of Misses (FOM) = m/(h+m)
         Probability of Correct Negatives (POCN) = c/(c+f)
@@ -1176,6 +1228,17 @@ def contingency_scores(h,m,f,c):
         Heidke Skill Score (HSS) = 2(hc-fm)/((h+m)(m+c)+(h+f)(f+c))
         Odds Ratio Skill Score (ORSS) = (hc-mf)/(hc+mf)
         Symmetric Extreme Dependency Score (SEDS) = ((ln((h+f)/n)+ln((h+m)/n))/ln(h/n)) - 1
+        F-Scores (Beta = 0.5, 1, 2) = ((1+ Beta^2)* h) / ((1+Beta^2)*h + Beta^2 * m + f)
+        Prevalence = (h+m)/n
+        Matthew Correlation Coefficient = (h*c-f*m)/Sqrt((h+f)*(h+m)*(c+f)*(c+m))
+        Informedness = h/(h+m) + c/(f+c) - 1
+        Markedness = h/(h+f) + c/(f+c) - 1
+        Prevalence Threshold = (Sqrt(h/(h+m)*f/(f+c))-(f/(f+c))) / (h/(h+m)-f/(f+c))
+        Balanced Accuracy = (1/2)*(h/(h+m)+c/(f+c)
+        Fowlkes-Mallows Index = Sqrt((h/(h+f))*(h/(h+m)))
+            https://en.wikipedia.org/wiki/Fowlkes%E2%80%93Mallows_index
+        
+        Some sources of these formuli are found here: https://en.wikipedia.org/wiki/Confusion_matrix
      
     """
     n = h + m + f + c
@@ -1191,9 +1254,10 @@ def contingency_scores(h,m,f,c):
     'H': check_div(h, h+m),                            # Hit Rate, Probability of Detection, Recall, Sensitivity
     'FAR': check_div(f, h+f),                          # False Alarm Ratio
     'F': check_div(f, f+c),                            # False Alarm Rate
+    'FNR': check_div(m,h+m),                           # False Negative Rate, Miss Rate
     'FOH': check_div(h, h+f),                          # Frequency of Hits
     'FOM': check_div(m, h+m),                          # Frequency of Misses
-    'POCN': check_div(c, f+c),                         # Probability of Correct Negatives
+    'POCN': check_div(c, f+c),                         # Probability of Correct Negatives, Specificity, Selectivity
     'DFR': check_div(m, m+c),                          # Detection Failure Ratio
     'FOCN': check_div(c, m+c),                         # Frequency of Correct Negatives
     'TS': check_div(h, h+f+m),                         # Threat Score, Critical success index
@@ -1202,7 +1266,15 @@ def contingency_scores(h,m,f,c):
     'TSS': check_div(h, h+m) - check_div(f, f+c),      # True Skill Score
     'HSS': check_div(2.0 * (h*c - f*m), ((h+m) * (m+c) + (h+f) * (f+c))), # Heidke Skill Score
     'ORSS': check_div((h*c - m*f), (h*c + m*f)),       # Odds Ratio Skill Score
-    'SEDS': check_SEDS(h, f, m, n)                     # Symmetric Extreme Dependency Score
+    'SEDS': check_SEDS(h, f, m, n),                    # Symmetric Extreme Dependency Score
+    'FBETA': calc_fbeta(h, m, f),                      # F_beta scores {0.5, 1, 2}
+    'PREV': check_div(h+m, n),                         # Prevalence 
+    'MCC': calc_MCC(h, m, f, c),                       # Matthew Correlation Coefficient, Phi Coefficient
+    'INFORM': check_div(h, h+m) + check_div(c, f+c) - 1, # Informedness
+    'MARK': check_div(h, h+f) + check_div(c, f+c) - 1,  # Markedness
+    'PT': calc_PT(h, m, f ,c),                         # Prevalence Threshold
+    'BA': check_div(check_div(h, h+m)+check_div(c, f+c), 2), # Balanced Accuracy
+    'FM': np.sqrt(check_div(h, h+f)*check_div(h, h+m))  # Fowlkes-Mallows Index (Geometric mean of precision and recall)
     }
     #### Just doing some testing here with likelihood ratios, keep commented out for now
     # print(df[obs_key], df[pred_key])
