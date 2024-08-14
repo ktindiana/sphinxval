@@ -1509,7 +1509,7 @@ def match_all_clear(sphinx, observation_obj, is_win_overlap,
        
         - Prediction window overlaps with observation
         - There is no ongoing SEP event at the start of the prediction window
-        - Last eruption within 48 hrs - 15 mins before threshold crossing
+        - Last eruption within 24 hrs - 8 mins before threshold crossing
         - The last trigger/input time if before the threshold crossing
         - Threshold crossed in prediction window = False All Clear
         - No threshold crossed in prediction window = True All Clear

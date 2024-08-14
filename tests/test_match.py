@@ -418,6 +418,55 @@ class TestMatchObservedOnsetPeak(LoadMatch):
         self.assertEqual(function_evaluations, [True, None], '')
         self.assertEqual(sphinx.peak_intensity_match_status, 'SEP Event', '')
 
+    @make_docstring_printable
+    def test_match_observed_onset_peak_7(this, self):
+        """
+        The forecast/observation pair has the following attributes:
+           -- Prediction window overlaps with observation window
+                prediction window start:  2000-01-01T00:00:00Z
+                prediction window end:    2000-01-01T00:32:00Z
+                observation window start: 2000-01-01T00:00:00Z
+                observation window end:   2000-01-01T01:00:00Z
+           -- The trigger occurred before the onset peak time
+                magnetogram last data:    2000-01-01T00:00:00Z
+                peak time:                2000-01-01T00:30:00Z
+           -- The prediction window overlaps with an SEP event
+                SEP start:                2000-01-01T00:16:00Z
+                SEP end:                  2000-01-01T00:35:00Z
+        The function should evaluate to [True]
+        sphinx.peak_intensity_match_status should be 'SEP Event'
+        """
+        forecast_json = './tests/files/forecasts/match/match_observed_onset_peak/match_observed_onset_peak_7.json'
+        sphinx, function_evaluations = self.utility_test_match_observed_onset_peak(this, forecast_json)
+        self.assertEqual(function_evaluations, [True], '')
+        self.assertEqual(sphinx.peak_intensity_match_status, 'SEP Event', '')
+   
+    @make_docstring_printable
+    def test_match_observed_onset_peak_8(this, self):
+        """
+        The forecast/observation pair has the following attributes:
+           -- Prediction window overlaps with observation window
+                prediction window start:  2000-01-01T00:00:00Z
+                prediction window end:    2000-01-01T00:18:00Z
+                observation window start: 2000-01-01T00:00:00Z
+                observation window end:   2000-01-01T01:00:00Z
+           -- The trigger occurred before the onset peak time
+                magnetogram last data:    2000-01-01T00:00:00Z
+                peak time:                2000-01-01T00:30:00Z
+           -- The prediction window overlaps with an SEP event (but does not overlap with peak)
+                SEP start:                2000-01-01T00:16:00Z
+                SEP end:                  2000-01-01T00:35:00Z
+        The function should evaluate to [True]
+        sphinx.peak_intensity_match_status should be 'SEP Event'
+        """
+        forecast_json = './tests/files/forecasts/match/match_observed_onset_peak/match_observed_onset_peak_8.json'
+        sphinx, function_evaluations = self.utility_test_match_observed_onset_peak(this, forecast_json)
+        self.assertEqual(function_evaluations, [True], '')
+        self.assertEqual(sphinx.peak_intensity_match_status, 'SEP Event', '')
+ 
+
+
+
 # sphinx.py --> match.match_all_forecasts --> match.match_observed_onset_peak
 class TestMatchObservedMaxFlux(LoadMatch):
     """
@@ -631,6 +680,81 @@ class TestMatchObservedMaxFlux(LoadMatch):
         self.assertEqual(function_evaluations, [True, None], '')
         self.assertEqual(sphinx.peak_intensity_max_match_status, 'SEP Event', '')
 
+
+class TestForecastValidity(LoadMatch):
+    """
+    Unit test classes for checking forecast JSON validity.
+    """
+
+    def setUp(self):
+        energy_channel = {'min': 10, 'max': -1, 'units': 'MeV'}
+        self.load_energy(energy_channel)
+        self.load_verbosity()
+
+    @make_docstring_printable
+    def test_forecast_validity_1(this, self):
+        """
+        The forecast should be invalid because the trigger comes after the issue time. 
+        No matchable forecast/observation pair exists.
+        """
+        forecast_json = './tests/files/forecasts/forecast_validity/forecast_validity_1.json'
+        self.utility_print_docstring(this)
+        forecast = utility_load_forecast(forecast_json, self.energy_channel)
+        forecast.valid_forecast()
+        self.assertEqual(forecast.valid, False, '')
+ 
+    @make_docstring_printable
+    def test_forecast_validity_2(this, self):
+        """
+        The forecast should be invalid because the trigger/input block does not exist. 
+        No matchable forecast/observation pair exists.
+        """
+        forecast_json = './tests/files/forecasts/forecast_validity/forecast_validity_2.json'
+        self.utility_print_docstring(this)
+        forecast = utility_load_forecast(forecast_json, self.energy_channel)
+        forecast.valid_forecast()
+        self.assertEqual(forecast.valid, False, '')
+
+    @make_docstring_printable
+    def test_forecast_validity_3(this, self):
+        """
+        The forecast should be invalid because the trigger/input block is empty. 
+        No matchable forecast/observation pair exists.
+        """
+        forecast_json = './tests/files/forecasts/forecast_validity/forecast_validity_3.json'
+        self.utility_print_docstring(this)
+        forecast = utility_load_forecast(forecast_json, self.energy_channel)
+        forecast.valid_forecast()
+        self.assertEqual(forecast.valid, False, '')
+  
+    @make_docstring_printable
+    def test_forecast_validity_4(this, self):
+        """
+        The forecast should be invalid because the issue time does not exist. 
+        No matchable forecast/observation pair exists.
+        """
+        forecast_json = './tests/files/forecasts/forecast_validity/forecast_validity_4.json'
+        self.utility_print_docstring(this)
+        self.assertRaises(KeyError, utility_load_forecast, forecast_json, self.energy_channel)
+        '''
+        forecast = utility_load_forecast(forecast_json, self.energy_channel)
+        forecast.valid_forecast()
+        self.assertEqual(forecast.valid, False, '')
+        '''
+ 
+    @make_docstring_printable
+    def test_forecast_validity_5(this, self):
+        """
+        The forecast should be invalid because the issue time is empty. 
+        No matchable forecast/observation pair exists.
+        """
+        forecast_json = './tests/files/forecasts/forecast_validity/forecast_validity_5.json'
+        self.utility_print_docstring(this)
+        forecast = utility_load_forecast(forecast_json, self.energy_channel)
+        self.assertRaises(TypeError, forecast.valid_forecast)
+        #self.assertEqual(forecast.valid, False, '')
+
+
 # sphinx.py --> match.match_all_forecasts --> match.match_all_clear
 class TestMatchAllClear(LoadMatch):
     """
@@ -745,7 +869,7 @@ class TestMatchAllClear(LoadMatch):
     @make_docstring_printable
     def test_match_all_clear_3(this, self):
         """
-        REVISION NEEDED? -- Should we allow forecasts whose prediction window extends to times prior to their issue time?
+        REVISION NEEDED? -- Should we allow forecasts whose prediction window extends to times prior to their issue time? Their last data time?
         The forecast/observation pair has the following attributes:
            -- Prediction window overlaps with observation window
                 prediction window start:  2000-01-01T00:00:00Z # Is this even possible? Do any forecasts declare prediction windows that happened prior to the issue time?
@@ -770,33 +894,6 @@ class TestMatchAllClear(LoadMatch):
     @make_docstring_printable
     def test_match_all_clear_4(this, self):
         """
-        REVISION NEEDED? -- Should we allow forecasts with issue times that precede the latest trigger/input time included in the file?
-        The forecast/observation pair has the following attributes:
-           -- Prediction window overlaps with observation window
-                prediction window start:  2000-01-01T00:00:00Z
-                prediction window end:    2000-01-01T01:00:00Z
-                observation window start: 2000-01-01T00:00:00Z
-                observation window end:   2000-01-01T01:00:00Z
-           -- No ongoing SEP event at start of prediction window
-                event start:              2000-01-01T00:15:00Z
-                event end:                2000-01-01T00:20:00Z
-           -- The trigger (CME observation) for the forecast occurred after the issue time
-                CME start:                2000-01-01T00:30:00Z
-                issue time:               
-           -- The threshold crossing was observed within the prediction window
-                threshold crossing:       2000-01-01T00:15:00Z
-        The forecast itself should be invalid because the trigger comes after the issue time. 
-        No matchable forecast/observation pair exists.
-        """
-        forecast_json = './tests/files/forecasts/match/match_all_clear/match_all_clear_4.json'
-        self.utility_print_docstring(this)
-        forecast = utility_load_forecast(forecast_json, self.energy_channel)
-        forecast.valid_forecast()
-        self.assertEqual(forecast.valid, False, '')
-        
-    @make_docstring_printable
-    def test_match_all_clear_5(this, self):
-        """
         The forecast/observation pair has the following attributes:
            -- Prediction window overlaps with observation window
                 prediction window start:  2000-01-01T00:00:00Z
@@ -810,8 +907,32 @@ class TestMatchAllClear(LoadMatch):
                 CME start:                1980-01-01T00:30:00Z
            -- The threshold crossing was observed within the prediction window
                 threshold crossing:       2000-01-01T00:15:00Z
-        The function should evaluate to [True] (forecast is invalid due to triggering after threshold crossing)
+        The function should evaluate to [True]
         sphinx.all_clear_match_status should be 'Eruption Out of Range' -- trigger occurs 20 years prior to threshold crossing
+        """
+        forecast_json = './tests/files/forecasts/match/match_all_clear/match_all_clear_4.json'
+        sphinx, function_evaluations = self.utility_test_match_all_clear(this, forecast_json)
+        self.assertEqual(sphinx.all_clear_match_status, 'Eruption Out of Range', '')
+        self.assertEqual(function_evaluations, [True], '')
+
+    @make_docstring_printable
+    def test_match_all_clear_5(this, self):
+        """
+        The forecast/observation pair has the following attributes:
+           -- Prediction window overlaps with observation window
+                prediction window start:  2000-01-01T00:00:00Z
+                prediction window end:    2000-01-01T01:00:00Z
+                observation window start: 2000-01-01T00:00:00Z
+                observation window end:   2000-01-01T01:00:00Z
+           -- No ongoing SEP event at start of prediction window
+                event start:              2000-01-01T00:15:00Z
+                event end:                2000-01-01T00:20:00Z
+           -- The trigger (CME observation) for the forecast occurred just before (1 minute) the threshold crossing
+                CME start:                2000-01-01T00:14:00Z
+           -- The threshold crossing was observed within the prediction window
+                threshold crossing:       2000-01-01T00:15:00Z
+        The function should evaluate to [True]
+        sphinx.all_clear_match_status should be 'Eruption Out of Range' -- trigger occurs < 8 minutes prior to threshold crossing (violates speed limit of the universe)
         """
         forecast_json = './tests/files/forecasts/match/match_all_clear/match_all_clear_5.json'
         sphinx, function_evaluations = self.utility_test_match_all_clear(this, forecast_json)
@@ -847,30 +968,6 @@ class TestMatchAllClear(LoadMatch):
     @make_docstring_printable
     def test_match_all_clear_7(this, self):
         """
-        REVISION NEEDED? -- Should we allow forecasts to have an empty trigger/input block?
-        The forecast/observation pair has the following attributes:
-           -- Prediction window overlaps with observation window
-                prediction window start:  2000-01-01T00:17:00Z
-                prediction window end:    2000-01-01T01:00:00Z
-                observation window start: 2000-01-01T00:00:00Z
-                observation window end:   2000-01-01T01:00:00Z
-           -- Ongoing SEP event at the start of the prediction window
-                event start:            2000-01-01T00:15:00Z
-                event end:              2000-01-01T00:20:00Z
-           -- No trigger/input information
-           -- The threshold crossing was not observed within the prediction window
-                threshold crossing:       2000-01-01T00:15:00Z
-        The function should evaluate to [None] (forecast is invalid due to no trigger)
-        sphinx.all_clear_match_status should be '' -- no trigger, rejection of JSON
-        """
-        forecast_json = './tests/files/forecasts/match/match_all_clear/match_all_clear_7.json'
-        sphinx, function_evaluations = self.utility_test_match_all_clear(this, forecast_json)
-        self.assertEqual(sphinx.all_clear_match_status, '', '')
-        self.assertEqual(function_evaluations, [None], '')
-    
-    @make_docstring_printable
-    def test_match_all_clear_8(this, self):
-        """
         The forecast/observation pair has the following attributes:
            -- Prediction window overlaps with observation window
                 prediction window start:  2000-01-01T00:00:00Z
@@ -892,18 +989,18 @@ class TestMatchAllClear(LoadMatch):
         sphinx.all_clear_match_status should be unchanged from 'SEP Event'
         sphinx.observed_all_clear.all_clear_boolean should be False from first forecast-observation match
         """
-        observation_json = './tests/files/observations/match/match_all_clear/match_all_clear_8.json'
+        observation_json = './tests/files/observations/match/match_all_clear/match_all_clear_7.json'
         observation = utility_load_observation(observation_json, self.energy_channel) # SAME ENERGY CHANNEL
         self.observation_objects[self.energy_key].append(observation)
         self.observation_values = match.compile_all_obs(self.all_energy_channels, self.observation_objects)        
-        forecast_json = './tests/files/forecasts/match/match_all_clear/match_all_clear_8.json'
+        forecast_json = './tests/files/forecasts/match/match_all_clear/match_all_clear_7.json'
         sphinx, function_evaluations = self.utility_test_match_all_clear(this, forecast_json)
         self.assertEqual(sphinx.all_clear_match_status, 'SEP Event', '')
         self.assertEqual(sphinx.observed_all_clear.all_clear_boolean, False, '')
         self.assertEqual(function_evaluations, [False, None], '')
         
     @make_docstring_printable
-    def test_match_all_clear_9(this, self):
+    def test_match_all_clear_8(this, self):
         """
         The forecast/observation pair has the following attributes:
             -- Prediction window overlaps with observation window
@@ -920,17 +1017,20 @@ class TestMatchAllClear(LoadMatch):
                 threshold crossing:       2000-01-01T00:15:00Z
         The function should evaluate to [None]
         """
-        forecast_json = './tests/files/forecasts/match/match_all_clear/match_all_clear_9.json'
+        forecast_json = './tests/files/forecasts/match/match_all_clear/match_all_clear_8.json'
         sphinx, function_evaluations = self.utility_test_match_all_clear(this, forecast_json)
         self.assertEqual(sphinx.all_clear_match_status, 'Ongoing SEP Event', '')
+        self.assertEqual(function_evaluations, [None], '')
 
     @make_docstring_printable
-    def test_match_all_clear_10(this, self):
+    def test_match_all_clear_9(this, self):
         """
         The forecast/observation pair has the following attributes:
            -- Prediction window overlaps with observation window
                 prediction window start:  2000-01-01T00:18:00Z
                 prediction window end:    2000-01-01T01:00:00Z
+                observation window start: 2000-01-01T00:00:00Z
+                observation window end:   2000-01-01T01:00:00Z
                 observation window start: 2000-01-01T00:25:00Z
                 observation window end:   2000-01-01T01:00:00Z
            -- The trigger (CME observation) for the forecast occurred after the first, and before the second threshold crossing
@@ -942,7 +1042,41 @@ class TestMatchAllClear(LoadMatch):
                 event 2 end:              2000-01-01T00:59:00Z
            -- The second threshold crossing was observed within the prediction window
                 threshold crossing:       2000-01-01T00:40:00Z
-           The function should evaluate to [None, False] (the prediction window is entirely outside of the first event's above threshold period; the second event is correctly identified as All Clear = False)
+           The function should evaluate to [None, False] (the prediction window starts after the first event's threshold crossing time; the second event is correctly identified as All Clear = False)
+        sphinx.all_clear_match_status should end up as 'SEP Event'
+        sphinx.observed_all_clear.all_clear_boolean should be False from second forecast-observation match
+        """
+        observation_json = './tests/files/observations/match/match_all_clear/match_all_clear_9.json'
+        observation = utility_load_observation(observation_json, self.energy_channel) # SAME ENERGY CHANNEL
+        self.observation_objects[self.energy_key].append(observation)
+        self.observation_values = match.compile_all_obs(self.all_energy_channels, self.observation_objects)        
+        forecast_json = './tests/files/forecasts/match/match_all_clear/match_all_clear_9.json'
+        sphinx, function_evaluations = self.utility_test_match_all_clear(this, forecast_json)
+        self.assertEqual(sphinx.all_clear_match_status, 'SEP Event', '')
+        self.assertEqual(sphinx.observed_all_clear.all_clear_boolean, False, '')
+        self.assertEqual(function_evaluations, [None, False], '')
+ 
+    @make_docstring_printable
+    def test_match_all_clear_10(this, self):
+        """
+        The forecast/observation pair has the following attributes:
+           -- Prediction window overlaps with observation window
+                prediction window start:  2000-01-01T00:00:00Z
+                prediction window end:    2000-01-01T00:45:00Z
+                observation window start: 2000-01-01T00:00:00Z
+                observation window end:   2000-01-01T01:00:00Z
+                observation window start: 2000-01-01T00:25:00Z
+                observation window end:   2000-01-01T01:00:00Z
+           -- The trigger (CME observation) for the forecast occurred after the first, and before the second threshold crossing
+                CME start:                2000-01-01T00:00:00Z
+           -- There are two SEP events in the prediction window. One of the events is ongoing at the start of the prediction window.
+                event 1 start:            2000-01-01T00:15:00Z
+                event 1 end:              2000-01-01T00:20:00Z
+                event 2 start:            2000-01-01T00:40:00Z
+                event 2 end:              2000-01-01T00:59:00Z
+           -- The second threshold crossing was observed within the prediction window
+                threshold crossing:       2000-01-01T00:40:00Z
+           The function should evaluate to [False, None] (the prediction window starts before the first event's threshold crossing time and stops in the middle of the second event; the second event is ignored)
         sphinx.all_clear_match_status should end up as 'SEP Event'
         sphinx.observed_all_clear.all_clear_boolean should be False from second forecast-observation match
         """
@@ -954,7 +1088,7 @@ class TestMatchAllClear(LoadMatch):
         sphinx, function_evaluations = self.utility_test_match_all_clear(this, forecast_json)
         self.assertEqual(sphinx.all_clear_match_status, 'SEP Event', '')
         self.assertEqual(sphinx.observed_all_clear.all_clear_boolean, False, '')
-        self.assertEqual(function_evaluations, [None, False], '')
+        self.assertEqual(function_evaluations, [False, None], '')
 
 class TestMatchSEPQuantities(LoadMatch):
     """
