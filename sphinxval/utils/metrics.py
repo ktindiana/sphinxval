@@ -1111,28 +1111,26 @@ def check_SEDS(h, f, m, n):
         return seds
 
 # F_beta Score
-def calc_fbeta(h, m, f):
+def calc_fbeta(h, m, f, beta):
     """
     Inputs
     h = hits
     m = misses
     f = false alarms
-
+    beta = weighting factor between precision and recall
 
     Formula
     -------
     F_beta = ((1+beta^2)*h)/((1+beta^2)*h+f+m*beta^2)
-    beta = 0.5, 1, 2
+    beta = 0.5, 1, 2 (typically)
 
     Notes
     -------
     F1 Score (Beta = 1) is the harmonic mean of precision and recall
     When Beta = 2 the recall is weighted higher than precision and when Beta = 0.5 precision is weighted higher.
     """
-    beta = [0.5, 1, 2]
-    score = {}
-    for value in beta:
-        score[value] = ((1+value**2)*h) / ((1+value**2)*h+f+m*value**2)
+    
+    score = ((1+beta**2)*h) / ((1+beta**2)*h+f+m*beta**2)
 
 
     return score
@@ -1267,7 +1265,9 @@ def contingency_scores(h,m,f,c):
     'HSS': check_div(2.0 * (h*c - f*m), ((h+m) * (m+c) + (h+f) * (f+c))), # Heidke Skill Score
     'ORSS': check_div((h*c - m*f), (h*c + m*f)),       # Odds Ratio Skill Score
     'SEDS': check_SEDS(h, f, m, n),                    # Symmetric Extreme Dependency Score
-    'FBETA': calc_fbeta(h, m, f),                      # F_beta scores {0.5, 1, 2}
+    'FONE': calc_fbeta(h, m, f, 1),                    # F_beta (1)
+    'FTWO': calc_fbeta(h, m, f, 2),                    # F_beta (2)
+    'FHALF': calc_fbeta(h, m, f, 0.5),                 # F_beta (0.5)
     'PREV': check_div(h+m, n),                         # Prevalence 
     'MCC': calc_MCC(h, m, f, c),                       # Matthew Correlation Coefficient, Phi Coefficient
     'INFORM': check_div(h, h+m) + check_div(c, f+c) - 1, # Informedness

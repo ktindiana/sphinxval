@@ -1127,11 +1127,12 @@ class ContigencyMetricsTestCase(unittest.TestCase):
             elif score == 'SEDS':
                 self.assertTrue(math.isnan(result[score]))
                 # SEDS = (log((h+f)/n)+log((h+m)/n) / log(h/n)) - 1 = (log((1+0)/1)+log((1+0)/1) / log(1/1)) - 1
-            elif score == 'FBETA':
-                beta = ['0.5', '1', '2']
-                test_score = {0.5: 1.0, 1: 1.0, 2: 1.0}
-                self.assertEqual(result[score], test_score)
-                
+            elif score == 'FONE':
+                self.assertEqual(result[score], 1)
+            elif score == 'FTWO':
+                self.assertEqual(result[score], 1)
+            elif score == 'FHALF':
+                self.assertEqual(result[score], 1)
                 # F-Scores (Beta = 0.5, 1, 2) = ((1+ Beta^2)* h) / ((1+Beta^2)*h + Beta^2 * m + f)
                 # F(Beta = 0.5) = ((1+0.5^2)*0) / ((1+0.5^2)*0 + 1 + 0)
                 # F(Beta = 1) = ((1+1^2)*1) / ((1+1^2)*1 + 0 + 0)
@@ -1236,10 +1237,12 @@ class ContigencyMetricsTestCase(unittest.TestCase):
                 # Will throw out the following error messages (but will pass unittest)
                 # RuntimeWarning: divide by zero encountered in log
                 # RuntimeWarning: invalid value encountered in scalar divide
-            elif score == 'FBETA':
-                test_score = {0.5: 0.0, 1: 0.0, 2: 0.0}
-                self.assertEqual(result[score], test_score)
-                
+            elif score == 'FONE':
+                self.assertEqual(result[score], 0)
+            elif score == 'FTWO':
+                self.assertEqual(result[score], 0)
+            elif score == 'FHALF':
+                self.assertEqual(result[score], 0)
                 # F-Scores (Beta = 0.5, 1, 2) = ((1+ Beta^2)* h) / ((1+Beta^2)*h + Beta^2 * m + f)
                 # F(Beta = 0.5) = ((1+0.5^2)*0) / ((1+0.5^2)*0 + 1 + 0)
                 # F(Beta = 1) = ((1+1^2)*0) / ((1+1^2)*0 + 1 + 0)
@@ -1343,11 +1346,12 @@ class ContigencyMetricsTestCase(unittest.TestCase):
                 # Will throw out the following error messages (but will pass unittest)
                 # RuntimeWarning: divide by zero encountered in log
                 # RuntimeWarning: invalid value encountered in scalar divide
-            elif score == 'FBETA':
-                beta = ['0.5', '1', '2']
-                test_score = {0.5: 0.0, 1: 0.0, 2: 0.0}
-                self.assertEqual(result[score], test_score)
-                
+            elif score == 'FONE':
+                self.assertEqual(result[score], 0)
+            elif score == 'FTWO':
+                self.assertEqual(result[score], 0)
+            elif score == 'FHALF':
+                self.assertEqual(result[score], 0)
                 # F-Scores (Beta = 0.5, 1, 2) = ((1+ Beta^2)* h) / ((1+Beta^2)*h + Beta^2 * m + f)
                 # F(Beta = 0.5) = ((1+0.5^2)*0) / ((1+0.5^2)*0 + 0 + 1)
                 # F(Beta = 1) = ((1+1^2)*0) / ((1+1^2)*0 + 0 + 1)
@@ -1450,12 +1454,12 @@ class ContigencyMetricsTestCase(unittest.TestCase):
                 # Will throw out the following error messages (but will pass unittest)
                 # RuntimeWarning: divide by zero encountered in log
                 # RuntimeWarning: invalid value encountered in scalar divide
-            elif score == 'FBETA':
-                beta = [0.5, 1, 2]
-                # test_score = {0.5: np.nan, 1: np.nan, 2: np.nan}
-                for values in beta:
-                    self.assertTrue(math.isnan(result[score][values]))
-                
+            elif score == 'FONE':
+                self.assertTrue(math.isnan(result[score]))
+            elif score == 'FTWO':
+                self.assertTrue(math.isnan(result[score]))
+            elif score == 'FHALF':
+                self.assertTrue(math.isnan(result[score]))
                 # F-Scores (Beta = 0.5, 1, 2) = ((1+ Beta^2)* h) / ((1+Beta^2)*h + Beta^2 * m + f)
                 # F(Beta = 0.5) = ((1+0.5^2)*0) / ((1+0.5^2)*0 + 0 + 0)
                 # F(Beta = 1) = ((1+1^2)*0) / ((1+1^2)*0 + 0 + 0)
@@ -1555,11 +1559,12 @@ class ContigencyMetricsTestCase(unittest.TestCase):
             elif score == 'SEDS':
                 self.assertEqual(result[score], 0)
                 # SEDS = (log((h+f)/n)+log((h+m)/n) / log(h/n)) - 1 = (log((1+1)/1)+log((1+1)/1) / log(1/1)) - 1
-            elif score == 'FBETA':
-                beta = ['0.5', '1', '2']
-                test_score = {0.5: 0.5, 1: 0.5, 2: 0.5}
-                self.assertEqual(result[score], test_score)
-                
+            elif score == 'FONE':
+                self.assertEqual(result[score], 0.5)
+            elif score == 'FTWO':
+                self.assertEqual(result[score], 0.5)
+            elif score == 'FHALF':
+                self.assertEqual(result[score], 0.5)
                 # F-Scores (Beta = 0.5, 1, 2) = ((1+ Beta^2)* h) / ((1+Beta^2)*h + Beta^2 * m + f)
                 # F(Beta = 0.5) = ((1+0.5^2)*1) / ((1+0.5^2)*1 + 1 + 1)
                 # F(Beta = 1) = ((1+1^2)*1) / ((1+1^2)*1 + 1 + 1)
@@ -1660,9 +1665,12 @@ class ContigencyMetricsTestCase(unittest.TestCase):
             elif score == 'SEDS':
                 self.assertEqual(result[score], ((np.log(4/10)+np.log(3/10))/np.log(1/10)) - 1)
                 # SEDS = (log((h+f)/n)+log((h+m)/n) / log(h/n)) - 1 = (log((1+3)/10)+log((1+2)/10) / log(1/10)) - 1
-            elif score == 'FBETA':
-                test_score = {0.5: 0.2631578947368421, 1: 0.2857142857142857, 2: 0.3125}
-                self.assertEqual(result[score], test_score)             
+            elif score == 'FONE':
+                self.assertEqual(result[score], 0.2857142857142857)
+            elif score == 'FTWO':
+                self.assertEqual(result[score], 0.3125)         
+            elif score == 'FHALF':
+                self.assertEqual(result[score], 0.2631578947368421)    
                 # F-Scores (Beta = 0.5, 1, 2) = ((1+ Beta^2)* h) / ((1+Beta^2)*h + Beta^2 * m + f)
                 # F(Beta = 0.5) = ((1+0.5^2)*1) / ((1+0.5^2)*1 + 2 + 3)
                 # F(Beta = 1) = ((1+1^2)*1) / ((1+1^2)*1 + 2 + 3)
