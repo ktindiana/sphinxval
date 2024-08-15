@@ -619,7 +619,9 @@ def initialize_all_clear_dict():
             "Heidke Skill Score": [],
             "Odds Ratio Skill Score": [],
             "Symmetric Extreme Dependency Score": [],
-            "F-Beta Scores": [],
+            "F1 Score": [],
+            "F2 Score": [],
+            "Fhalf Score": [],
             'Prevalence': [],
             'Matthew Correlation Coefficient': [],
             'Informedness': [],
@@ -754,7 +756,9 @@ def fill_all_clear_dict(dict, model, energy_key, thresh_key, pred_energy_key,
     dict["Heidke Skill Score"].append(scores['HSS'])
     dict["Odds Ratio Skill Score"].append(scores['ORSS'])
     dict["Symmetric Extreme Dependency Score"].append(scores['SEDS'])
-    dict["F-Beta Scores"].append(scores['FBETA'])
+    dict["F1 Score"].append(scores['FONE'])
+    dict["F2 Score"].append(scores['FTWO'])
+    dict["Fhalf Score"].append(scores['FHALF'])
     dict['Prevalence'].append(scores['PREV'])
     dict['Matthew Correlation Coefficient'].append(scores['MCC'])
     dict['Informedness'].append(scores['INFORM'])
