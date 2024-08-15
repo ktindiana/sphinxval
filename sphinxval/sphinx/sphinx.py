@@ -8,6 +8,7 @@ from ..utils import report
 import datetime
 import pickle
 import logging
+import logging.config
 import sys
 import os
 import pathlib
