@@ -18,6 +18,7 @@ from pandas.api.types import is_datetime64_any_dtype as is_datetime
 import sklearn.metrics as skl
 import os.path
 import logging
+import pickle
 
 __author__ = "Katie Whitman"
 __maintainer__ = "Katie Whitman"
@@ -518,7 +519,9 @@ def prepare_outdirs():
 def write_df(df, name, verbose=True):
     """Writes a pandas dataframe to the standard location in multiple formats
     """
-    dataformats = (('pkl',  getattr(df, 'to_pickle'), {}),
+    dataformats = (#('parquet',  getattr(df, 'to_parquet'),  dict(compression='gzip')),
+                   ('h5' , getattr(df, 'to_hdf'), dict(key='df')),
+                   ('pkl' , getattr(df, 'to_pickle'), {}),
                    ('csv',  getattr(df, 'to_csv'), {}))
     for ext, write_func, kwargs in dataformats:
         filepath = os.path.join(config.outpath, ext, name + '.' + ext)
@@ -598,13 +601,28 @@ def fill_df(matched_sphinx, model_names, all_energy_channels,
     #Sort by prediction window start so in time order for AWT, etc
     df = df.sort_values(by=["Model","Energy Channel Key","Threshold Key","Prediction Window Start"],ascending=[True, True, True, True])
     
-#    #TEST TEST TEST
-#    name = "TEST_Duplicate_DF"
-#    write_df(df, name)
-#    filepath = os.path.join(config.outpath, 'csv', name + '.csv')
-#    df_in = pd.read_csv(filepath, parse_dates=True)
+    data_types = df.dtypes
     
-    df = pd.concat([df,df_in], ignore_index = True)
+    #TEST TEST TEST
+    name = "TEST_Duplicate_DF"
+#    filepath = os.path.join(config.outpath, 'pkl', name + '.pkl')
+#    df.to_pickle(filepath)
+#    with open(filepath) as f_in:
+#        df_inp = pickle.load(f_in)
+#    print("PICKLE: ARE THE TWO DATAFRAMES THE SAME??")
+#    print(df.equals(df_inp))
+
+#    filepath = os.path.join(config.outpath, 'parquet', name + '.parquet.gzip')
+#    df_in = pd.read_parquet(filepath)
+
+
+    filepath = os.path.join(config.outpath, 'h5', name + '.h5')
+    df.to_hdf(filepath, key='df')
+    df_inh = pd.read_hdf(filepath)
+    print("HDF: ARE THE TWO DATAFRAMES THE SAME??")
+    print(df.equals(df_inh))
+    
+    df = pd.concat([df,df_inh], ignore_index = True)
     
     #Check for duplicated forecasts and remove
     df = remove_duplicates(df)

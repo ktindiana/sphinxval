@@ -12,3 +12,9 @@ markdown==3.5
 PyPDF2==3.0.1
 gitpython==3.1.43
 beautifulsoup4==4.12.3
+#If use PyTables
+h5py==3.11.0
+cython==3.0.11
+py-cpuinfo==9.0.0
+tables==3.9.2
+

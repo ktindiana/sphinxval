@@ -636,7 +636,8 @@ def dict_to_flare(flareD):
                 noaa_region = int(noaa_region)
             except ValueError as e:
                 # Ignore invalid regions (e.g. "") with warning
-                logger.warning("Invalid noaa_region in flare trigger")
+                noaa_region = None
+                logger.warning("Invalid noaa_region in flare trigger. Setting to None.")
        
     return last_data_time, start_time, peak_time, end_time, location,\
         lat, lon, intensity, integrated_intensity, noaa_region
