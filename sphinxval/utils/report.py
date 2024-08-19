@@ -1063,7 +1063,7 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
                     appendage_set_list.append(appendages[j])
                     markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
                 validation_reference_subtext_string, validation_reference_flag_dict = construct_validation_reference_sheet(validation_reference_subtext, validation_reference_flag_dict, 'Flux', 
-                                                                                                                           os.path.join(config.referencepath + 'validation_reference_sheet_flux_metrics.csv'),
+                                                                                                                           os.path.join(config.referencepath, 'validation_reference_sheet_flux_metrics.csv'),
                                                                                                                            None,
                                                                                                                            os.path.join(config.referencepath, 'validation_reference_sheet_flux_plots.csv'))
                 validation_reference_subtext = validation_reference_subtext_string
