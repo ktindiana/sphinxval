@@ -108,30 +108,6 @@ def initialize_dict():
             "Observed Max Flux in Prediction Window Units": [],
             "Observed Max Flux in Prediction Window Time": [],
             
-            #MATCHING INFORMATION
-            "Last Eruption Time": [], #Last time for flare/CME
-            "Last Trigger Time": [],
-            "Last Input Time": [],
-            "Threshold Crossed in Prediction Window": [],
-            "Eruption before Threshold Crossed": [],
-            "Time Difference between Eruption and Threshold Crossing": [],
-            "Triggers before Threshold Crossing": [],
-            "Inputs before Threshold Crossing": [],
-            "Triggers before Peak Intensity": [],
-            "Time Difference between Triggers and Peak Intensity": [],
-            "Inputs before Peak Intensity": [],
-            "Time Difference between Inputs and Peak Intensity": [],
-            "Triggers before Peak Intensity Max": [],
-            "Time Difference between Triggers and Peak Intensity Max": [],
-            "Inputs before Peak Intensity Max": [],
-            "Time Difference between Inputs and Peak Intensity Max": [],
-            "Triggers before SEP End": [],
-            "Time Difference between Triggers and SEP End": [],
-            "Inputs before SEP End": [],
-            "Time Difference between Inputs and SEP End": [],
-            "Prediction Window Overlap with Observed SEP Event": [],
-            "Ongoing SEP Event": [],
-            
             #PREDICTIONS
             "Predicted SEP All Clear": [],
             "All Clear Match Status": [],
@@ -167,7 +143,33 @@ def initialize_dict():
             "Predicted Time Profile": [],
             "Time Profile Match Status": [],
             
-            "Last Data Time to Issue Time": []}
+            "Last Data Time to Issue Time": [],
+            
+            #MATCHING INFORMATION
+            "Last Eruption Time": [], #Last time for flare/CME
+            "Last Trigger Time": [],
+            "Last Input Time": [],
+            "Threshold Crossed in Prediction Window": [],
+            "Eruption before Threshold Crossed": [],
+            "Time Difference between Eruption and Threshold Crossing": [],
+            "Triggers before Threshold Crossing": [],
+            "Inputs before Threshold Crossing": [],
+            "Triggers before Peak Intensity": [],
+            "Time Difference between Triggers and Peak Intensity": [],
+            "Inputs before Peak Intensity": [],
+            "Time Difference between Inputs and Peak Intensity": [],
+            "Triggers before Peak Intensity Max": [],
+            "Time Difference between Triggers and Peak Intensity Max": [],
+            "Inputs before Peak Intensity Max": [],
+            "Time Difference between Inputs and Peak Intensity Max": [],
+            "Triggers before SEP End": [],
+            "Time Difference between Triggers and SEP End": [],
+            "Inputs before SEP End": [],
+            "Time Difference between Inputs and SEP End": [],
+            "Prediction Window Overlap with Observed SEP Event": [],
+            "Ongoing SEP Event": []
+            
+            }
 
     return dict
 
@@ -399,71 +401,7 @@ def fill_dict_row(sphinx, dict, energy_key, thresh_key, profname_dict):
         dict["Observed SEP Fluence Spectrum Units"].append(None)
 
 
-            #MATCHING INFORMATION
-    dict["Last Eruption Time"].append(sphinx.last_eruption_time)
-    dict["Last Trigger Time"].append(sphinx.last_trigger_time)
-    dict["Last Input Time"].append(sphinx.last_input_time)
-    
-    try:
-        dict["Threshold Crossed in Prediction Window"].append(sphinx.threshold_crossed_in_pred_win[thresh_key])
-    except:
-        dict["Threshold Crossed in Prediction Window"].append(None)
-        
-    try:
-        dict["Eruption before Threshold Crossed"].append(sphinx.eruptions_before_threshold_crossing[thresh_key])
-        dict["Time Difference between Eruption and Threshold Crossing"].append(sphinx.time_difference_eruptions_threshold_crossing[thresh_key])
-    except:
-        dict["Eruption before Threshold Crossed"].append(None)
-        dict["Time Difference between Eruption and Threshold Crossing"].append(None)
-    
-
-    
-    try:
-        dict["Triggers before Threshold Crossing"].append(sphinx.triggers_before_threshold_crossing[thresh_key])
-    except:
-        dict["Triggers before Threshold Crossing"].append(None)
-    
-    
-    try:
-        dict["Inputs before Threshold Crossing"].append(sphinx.inputs_before_threshold_crossing[thresh_key])
-    except:
-        dict["Inputs before Threshold Crossing"].append(None)
-
-
-    dict["Triggers before Peak Intensity"].append(sphinx.triggers_before_peak_intensity)
-    dict["Time Difference between Triggers and Peak Intensity"].append(sphinx.time_difference_triggers_peak_intensity)
-    dict["Inputs before Peak Intensity"].append(sphinx.inputs_before_peak_intensity)
-    dict["Time Difference between Inputs and Peak Intensity"].append(sphinx.time_difference_inputs_peak_intensity)
-    dict["Triggers before Peak Intensity Max"].append(sphinx.triggers_before_peak_intensity_max)
-    dict["Time Difference between Triggers and Peak Intensity Max"].append(sphinx.time_difference_triggers_peak_intensity_max)
-    dict["Inputs before Peak Intensity Max"].append(sphinx.inputs_before_peak_intensity_max)
-    dict["Time Difference between Inputs and Peak Intensity Max"].append(sphinx.time_difference_inputs_peak_intensity_max)
-
-    try:
-        dict["Triggers before SEP End"].append(sphinx.triggers_before_sep_end[thresh_key])
-        dict["Time Difference between Triggers and SEP End"].append(sphinx.time_difference_triggers_sep_end[thresh_key])
-    except:
-        dict["Triggers before SEP End"].append(None)
-        dict["Time Difference between Triggers and SEP End"].append(None)
-    
-    try:
-        dict["Inputs before SEP End"].append(sphinx.inputs_before_sep_end[thresh_key])
-        dict["Time Difference between Inputs and SEP End"].append(sphinx.time_difference_inputs_sep_end[thresh_key])
-    except:
-        dict["Inputs before SEP End"].append(None)
-        dict["Time Difference between Inputs and SEP End"].append(None)
-        
-    try:
-        dict["Prediction Window Overlap with Observed SEP Event"].append(sphinx.prediction_window_sep_overlap[thresh_key])
-    except:
-        dict["Prediction Window Overlap with Observed SEP Event"].append(None)
-    
-    try:
-        dict["Ongoing SEP Event"].append(sphinx.observed_ongoing_events[thresh_key])
-    except:
-        dict["Ongoing SEP Event"].append(None)
-
-
+    #PREDICTION INFORMATION
     dict["Predicted SEP All Clear"].append(pred_all_clear)
     dict["All Clear Match Status"].append(ac_match_status)
     dict["Predicted SEP Probability"].append(pred_prob)
@@ -505,6 +443,75 @@ def fill_dict_row(sphinx, dict, energy_key, thresh_key, profname_dict):
     dict["Last Data Time to Issue Time"].append(sphinx.prediction.last_data_time_to_issue_time())
 
 
+    #MATCHING INFORMATION - cast all matching info to strings to avoid problems
+    #with read/write. Kept mainly for human reference and traceability. Not used
+    #in the validation process.
+    dict["Last Eruption Time"].append(str(sphinx.last_eruption_time))
+    dict["Last Trigger Time"].append(str(sphinx.last_trigger_time))
+    dict["Last Input Time"].append(str(sphinx.last_input_time))
+    
+    try:
+        dict["Threshold Crossed in Prediction Window"].append(str(sphinx.threshold_crossed_in_pred_win[thresh_key]))
+    except:
+        dict["Threshold Crossed in Prediction Window"].append(None)
+        
+    try:
+        dict["Eruption before Threshold Crossed"].append(str(sphinx.eruptions_before_threshold_crossing[thresh_key]))
+        dict["Time Difference between Eruption and Threshold Crossing"].append(str(sphinx.time_difference_eruptions_threshold_crossing[thresh_key]))
+    except:
+        dict["Eruption before Threshold Crossed"].append(None)
+        dict["Time Difference between Eruption and Threshold Crossing"].append(None)
+    
+
+    
+    try:
+        dict["Triggers before Threshold Crossing"].append(str(sphinx.triggers_before_threshold_crossing[thresh_key]))
+    except:
+        dict["Triggers before Threshold Crossing"].append(None)
+    
+    
+    try:
+        dict["Inputs before Threshold Crossing"].append(str(sphinx.inputs_before_threshold_crossing[thresh_key]))
+    except:
+        dict["Inputs before Threshold Crossing"].append(None)
+
+
+    dict["Triggers before Peak Intensity"].append(str(sphinx.triggers_before_peak_intensity))
+    dict["Time Difference between Triggers and Peak Intensity"].append(str(sphinx.time_difference_triggers_peak_intensity))
+    dict["Inputs before Peak Intensity"].append(str(sphinx.inputs_before_peak_intensity))
+    dict["Time Difference between Inputs and Peak Intensity"].append(str(sphinx.time_difference_inputs_peak_intensity))
+    dict["Triggers before Peak Intensity Max"].append(str(sphinx.triggers_before_peak_intensity_max))
+    dict["Time Difference between Triggers and Peak Intensity Max"].append(str(sphinx.time_difference_triggers_peak_intensity_max))
+    dict["Inputs before Peak Intensity Max"].append(str(sphinx.inputs_before_peak_intensity_max))
+    dict["Time Difference between Inputs and Peak Intensity Max"].append(str(sphinx.time_difference_inputs_peak_intensity_max))
+
+    try:
+        dict["Triggers before SEP End"].append(str(sphinx.triggers_before_sep_end[thresh_key]))
+        dict["Time Difference between Triggers and SEP End"].append(str(sphinx.time_difference_triggers_sep_end[thresh_key]))
+    except:
+        dict["Triggers before SEP End"].append(None)
+        dict["Time Difference between Triggers and SEP End"].append(None)
+    
+    try:
+        dict["Inputs before SEP End"].append(str(sphinx.inputs_before_sep_end[thresh_key]))
+        dict["Time Difference between Inputs and SEP End"].append(str(sphinx.time_difference_inputs_sep_end[thresh_key]))
+    except:
+        dict["Inputs before SEP End"].append(None)
+        dict["Time Difference between Inputs and SEP End"].append(None)
+        
+    try:
+        dict["Prediction Window Overlap with Observed SEP Event"].append(str(sphinx.prediction_window_sep_overlap[thresh_key]))
+    except:
+        dict["Prediction Window Overlap with Observed SEP Event"].append(None)
+    
+    try:
+        dict["Ongoing SEP Event"].append(str(sphinx.observed_ongoing_events[thresh_key]))
+    except:
+        dict["Ongoing SEP Event"].append(None)
+
+
+
+
 def prepare_outdirs():
     if not os.path.isdir(config.outpath):
         os.mkdir(config.outpath)
@@ -520,7 +527,7 @@ def write_df(df, name, verbose=True):
     """Writes a pandas dataframe to the standard location in multiple formats
     """
     dataformats = (#('parquet',  getattr(df, 'to_parquet'),  dict(compression='gzip')),
-                   ('h5' , getattr(df, 'to_hdf'), dict(key='df')),
+                   #('h5' , getattr(df, 'to_hdf'), dict(key='df')),
                    ('pkl' , getattr(df, 'to_pickle'), {}),
                    ('csv',  getattr(df, 'to_csv'), {}))
     for ext, write_func, kwargs in dataformats:
@@ -605,24 +612,24 @@ def fill_df(matched_sphinx, model_names, all_energy_channels,
     
     #TEST TEST TEST
     name = "TEST_Duplicate_DF"
-#    filepath = os.path.join(config.outpath, 'pkl', name + '.pkl')
-#    df.to_pickle(filepath)
-#    with open(filepath) as f_in:
-#        df_inp = pickle.load(f_in)
-#    print("PICKLE: ARE THE TWO DATAFRAMES THE SAME??")
-#    print(df.equals(df_inp))
+    filepath = os.path.join(config.outpath, 'pkl', name + '.pkl')
+    df.to_pickle(filepath)
+    with open(filepath, 'rb') as f_in:
+        df_inp = pickle.load(f_in)
+    print("PICKLE: ARE THE TWO DATAFRAMES THE SAME??")
+    print(df.equals(df_inp))
 
 #    filepath = os.path.join(config.outpath, 'parquet', name + '.parquet.gzip')
 #    df_in = pd.read_parquet(filepath)
 
 
-    filepath = os.path.join(config.outpath, 'h5', name + '.h5')
-    df.to_hdf(filepath, key='df')
-    df_inh = pd.read_hdf(filepath)
-    print("HDF: ARE THE TWO DATAFRAMES THE SAME??")
-    print(df.equals(df_inh))
+#    filepath = os.path.join(config.outpath, 'h5', name + '.h5')
+#    df.to_hdf(filepath, key='df')
+#    df_inh = pd.read_hdf(filepath)
+#    print("HDF: ARE THE TWO DATAFRAMES THE SAME??")
+#    print(df.equals(df_inh))
     
-    df = pd.concat([df,df_inh], ignore_index = True)
+    df = pd.concat([df,df_inp], ignore_index = True)
     
     #Check for duplicated forecasts and remove
     df = remove_duplicates(df)
@@ -1172,10 +1179,10 @@ def calculate_mean_forecast(df, pred_key):
 
     #Use the 0th row of the sub df to replace various values to the ones
     #we want saved
-    sub['Forecast Source'].iloc[0] = fnames
-    sub['Prediction Window Start'].iloc[0] = pred_st
-    sub['Prediction Window End'].iloc[0] = pred_end
-    sub[pred_key].iloc[0] = meanval
+    sub.loc[0,'Forecast Source'] = fnames
+    sub.loc[0,'Prediction Window Start'] = pred_st
+    sub.loc[0,'Prediction Window End'] = pred_end
+    sub.loc[0,pred_key] = meanval
 
     return sub.iloc[0]
     
@@ -1367,7 +1374,7 @@ def extract_time_forecast_type(df, pred_key, validation_type):
         
         OUTPUT:
         
-        :sub: (pandas DataFrame) probability forecasts relevant to the
+        :sub: (pandas DataFrame) forecasts relevant to the
             validation_type. Only one forecast per SEP event. ONLY
             forecasts related to observed SEP events.
             
@@ -1376,6 +1383,7 @@ def extract_time_forecast_type(df, pred_key, validation_type):
             False = one forecast per SEP event so no First, Last, Mean, Max
         
     """
+    #Validation type can only be All, First, Last, Mean, Max
     if validation_type == "All" or validation_type == "":
         return df, True
     
@@ -1388,6 +1396,7 @@ def extract_time_forecast_type(df, pred_key, validation_type):
     #Extract all unique SEP events
     time_key = pred_key.replace("Predicted", "Observed")
     sep_events = resume.identify_unique(df, time_key)
+
     
     #If same number of forecasts as SEP events, then only one forecast
     #per SEP event and no need to do First, Last
@@ -1401,10 +1410,8 @@ def extract_time_forecast_type(df, pred_key, validation_type):
         if validation_type == "First" or validation_type == "Last":
             row = identify_time_forecast(sep_sub, pred_key, validation_type)
         
-        if row.empty:
-            continue
-
-        sel_df.loc[len(sel_df)] = row.values
+            if not row.empty:
+                sel_df.loc[len(sel_df)] = row.values
 
     return sel_df, True
     
@@ -2473,6 +2480,10 @@ def threshold_crossing_intuitive_metrics(df, dict, model, energy_key,
     pred = sub['Predicted SEP Threshold Crossing Time'].to_list()
     td = (sub['Predicted SEP Threshold Crossing Time'] - sub['Observed SEP Threshold Crossing Time'])
 
+    #Explicitly cast as timedelta because actions in extract_time_forecast can change
+    #the datatype, which causes problems
+    td = pd.to_timedelta(td)
+
     td = td.dt.total_seconds()/(60*60) #convert to hours
     td = td.to_list()
     abs_td = [abs(x) for x in td]
@@ -2556,6 +2567,10 @@ def start_time_intuitive_metrics(df, dict, model, energy_key, thresh_key,
     pred = sub['Predicted SEP Start Time'].to_list()
     td = (sub['Predicted SEP Start Time'] - sub['Observed SEP Start Time'])
     
+    #Explicitly cast as timedelta because actions in extract_time_forecast can change
+    #the datatype, which causes problems
+    td = pd.to_timedelta(td)
+    
     td = td.dt.total_seconds()/(60*60) #convert to hours
     td = td.to_list()
     abs_td = [abs(x) for x in td]
@@ -2637,6 +2652,10 @@ def end_time_intuitive_metrics(df, dict, model, energy_key,
     obs = sub['Observed SEP End Time'].to_list()
     pred = sub['Predicted SEP End Time'].to_list()
     td = (sub['Predicted SEP End Time'] - sub['Observed SEP End Time'])
+
+    #Explicitly cast as timedelta because actions in extract_time_forecast can change
+    #the datatype, which causes problems
+    td = pd.to_timedelta(td)
     
     td = td.dt.total_seconds()/(60*60) #convert to hours
     td = td.to_list()
@@ -2814,6 +2833,10 @@ def peak_intensity_time_intuitive_metrics(df, dict, model, energy_key,
     obs = sub['Observed SEP Peak Intensity (Onset Peak) Time'].to_list()
     pred = sub['Predicted SEP Peak Intensity (Onset Peak) Time'].to_list()
     td = (sub['Predicted SEP Peak Intensity (Onset Peak) Time'] - sub['Observed SEP Peak Intensity (Onset Peak) Time'])
+
+    #Explicitly cast as timedelta because actions in extract_time_forecast can change
+    #the datatype, which causes problems
+    td = pd.to_timedelta(td)
     
     td = td.dt.total_seconds()/(60*60) #convert to hours
     td = td.to_list()
@@ -2919,7 +2942,11 @@ def peak_intensity_max_time_intuitive_metrics(df, dict, model, energy_key,
     obs = sub['Observed SEP Peak Intensity Max (Max Flux) Time'].to_list()
     pred = sub['Predicted SEP Peak Intensity Max (Max Flux) Time'].to_list()
     td = (sub['Predicted SEP Peak Intensity Max (Max Flux) Time'] - sub['Observed SEP Peak Intensity Max (Max Flux) Time'])
-    
+
+    #Explicitly cast as timedelta because actions in extract_time_forecast_type can change
+    #the datatype, which causes problems
+    td = pd.to_timedelta(td)
+
     td = td.dt.total_seconds()/(60*60) #convert to hours
     td = td.to_list()
     abs_td = [abs(x) for x in td]
