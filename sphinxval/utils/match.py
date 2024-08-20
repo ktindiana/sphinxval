@@ -4,6 +4,7 @@ from . import config as cfg
 from . import classes as cl
 from . import time_profile as profile
 import sys
+import os.path
 import pandas as pd
 import numpy as np
 import datetime
@@ -2352,9 +2353,9 @@ def setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_o
             if len(overlap_idx) != 0:
                 for ix in range(len(overlap_idx)):
                     sphinx.prediction_observation_windows_overlap.append(observation_objs[overlap_idx[ix]])
-                    path = objh.get_file_path(observation_objs[overlap_idx[ix]].source)
-                    sphinx.observed_sep_profiles.append(path +
-                        observation_objs[overlap_idx[ix]].sep_profile)
+                    obs_path = os.path.dirname(observation_objs[overlap_idx[ix]].source)
+                    profile_path = os.path.join(obs_path, observation_objs[overlap_idx[ix]].sep_profile)
+                    sphinx.observed_sep_profiles.append(profile_path)
                     #logging
                     logger.debug("  " +
                     str(sphinx.prediction_observation_windows_overlap[ix].source))
