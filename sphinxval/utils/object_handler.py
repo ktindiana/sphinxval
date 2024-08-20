@@ -269,24 +269,3 @@ def get_threshold_crossing_time(obj, threshold):
                 obj.threshold_crossings[i].crossing_time
     
     return threshold_crossing_time
-
-
-def get_file_path(json_fname):
-    """ Extract the path information from the json filename and return as a string.
-    
-    """
-    paths = json_fname.strip().split("/")
-    if len(paths) == 1:
-        paths = json_fname.strip().split("\\") #Windows
-    
-    #If no path, just json filename, then return an empty string
-    if len(paths) == 1:
-        return ""
-
-    path = ""
-    for sub in paths:
-        if ("json" in sub) or ("JSON" in sub):
-            continue
-        path += sub + "/"
-
-    return path
