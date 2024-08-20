@@ -1666,11 +1666,11 @@ class ContigencyMetricsTestCase(unittest.TestCase):
                 self.assertEqual(result[score], ((np.log(4/10)+np.log(3/10))/np.log(1/10)) - 1)
                 # SEDS = (log((h+f)/n)+log((h+m)/n) / log(h/n)) - 1 = (log((1+3)/10)+log((1+2)/10) / log(1/10)) - 1
             elif score == 'FONE':
-                self.assertEqual(result[score], 0.2857142857142857)
+                self.assertEqual(result[score], ((1+1**2)*1) / ((1+1**2)*1 + 2*(1**2) + 3))
             elif score == 'FTWO':
-                self.assertEqual(result[score], 0.3125)         
+                self.assertEqual(result[score], ((1+2**2)*1) / ((1+2**2)*1 + 2*(2**2) + 3))         
             elif score == 'FHALF':
-                self.assertEqual(result[score], 0.2631578947368421)    
+                self.assertEqual(result[score], ((1+0.5**2)*1) / ((1+0.5**2)*1 + 2*(0.5**2) + 3))   
                 # F-Scores (Beta = 0.5, 1, 2) = ((1+ Beta^2)* h) / ((1+Beta^2)*h + Beta^2 * m + f)
                 # F(Beta = 0.5) = ((1+0.5^2)*1) / ((1+0.5^2)*1 + 2 + 3)
                 # F(Beta = 1) = ((1+1^2)*1) / ((1+1^2)*1 + 2 + 3)
