@@ -13,7 +13,7 @@ __version__ = "1.0"
 __author__ = "Clayton Allison"
 
 
-# Updated May 5, 2024
+# Updated July 31, 2024
 
 # test_metrics.py
 # Metrics.py unittest file
@@ -1021,7 +1021,6 @@ class ProbabilityMetricsTestCase(unittest.TestCase):
         y_true = [0.0, 1.0, 1.0, 1.0]
         y_pred = [0.0, 0.1, 0.2, 0.3]
         result = metrics.calc_pearson(y_true, y_pred, 'linear')
-        print('here: ', result)
         self.assertTrue(result[0] > 0.0)
 
         y_true = [0.0, 1.0, 1.0, 1.0]
@@ -1128,6 +1127,37 @@ class ContigencyMetricsTestCase(unittest.TestCase):
             elif score == 'SEDS':
                 self.assertTrue(math.isnan(result[score]))
                 # SEDS = (log((h+f)/n)+log((h+m)/n) / log(h/n)) - 1 = (log((1+0)/1)+log((1+0)/1) / log(1/1)) - 1
+            elif score == 'FONE':
+                self.assertEqual(result[score], 1)
+            elif score == 'FTWO':
+                self.assertEqual(result[score], 1)
+            elif score == 'FHALF':
+                self.assertEqual(result[score], 1)
+                # F-Scores (Beta = 0.5, 1, 2) = ((1+ Beta^2)* h) / ((1+Beta^2)*h + Beta^2 * m + f)
+                # F(Beta = 0.5) = ((1+0.5^2)*0) / ((1+0.5^2)*0 + 1 + 0)
+                # F(Beta = 1) = ((1+1^2)*1) / ((1+1^2)*1 + 0 + 0)
+                # F(Beta = 2) = ((1+2^2)*1) / ((1+2^2)*1 + 0 + 0)
+            elif score == 'PREV':
+                self.assertEqual(result[score], 1)
+                # Prevalence = (h+m)/n = (1+0)/1
+            elif score == 'MCC':
+                self.assertTrue(math.isnan(result[score]))
+                # Matthew Correlation Coefficient = (h*c-f*m)/Sqrt((h+f)*(h+m)*(c+f)*(f+m)) = (1*0-0*0)/sqrt((1+0)*(1+0)*(0+0)*(0+0))
+            elif score == 'INFORM':
+                self.assertTrue(math.isnan(result[score]))
+                # Informedness = h/(h+m) + c/(f+c) - 1 = 1/(1+0) + 0/(0+0) - 1
+            elif score == 'MARK':
+                self.assertTrue(math.isnan(result[score]))
+                # Markedness = h/(h+f) + c/(f+c) - 1 = 1/(1+0) + 0/(0+0) - 1
+            elif score == 'PT':
+                self.assertTrue(math.isnan(result[score]))
+                # Prevalence Threshold = (Sqrt(h/(h+m)*f/(f+c))-(f/(f+c))) / (h/(h+m)-f/(f+c)) = (Sqrt(1/(1+0)*0/(0+0))-(0/(0+0))) / (1/(1+0)-0/(0+0))
+            elif score == 'BA':
+                self.assertTrue(math.isnan(result[score]))
+                # Balanced Accuracy = (1/2)*(h/(h+m)+c/(f+c) = 1/2 * (1/(1+0)+ 0/(0+0))
+            elif score == 'FM':
+                self.assertEqual(result[score],1)
+                # Fowlkes-Mallows Index = Sqrt((h/(h+f))*(h/(h+m))) = sqrt((1/(1+0))*((1/(1+0)))
 
 
 
@@ -1207,6 +1237,37 @@ class ContigencyMetricsTestCase(unittest.TestCase):
                 # Will throw out the following error messages (but will pass unittest)
                 # RuntimeWarning: divide by zero encountered in log
                 # RuntimeWarning: invalid value encountered in scalar divide
+            elif score == 'FONE':
+                self.assertEqual(result[score], 0)
+            elif score == 'FTWO':
+                self.assertEqual(result[score], 0)
+            elif score == 'FHALF':
+                self.assertEqual(result[score], 0)
+                # F-Scores (Beta = 0.5, 1, 2) = ((1+ Beta^2)* h) / ((1+Beta^2)*h + Beta^2 * m + f)
+                # F(Beta = 0.5) = ((1+0.5^2)*0) / ((1+0.5^2)*0 + 1 + 0)
+                # F(Beta = 1) = ((1+1^2)*0) / ((1+1^2)*0 + 1 + 0)
+                # F(Beta = 2) = ((1+2^2)*0) / ((1+2^2)*0 + 1 + 0)
+            elif score == 'PREV':
+                self.assertEqual(result[score], 1)
+                # Prevalence = (h+m)/n = (0+1)/1
+            elif score == 'MCC':
+                self.assertTrue(math.isnan(result[score]))
+                # Matthew Correlation Coefficient = (h*c-f*m)/Sqrt((h+f)*(h+m)*(c+f)*(f+m)) = (0*0-0*1)/sqrt((0+0)*(0+1)*(0+0)*(0+1))
+            elif score == 'INFORM':
+                self.assertTrue(math.isnan(result[score]))
+                # Informedness = h/(h+m) + c/(f+c) - 1 = 0/(0+1) + 0/(0+0) - 1
+            elif score == 'MARK':
+                self.assertTrue(math.isnan(result[score]))
+                # Markedness = h/(h+f) + c/(f+c) - 1 = 0/(0+0) + 0/(0+0) - 1
+            elif score == 'PT':
+                self.assertTrue(math.isnan(result[score]))
+                # Prevalence Threshold = (Sqrt(h/(h+m)*f/(f+c))-(f/(f+c))) / (h/(h+m)-f/(f+c)) = (Sqrt(0/(0+1)*0/(0+0))-(0/(0+0))) / (0/(0+1)-0/(0+0))
+            elif score == 'BA':
+                self.assertTrue(math.isnan(result[score]))
+                # Balanced Accuracy = (1/2)*(h/(h+m)+c/(f+c) = 1/2 * (1/(1+0)+ 0/(0+0))
+            elif score == 'FM':
+                self.assertTrue(math.isnan(result[score]))
+                # Fowlkes-Mallows Index = Sqrt((h/(h+f))*(h/(h+m))) = sqrt((0/(0+0))*((0/(0+1)))
 
         
 
@@ -1285,6 +1346,37 @@ class ContigencyMetricsTestCase(unittest.TestCase):
                 # Will throw out the following error messages (but will pass unittest)
                 # RuntimeWarning: divide by zero encountered in log
                 # RuntimeWarning: invalid value encountered in scalar divide
+            elif score == 'FONE':
+                self.assertEqual(result[score], 0)
+            elif score == 'FTWO':
+                self.assertEqual(result[score], 0)
+            elif score == 'FHALF':
+                self.assertEqual(result[score], 0)
+                # F-Scores (Beta = 0.5, 1, 2) = ((1+ Beta^2)* h) / ((1+Beta^2)*h + Beta^2 * m + f)
+                # F(Beta = 0.5) = ((1+0.5^2)*0) / ((1+0.5^2)*0 + 0 + 1)
+                # F(Beta = 1) = ((1+1^2)*0) / ((1+1^2)*0 + 0 + 1)
+                # F(Beta = 2) = ((1+2^2)*0) / ((1+2^2)*0 + 0 + 1)
+            elif score == 'PREV':
+                self.assertEqual(result[score], 0)
+                # Prevalence = (h+m)/n = (0+0)/1
+            elif score == 'MCC':
+                self.assertTrue(math.isnan(result[score]))
+                # Matthew Correlation Coefficient = (h*c-f*m)/Sqrt((h+f)*(h+m)*(c+f)*(f+m)) = (0*0-1*0)/sqrt((1+0)*(0+0)*(0+1)*(1+0))
+            elif score == 'INFORM':
+                self.assertTrue(math.isnan(result[score]))
+                # Informedness = h/(h+m) + c/(f+c) - 1 = 0/(0+0) + 0/(1+0) - 1
+            elif score == 'MARK':
+                self.assertEqual(result[score], -1)
+                # Markedness = h/(h+f) + c/(f+c) - 1 = 0/(0+1) + 0/(1+0) - 1
+            elif score == 'PT':
+                self.assertTrue(math.isnan(result[score]))
+                # Prevalence Threshold = (Sqrt(h/(h+m)*f/(f+c))-(f/(f+c))) / (h/(h+m)-f/(f+c)) = (Sqrt(0/(0+0)*1/(1+0))-(1/(1+0))) / (0/(0+0)-1/(1+0))
+            elif score == 'BA':
+                self.assertTrue(math.isnan(result[score]))
+                # Balanced Accuracy = (1/2)*(h/(h+m)+c/(f+c) = 1/2 * (0/(0+0)+ 0/(1+0))
+            elif score == 'FM':
+                self.assertTrue(math.isnan(result[score]))
+                # Fowlkes-Mallows Index = Sqrt((h/(h+f))*(h/(h+m))) = sqrt((0/(0+1))*((0/(0+0)))
 
 
     def test_cont_only_correct_negatives(self):
@@ -1362,6 +1454,37 @@ class ContigencyMetricsTestCase(unittest.TestCase):
                 # Will throw out the following error messages (but will pass unittest)
                 # RuntimeWarning: divide by zero encountered in log
                 # RuntimeWarning: invalid value encountered in scalar divide
+            elif score == 'FONE':
+                self.assertTrue(math.isnan(result[score]))
+            elif score == 'FTWO':
+                self.assertTrue(math.isnan(result[score]))
+            elif score == 'FHALF':
+                self.assertTrue(math.isnan(result[score]))
+                # F-Scores (Beta = 0.5, 1, 2) = ((1+ Beta^2)* h) / ((1+Beta^2)*h + Beta^2 * m + f)
+                # F(Beta = 0.5) = ((1+0.5^2)*0) / ((1+0.5^2)*0 + 0 + 0)
+                # F(Beta = 1) = ((1+1^2)*0) / ((1+1^2)*0 + 0 + 0)
+                # F(Beta = 2) = ((1+2^2)*0) / ((1+2^2)*0 + 0 + 0)
+            elif score == 'PREV':
+                self.assertEqual(result[score], 0)
+                # Prevalence = (h+m)/n = (0+0)/1
+            elif score == 'MCC':
+                self.assertTrue(math.isnan(result[score]))
+                # Matthew Correlation Coefficient = (h*c-f*m)/Sqrt((h+f)*(h+m)*(c+f)*(f+m)) = (1*0-0*0)/sqrt((0+0)*(0+0)*(1+0)*(0+0))
+            elif score == 'INFORM':
+                self.assertTrue(math.isnan(result[score]))
+                # Informedness = h/(h+m) + c/(f+c) - 1 = 0/(0+0) + 1/(0+1) - 1
+            elif score == 'MARK':
+                self.assertTrue(math.isnan(result[score]))
+                # Markedness = h/(h+f) + c/(f+c) - 1 = 0/(0+0) + 1/(0+1) - 1
+            elif score == 'PT':
+                self.assertTrue(math.isnan(result[score]))
+                # Prevalence Threshold = (Sqrt(h/(h+m)*f/(f+c))-(f/(f+c))) / (h/(h+m)-f/(f+c)) = (Sqrt(0/(0+0)*0/(0+1))-(0/(0+1))) / (0/(0+0)-0/(0+1))
+            elif score == 'BA':
+                self.assertTrue(math.isnan(result[score]))
+                # Balanced Accuracy = (1/2)*(h/(h+m)+c/(f+c) = 1/2 * (0/(0+0)+ 1/(0+1))
+            elif score == 'FM':
+                self.assertTrue(math.isnan(result[score]))
+                # Fowlkes-Mallows Index = Sqrt((h/(h+f))*(h/(h+m))) = sqrt((0/(0+0))*((0/(0+0)))
     
     
     def test_cont_mixed_table(self):
@@ -1436,6 +1559,37 @@ class ContigencyMetricsTestCase(unittest.TestCase):
             elif score == 'SEDS':
                 self.assertEqual(result[score], 0)
                 # SEDS = (log((h+f)/n)+log((h+m)/n) / log(h/n)) - 1 = (log((1+1)/1)+log((1+1)/1) / log(1/1)) - 1
+            elif score == 'FONE':
+                self.assertEqual(result[score], 0.5)
+            elif score == 'FTWO':
+                self.assertEqual(result[score], 0.5)
+            elif score == 'FHALF':
+                self.assertEqual(result[score], 0.5)
+                # F-Scores (Beta = 0.5, 1, 2) = ((1+ Beta^2)* h) / ((1+Beta^2)*h + Beta^2 * m + f)
+                # F(Beta = 0.5) = ((1+0.5^2)*1) / ((1+0.5^2)*1 + 1 + 1)
+                # F(Beta = 1) = ((1+1^2)*1) / ((1+1^2)*1 + 1 + 1)
+                # F(Beta = 2) = ((1+2^2)*1) / ((1+2^2)*1 + 1 + 1)
+            elif score == 'PREV':
+                self.assertEqual(result[score], 1/2)
+                # Prevalence = (h+m)/n = (1+1)/4
+            elif score == 'MCC':
+                self.assertEqual(result[score], 0)
+                # Matthew Correlation Coefficient = (h*c-f*m)/Sqrt((h+f)*(h+m)*(c+f)*(f+m)) = (1*1-1*1)/sqrt((1+1)*(1+1)*(1+1)*(1+1))
+            elif score == 'INFORM':
+                self.assertEqual(result[score], 0)
+                # Informedness = h/(h+m) + c/(f+c) - 1 = 1/(1+1) + 1/(1+1) - 1
+            elif score == 'MARK':
+                self.assertEqual(result[score], 0)
+                # Markedness = h/(h+f) + c/(f+c) - 1 = 1/(1+1) + 1/(1+1) - 1
+            elif score == 'PT':
+                self.assertTrue(math.isnan(result[score]))
+                # Prevalence Threshold = (Sqrt(h/(h+m)*f/(f+c))-(f/(f+c))) / (h/(h+m)-f/(f+c)) = (Sqrt(1/(1+1)*1/(1+1))-(1/(1+1))) / (1/(1+1)-1/(1+1))
+            elif score == 'BA':
+                self.assertEqual(result[score], 1/2)
+                # Balanced Accuracy = (1/2)*(h/(h+m)+c/(f+c) = 1/2 * (1/(1+1)+ 1/(1+1))
+            elif score == 'FM':
+                self.assertEqual(result[score],1/2)
+                # Fowlkes-Mallows Index = Sqrt((h/(h+f))*(h/(h+m))) = sqrt((1/(1+1))*((1/(1+1)))
 
 
 
@@ -1511,6 +1665,38 @@ class ContigencyMetricsTestCase(unittest.TestCase):
             elif score == 'SEDS':
                 self.assertEqual(result[score], ((np.log(4/10)+np.log(3/10))/np.log(1/10)) - 1)
                 # SEDS = (log((h+f)/n)+log((h+m)/n) / log(h/n)) - 1 = (log((1+3)/10)+log((1+2)/10) / log(1/10)) - 1
+            elif score == 'FONE':
+                self.assertEqual(result[score], ((1+1**2)*1) / ((1+1**2)*1 + 2*(1**2) + 3))
+            elif score == 'FTWO':
+                self.assertEqual(result[score], ((1+2**2)*1) / ((1+2**2)*1 + 2*(2**2) + 3))         
+            elif score == 'FHALF':
+                self.assertEqual(result[score], ((1+0.5**2)*1) / ((1+0.5**2)*1 + 2*(0.5**2) + 3))   
+                # F-Scores (Beta = 0.5, 1, 2) = ((1+ Beta^2)* h) / ((1+Beta^2)*h + Beta^2 * m + f)
+                # F(Beta = 0.5) = ((1+0.5^2)*1) / ((1+0.5^2)*1 + 2 + 3)
+                # F(Beta = 1) = ((1+1^2)*1) / ((1+1^2)*1 + 2 + 3)
+                # F(Beta = 2) = ((1+2^2)*1) / ((1+2^2)*1 + 2 + 3)
+            elif score == 'PREV':
+                self.assertEqual(result[score], 3/10)
+                # Prevalence = (h+m)/n = (1+2)/10
+            elif score == 'MCC':
+                self.assertEqual(result[score], -2/np.sqrt(504))
+                # Matthew Correlation Coefficient = (h*c-f*m)/Sqrt((h+f)*(h+m)*(c+f)*(c+m)) = (1*4-3*2)/sqrt((1+3)*(1+2)*(4+3)*(4+2))
+            elif score == 'INFORM':
+                self.assertAlmostEqual(result[score], -2/21)
+                # Informedness = h/(h+m) + c/(f+c) - 1 = 1/(1+2) + 4/(3+4) - 1= 1/3 + 4/7 - 1 = 7/21 + 12/21 - 1 = 19/21 - 1
+            elif score == 'MARK':
+                self.assertAlmostEqual(result[score], -5/28)
+                # Markedness = h/(h+f) + c/(f+c) - 1 = 1/(1+3) + 4/(3+4) - 1 = 1/4 + 4/7 - 1 = 7/28 + 16/28 - 1 = 23/28 - 1
+            elif score == 'PT':
+                self.assertEqual(result[score], (np.sqrt(3/21)- 3/7)/(-2/21))
+                # Prevalence Threshold = (Sqrt(h/(h+m)*f/(f+c))-(f/(f+c))) / (h/(h+m)-f/(f+c)) = (Sqrt(1/(1+2)*3/(3+4))-(3/(3+4))) / (1/(1+2)-3/(3+4))
+            elif score == 'BA':
+                self.assertAlmostEqual(result[score], 19/42)
+                # Balanced Accuracy = (1/2)*(h/(h+m)+c/(f+c) = 1/2 * (1/(1+2)+ 4/(3+4))
+            elif score == 'FM':
+                self.assertEqual(result[score], np.sqrt(1/12))
+                # Fowlkes-Mallows Index = Sqrt((h/(h+f))*(h/(h+m))) = sqrt((1/(1+3))*((1/(1+2)))
+             
     
     def test_cont_garbage(self):
         test_GSS_garbage = metrics.check_GSS(0,0,0,0)

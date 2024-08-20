@@ -122,3 +122,6 @@ def validate(data_list, model_list, top=None, DoResume=False, df_pkl=""):
     valid.intuitive_validation(matched_sphinx, model_names,
         all_energy_channels, all_observed_thresholds, observed_sep_events, profname_dict, DoResume, r_df)
     logger.info("Completed validation.")
+
+
+    

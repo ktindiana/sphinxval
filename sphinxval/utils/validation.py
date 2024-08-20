@@ -605,6 +605,7 @@ def initialize_all_clear_dict():
             "Bias": [],
             "Hit Rate": [],
             "False Alarm Rate": [],
+            'False Negative Rate': [],
             "Frequency of Misses": [],
             "Frequency of Hits": [],
             "Probability of Correct Negatives": [],
@@ -618,6 +619,16 @@ def initialize_all_clear_dict():
             "Heidke Skill Score": [],
             "Odds Ratio Skill Score": [],
             "Symmetric Extreme Dependency Score": [],
+            "F1 Score": [],
+            "F2 Score": [],
+            "Fhalf Score": [],
+            'Prevalence': [],
+            'Matthew Correlation Coefficient': [],
+            'Informedness': [],
+            'Markedness': [],
+            'Prevalence Threshold': [],
+            'Balanced Accuracy': [],
+            'Fowlkes-Mallows Index': [],
             "Number SEP Events Correctly Predicted": [],
             "Number SEP Events Missed": [],
             "Predicted SEP Events": [], #date string
@@ -730,6 +741,7 @@ def fill_all_clear_dict(dict, model, energy_key, thresh_key, pred_energy_key,
     dict["Bias"].append(scores['B'])
     dict["Hit Rate"].append(scores['H'])
     dict["False Alarm Rate"].append(scores['F'])
+    dict['False Negative Rate'].append(scores['FNR'])
     dict["Frequency of Misses"].append(scores['FOM'])
     dict["Frequency of Hits"].append(scores['FOH'])
     dict["Probability of Correct Negatives"].append(scores['POCN'])
@@ -744,6 +756,16 @@ def fill_all_clear_dict(dict, model, energy_key, thresh_key, pred_energy_key,
     dict["Heidke Skill Score"].append(scores['HSS'])
     dict["Odds Ratio Skill Score"].append(scores['ORSS'])
     dict["Symmetric Extreme Dependency Score"].append(scores['SEDS'])
+    dict["F1 Score"].append(scores['FONE'])
+    dict["F2 Score"].append(scores['FTWO'])
+    dict["Fhalf Score"].append(scores['FHALF'])
+    dict['Prevalence'].append(scores['PREV'])
+    dict['Matthew Correlation Coefficient'].append(scores['MCC'])
+    dict['Informedness'].append(scores['INFORM'])
+    dict['Markedness'].append(scores['MARK'])
+    dict['Prevalence Threshold'].append(scores['PT'])
+    dict['Balanced Accuracy'].append(scores['BA'])
+    dict['Fowlkes-Mallows Index'].append(scores['FM'])
     dict["Number SEP Events Correctly Predicted"].append(n_caught)
     dict["Number SEP Events Missed"].append(n_miss)
     dict["Predicted SEP Events"].append(sep_caught_str)
@@ -1782,7 +1804,6 @@ def peak_intensity_max_intuitive_metrics(df, dict, model, energy_key,
             'Predicted SEP Peak Intensity Max (Max Flux) Units',
             'Peak Intensity Max Match Status']]
     sub = sub.loc[(sub['Peak Intensity Max Match Status'] == 'SEP Event')]
-
     #Find predicted None values
     noneval = pd.isna(sub['Predicted SEP Peak Intensity Max (Max Flux)'])
     #Extract only indices for Nones
@@ -1792,7 +1813,6 @@ def peak_intensity_max_intuitive_metrics(df, dict, model, energy_key,
     if len(noneval) > 0:
         for ix in noneval:
             sub = sub.drop(index=ix)
-
     if not sub.empty:
         #Find predicted None values
         noneval = pd.isna(sub['Observed SEP Peak Intensity Max (Max Flux)'])
@@ -3770,3 +3790,4 @@ def intuitive_validation(matched_sphinx, model_names, all_energy_channels,
                 all_observed_thresholds, type)
  
     logger.info("intuitive_validation: Validation process complete.")
+    

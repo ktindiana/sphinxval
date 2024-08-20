@@ -1,14 +1,23 @@
-﻿Contigency Metrics,,,
-Name,Attribute,Calculation,Range, Perfect Score,Alternate Names
-Percent Correct,Accuracy,(Hits+Correct Negatives)/N,0 to 1,1,Accuracy
-Bias,Bias,(Hits+False Alarms)/(Hits+Misses),0 to infinity,1,Precision
-Hit Rate,Discrimination,Hits+(Hits+Misses),0 to 1,1,Probability of Detection & Recall & Sensitivity
-False Alarm Ratio,Resolution,False Alarms/(Hits+False Alarms),0 to 1,1,
-False Alarm Rate,Discrimination,False Alarms/(False Alarms + Correct Negatives),0 to 1,0, 
-Frequency of Hits,Resolution,Hits/(Hits+False Alarms),0 to 1,1, 
-Frequency of Misses,Discrimination,Misses/(Misses+Correct Negatives),0 to 1,0, 
-Probability of Correct Negatives,Discrimination,Correct Negatives/(False Alarms+Correct Negatives),0 to 1,1, 
-Detection Failure Ratio,Resolution,Misses/(Misses+Correct Negatives),0 to 1,0, 
-Frequency of Correct Negatives,Resolution,Correct Negatives/(Misses+Correct Negatives),0 to 1,1, 
-Threat Score,Accuracy,Hits/(Hits+False Alarms+Misses),0 to 1,1,Critical Success Index
-Odds Ratio,Accuracy,(Hits x Correct Negatives)/(False Alarms x Misses),0 to infinity,infinity, 
+﻿Contigency Metrics,,,,,,
+Name,Attribute,Calculation,Range, Perfect Score,Alternate Names,Notes
+Percent Correct,Accuracy,(Hits+Correct Negatives)/N,0 to 1,1,Accuracy,
+Bias,Bias,(Hits+False Alarms)/(Hits+Misses),0 to infinity,1,Frequency bias,
+Hit Rate,Discrimination,Hits+(Hits+Misses),0 to 1,1,Probability of Detection & Recall & Sensitivity & True Positive Rate,
+False Alarm Ratio,Resolution,False Alarms/(Hits+False Alarms),0 to 1,1,False Discovery Rate,
+False Alarm Rate,Discrimination,False Alarms/(False Alarms + Correct Negatives),0 to 1,0,False Positive Rate & Probability of False Alarm,
+False Negative Rate,,Misses/(Hits+Misses),0 to 1,0,Miss Rate,
+Frequency of Hits,Resolution,Hits/(Hits+False Alarms),0 to 1,1,Positive Predictive Value & Precision,
+Frequency of Misses,Discrimination,Misses/(Misses+Correct Negatives),0 to 1,0,Negative Predictive Value,
+Probability of Correct Negatives,Discrimination,Correct Negatives/(False Alarms+Correct Negatives),0 to 1,1,True Negative Rate & Specificity & Selectivity,
+Detection Failure Ratio,Resolution,Misses/(Misses+Correct Negatives),0 to 1,0,False Omission Rate,
+Frequency of Correct Negatives,Resolution,Correct Negatives/(Misses+Correct Negatives),0 to 1,1,,
+Threat Score,Accuracy/Clustering,Hits/(Hits+False Alarms+Misses),0 to 1,1,Critical Success Index & Jaccard Index,
+Odds Ratio,Accuracy,(Hits x Correct Negatives)/(False Alarms x Misses),0 to infinity,infinity,Diagnostic Odds Ratio,
+F-Scores,Classification, ((1+ Beta^2)* Hits) / ((1+Beta^2)*Hits + Beta^2 * Misses + False Alarms), 0 to 1, 1,F-Measure,
+Prevalence,Event List Statistic, (Hits + Misses) / Total, 0 to 1,,,
+Matthew Correlation Coefficient,Association,(Hits*Correct Negatives-False Alarms*Misses)/Sqrt((Hits+False Alarms)*(Hits+Misses)*(Correct Negatives+False Alarms)*(Correct Negatives+Misses)),-1 to 1, 1,Phi Coefficient,
+Informedness,,Hits/(Hits+Misses) + Correct Negatives/(False Alarms+Correct Negatives) - 1,0 to 1,1,Youden's J Statistic & Youden's Index,
+Markedness,,Hits/(Hits+False Alarms) + Correct Negatives/(False Alarms+Correct Negatives) - 1, 0 to 1,1,DeltaP,
+Prevalence Threshold,Percentage,(Sqrt(Hits/(Hits+Misses)*False Alarms/(False Alarms+Correct Negatives))-(False Alarms/(False Alarms+Correct Negatives)))/(Hits/(Hits+Misses)-False Alarms/(False Alarms+Correct Negatives)),0 to inf,,,
+Balanced Accuracy,,(1/2)*(Hits/(Hits+Misses)+Correct Negatives/(False Alarms+Correct Negatives),,,,
+Fowlkes-Mallows Index,Classification/Clustering,Sqrt((Hits/(Hits+False Alarms))*(Hits/(Hits+Misses))),0 to 1,1,,
