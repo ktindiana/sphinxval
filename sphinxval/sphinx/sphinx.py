@@ -64,11 +64,17 @@ def validate(data_list, model_list, top=None, DoResume=False, df_pkl=""):
             
     """
     setup_logging()
+    
+    #Reconstruct command line execution of sphinx
+    call = "bin/sphinx.py --ModelList " + model_list + " --DataList " + data_list
+    if top != None:
+        call += " --TopDirectory " + top
+    if DoResume:
+        call += " --resume " + df_pkl
+    logger.info("SPHINX called with: " + call)
+        
     logger.info("Starting SPHINX Validation and reading in files.")
 
-
-###RESUME WILL DETERMINE WHICH OBJECTS CONTINUE ON - inside
-#load_objects_from_json, check timing and if already in dataframe
     #Create Observation and Forecast objects from jsons (edge cases)
     #Unique identifier - issue time, triggers, prediction window - ignore for now
     #Use last prediction window for model or energy_channel to include new
@@ -90,19 +96,14 @@ def validate(data_list, model_list, top=None, DoResume=False, df_pkl=""):
     logger.info("Built model list.")
     
     #### RESUME ####
-    #If resuming, check for last prediction window times for each
-    #model in the input dataframe.
-    #Variables that are a starting point when resuming are labelled
-    #with r_. For example, r_df is the dataframe that was already created
-    #by SPHINX and was input as a starting point by the user.
+    #If resuming, read in the dataframe specified by the user.
+    #Can use SPHINX_dataframe.pkl from a previous run, because will not
+    #have overwritten by this point.
     r_df = None
     if DoResume:
-        logger.info("Resume selected. Reading in previous dataframe: "
+        logger.info("RESUME: Reading in previous dataframe: "
             + df_pkl)
         r_df = resume.read_in_df(df_pkl)
-        model_objs = resume.check_fcast_for_resume(r_df, model_objs) #exclude fcasts
-        logger.info("Completed reading in previous dataframe and checking for new forecasts only: "
-            + df_pkl)
     ################
     
     

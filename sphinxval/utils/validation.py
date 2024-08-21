@@ -587,7 +587,7 @@ def remove_duplicates(df):
 
 
 def fill_df(matched_sphinx, model_names, all_energy_channels,
-    all_obs_thresholds, profname_dict, DoResume):
+    all_obs_thresholds, profname_dict):
     """ Fill in a dictionary with the all clear predictions and observations
         organized by model and energy channel.
     """
@@ -598,7 +598,7 @@ def fill_df(matched_sphinx, model_names, all_energy_channels,
     #as appropriate
     for model in model_names:
         for ek in all_energy_channels:
-            logger.info("---Model: " + model + ", Energy Channel: " + ek)
+            logger.debug("---Model: " + model + ", Energy Channel: " + ek)
             for sphinx in matched_sphinx[model][ek]:
                 for tk in all_obs_thresholds[ek]:
                     fill_dict_row(sphinx, dict, ek, tk, profname_dict)
@@ -608,33 +608,9 @@ def fill_df(matched_sphinx, model_names, all_energy_channels,
     #Sort by prediction window start so in time order for AWT, etc
     df = df.sort_values(by=["Model","Energy Channel Key","Threshold Key","Prediction Window Start"],ascending=[True, True, True, True])
     
-    data_types = df.dtypes
-    
-    #TEST TEST TEST
-    name = "TEST_Duplicate_DF"
-    filepath = os.path.join(config.outpath, 'pkl', name + '.pkl')
-    df.to_pickle(filepath)
-    with open(filepath, 'rb') as f_in:
-        df_inp = pickle.load(f_in)
-    print("PICKLE: ARE THE TWO DATAFRAMES THE SAME??")
-    print(df.equals(df_inp))
-
-#    filepath = os.path.join(config.outpath, 'parquet', name + '.parquet.gzip')
-#    df_in = pd.read_parquet(filepath)
-
-
-#    filepath = os.path.join(config.outpath, 'h5', name + '.h5')
-#    df.to_hdf(filepath, key='df')
-#    df_inh = pd.read_hdf(filepath)
-#    print("HDF: ARE THE TWO DATAFRAMES THE SAME??")
-#    print(df.equals(df_inh))
-    
-    df = pd.concat([df,df_inp], ignore_index = True)
-    
     #Check for duplicated forecasts and remove
     df = remove_duplicates(df)
     
-    if not DoResume: write_df(df, "SPHINX_dataframe")
     return df
 
 
@@ -3059,13 +3035,13 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
     figname = ""
     tpfigname = ""
     for i in range(len(obs_profs)):
-        logger.info("Time profile of " + pred_profs[i] + " compared to observations.")
+        logger.debug("Comparing time profile of " + pred_profs[i] + " to observations.")
         all_obs_dates = []
         all_obs_flux = []
         #Read in and combine time profiles of observations inside
         #prediction window
-        logger.info("======NAMES OF OBSERVED TIME PROFILE++++")
         obs_fnames = obs_profs[i].strip().split(",")
+        logger.debug("Comparing to OBSERVED TIME PROFILES: " + str(obs_fnames))
         for j in range(len(obs_fnames)):
             dt, flx = profile.read_single_time_profile(obs_fnames[j])
             all_obs_dates.append(dt)
@@ -3096,7 +3072,7 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
             pred_dates)
         
         #Trim the time profiles to the observed start and end time
-        logger.info("Trimming between " + str(obs_st[i]) + " and " + str(obs_et[i]))
+        logger.debug("Trimming between " + str(obs_st[i]) + " and " + str(obs_et[i]))
         trim_pred_dates, trim_pred_flux = profile.trim_profile(obs_st[i],
                 obs_et[i], pred_dates, pred_flux)
         trim_obs_dates, trim_obs_flux = profile.trim_profile(obs_st[i],
@@ -3950,38 +3926,35 @@ def intuitive_validation(matched_sphinx, model_names, all_energy_channels,
     # Make sure the output directories exist
     prepare_outdirs()
     
-    #For each model and predicted quantity, create arrays of paired up values
+    #For each model and predicted quantity, create dataframe of paired up values
     #so can calculate metrics
     logger.info("Filling dataframe with information from matched sphinx objects.")
 
     df = fill_df(matched_sphinx, model_names, all_energy_channels,
-            all_observed_thresholds, profname_dict, DoResume)
- 
-    logger.info("Completed filling dataframe (and possibly writing). ")
+            all_observed_thresholds, profname_dict)
+    logger.debug("Completed filling dataframe. ")
 
-    ###RESUME WILL APPEND DF TO PREVIOUS DF
-    logger.info("Resume boolean is " + str(DoResume))
+    ### RESUME WILL APPEND DF TO PREVIOUS DF
+    logger.debug("Resume boolean is " + str(DoResume))
     if DoResume:
-        logger.info("Resuming from a previous run. Concatenating new dataframe and previous dataframe. ")
+        logger.info("RESUME: Resuming from a previous run. Concatenating current and previous forecasts, ensuring that any duplicates are removed. ")
  
         df = pd.concat([r_df, df], ignore_index=True)
-
-        logger.info("Completed concatenation. Writing out to file.")
-
-        write_df(df, "SPHINX_dataframe")
-
-        logger.info("Completed writing SPHINX_dataframe to file.")
+        df = remove_duplicates(df)
+        logger.debug("RESUME: Completed concatenation and removed any duplicates. Writing SPHINX_dataframe to file.")
 
         model_names = resume.identify_unique(df, 'Model')
         all_energy_channels = resume.identify_unique(df, 'Energy Channel Key')
         all_observed_thresholds = resume.identify_thresholds_per_energy_channel(df)
+    ### RESUME COMPLETED
 
-    logger.info("Calculating metrics from dataframe.")
- 
+    #Write dataframe to file
+    write_df(df, "SPHINX_dataframe")
+    logger.debug("Completed writing SPHINX_dataframe to file.")
  
     validation_type = ["All", "First", "Last", "Max", "Mean"]
     for type in validation_type:
-        logger.info("Starting validation of " + type +" forecasts.")
+        logger.info("-----------Starting validation of " + type +" forecasts-------------")
         calculate_intuitive_metrics(df, model_names, all_energy_channels,
                 all_observed_thresholds, type)
  
