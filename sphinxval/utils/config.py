@@ -88,6 +88,7 @@ in_percent = ["Mean Percent Error (MPE)",
 
 # SAVES THE CURRENT GIT COMMIT SHA HASH FOR LATER USE
 git_repo = git.Repo(search_parent_directories=True)
+git_repo_url = 'https://github.com/ktindiana/sphinxval'
 git_commit_sha = git_repo.head.object.hexsha
 git_is_dirty = git_repo.is_dirty()
 git_changed_files = [item.a_path for item in git_repo.index.diff(None)]
