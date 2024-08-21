@@ -63,7 +63,7 @@ def validate(data_list, model_list, top=None, Resume=None):
     setup_logging()
     
     #Reconstruct command line execution of sphinx
-    logger.info("SPHINX called with:", sys.argv)
+    logger.info("SPHINX called with: " + " ".join(sys.argv))
     logger.info("Starting SPHINX Validation and reading in files.")
 
     #Create Observation and Forecast objects from jsons (edge cases)
@@ -91,7 +91,7 @@ def validate(data_list, model_list, top=None, Resume=None):
     #Can use SPHINX_dataframe.pkl from a previous run, because will not
     #have overwritten by this point.
     r_df = None
-    if Resume:
+    if Resume is not None:
         logger.info("RESUME: Reading in previous dataframe: "
             + Resume)
         r_df = resume.read_in_df(Resume)

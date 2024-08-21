@@ -3932,7 +3932,7 @@ def intuitive_validation(matched_sphinx, model_names, all_energy_channels,
     logger.debug("Completed filling dataframe. ")
 
     ### RESUME WILL APPEND DF TO PREVIOUS DF
-    if r_df:
+    if r_df is not None:
         logger.info("RESUME: Resuming from a previous run. Concatenating current and previous forecasts, ensuring that any duplicates are removed. ")
  
         df = pd.concat([r_df, df], ignore_index=True)
