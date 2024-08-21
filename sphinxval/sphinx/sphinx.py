@@ -32,7 +32,7 @@ def setup_logging():
     logging.config.dictConfig(config)
 
 
-def validate(data_list, model_list, top=None, DoResume=False, df_pkl=""):
+def validate(data_list, model_list, top=None, Resume=None):
     """ Validate ingests a list of observations (data_list) and a
         list of predictions (model_list).
         
@@ -52,10 +52,7 @@ def validate(data_list, model_list, top=None, DoResume=False, df_pkl=""):
             :model_list: (string array) filenames of model prediction jsons
             :top: (string) top directory in which to search for time profile
                 files. Directory containing model jsons and .txt files.
-            :resume: (boolean) set to False and only data_list and model_list
-                will be used to calculate metrics; set to True and new
-                predictions will be added to existing dataframe
-            :df_pkl: (string) filename of pickle file containing previously
+            :Resume: (string) filename of pickle file containing previously
                 calculated dataframe. New predictions will be appended.
                 
         OUTPUT:
@@ -66,13 +63,7 @@ def validate(data_list, model_list, top=None, DoResume=False, df_pkl=""):
     setup_logging()
     
     #Reconstruct command line execution of sphinx
-    call = "bin/sphinx.py --ModelList " + model_list + " --DataList " + data_list
-    if top != None:
-        call += " --TopDirectory " + top
-    if DoResume:
-        call += " --resume " + df_pkl
-    logger.info("SPHINX called with: " + call)
-        
+    logger.info("SPHINX called with:", sys.argv)
     logger.info("Starting SPHINX Validation and reading in files.")
 
     #Create Observation and Forecast objects from jsons (edge cases)
@@ -100,10 +91,10 @@ def validate(data_list, model_list, top=None, DoResume=False, df_pkl=""):
     #Can use SPHINX_dataframe.pkl from a previous run, because will not
     #have overwritten by this point.
     r_df = None
-    if DoResume:
+    if Resume:
         logger.info("RESUME: Reading in previous dataframe: "
-            + df_pkl)
-        r_df = resume.read_in_df(df_pkl)
+            + Resume)
+        r_df = resume.read_in_df(Resume)
     ################
     
     
@@ -121,7 +112,7 @@ def validate(data_list, model_list, top=None, DoResume=False, df_pkl=""):
 
     #Perform intuitive validation
     valid.intuitive_validation(matched_sphinx, model_names,
-        all_energy_channels, all_observed_thresholds, observed_sep_events, profname_dict, DoResume, r_df)
+        all_energy_channels, all_observed_thresholds, observed_sep_events, profname_dict, r_df=r_df)
     logger.info("Completed validation.")
 
 

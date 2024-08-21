@@ -526,9 +526,7 @@ def prepare_outdirs():
 def write_df(df, name, verbose=True):
     """Writes a pandas dataframe to the standard location in multiple formats
     """
-    dataformats = (#('parquet',  getattr(df, 'to_parquet'),  dict(compression='gzip')),
-                   #('h5' , getattr(df, 'to_hdf'), dict(key='df')),
-                   ('pkl' , getattr(df, 'to_pickle'), {}),
+    dataformats = (('pkl' , getattr(df, 'to_pickle'), {}),
                    ('csv',  getattr(df, 'to_csv'), {}))
     for ext, write_func, kwargs in dataformats:
         filepath = os.path.join(config.outpath, ext, name + '.' + ext)
@@ -3871,8 +3869,7 @@ def calculate_intuitive_metrics(df, model_names, all_energy_channels,
 
 
 def intuitive_validation(matched_sphinx, model_names, all_energy_channels,
-    all_observed_thresholds, observed_sep_events, profname_dict,
-    DoResume=False, r_df=None):
+    all_observed_thresholds, observed_sep_events, profname_dict, r_df=None):
     """ In the intuitive_validation subroutine, forecasts are validated in a
         way similar to which people would interpret forecasts.
     
@@ -3912,7 +3909,7 @@ def intuitive_validation(matched_sphinx, model_names, all_energy_channels,
         :observed_sep_events: (dict) dictionary organized by model name,
             energy channel, and threshold containing all unique observed SEP
             events that fell inside a forecast prediction window
-        :DoResume: (bool) boolean to indicate whether the user wants to resume
+        :resume: (string) boolean to indicate whether the user wants to resume
             building on a previous run of SPHINX
         :r_df: (pandas dataframe) dataframe created from a previous run of
             SPHINX. Newly input predictions will be appended.
@@ -3935,8 +3932,7 @@ def intuitive_validation(matched_sphinx, model_names, all_energy_channels,
     logger.debug("Completed filling dataframe. ")
 
     ### RESUME WILL APPEND DF TO PREVIOUS DF
-    logger.debug("Resume boolean is " + str(DoResume))
-    if DoResume:
+    if r_df:
         logger.info("RESUME: Resuming from a previous run. Concatenating current and previous forecasts, ensuring that any duplicates are removed. ")
  
         df = pd.concat([r_df, df], ignore_index=True)
