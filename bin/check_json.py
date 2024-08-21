@@ -5,13 +5,18 @@ import argparse
 import json
 import traceback
 import sphinxval.utils.validation_json_handler as vjson
+import logging
+import sys
+
+logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
 description = """
 Checks a series of CCMC Scoreboard forecast jsons or SPHINX
 observation jsons for compatibility with the SPHINX validation tool.
 For each json file given to the input (see arguments), prints OK for
-jsons passing all tests, and ERROR for jsons that have a problem,
-followed by a printout of the file/json.
+jsons passing all tests, INVALID for jsons that can be read in
+correctly but fail the trigger/timing requirements, and ERROR for
+jsons that have more serious problems.
 """
 
 epilog = """
@@ -30,9 +35,12 @@ parser.add_argument("--model", nargs="*",  default=[],
 parser.add_argument("--data", nargs="*", default=[],
                     help="Command-line list of observation  jsons files")
 parser.add_argument("--dontstop", action="store_true", default=False,
-                    help="Don't stop checking jsons on ERROR")
+                    help="Don't stop checking jsons on ERROR or INVALID")
 parser.add_argument("--print", action="store_true", default=False,
                     help="Print each json even when OK")
+parser.add_argument("--clean", action="store_true", default=False,
+                    help=("Generate a file ModelList.clean with all ERROR files commented out.  "+
+                          "implies --dontstop"))
 args = parser.parse_args()
 
 # Prepare lists of json files
@@ -48,10 +56,28 @@ else:
     data_list = []
 data_list.extend(args.data)
 
+if args.clean:
+    if not args.ModelList:
+        print("Execution error: --clean requires a --ModelList", file=sys.stderr)
+        exit(-1)
+    args.dontstop = True
+    clean_fh = open(args.ModelList + '.clean', 'w')
+    
 def maybe_stop():
     if not args.dontstop:
         exit()
 
+def write_clean(state, json_fname):
+    if state in ('OK', 'INVALID'):
+        clean_fh.write(json_fname+'\n')
+    else:
+        clean_fh.write('#'+json_fname+'\n')
+        
+def print_json_fname(state, json_fname, *printargs):
+    print(state, json_fname, *printargs)
+    if args.clean:
+        write_clean(state, json_fname)
+        
 def print_json(json_fname, json_pretty):
     print()
     print(f"=== {json_fname} ===")
@@ -63,11 +89,11 @@ def check_jsons(kind, json_list):
         object_from_json = vjson.observation_object_from_json        
     elif kind == 'forecast':
         object_from_json = vjson.forecast_object_from_json        
-
+        
     for json_fname in json_list:
         # Check if the file exists
         if not os.path.isfile(json_fname):
-            print("ERROR", json_fname, "File not found")
+            print_json_fname("ERROR", json_fname, "File not found")
             maybe_stop()
 
         # Try to read the file into a json object
@@ -75,7 +101,7 @@ def check_jsons(kind, json_list):
             json_obj = vjson.read_json_list([json_fname], verbose=False)[0]
             json_pretty = json.dumps(json_obj, indent=4) # Save pretty format; see below
         except Exception as e:
-            print("ERROR", json_fname, "Failed to read json:", e)
+            print_json_fname("ERROR", json_fname, "Failed to read json:", e)
             print()
             print(f"=== {json_fname} ===")
             with open(json_fname, 'r') as f:
@@ -87,7 +113,7 @@ def check_jsons(kind, json_list):
         try:
             all_energy_channels = vjson.identify_all_energy_channels([json_obj], kind)
         except Exception as e:
-            print("ERROR", json_fname, "Failed to extract energy channel:", e)
+            print_json_fname("ERROR", json_fname, "Failed to extract energy channel:", e)
             print_json(json_fname, json_pretty)
             maybe_stop()
             continue
@@ -98,7 +124,7 @@ def check_jsons(kind, json_list):
             try:
                 sphinx_obj = object_from_json(json_obj, channel)
             except Exception as e:
-                print("ERROR", json_fname, f"Failed to load object (channel {channel}):", e)
+                print_json_fname("ERROR", json_fname, f"Failed to load object (channel {channel}):", e)
                 print(traceback.format_exc())
                 print_json(json_fname, json_pretty)
                 maybe_stop()
@@ -109,7 +135,7 @@ def check_jsons(kind, json_list):
             if kind == 'forecast':
                 is_valid = sphinx_obj.valid_forecast(verbose=True)
                 if not is_valid:
-                    print("ERROR", json_fname, f"valid_forecast() = {is_valid}")
+                    print_json_fname("INVALID", json_fname)
                     print_json(json_fname, json_pretty)
                     maybe_stop()
                     errored = True
@@ -119,7 +145,7 @@ def check_jsons(kind, json_list):
             continue
 
         # Report success
-        print("OK", json_fname)
+        print_json_fname("OK", json_fname)
         if args.print:
             # Note: printing a saved formatted string from above because
             # one of the functions above changes the object type of json_obj
