@@ -25,7 +25,7 @@ def read_in_df(filename):
         df = pickle.load(pklfile)
         return df
     except:
-        sys.exit("validate: Cannot open pickle file containing "
+        sys.exit("RESUME: Cannot open pickle file containing "
             "input dataframe. Please check the filename.")
 
 
@@ -127,78 +127,3 @@ def last_prediction_windows(df):
                 df_pred_win = pd.concat([df_pred_win,sub_p], ignore_index=True)
                     
     return df_pred_win
-
-
-def check_fcast_for_resume(df, model_objs):
-    """ Take the list of Forecast objects in the model list and
-        keep only those after the last prediction window in the
-        dataframe.
-        
-        INPUT:
-        
-            :df: (Pandas DataFrame) contains previously run forecast
-                and observation matched values.
-            :model_objs: (list of objects) Forecast objects with a set
-                of new predictions
-        
-        OUTPUT:
-        
-            :select_objs: (list of objects) Forecast objects with
-                prediction windows after the previously run forecasts
-        
-    """
-
-    pw = last_prediction_windows(df)
-    logger.info(pw)
-    select_objs = {}
-
-    energy_keys = list(model_objs.keys())
-    for ek in energy_keys:
-        select_objs.update({ek: []})
-    
-    for ek in energy_keys:
-        for obj in model_objs[ek]:
-            model = obj.short_name
-            if model == None: continue
-                
-            pred_win_st = obj.prediction_window_start
-            if pred_win_st == None: continue
-            
-            #if energy channel not in there, then want to add?
-            
-            sub = pw.loc[(pw['Model'] == model)]
-            #If model not already present, then new information and
-            #want to add
-            if sub.empty:
-                logger.debug("Model " + model +
-                    " not present in previous data frame. "
-                    "Appending all forecasts.")
-                select_objs[ek].append(obj)
-                continue
-            
-            sub = sub.loc[(sub['Energy Channel Key'] == ek)]
-            #if energy channel not already present, then new information
-            #and want to add
-            if sub.empty:
-                logger.debug("Model " + model +
-                    " and energy channel " + ek +
-                    " not present in previous data frame. "
-                    "Appending all forecasts.")
-                select_objs[ek].append(obj)
-                continue
-            
-            
-            #Keep if the prediction window is after the last prediction
-            #window in the input dataframe for that model and energy
-            #channel
-            ref_pred_win_st = sub['Prediction Window Start'].iloc[0]
-            logger.debug("Model " + model +
-                " and energy channel " + ek + " last prediction "
-                "window start " + str(ref_pred_win_st))
-            logger.debug("Current forecast prediction window "
-                    + str(pred_win_st))
-            if pred_win_st > ref_pred_win_st:
-                logger.debug("Keeping forecast")
-                select_objs[ek].append(obj)
-    
-    return select_objs

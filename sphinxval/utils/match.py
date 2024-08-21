@@ -2339,7 +2339,8 @@ def setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_o
             #Check that forecast prediction window is after last trigger/input
             fcast.valid_forecast(verbose=True)
             if fcast.valid == False:
-                logger.warning("Skipping invalid " + fcast.source)
+                logger.warning("FORECAST NOT VALID: Removing " + fcast.source
+                    + " from validation analysis.")
                 continue
                 
 
@@ -2401,7 +2402,7 @@ def setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_o
                     if f_thresh == cfg.mm_pred_threshold:
                         #set threshold as the observed threshold
                         fcast_thresh = cfg.mm_obs_threshold
-                        logger.info("Predicted threshold associated with \'mismatched\' "
+                        logger.debug("Predicted threshold associated with \'mismatched\' "
                                 "observational threshold " + str(fcast_thresh))
                     else:
                         continue
@@ -2646,7 +2647,7 @@ def match_all_forecasts(all_energy_channels, model_names, obs_objs,
                 #Save the SPHINX object with all of the forecasted and matched
                 #observation values to a dictionary organized by energy channel
                 msg = sphinx.match_report_streamlined()
-                logger.info(msg)
+                logger.debug(msg)
                 matched_sphinx[model][energy_key][ii] = sphinx
 
                 logger.debug("Model: " + sphinx.prediction.short_name)
