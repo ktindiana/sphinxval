@@ -18,6 +18,7 @@ from pandas.api.types import is_datetime64_any_dtype as is_datetime
 import sklearn.metrics as skl
 import os.path
 import logging
+import pickle
 
 __author__ = "Katie Whitman"
 __maintainer__ = "Katie Whitman"
@@ -56,6 +57,8 @@ def initialize_dict():
             "Forecast Issue Time":[],
             "Prediction Window Start": [],
             "Prediction Window End": [],
+            
+            #OBSERVATIONS
             "Number of CMEs": [],
             "CME Start Time": [], #Timestamp of 1st
                 #coronagraph image CME is visible in
@@ -104,7 +107,8 @@ def initialize_dict():
             "Observed Max Flux in Prediction Window": [],
             "Observed Max Flux in Prediction Window Units": [],
             "Observed Max Flux in Prediction Window Time": [],
-
+            
+            #PREDICTIONS
             "Predicted SEP All Clear": [],
             "All Clear Match Status": [],
             "Predicted SEP Probability": [],
@@ -139,7 +143,33 @@ def initialize_dict():
             "Predicted Time Profile": [],
             "Time Profile Match Status": [],
             
-            "Last Data Time to Issue Time": []}
+            "Last Data Time to Issue Time": [],
+            
+            #MATCHING INFORMATION
+            "Last Eruption Time": [], #Last time for flare/CME
+            "Last Trigger Time": [],
+            "Last Input Time": [],
+            "Threshold Crossed in Prediction Window": [],
+            "Eruption before Threshold Crossed": [],
+            "Time Difference between Eruption and Threshold Crossing": [],
+            "Triggers before Threshold Crossing": [],
+            "Inputs before Threshold Crossing": [],
+            "Triggers before Peak Intensity": [],
+            "Time Difference between Triggers and Peak Intensity": [],
+            "Inputs before Peak Intensity": [],
+            "Time Difference between Inputs and Peak Intensity": [],
+            "Triggers before Peak Intensity Max": [],
+            "Time Difference between Triggers and Peak Intensity Max": [],
+            "Inputs before Peak Intensity Max": [],
+            "Time Difference between Inputs and Peak Intensity Max": [],
+            "Triggers before SEP End": [],
+            "Time Difference between Triggers and SEP End": [],
+            "Inputs before SEP End": [],
+            "Time Difference between Inputs and SEP End": [],
+            "Prediction Window Overlap with Observed SEP Event": [],
+            "Ongoing SEP Event": []
+            
+            }
 
     return dict
 
@@ -371,6 +401,7 @@ def fill_dict_row(sphinx, dict, energy_key, thresh_key, profname_dict):
         dict["Observed SEP Fluence Spectrum Units"].append(None)
 
 
+    #PREDICTION INFORMATION
     dict["Predicted SEP All Clear"].append(pred_all_clear)
     dict["All Clear Match Status"].append(ac_match_status)
     dict["Predicted SEP Probability"].append(pred_prob)
@@ -412,6 +443,75 @@ def fill_dict_row(sphinx, dict, energy_key, thresh_key, profname_dict):
     dict["Last Data Time to Issue Time"].append(sphinx.prediction.last_data_time_to_issue_time())
 
 
+    #MATCHING INFORMATION - cast all matching info to strings to avoid problems
+    #with read/write. Kept mainly for human reference and traceability. Not used
+    #in the validation process.
+    dict["Last Eruption Time"].append(str(sphinx.last_eruption_time))
+    dict["Last Trigger Time"].append(str(sphinx.last_trigger_time))
+    dict["Last Input Time"].append(str(sphinx.last_input_time))
+    
+    try:
+        dict["Threshold Crossed in Prediction Window"].append(str(sphinx.threshold_crossed_in_pred_win[thresh_key]))
+    except:
+        dict["Threshold Crossed in Prediction Window"].append(None)
+        
+    try:
+        dict["Eruption before Threshold Crossed"].append(str(sphinx.eruptions_before_threshold_crossing[thresh_key]))
+        dict["Time Difference between Eruption and Threshold Crossing"].append(str(sphinx.time_difference_eruptions_threshold_crossing[thresh_key]))
+    except:
+        dict["Eruption before Threshold Crossed"].append(None)
+        dict["Time Difference between Eruption and Threshold Crossing"].append(None)
+    
+
+    
+    try:
+        dict["Triggers before Threshold Crossing"].append(str(sphinx.triggers_before_threshold_crossing[thresh_key]))
+    except:
+        dict["Triggers before Threshold Crossing"].append(None)
+    
+    
+    try:
+        dict["Inputs before Threshold Crossing"].append(str(sphinx.inputs_before_threshold_crossing[thresh_key]))
+    except:
+        dict["Inputs before Threshold Crossing"].append(None)
+
+
+    dict["Triggers before Peak Intensity"].append(str(sphinx.triggers_before_peak_intensity))
+    dict["Time Difference between Triggers and Peak Intensity"].append(str(sphinx.time_difference_triggers_peak_intensity))
+    dict["Inputs before Peak Intensity"].append(str(sphinx.inputs_before_peak_intensity))
+    dict["Time Difference between Inputs and Peak Intensity"].append(str(sphinx.time_difference_inputs_peak_intensity))
+    dict["Triggers before Peak Intensity Max"].append(str(sphinx.triggers_before_peak_intensity_max))
+    dict["Time Difference between Triggers and Peak Intensity Max"].append(str(sphinx.time_difference_triggers_peak_intensity_max))
+    dict["Inputs before Peak Intensity Max"].append(str(sphinx.inputs_before_peak_intensity_max))
+    dict["Time Difference between Inputs and Peak Intensity Max"].append(str(sphinx.time_difference_inputs_peak_intensity_max))
+
+    try:
+        dict["Triggers before SEP End"].append(str(sphinx.triggers_before_sep_end[thresh_key]))
+        dict["Time Difference between Triggers and SEP End"].append(str(sphinx.time_difference_triggers_sep_end[thresh_key]))
+    except:
+        dict["Triggers before SEP End"].append(None)
+        dict["Time Difference between Triggers and SEP End"].append(None)
+    
+    try:
+        dict["Inputs before SEP End"].append(str(sphinx.inputs_before_sep_end[thresh_key]))
+        dict["Time Difference between Inputs and SEP End"].append(str(sphinx.time_difference_inputs_sep_end[thresh_key]))
+    except:
+        dict["Inputs before SEP End"].append(None)
+        dict["Time Difference between Inputs and SEP End"].append(None)
+        
+    try:
+        dict["Prediction Window Overlap with Observed SEP Event"].append(str(sphinx.prediction_window_sep_overlap[thresh_key]))
+    except:
+        dict["Prediction Window Overlap with Observed SEP Event"].append(None)
+    
+    try:
+        dict["Ongoing SEP Event"].append(str(sphinx.observed_ongoing_events[thresh_key]))
+    except:
+        dict["Ongoing SEP Event"].append(None)
+
+
+
+
 def prepare_outdirs():
     if not os.path.isdir(config.outpath):
         os.mkdir(config.outpath)
@@ -426,7 +526,7 @@ def prepare_outdirs():
 def write_df(df, name, verbose=True):
     """Writes a pandas dataframe to the standard location in multiple formats
     """
-    dataformats = (('pkl',  getattr(df, 'to_pickle'), {}),
+    dataformats = (('pkl' , getattr(df, 'to_pickle'), {}),
                    ('csv',  getattr(df, 'to_csv'), {}))
     for ext, write_func, kwargs in dataformats:
         filepath = os.path.join(config.outpath, ext, name + '.' + ext)
@@ -435,9 +535,57 @@ def write_df(df, name, verbose=True):
             logger.debug('Wrote ' + filepath)
 
 
+def remove_duplicates(df):
+    """ Check dataframe for duplicate entries. Issue warning and remove
+        repeated forecasts.
+        
+        Forecasts will be considered duplicate if all fields in the
+        dataframe are exactly the same.
+        
+        Output:
+        
+            :df: (dataframe) with unique entries
+        
+    """
+    #Extract key rows from the df that uniquely identify a forecast
+    #Cannot use all df entries, because the hash command cannot hash lists.
+    sub = df[["Model", "Energy Channel Key", "Threshold Key", "Mismatch Allowed",
+            "Prediction Energy Channel Key", "Prediction Threshold Key", "Forecast Source",
+            "Forecast Path", "Forecast Issue Time", "Prediction Window Start",
+            "Prediction Window End", "Number of CMEs","CME Start Time", "CME Liftoff Time",
+            "CME Latitude", "CME Longitude", "CME Speed", "CME Half Width", "CME PA",
+            "Number of Flares", "Flare Latitude", "Flare Longitude", "Flare Start Time",
+            "Flare Peak Time", "Flare End Time", "Flare Last Data Time", "Flare Intensity",
+            "Flare Integrated Intensity", "Flare NOAA AR", "Observatory", "Observed SEP All Clear",
+            "Predicted SEP All Clear", "All Clear Match Status", "Predicted SEP Probability",
+            "Probability Match Status", "Predicted SEP Threshold Crossing Time",
+            "Threshold Crossing Time Match Status", "Predicted SEP Start Time",
+            "Start Time Match Status", "Predicted SEP End Time", "End Time Match Status",
+            "Predicted SEP Duration", "Duration Match Status", "Predicted SEP Fluence",
+            "Fluence Match Status", "Predicted SEP Peak Intensity (Onset Peak)",
+            "Peak Intensity Match Status", "Predicted SEP Peak Intensity Max (Max Flux)",
+            "Peak Intensity Max Match Status", "Predicted Point Intensity", "Predicted Time Profile",
+            "Time Profile Match Status", "Last Data Time to Issue Time"]]
+    
+    #Create a hash for each row of the dataframe
+    hash = pd.util.hash_pandas_object(sub, index=False)
+    duplicates = hash.duplicated()
+    dup = pd.DataFrame(duplicates)
+    
+    #Duplicated entries
+    dup_df = df.loc[(dup[0] == True)]
+    for entry in dup_df["Forecast Source"]:
+        logging.warning("DUPLICATE: " + str(entry) + " is a duplicated forecast. Removing." )
+    
+    #Keep only the entries that are marked as False for duplicates
+    unique_df = df.loc[(dup[0] == False)]
+    
+    return unique_df
+
+
 
 def fill_df(matched_sphinx, model_names, all_energy_channels,
-    all_obs_thresholds, profname_dict, DoResume):
+    all_obs_thresholds, profname_dict):
     """ Fill in a dictionary with the all clear predictions and observations
         organized by model and energy channel.
     """
@@ -448,7 +596,7 @@ def fill_df(matched_sphinx, model_names, all_energy_channels,
     #as appropriate
     for model in model_names:
         for ek in all_energy_channels:
-            logger.info("---Model: " + model + ", Energy Channel: " + ek)
+            logger.debug("---Model: " + model + ", Energy Channel: " + ek)
             for sphinx in matched_sphinx[model][ek]:
                 for tk in all_obs_thresholds[ek]:
                     fill_dict_row(sphinx, dict, ek, tk, profname_dict)
@@ -458,7 +606,9 @@ def fill_df(matched_sphinx, model_names, all_energy_channels,
     #Sort by prediction window start so in time order for AWT, etc
     df = df.sort_values(by=["Model","Energy Channel Key","Threshold Key","Prediction Window Start"],ascending=[True, True, True, True])
     
-    if not DoResume: write_df(df, "SPHINX_dataframe")
+    #Check for duplicated forecasts and remove
+    df = remove_duplicates(df)
+    
     return df
 
 
@@ -1003,10 +1153,10 @@ def calculate_mean_forecast(df, pred_key):
 
     #Use the 0th row of the sub df to replace various values to the ones
     #we want saved
-    sub['Forecast Source'].iloc[0] = fnames
-    sub['Prediction Window Start'].iloc[0] = pred_st
-    sub['Prediction Window End'].iloc[0] = pred_end
-    sub[pred_key].iloc[0] = meanval
+    sub.loc[0,'Forecast Source'] = fnames
+    sub.loc[0,'Prediction Window Start'] = pred_st
+    sub.loc[0,'Prediction Window End'] = pred_end
+    sub.loc[0,pred_key] = meanval
 
     return sub.iloc[0]
     
@@ -1198,7 +1348,7 @@ def extract_time_forecast_type(df, pred_key, validation_type):
         
         OUTPUT:
         
-        :sub: (pandas DataFrame) probability forecasts relevant to the
+        :sub: (pandas DataFrame) forecasts relevant to the
             validation_type. Only one forecast per SEP event. ONLY
             forecasts related to observed SEP events.
             
@@ -1207,6 +1357,7 @@ def extract_time_forecast_type(df, pred_key, validation_type):
             False = one forecast per SEP event so no First, Last, Mean, Max
         
     """
+    #Validation type can only be All, First, Last, Mean, Max
     if validation_type == "All" or validation_type == "":
         return df, True
     
@@ -1219,6 +1370,7 @@ def extract_time_forecast_type(df, pred_key, validation_type):
     #Extract all unique SEP events
     time_key = pred_key.replace("Predicted", "Observed")
     sep_events = resume.identify_unique(df, time_key)
+
     
     #If same number of forecasts as SEP events, then only one forecast
     #per SEP event and no need to do First, Last
@@ -1232,10 +1384,8 @@ def extract_time_forecast_type(df, pred_key, validation_type):
         if validation_type == "First" or validation_type == "Last":
             row = identify_time_forecast(sep_sub, pred_key, validation_type)
         
-        if row.empty:
-            continue
-
-        sel_df.loc[len(sel_df)] = row.values
+            if not row.empty:
+                sel_df.loc[len(sel_df)] = row.values
 
     return sel_df, True
     
@@ -2304,6 +2454,10 @@ def threshold_crossing_intuitive_metrics(df, dict, model, energy_key,
     pred = sub['Predicted SEP Threshold Crossing Time'].to_list()
     td = (sub['Predicted SEP Threshold Crossing Time'] - sub['Observed SEP Threshold Crossing Time'])
 
+    #Explicitly cast as timedelta because actions in extract_time_forecast can change
+    #the datatype, which causes problems
+    td = pd.to_timedelta(td)
+
     td = td.dt.total_seconds()/(60*60) #convert to hours
     td = td.to_list()
     abs_td = [abs(x) for x in td]
@@ -2387,6 +2541,10 @@ def start_time_intuitive_metrics(df, dict, model, energy_key, thresh_key,
     pred = sub['Predicted SEP Start Time'].to_list()
     td = (sub['Predicted SEP Start Time'] - sub['Observed SEP Start Time'])
     
+    #Explicitly cast as timedelta because actions in extract_time_forecast can change
+    #the datatype, which causes problems
+    td = pd.to_timedelta(td)
+    
     td = td.dt.total_seconds()/(60*60) #convert to hours
     td = td.to_list()
     abs_td = [abs(x) for x in td]
@@ -2468,6 +2626,10 @@ def end_time_intuitive_metrics(df, dict, model, energy_key,
     obs = sub['Observed SEP End Time'].to_list()
     pred = sub['Predicted SEP End Time'].to_list()
     td = (sub['Predicted SEP End Time'] - sub['Observed SEP End Time'])
+
+    #Explicitly cast as timedelta because actions in extract_time_forecast can change
+    #the datatype, which causes problems
+    td = pd.to_timedelta(td)
     
     td = td.dt.total_seconds()/(60*60) #convert to hours
     td = td.to_list()
@@ -2645,6 +2807,10 @@ def peak_intensity_time_intuitive_metrics(df, dict, model, energy_key,
     obs = sub['Observed SEP Peak Intensity (Onset Peak) Time'].to_list()
     pred = sub['Predicted SEP Peak Intensity (Onset Peak) Time'].to_list()
     td = (sub['Predicted SEP Peak Intensity (Onset Peak) Time'] - sub['Observed SEP Peak Intensity (Onset Peak) Time'])
+
+    #Explicitly cast as timedelta because actions in extract_time_forecast can change
+    #the datatype, which causes problems
+    td = pd.to_timedelta(td)
     
     td = td.dt.total_seconds()/(60*60) #convert to hours
     td = td.to_list()
@@ -2750,7 +2916,11 @@ def peak_intensity_max_time_intuitive_metrics(df, dict, model, energy_key,
     obs = sub['Observed SEP Peak Intensity Max (Max Flux) Time'].to_list()
     pred = sub['Predicted SEP Peak Intensity Max (Max Flux) Time'].to_list()
     td = (sub['Predicted SEP Peak Intensity Max (Max Flux) Time'] - sub['Observed SEP Peak Intensity Max (Max Flux) Time'])
-    
+
+    #Explicitly cast as timedelta because actions in extract_time_forecast_type can change
+    #the datatype, which causes problems
+    td = pd.to_timedelta(td)
+
     td = td.dt.total_seconds()/(60*60) #convert to hours
     td = td.to_list()
     abs_td = [abs(x) for x in td]
@@ -2863,13 +3033,13 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
     figname = ""
     tpfigname = ""
     for i in range(len(obs_profs)):
-        logger.info("Time profile of " + pred_profs[i] + " compared to observations.")
+        logger.debug("Comparing time profile of " + pred_profs[i] + " to observations.")
         all_obs_dates = []
         all_obs_flux = []
         #Read in and combine time profiles of observations inside
         #prediction window
-        logger.info("======NAMES OF OBSERVED TIME PROFILE++++")
         obs_fnames = obs_profs[i].strip().split(",")
+        logger.debug("Comparing to OBSERVED TIME PROFILES: " + str(obs_fnames))
         for j in range(len(obs_fnames)):
             dt, flx = profile.read_single_time_profile(obs_fnames[j])
             all_obs_dates.append(dt)
@@ -2900,7 +3070,7 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
             pred_dates)
         
         #Trim the time profiles to the observed start and end time
-        logger.info("Trimming between " + str(obs_st[i]) + " and " + str(obs_et[i]))
+        logger.debug("Trimming between " + str(obs_st[i]) + " and " + str(obs_et[i]))
         trim_pred_dates, trim_pred_flux = profile.trim_profile(obs_st[i],
                 obs_et[i], pred_dates, pred_flux)
         trim_obs_dates, trim_obs_flux = profile.trim_profile(obs_st[i],
@@ -3699,8 +3869,7 @@ def calculate_intuitive_metrics(df, model_names, all_energy_channels,
 
 
 def intuitive_validation(matched_sphinx, model_names, all_energy_channels,
-    all_observed_thresholds, observed_sep_events, profname_dict,
-    DoResume=False, r_df=None):
+    all_observed_thresholds, observed_sep_events, profname_dict, r_df=None):
     """ In the intuitive_validation subroutine, forecasts are validated in a
         way similar to which people would interpret forecasts.
     
@@ -3740,7 +3909,7 @@ def intuitive_validation(matched_sphinx, model_names, all_energy_channels,
         :observed_sep_events: (dict) dictionary organized by model name,
             energy channel, and threshold containing all unique observed SEP
             events that fell inside a forecast prediction window
-        :DoResume: (bool) boolean to indicate whether the user wants to resume
+        :resume: (string) boolean to indicate whether the user wants to resume
             building on a previous run of SPHINX
         :r_df: (pandas dataframe) dataframe created from a previous run of
             SPHINX. Newly input predictions will be appended.
@@ -3754,38 +3923,34 @@ def intuitive_validation(matched_sphinx, model_names, all_energy_channels,
     # Make sure the output directories exist
     prepare_outdirs()
     
-    #For each model and predicted quantity, create arrays of paired up values
+    #For each model and predicted quantity, create dataframe of paired up values
     #so can calculate metrics
     logger.info("Filling dataframe with information from matched sphinx objects.")
 
     df = fill_df(matched_sphinx, model_names, all_energy_channels,
-            all_observed_thresholds, profname_dict, DoResume)
- 
-    logger.info("Completed filling dataframe (and possibly writing). ")
+            all_observed_thresholds, profname_dict)
+    logger.debug("Completed filling dataframe. ")
 
-    ###RESUME WILL APPEND DF TO PREVIOUS DF
-    logger.info("Resume boolean is " + str(DoResume))
-    if DoResume:
-        logger.info("Resuming from a previous run. Concatenating new dataframe and previous dataframe. ")
+    ### RESUME WILL APPEND DF TO PREVIOUS DF
+    if r_df is not None:
+        logger.info("RESUME: Resuming from a previous run. Concatenating current and previous forecasts, ensuring that any duplicates are removed. ")
  
         df = pd.concat([r_df, df], ignore_index=True)
-
-        logger.info("Completed concatenation. Writing out to file.")
-
-        write_df(df, "SPHINX_dataframe")
-
-        logger.info("Completed writing SPHINX_dataframe to file.")
+        df = remove_duplicates(df)
+        logger.debug("RESUME: Completed concatenation and removed any duplicates. Writing SPHINX_dataframe to file.")
 
         model_names = resume.identify_unique(df, 'Model')
         all_energy_channels = resume.identify_unique(df, 'Energy Channel Key')
         all_observed_thresholds = resume.identify_thresholds_per_energy_channel(df)
+    ### RESUME COMPLETED
 
-    logger.info("Calculating metrics from dataframe.")
- 
+    #Write dataframe to file
+    write_df(df, "SPHINX_dataframe")
+    logger.debug("Completed writing SPHINX_dataframe to file.")
  
     validation_type = ["All", "First", "Last", "Max", "Mean"]
     for type in validation_type:
-        logger.info("Starting validation of " + type +" forecasts.")
+        logger.info("-----------Starting validation of " + type +" forecasts-------------")
         calculate_intuitive_metrics(df, model_names, all_energy_channels,
                 all_observed_thresholds, type)
  

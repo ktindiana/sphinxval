@@ -546,8 +546,10 @@ class Forecast():
         """ Fills in trigger objects.
             
         """
+        is_good = True #currently associated with flare trigger
+        
         is_good, dataD = vjson.check_forecast_json(full_json, self.energy_channel)
-        if not is_good: return
+        if not is_good: return is_good
         
         if 'triggers' in full_json['sep_forecast_submission']:
             trig_arr = full_json['sep_forecast_submission']['triggers']
@@ -572,11 +574,15 @@ class Forecast():
  
             if 'flare' in trig:
                 (last_data_time, start_time, peak_time, end_time,
-                 location, lat, lon, intensity, integrated_intensity, noaa_region) = vjson.dict_to_flare(trig['flare'])
+                 location, lat, lon, intensity, integrated_intensity, noaa_region, warning) = vjson.dict_to_flare(trig['flare'])
                 flare = Flare("id", last_data_time, start_time, peak_time,
                             end_time, location, lat, lon, intensity,
                             integrated_intensity, noaa_region)
                 self.flares.append(flare)
+                
+                if is_good:
+                    if warning:
+                        is_good = False
                 continue
  
             if 'particle_intensity' in trig:
@@ -585,6 +591,8 @@ class Forecast():
                 pi = Particle_Intensity("id", observatory, instrument,
                     last_data_time, ongoing_events)
                 self.particle_intensities.append(pi)
+ 
+        return is_good
  
 
     ## -----INPUTS
@@ -2292,6 +2300,10 @@ class SPHINX:
         #Check if forecast for all clear
         predicted = self.prediction.all_clear.all_clear_boolean
         match_status = self.all_clear_match_status
+        
+        if predicted == None:
+            match_status = "No Prediction Provided"
+            return predicted, match_status
 
         pred_threshold = {'threshold': self.prediction.all_clear.threshold,
             'threshold_units': self.prediction.all_clear.threshold_units}

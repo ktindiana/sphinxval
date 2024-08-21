@@ -36,13 +36,15 @@ logger = logging.getLogger(__name__)
 
 def read_in_json(filename, verbose=True):
     """Read in json file """
+    if verbose:
+        logger.info("Reading in " + filename)
+
     with open(filename) as f:
         info = json.load(f)
-        
         if info == {}:
+            logger.warning("Could not read in " + filename + "!!!!")
             return info
-        if verbose:
-            logger.info("read in " + filename)
+
         info.update({'filename':filename})
          
     return info
@@ -211,12 +213,12 @@ def forecast_object_from_json(fcast_json, energy_channel):
     """
             
     fcast = cl.Forecast(energy_channel)
-    fcast.add_triggers_from_dict(fcast_json)
+    is_good = fcast.add_triggers_from_dict(fcast_json)
     fcast.add_inputs_from_dict(fcast_json)
     fcast.add_forecasts_from_dict(fcast_json)
     fcast.check_energy_channel_format()
     
-    return fcast
+    return fcast, is_good
 
 def load_objects_from_json(data_list, model_list):
     """ Read in a list of observations (data_list) and
@@ -269,7 +271,7 @@ def load_objects_from_json(data_list, model_list):
             key = objh.energy_channel_to_key(channel)
             obj = observation_object_from_json(json, channel)
             
-            logger.debug("Trying " + obj.source)
+            logger.debug("Created OBSERVATION object from json " + obj.source   + ", " + str(channel))
             logger.debug("Observation window start: " + str(obj.observation_window_start))
             #skip if energy block wasn't present in json
             if obj.observation_window_start != None:
@@ -291,8 +293,11 @@ def load_objects_from_json(data_list, model_list):
         short_name = json["sep_forecast_submission"]["model"]["short_name"]
         for channel in all_energy_channels:
             key = objh.energy_channel_to_key(channel)
-            obj = forecast_object_from_json(json, channel)
-            logger.debug("Trying " + obj.source)
+            obj, is_good = forecast_object_from_json(json, channel)
+            if not is_good:
+                logger.warning("Note issue with creating FORECAST object from json " + obj.source  + ", " + key)
+            
+            logger.debug("Created FORECAST object from json " + obj.source  + ", " + key)
             logger.debug("Prediction window start: " + str(obj.prediction_window_start))
             #skip if energy block wasn't present in json
             if obj.prediction_window_start != None:
@@ -308,14 +313,14 @@ def load_objects_from_json(data_list, model_list):
                 if cfg.mm_model in short_name:
                     if channel == cfg.mm_obs_energy_channel:
                         pred_channel = cfg.mm_pred_energy_channel
-                        obj = forecast_object_from_json(json, pred_channel)
+                        obj, is_good = forecast_object_from_json(json, pred_channel)
+                        if not is_good:
+                            logger.warning("Note issue with creating FORECAST object from json " + obj.source  + ", mismatch channel" + str(pred_channel))
 
                         #skip if energy block wasn't present in json
                         if obj.prediction_window_start != None:
                             model_objs[cfg.mm_energy_key].append(obj)
-#                            obj.index = fcast_index
-#                            fcast_index += 1 #each forecast object gets a unique index value 
-#                            print("Adding " + obj.source + " to dictionary under key " + cfg.mm_energy_key)
+
 
     #Convert all_energy_channels to an array of string keys
     for i in range(len(all_energy_channels)):
@@ -582,6 +587,7 @@ def dict_to_flare(flareD):
     intensity = None
     integrated_intensity = None
     noaa_region = None
+    warning = False
     
     if 'last_data_time' in flareD:
         last_data_time = flareD['last_data_time']
@@ -636,10 +642,12 @@ def dict_to_flare(flareD):
                 noaa_region = int(noaa_region)
             except ValueError as e:
                 # Ignore invalid regions (e.g. "") with warning
-                logger.warning("Invalid noaa_region in flare trigger")
+                noaa_region = None
+                warning = True
+                logger.warning("Invalid noaa_region in flare trigger. Setting to None.")
        
     return last_data_time, start_time, peak_time, end_time, location,\
-        lat, lon, intensity, integrated_intensity, noaa_region
+        lat, lon, intensity, integrated_intensity, noaa_region, warning
 
 
 def dict_to_particle_intensity(partD):

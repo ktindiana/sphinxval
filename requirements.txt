@@ -12,3 +12,4 @@ markdown==3.5
 PyPDF2==3.0.1
 gitpython==3.1.43
 beautifulsoup4==4.12.3
+
