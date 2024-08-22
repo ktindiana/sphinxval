@@ -4,7 +4,13 @@
             "short_name": "unit_test",
             "flux_type": "integral"
         },
-		"triggers": [],
+		"triggers": [
+            {
+                "cme": {
+                    "start_time": "2000-01-01T00:00:00Z"
+                }
+            }
+        ],
         "issue_time": "2000-01-01T00:00:00Z",
         "mode": "historical",
         "forecasts": [
@@ -20,7 +26,7 @@
                     "start_time": "2000-01-01T00:00:00Z",
                     "end_time": "2000-01-01T01:00:00Z"
                 },
-                "all_clear": {
+				"all_clear": {
                     "all_clear_boolean": false,
                     "threshold": 10,
                     "threshold_units": "pfu"

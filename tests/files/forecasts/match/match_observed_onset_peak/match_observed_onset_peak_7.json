@@ -7,7 +7,7 @@
 		"triggers": [
             {
                 "cme": {
-                    "start_time": "1980-01-01T00:30:00Z"
+                    "start_time": "2000-01-01T00:00:00Z"
                 }
             }
         ],
@@ -24,13 +24,22 @@
                 "location": "earth",
                 "prediction_window": {
                     "start_time": "2000-01-01T00:00:00Z",
-                    "end_time": "2000-01-01T01:00:00Z"
+                    "end_time": "2000-01-01T00:32:00Z"
                 },
-                "all_clear": {
-                    "all_clear_boolean": false,
-                    "threshold": 10,
-                    "threshold_units": "pfu"
-                }
+				"peak_intensity": {
+					"intensity": 3000,
+					"units": "pfu",
+					"time": "2000-01-01T00:30:00Z",
+					"uncertainty": 300
+				},
+				"threshold_crossings": [
+                    {
+                        "crossing_time": "2000-01-01T00:15:00Z",
+                        "threshold": 10,
+                        "threshold_units": "pfu"
+                    }
+                ]
+				
             }
         ]
     }
