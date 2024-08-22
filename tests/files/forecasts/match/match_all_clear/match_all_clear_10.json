@@ -7,11 +7,11 @@
 		"triggers": [
             {
                 "cme": {
-                    "start_time": "2000-01-01T00:17:00Z"
+                    "start_time": "2000-01-01T00:00:00Z"
                 }
             }
         ],
-        "issue_time": "2000-01-01T00:17:00Z",
+        "issue_time": "2000-01-01T00:00:00Z",
         "mode": "historical",
         "forecasts": [
             {
@@ -23,8 +23,8 @@
                 "species": "proton",
                 "location": "earth",
                 "prediction_window": {
-                    "start_time": "2000-01-01T00:18:00Z",
-                    "end_time": "2000-01-01T01:00:00Z"
+                    "start_time": "2000-01-01T00:00:00Z",
+                    "end_time": "2000-01-01T00:45:00Z"
                 },
 				"all_clear": {
                     "all_clear_boolean": false,

@@ -4,13 +4,6 @@
             "short_name": "unit_test",
             "flux_type": "integral"
         },
-		"triggers": [
-            {
-                "cme": {
-                    "start_time": "1980-01-01T00:30:00Z"
-                }
-            }
-        ],
         "issue_time": "2000-01-01T00:00:00Z",
         "mode": "historical",
         "forecasts": [

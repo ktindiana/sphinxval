@@ -39,7 +39,7 @@
 						"threshold_units": "pfu"
 					}
 				],
-				"sep_profile": "match_all_clear_8_integral_flux.10MeV.txt"
+				"sep_profile": "match_all_clear_7_integral_flux.10MeV.txt"
 			}
 		]
 	}
