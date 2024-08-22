@@ -32,8 +32,7 @@ def utility_load_forecast(filename, energy_channel):
             :forecast: resultant Forecast() object.
     """
     forecast_dict = vjson.read_in_json(filename)
-    forecast = vjson.forecast_object_from_json(forecast_dict, energy_channel)    
-    forecast.source = filename
+    forecast, _ = vjson.forecast_object_from_json(forecast_dict, energy_channel)    
     return forecast
 
 def utility_load_observation(filename, energy_channel):
@@ -47,8 +46,7 @@ def utility_load_observation(filename, energy_channel):
     """
     observation_dict = vjson.read_in_json(filename)
     observation = vjson.observation_object_from_json(observation_dict, energy_channel)
-    observation.source = filename
-    return observation    
+    return observation
 
 def utility_get_verbosity():
     """
@@ -289,7 +287,6 @@ class TestMatchObservedOnsetPeak(LoadMatch):
         """
         forecast_json = './tests/files/forecasts/match/match_observed_onset_peak/match_observed_onset_peak_1.json'
         sphinx, function_evaluations = self.utility_test_match_observed_onset_peak(this, forecast_json)
-        self.assertEqual(sphinx.observed_match_peak_intensity_source, self.observation.source, '')
         self.assertEqual(sphinx.observed_peak_intensity, self.observation.peak_intensity, '')
         self.assertEqual(sphinx.peak_intensity_match_status, 'SEP Event', '')
         self.assertEqual(function_evaluations, [True], '')
@@ -551,7 +548,6 @@ class TestMatchObservedMaxFlux(LoadMatch):
         """
         forecast_json = './tests/files/forecasts/match/match_observed_max_flux/match_observed_max_flux_1.json'
         sphinx, function_evaluations = self.utility_test_match_observed_max_flux(this, forecast_json)
-        self.assertEqual(sphinx.observed_match_peak_intensity_max_source, self.observation.source, '')
         self.assertEqual(sphinx.observed_peak_intensity_max, self.observation.peak_intensity_max, '')
         self.assertEqual(sphinx.peak_intensity_max_match_status, 'SEP Event', '')
         self.assertEqual(function_evaluations, [True], '')
@@ -1681,11 +1677,11 @@ class TestCalculateDerivedQuantities(LoadMatch):
         """
         The forecast/observation pair has the following attributes:
             No prediction window specified.
-            The function should evaluate to [None].
+            The function should evaluate to [] (forecast skipped because it is invalid).
         """
         forecast_jsons = ['./tests/files/forecasts/match/calculate_derived_quantities/calculate_derived_quantities_3.json']
         matched_sphinx, function_evaluations = self.utility_test_calculate_derived_quantities(this, forecast_jsons)
-        self.assertEqual(function_evaluations, [None], '')
+        self.assertEqual(function_evaluations, [], '')
         
     @make_docstring_printable
     def test_calculate_derived_quantities_4(this, self):
