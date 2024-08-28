@@ -689,7 +689,7 @@ def add_tab(appendage, markdown_text, model):
     return text
 
 def add_index_link():
-    return '<a href="' + os.path.abspath(os.path.join(config.reportpath, 'index.html')) + '">All Reports</a>\n'
+    return '<a href="' + os.path.abspath(os.path.join(config.reportpath, 'index.html')) + '">&#8592; Other Reports</a>\n'
 
 def convert_markdown_to_html(text, model, validation_reference=False):
     
@@ -723,8 +723,8 @@ def convert_markdown_to_html(text, model, validation_reference=False):
 def get_html_report_preamble(model):
     text = add_script('')
     text += add_style('')
-    text += add_title(model)
     text += add_index_link()
+    text += add_title(model)
     return text
 
 def get_plot_type(plot_string):
