@@ -213,10 +213,24 @@ def forecast_object_from_json(fcast_json, energy_channel):
     """
             
     fcast = cl.Forecast(energy_channel)
-    is_good = fcast.add_triggers_from_dict(fcast_json)
-    fcast.add_inputs_from_dict(fcast_json)
-    fcast.add_forecasts_from_dict(fcast_json)
+    is_good_fcast = fcast.add_forecasts_from_dict(fcast_json)
+    if not is_good_fcast:
+        logger.warning("Note there was an issue with the forecast block.")
+    #If forecast not loaded because no forecast for the requested energy channel, return
+    if fcast.prediction_window_start == None:
+        return fcast, is_good_fcast
+    
+    is_good_trig = fcast.add_triggers_from_dict(fcast_json)
+    if not is_good_trig:
+        logger.warning("Note that there was an issue with the trigger block.")
+    
+    is_good_input = fcast.add_inputs_from_dict(fcast_json)
+    if not is_good_input:
+        logger.warning("Note that there was an issue with the input block.")
+
     fcast.check_energy_channel_format()
+    
+    is_good = (is_good_fcast and is_good_trig and is_good_input)
     
     return fcast, is_good
 
@@ -242,8 +256,18 @@ def load_objects_from_json(data_list, model_list):
             the forecast jsons
         
     """
-    obs_jsons = read_json_list(read_list_of_jsons(data_list))
-    model_jsons = read_json_list(read_list_of_jsons(model_list))    
+    list_of_obs = read_list_of_jsons(data_list)
+    list_of_model = read_list_of_jsons(model_list)
+    
+    logger.info("STATS: Observation json files input into SPHINX: " + str(len(list_of_obs)))
+    logger.info("STATS: Forecast json files input into SPHINX: " + str(len(list_of_model)))
+
+    obs_jsons = read_json_list(list_of_obs)
+    model_jsons = read_json_list(list_of_model)
+    
+    logger.info("STATS: Observation json files read in: " + str(len(obs_jsons)))
+    logger.info("STATS: Forecast json files read in: " + str(len(model_jsons)))
+
     
     #Find energy channels available in the OBSERVATIONS
     #Only channels with observed values will be validated
@@ -288,24 +312,23 @@ def load_objects_from_json(data_list, model_list):
             
 
     #Load json objects
-    fcast_index = 0 #indicates order in which forecast read in; should maintain order throughout
     for json in model_jsons:
         short_name = json["sep_forecast_submission"]["model"]["short_name"]
         for channel in all_energy_channels:
             key = objh.energy_channel_to_key(channel)
             obj, is_good = forecast_object_from_json(json, channel)
-            if not is_good:
-                logger.warning("Note issue with creating FORECAST object from json " + obj.source  + ", " + key)
-            
-            logger.debug("Created FORECAST object from json " + obj.source  + ", " + key)
-            logger.debug("Prediction window start: " + str(obj.prediction_window_start))
-            #skip if energy block wasn't present in json
+            #At this point, may not be a good object if the forecast needed to use
+            #a mismatched energy channel. Check that first before determine
+            #outcome of object.
+            #If the object is good, include here
             if obj.prediction_window_start != None:
                 model_objs[key].append(obj)
-                logger.debug("Adding " + obj.source + " to dictionary under key " + key)
-                obj.index = fcast_index
-                fcast_index += 1 #each forecast object gets a unique index value for tracking
-            
+                logger.debug("Created FORECAST object from json " + str(obj.source)  + ", " + key)
+                logger.debug("Prediction window start: " + str(obj.prediction_window_start))
+ 
+            if not is_good:
+                logger.warning("Note issue with creating FORECAST object from json " + str(obj.source)  + ", " + key)
+
             #If mismatched observation and prediction energy channels
             #enabled, then find the correct prediction energy channel
             #to load.
@@ -314,12 +337,16 @@ def load_objects_from_json(data_list, model_list):
                     if channel == cfg.mm_obs_energy_channel:
                         pred_channel = cfg.mm_pred_energy_channel
                         obj, is_good = forecast_object_from_json(json, pred_channel)
+ 
                         if not is_good:
-                            logger.warning("Note issue with creating FORECAST object from json " + obj.source  + ", mismatch channel" + str(pred_channel))
+                            logger.warning("Note issue with creating FORECAST object from json " + str(obj.source)  + ", mismatch channel" + str(pred_channel))
 
                         #skip if energy block wasn't present in json
                         if obj.prediction_window_start != None:
                             model_objs[cfg.mm_energy_key].append(obj)
+                            logger.debug("Adding " + obj.source + " to dictionary under key " + key)
+
+
 
 
     #Convert all_energy_channels to an array of string keys
@@ -331,6 +358,10 @@ def load_objects_from_json(data_list, model_list):
 
     del obs_jsons
     del model_jsons
+
+    for channel in all_energy_channels:
+        logger.info("STATS: Observation objects created for : " + channel + ", " + str(len(obs_objs[channel])))
+        logger.info("STATS: Forecast objects created for : " + channel + ", " + str(len(model_objs[channel])))
 
     return all_energy_channels, obs_objs, model_objs
 
@@ -357,15 +388,15 @@ def check_forecast_json(full_json, energy_channel):
     is_good = True
     dataD = {}
     if full_json == {} or full_json == None:
-        logger.debug("Empty forecast json for  "
+        logger.warning("EMPTY forecast json for  "
             + full_json['filename'] +
             ". Initializing all to None.")
         dataD = {}
         is_good = False
     
     if 'sep_forecast_submission' not in full_json:
-        logger.debug("Check that you have passed a "
-            "forecast json? Initializing all to None.")
+        logger.warning("\'sep_forecast_submission\' field missing from forecast json. "
+                       "Initializing all to None.")
         dataD = {}
         is_good = False
         
@@ -381,13 +412,17 @@ def check_forecast_json(full_json, energy_channel):
                     + full_json['filename'] +
                     ". Initializing all to None.")
                 dataD = {}
+                #Is okay, forecasts will not have all energy channels
+                #tested in this block. Tests every energy channel in
+                #the prepared observations.
                 
         else:
-            logger.debug("forecast block not "
+            logger.warning("\'forecast\' block not "
                     "found in forecast json"
                     + full_json['filename'] +
                     ". Initializing all to None.")
             dataD = {}
+            is_good = False
             
     return is_good, dataD
 
@@ -587,7 +622,7 @@ def dict_to_flare(flareD):
     intensity = None
     integrated_intensity = None
     noaa_region = None
-    warning = False
+    is_good = True
     
     if 'last_data_time' in flareD:
         last_data_time = flareD['last_data_time']
@@ -642,12 +677,14 @@ def dict_to_flare(flareD):
                 noaa_region = int(noaa_region)
             except ValueError as e:
                 # Ignore invalid regions (e.g. "") with warning
+                logger.warning("Invalid noaa_region in flare trigger: \'" + noaa_region
+                            + "\'. Setting to None.")
                 noaa_region = None
-                warning = True
-                logger.warning("Invalid noaa_region in flare trigger. Setting to None.")
+                is_good = False
+                
        
     return last_data_time, start_time, peak_time, end_time, location,\
-        lat, lon, intensity, integrated_intensity, noaa_region, warning
+        lat, lon, intensity, integrated_intensity, noaa_region, is_good
 
 
 def dict_to_particle_intensity(partD):
