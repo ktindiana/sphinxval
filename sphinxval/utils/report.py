@@ -873,15 +873,18 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
             info_text += 'This code may be publicly accessed at: ' + '[' + config.git_repo_url + '](' + config.git_repo_url + ')<br>'
             info_text += 'Specific git commit SHA used to generate this report: [' + config.git_commit_sha + '](https://github.com/search?q=' + config.git_commit_sha + ')<br>'
             if config.git_is_dirty:
-                info_text += '&nbsp;&nbsp;&nbsp;&nbsp;The sphinxval code used to generate this report has changed since the commit listed above.<br>'
+                git_info = ''
+                git_info += '&nbsp;&nbsp;&nbsp;&nbsp;The sphinxval code used to generate this report has changed since the commit listed above.<br>'
                 if len(config.git_changed_files) > 0:
-                    info_text += '&nbsp;&nbsp;&nbsp;&nbsp;Changes were found in the following files:<br>'
+                    git_info += '&nbsp;&nbsp;&nbsp;&nbsp;Changes were found in the following files:<br>'
                     for this_filename in config.git_changed_files:
-                        info_text += '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + this_filename + '<br>'
+                        git_info += '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + this_filename + '<br>'
                 if len(config.git_untracked_files) > 0:
-                    info_text += '&nbsp;&nbsp;&nbsp;&nbsp;The following untracked files were found:<br>'
+                    git_info += '&nbsp;&nbsp;&nbsp;&nbsp;The following untracked files were found:<br>'
                     for this_filename in config.git_untracked_files:
-                        info_text += '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + this_filename + '<br>'
+                        git_info += '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + this_filename + '<br>'
+                info_text += add_collapsible_segment('Dirty Git Repository (details)', git_info) + '<br>'
+
             if appendages[j] == '':
                 title = model + ' Validation Report'
             else:
