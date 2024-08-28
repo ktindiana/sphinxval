@@ -15,6 +15,7 @@ import bs4
 import base64
 
 from . import config 
+from . import make_index
 
 #Create logger
 logger = logging.getLogger(__name__)
@@ -36,7 +37,7 @@ def formatting_function(value):
         if num_floats >= 5:
             condition = False
     return formatted_value
-    
+
 def transpose_markdown(text):
     table = text.split('\n')
     output = '| Metric | Value |\n'
@@ -512,7 +513,7 @@ def get_image_string(original_string):
         left = original_string.split('![](')[1]
         result = left.split(')')[0]
     return result
-    
+
 def convert_tables_html(text):
     new_text = ''
     outside_table = True
@@ -741,17 +742,14 @@ def convert_pdf_to_base64(pdf_path):
 def embed_pdf_files_in_html(html_content, output_html_path):
     soup = bs4.BeautifulSoup(html_content, 'html.parser')
     embed_tags = soup.find_all('embed')
-
     for embed in embed_tags:
         embed_src = embed.get('src')
         if embed_src.endswith('.pdf'):
             pdf_path = embed_src
-
             html_dir = os.path.abspath(config.reportpath)
             pdf_path = os.path.normpath(os.path.join(html_dir, pdf_path))
             base64_pdf = convert_pdf_to_base64(pdf_path)
-            embed['src'] = 'data:application/pdf;base64,' + base64_pdf
-   
+            embed['src'] = 'data:application/pdf;base64,' + base64_pdf   
     return str(soup) 
 
  
@@ -1191,6 +1189,12 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
         a.close()
         logger.info('    Complete')
         
+    # MAKE index.html
+    html_index = make_index.make_index(config.reportpath, banner_text='SPHINX Validation Report Repository')
+    a = open(os.path.join(config.reportpath, 'index.html'), 'w')
+    a.write(html_index)
+    a.close()
+    
         
         
             
