@@ -84,7 +84,8 @@ in_percent = ["Mean Percent Error (MPE)",
               "Mean Symmetric Percent Error (MSPE)",
               "Mean Symmetric Absolute Percent Error (SMAPE)",
               "Median Symmetric Accuracy (MdSA)",
-              "Mean Accuracy Ratio (MAR)"]
+              "Mean Accuracy Ratio (MAR)",
+              "Prevalence Threshold"]
 
 # SAVES THE CURRENT GIT COMMIT SHA HASH FOR LATER USE
 git_repo = git.Repo(search_parent_directories=True)
