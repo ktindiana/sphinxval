@@ -480,8 +480,6 @@ class Forecast():
         self.issue_time = None
         self.valid = None #indicates whether prediction window starts
                           #at the same time or after triggers/inputs
-        self.index = None   #indicates order read in by SPHINX
-        
         #General info
         self.species = None
         self.location = None
@@ -546,7 +544,6 @@ class Forecast():
         """ Fills in trigger objects.
             
         """
-        is_good = True #currently associated with flare trigger
         
         is_good, dataD = vjson.check_forecast_json(full_json, self.energy_channel)
         if not is_good: return is_good
@@ -574,15 +571,14 @@ class Forecast():
  
             if 'flare' in trig:
                 (last_data_time, start_time, peak_time, end_time,
-                 location, lat, lon, intensity, integrated_intensity, noaa_region, warning) = vjson.dict_to_flare(trig['flare'])
+                 location, lat, lon, intensity, integrated_intensity, noaa_region, is_good_flare) = vjson.dict_to_flare(trig['flare'])
                 flare = Flare("id", last_data_time, start_time, peak_time,
                             end_time, location, lat, lon, intensity,
                             integrated_intensity, noaa_region)
                 self.flares.append(flare)
                 
-                if is_good:
-                    if warning:
-                        is_good = False
+                if not is_good_flare:
+                    is_good = False
                 continue
  
             if 'particle_intensity' in trig:
@@ -601,12 +597,12 @@ class Forecast():
         
         """
         is_good, dataD = vjson.check_forecast_json(full_json, self.energy_channel)
-        if not is_good: return
+        if not is_good: return is_good
         
         if 'inputs' in full_json['sep_forecast_submission']:
             input_arr = full_json['sep_forecast_submission']['inputs']
         else:
-            return
+            return is_good
 
         for input in input_arr:
             if 'magnetic_connectivity' in input:
@@ -630,7 +626,7 @@ class Forecast():
                         products)
                 self.coronagraphs.append(corona)
 
-
+        return is_good
 
 
     ## -----FORECASTED QUANTITIES
@@ -639,8 +635,9 @@ class Forecast():
                 forecasts and fills all possible forecasted values
  
         """
+        
         is_good, dataD = vjson.check_forecast_json(full_json, self.energy_channel)
-        if not is_good: return
+        if not is_good: return is_good
         
         self.short_name = full_json['sep_forecast_submission']['model']['short_name']
         issue_time = full_json['sep_forecast_submission']['issue_time']
@@ -778,7 +775,7 @@ class Forecast():
                     self.probabilities.append(Probability(probability_value,
                         uncertainty, threshold, threshold_units))
                     
-        return
+        return is_good
 
 
 
@@ -2317,12 +2314,10 @@ class SPHINX:
         
         #Thresholds must match
         if pred_threshold != obs_threshold:
-            logger.warning("No Matching Threshold!!!")
-            logger.warning(self.prediction.short_name)
-            logger.warning(self.prediction.source)
-            logger.warning(self.energy_channel)
-            logger.warning("Predicted: " + str(pred_threshold))
-            logger.warning("Observed: " + str(obs_threshold))
+            logger.warning("No Matching Threshold!!! " + self.prediction.short_name + ", "
+                        + self.prediction.source + ", " + str(self.energy_channel) +
+                        ", Predicted Threshold: " + str(pred_threshold) +
+                        ", Observed Threshold: " + str(obs_threshold))
             predicted = None
             match_status = "No Matching Threshold"
             return predicted, match_status

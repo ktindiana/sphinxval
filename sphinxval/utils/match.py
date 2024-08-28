@@ -2499,9 +2499,17 @@ def setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_o
             logger.debug("Forecast energy channel: " + str(sphinx.prediction.energy_channel))
             logger.debug("Prediction Thresholds: " + str(all_fcast_thresholds))
             logger.debug("Observed Thresholds: " + str(sphinx.thresholds))
-            logger.debug("Prediction index: " + str(sphinx.prediction.index))
             logger.debug("Forecast index (position in matched_sphinx): " + str(len(matched_sphinx[fcast.short_name][energy_key]) - 1))
+
+    total_sphinx = 0
+    for model in model_names:
+        for energy_key in all_energy_channels:
+            logger.info("STATS: SPHINX objects created for " + model + ", " + energy_key
+                        + ": " + str(len(matched_sphinx[model][energy_key])))
+            total_sphinx += len(matched_sphinx[model][energy_key])
             
+    logger.info("STATS: TOTAL SPHINX OBJECTS: " + str(total_sphinx))
+
  
     return matched_sphinx, observed_sep_events
 
@@ -2654,7 +2662,6 @@ def match_all_forecasts(all_energy_channels, model_names, obs_objs,
                 logger.debug("Forecast energy channel: " + str(sphinx.prediction.energy_channel))
                 logger.debug("Predicted Thresholds: " + str(sphinx.prediction.identify_all_thresholds()))
                 logger.debug("Observed Thresholds: " + str(sphinx.thresholds))
-                logger.debug("Prediction index: " + str(sphinx.prediction.index))
                 logger.debug("Forecast index (position in matched_sphinx): " + str(ii))
 
 
