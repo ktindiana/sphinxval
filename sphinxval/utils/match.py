@@ -832,7 +832,7 @@ def threshold_cross_criteria(sphinx, fcast, obs_values, observation_objs,
             
     Ouput:
         
-        Output values are saved to the sphinx object
+        None
         
     """
     thresh_key = objh.threshold_to_key(thresh)
@@ -872,7 +872,7 @@ def before_threshold_crossing(sphinx, fcast, obs_values, observation_objs,
             
     Ouput:
         
-        All output is saved to the sphinx object
+        None
 
 
     """
@@ -949,7 +949,7 @@ def before_sep_end(sphinx, fcast, obs_values, observation_objs,
             
     Ouput:
         
-        All output is saved to the sphinx object
+        None
  
     """
     last_trigger_time = sphinx.last_trigger_time
@@ -1016,7 +1016,7 @@ def eruption_before_threshold_crossing(sphinx, fcast, obs_values,
             
     Ouput:
         
-        All output is saved to the sphinx object
+        None
  
     """
     last_eruption_time = sphinx.last_eruption_time
@@ -1160,11 +1160,7 @@ def pred_win_sep_overlap(sphinx, fcast, obs_values, observation_objs,
             
     Ouput:
         
-        For all output, indices of arrays match with indices of
-        obs_values and observation_objs
-        
-        :is_overlap: (boolean array) indicates if an observed SEP
-            event is occuring within the prediction window
+        None
             
     """
     
@@ -1226,7 +1222,7 @@ def observed_ongoing_event(sphinx, fcast, obs_values, observation_objs,
             
     Ouput:
         
-        All output is saved the to the sphinx object
+        None
             
     """
     pred_win_st = fcast.prediction_window_start
@@ -2584,17 +2580,23 @@ def match_all_forecasts(all_energy_channels, model_names, obs_objs,
                 logger.debug("Observed Thresholds: " + str(sphinx.thresholds))
                 logger.debug("Forecast index (position in matched_sphinx): " + str(ii))
 
-
+    logger.info("Initial forecast-to-observation matching complete.")
     #Print uniquely identified observed SEP events
     #Redundant as info is in output files. Use for debugging.
     sep_report(all_energy_channels, obs_values, model_names,
         observed_sep_events)
 
+    logger.info("Checking forecasts to determine if revisions should be made "
+            "in matches to observed SEP events. Revising for all predictions "
+            "triggered by flares and/or CMEs.")
     #In the case where the same model has forecasts derived from
     #multiple eruptions matched to the same SEP event, find the
     #best match and unmatch the other forecasts.
     revise_eruption_matches(matched_sphinx, all_energy_channels,
         obs_values, model_names, observed_sep_events)
+
+    logger.info("The revision process is complete. All forecast-to-observation "
+        "matches have been finalized.")
 
     return matched_sphinx, all_obs_thresholds, observed_sep_events
 
