@@ -2224,8 +2224,8 @@ def setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_o
     #Launch into matching of observations and forecasts
     
     for energy_key in all_energy_channels:
-        #print("\n")
-        #print("Identifying Match Criteria for " + str(energy_key) + "," + str(datetime.datetime.now()))
+        logger.info("MATCHING SETUP STARTING FOR: " + energy_key)
+ 
         observation_objs = obs_objs[energy_key] #Observation objects
         forecasts = model_objs[energy_key] #all forecasts for channel
         for fcast in forecasts:
@@ -2482,7 +2482,7 @@ def match_all_forecasts(all_energy_channels, model_names, obs_objs,
     
     for model in model_names:
         logger.info("MATCHING STARTING FOR: " + model)
-        start_match_time = datetime.datetime.now()
+        match_start_time = datetime.datetime.now()
 
         for energy_key in all_energy_channels:
             observation_objs = obs_objs[energy_key] #Observation objects
@@ -2491,7 +2491,7 @@ def match_all_forecasts(all_energy_channels, model_names, obs_objs,
  
             for ii in range(len(matched_sphinx[model][energy_key])):
                 #Report progress
-                if ii%1000 == 0:
+                if ii%1000 == 0 and ii != 0:
                     logger.info(f"MATCH PROGRESS: Matched {ii} out of {n_tot} forecasts for {model} and {energy_key}.")
  
                 sphinx = matched_sphinx[model][energy_key][ii]
@@ -2578,10 +2578,6 @@ def match_all_forecasts(all_energy_channels, model_names, obs_objs,
 
                         derived_status = calculate_derived_quantities(sphinx)
 
-                match_end_time = datetime.datetime.now()
-                match_td = (match_end_time - match_start_time).total_seconds()
-                rate = n_tot/match_td
-                logger.info(f"MATCH PROGRESS: Completed {n_tot} matches for {model} and {energy_key} in {match_td} seconds at a rate of {rate:0.1f} forecasts/second.")
                 #Save the SPHINX object with all of the forecasted and matched
                 #observation values to a dictionary organized by energy channel
                 msg = sphinx.match_report_streamlined()
@@ -2593,6 +2589,11 @@ def match_all_forecasts(all_energy_channels, model_names, obs_objs,
                 logger.debug("Predicted Thresholds: " + str(sphinx.prediction.identify_all_thresholds()))
                 logger.debug("Observed Thresholds: " + str(sphinx.thresholds))
                 logger.debug("Forecast index (position in matched_sphinx): " + str(ii))
+
+            match_end_time = datetime.datetime.now()
+            match_td = (match_end_time - match_start_time).total_seconds()
+            rate = n_tot/match_td
+            logger.info(f"MATCH PROGRESS: Completed {n_tot} matches for {model} and {energy_key} in {match_td} seconds at a rate of {rate:0.1f} forecasts/second.")
 
     logger.info("Initial forecast-to-observation matching complete.")
     #Print uniquely identified observed SEP events
