@@ -2228,7 +2228,16 @@ def setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_o
  
         observation_objs = obs_objs[energy_key] #Observation objects
         forecasts = model_objs[energy_key] #all forecasts for channel
+ 
+        n_tot = len(forecasts)
+        ii=0
+        setup_start_time = datetime.datetime.now()
         for fcast in forecasts:
+            #Report progress
+            if ii%1000 == 0 and ii != 0:
+                logger.info(f"MATCH SETUP PROGRESS: Set up {ii} out of {n_tot} forecasts.")
+            ii += 1
+
             #One SPHINX object contains all matching information and
             #predicted and observed values (and all thresholds)
             sphinx = objh.initialize_sphinx(fcast)
@@ -2317,6 +2326,7 @@ def setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_o
             
             observed_peak_flux = None
             observed_peak_flux_max = None
+            
             
             for f_thresh in all_fcast_thresholds:
                 logger.debug("Checking Threshold: " + str(f_thresh))
@@ -2413,6 +2423,12 @@ def setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_o
             logger.debug("Observed Thresholds: " + str(sphinx.thresholds))
             logger.debug("Forecast index (position in matched_sphinx): " + str(len(matched_sphinx[fcast.short_name][energy_key]) - 1))
 
+
+        setup_end_time = datetime.datetime.now()
+        match_td = (setup_end_time - setup_start_time).total_seconds()
+        rate = ii/match_td
+        logger.info(f"MATCH SETUP PROGRESS: Completed {ii} matches in {match_td} seconds at a rate of {rate:0.1f} forecasts/second.")
+
     total_sphinx = 0
     for model in model_names:
         for energy_key in all_energy_channels:
@@ -2482,12 +2498,12 @@ def match_all_forecasts(all_energy_channels, model_names, obs_objs,
     
     for model in model_names:
         logger.info("MATCHING STARTING FOR: " + model)
-        match_start_time = datetime.datetime.now()
 
         for energy_key in all_energy_channels:
             observation_objs = obs_objs[energy_key] #Observation objects
             logger.info("MATCHING STARTING FOR: " + energy_key)
             n_tot = len(matched_sphinx[model][energy_key])
+            match_start_time = datetime.datetime.now()
  
             for ii in range(len(matched_sphinx[model][energy_key])):
                 #Report progress
