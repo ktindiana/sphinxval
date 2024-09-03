@@ -2427,7 +2427,7 @@ def setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_o
         setup_end_time = datetime.datetime.now()
         match_td = (setup_end_time - setup_start_time).total_seconds()
         rate = ii/match_td
-        logger.info(f"MATCH SETUP PROGRESS: Completed {ii} matches in {match_td} seconds at a rate of {rate:0.1f} forecasts/second.")
+        logger.info(f"MATCH SETUP PROGRESS: Completed {ii} matches in {match_td:0.3f} seconds at a rate of {rate:0.1f} forecasts/second.")
 
     total_sphinx = 0
     for model in model_names:
@@ -2609,7 +2609,7 @@ def match_all_forecasts(all_energy_channels, model_names, obs_objs,
             match_end_time = datetime.datetime.now()
             match_td = (match_end_time - match_start_time).total_seconds()
             rate = n_tot/match_td
-            logger.info(f"MATCH PROGRESS: Completed {n_tot} matches for {model} and {energy_key} in {match_td} seconds at a rate of {rate:0.1f} forecasts/second.")
+            logger.info(f"MATCH PROGRESS: Completed {n_tot} matches for {model} and {energy_key} in {match_td:0.3f} seconds at a rate of {rate:0.1f} forecasts/second.")
 
     logger.info("Initial forecast-to-observation matching complete.")
     #Print uniquely identified observed SEP events
