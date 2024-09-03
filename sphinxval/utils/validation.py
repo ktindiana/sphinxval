@@ -293,7 +293,7 @@ def fill_dict_row(sphinx, dict, energy_key, thresh_key, profname_dict):
                     pred_time_profile = profname_dict[pred_time_profile]
                 except:
                     #sys.exit('fill_dict_row: Cannot locate time profile file ' + pred_time_profile)
-                    logger.warning('Cannot local time profile file ' + pred_time_profile)
+                    logger.warning('Cannot locate time profile file ' + pred_time_profile)
                     pred_time_profile = None
                 
 
