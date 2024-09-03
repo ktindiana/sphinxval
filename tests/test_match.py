@@ -222,10 +222,10 @@ class TestMatchObservedOnsetPeak(LoadMatch):
             print('===== PRINT INPUTS =====')
             print('sphinx.peak_intensity_match_status =', sphinx.peak_intensity_match_status)
             print('sphinx.is_eruption_in_range =', sphinx.is_eruption_in_range[forecast_threshold_key][i])
-            print('sphinx.is_trigger_before_onset_peak =', sphinx.is_trigger_before_onset_peak[i])
-            print('sphinx.is_input_before_onset_peak =', sphinx.is_input_before_onset_peak[i]) 
+            print('sphinx.triggers_before_peak_intensity =', sphinx.triggers_before_peak_intensity[i])
+            print('sphinx.inputs_before_peak_intensity =', sphinx.inputs_before_peak_intensity[i]) 
             print('sphinx.is_win_overlap =', sphinx.is_win_overlap[i], '(always True)')
-            print('sphinx.is_pred_sep_overlap =', sphinx.is_pred_sep_overlap[forecast_threshold_key][i])
+            print('sphinx.prediction_window_sep_overlap =', sphinx.prediction_window_sep_overlap[forecast_threshold_key][i])
             print('==========')
             print('')
             
@@ -260,9 +260,9 @@ class TestMatchObservedOnsetPeak(LoadMatch):
                                                                     self.observation_objects[self.energy_key][i],
                                                                     sphinx.is_win_overlap[i],
                                                                     sphinx.is_eruption_in_range[forecast_threshold_key][i],
-                                                                    sphinx.is_trigger_before_onset_peak[i],
-                                                                    sphinx.is_input_before_onset_peak[i],
-                                                                    sphinx.is_pred_sep_overlap[forecast_threshold_key][i])
+                                                                    sphinx.triggers_before_peak_intensity[i],
+                                                                    sphinx.inputs_before_peak_intensity[i],
+                                                                    sphinx.prediction_window_sep_overlap[forecast_threshold_key][i])
                 function_evaluations.append(function_evaluation)
         self.utility_print_outputs(sphinx, function_evaluations)
         return sphinx, function_evaluations 
@@ -464,7 +464,7 @@ class TestMatchObservedOnsetPeak(LoadMatch):
 
 
 
-# sphinx.py --> match.match_all_forecasts --> match.match_observed_onset_peak
+# sphinx.py --> match.match_all_forecasts --> match.match_observed_max_flux
 class TestMatchObservedMaxFlux(LoadMatch):
     """
     Unit test class for match_observed_max_flux function in match.py
@@ -480,13 +480,13 @@ class TestMatchObservedMaxFlux(LoadMatch):
         if self.verbosity == 2:
             print('')
             print('===== PRINT INPUTS =====')
-            print(sphinx.is_trigger_before_max_time)
+            print(sphinx.triggers_before_peak_intensity_max)
             print('sphinx.peak_intensity_max_match_status =', sphinx.peak_intensity_max_match_status)
             print('is_eruption_in_range =', sphinx.is_eruption_in_range[forecast_threshold_key][i])
-            print('is_trigger_before_max_time =', sphinx.is_trigger_before_max_time[i])
-            print('is_input_before_max_time =', sphinx.is_input_before_max_time[i]) 
+            print('triggers_before_peak_intensity_max =', sphinx.triggers_before_peak_intensity_max[i])
+            print('triggers_before_peak_intensity_max =', sphinx.triggers_before_peak_intensity_max[i]) 
             print('is_win_overlap =', sphinx.is_win_overlap[i], '(always True)')
-            print('is_pred_sep_overlap =', sphinx.is_pred_sep_overlap[forecast_threshold_key][i])
+            print('prediction_window_sep_overlap =', sphinx.prediction_window_sep_overlap[forecast_threshold_key][i])
             print('==========')
             print('')
             
@@ -521,9 +521,9 @@ class TestMatchObservedMaxFlux(LoadMatch):
                                                                     self.observation_objects[self.energy_key][i],
                                                                     sphinx.is_win_overlap[i],
                                                                     sphinx.is_eruption_in_range[forecast_threshold_key][i],
-                                                                    sphinx.is_trigger_before_max_time[i],
-                                                                    sphinx.is_input_before_max_time[i],
-                                                                    sphinx.is_pred_sep_overlap[forecast_threshold_key][i])
+                                                                    sphinx.triggers_before_peak_intensity_max[i],
+                                                                    sphinx.inputs_before_peak_intensity_max[i],
+                                                                    sphinx.prediction_window_sep_overlap[forecast_threshold_key][i])
                 function_evaluations.append(function_evaluation)
         self.utility_print_outputs(sphinx, function_evaluations)
         return sphinx, function_evaluations 
@@ -544,7 +544,7 @@ class TestMatchObservedMaxFlux(LoadMatch):
                 SEP start:                2000-01-01T00:16:00Z
                 SEP end:                  2000-01-01T00:35:00Z
         The function should evaluate to [True]
-        sphinx.peak_intensity_match_status should be 'SEP Event'
+        sphinx.peak_intensity_max_match_status should be 'SEP Event'
         """
         forecast_json = './tests/files/forecasts/match/match_observed_max_flux/match_observed_max_flux_1.json'
         sphinx, function_evaluations = self.utility_test_match_observed_max_flux(this, forecast_json)
@@ -568,7 +568,7 @@ class TestMatchObservedMaxFlux(LoadMatch):
                 SEP start:                2000-01-01T00:16:00Z
                 SEP end:                  2000-01-01T00:35:00Z
         The function should evaluate to [False]
-        sphinx.peak_intensity_match_status should be 'No SEP Event'
+        sphinx.peak_intensity_max_match_status should be 'No SEP Event'
         """
         forecast_json = './tests/files/forecasts/match/match_observed_max_flux/match_observed_max_flux_2.json'
         sphinx, function_evaluations = self.utility_test_match_observed_max_flux(this, forecast_json)
@@ -592,7 +592,7 @@ class TestMatchObservedMaxFlux(LoadMatch):
                 SEP start:                2000-01-01T00:16:00Z
                 SEP end:                  2000-01-01T00:35:00Z
         The function should evaluate to [False]
-        sphinx.peak_intensity_match_status should be 'Eruption Out of Range'
+        sphinx.peak_intensity_max_match_status should be 'Eruption Out of Range'
         """
         forecast_json = './tests/files/forecasts/match/match_observed_max_flux/match_observed_max_flux_3.json'
         sphinx, function_evaluations = self.utility_test_match_observed_max_flux(this, forecast_json)
@@ -616,7 +616,7 @@ class TestMatchObservedMaxFlux(LoadMatch):
                 SEP start:                2000-01-01T00:16:00Z
                 SEP end:                  2000-01-01T00:35:00Z
         The function should evaluate to [False]
-        sphinx.peak_intensity_match_status should be 'Trigger/Input after Observed Phenomenon'
+        sphinx.peak_intensity_max_match_status should be 'Trigger/Input after Observed Phenomenon'
         """
         forecast_json = './tests/files/forecasts/match/match_observed_max_flux/match_observed_max_flux_4.json'
         sphinx, function_evaluations = self.utility_test_match_observed_max_flux(this, forecast_json)
@@ -640,7 +640,7 @@ class TestMatchObservedMaxFlux(LoadMatch):
                 SEP start:                2000-01-01T00:16:00Z
                 SEP end:                  2000-01-01T00:35:00Z
         The function should evaluate to [False]
-        sphinx.peak_intensity_match_status should be 'Trigger/Input after Observed Phenomenon'
+        sphinx.peak_intensity_max_match_status should be 'Trigger/Input after Observed Phenomenon'
         """
         forecast_json = './tests/files/forecasts/match/match_observed_max_flux/match_observed_max_flux_5.json'
         sphinx, function_evaluations = self.utility_test_match_observed_max_flux(this, forecast_json)
@@ -665,7 +665,7 @@ class TestMatchObservedMaxFlux(LoadMatch):
                 SEP start:                2000-01-01T00:16:00Z
                 SEP end:                  2000-01-01T00:35:00Z
         The function should evaluate to [True, None] (forecast matches to first )
-        sphinx.peak_intensity_match_status should be 'SEP Event'
+        sphinx.peak_intensity_max_match_status should be 'SEP Event'
         """
         observation_json = './tests/files/observations/match/match_observed_max_flux/match_observed_max_flux_6.json'
         observation = utility_load_observation(observation_json, self.energy_channel) # SAME ENERGY CHANNEL
@@ -771,9 +771,9 @@ class TestMatchAllClear(LoadMatch):
             print('sphinx.all_clear_match_status =', sphinx.all_clear_match_status)
             print('is_eruption_in_range =', sphinx.is_eruption_in_range[forecast_threshold_key][i])
             print('is_win_overlap =', sphinx.is_win_overlap[i], '(always True)')
-            print('is_sep_ongoing =', sphinx.is_sep_ongoing[forecast_threshold_key][i])
+            print('observed_ongoing_events =', sphinx.observed_ongoing_events[forecast_threshold_key][i])
             print('trigger_input_start =', sphinx.trigger_input_start[forecast_threshold_key][i])
-            print('contains_thresh_cross =', sphinx.contains_thresh_cross[forecast_threshold_key][i])
+            print('threshold_crossed_in_pred_win =', sphinx.threshold_crossed_in_pred_win[forecast_threshold_key][i])
             print('==========')
             print('')
             
@@ -808,8 +808,8 @@ class TestMatchAllClear(LoadMatch):
                                                             sphinx.is_win_overlap[i],
                                                             sphinx.is_eruption_in_range[forecast_threshold_key][i],
                                                             sphinx.trigger_input_start[forecast_threshold_key][i],
-                                                            sphinx.contains_thresh_cross[forecast_threshold_key][i],
-                                                            sphinx.is_sep_ongoing[forecast_threshold_key][i])
+                                                            sphinx.threshold_crossed_in_pred_win[forecast_threshold_key][i],
+                                                            sphinx.observed_ongoing_events[forecast_threshold_key][i])
                 function_evaluations.append(function_evaluation)
         self.utility_print_outputs(sphinx, function_evaluations)
         return sphinx, function_evaluations
@@ -1105,9 +1105,9 @@ class TestMatchSEPQuantities(LoadMatch):
             print('sphinx.sep_match_status[thresh_key] =', sphinx.sep_match_status[forecast_threshold_key])
             print('is_eruption_in_range =', sphinx.is_eruption_in_range[forecast_threshold_key][i])
             print('is_win_overlap =', sphinx.is_win_overlap[i], '(always True)')
-            print('is_sep_ongoing =', sphinx.is_sep_ongoing[forecast_threshold_key][i])
+            print('observed_ongoing_events =', sphinx.observed_ongoing_events[forecast_threshold_key][i])
             print('trigger_input_start =', sphinx.trigger_input_start[forecast_threshold_key][i])
-            print('contains_thresh_cross =', sphinx.contains_thresh_cross[forecast_threshold_key][i])
+            print('threshold_crossed_in_pred_win =', sphinx.threshold_crossed_in_pred_win[forecast_threshold_key][i])
             print('==========')
             print('')
             
@@ -1142,8 +1142,8 @@ class TestMatchSEPQuantities(LoadMatch):
                                                                  sphinx.is_win_overlap[i],
                                                                  sphinx.is_eruption_in_range[forecast_threshold_key][i],
                                                                  sphinx.trigger_input_start[forecast_threshold_key][i],
-                                                                 sphinx.contains_thresh_cross[forecast_threshold_key][i],
-                                                                 sphinx.is_sep_ongoing[forecast_threshold_key][i])
+                                                                 sphinx.threshold_crossed_in_pred_win[forecast_threshold_key][i],
+                                                                 sphinx.observed_ongoing_events[forecast_threshold_key][i])
                 function_evaluations.append(function_evaluation)
         self.utility_print_outputs(sphinx, function_evaluations)
         return sphinx, function_evaluations
@@ -1320,7 +1320,7 @@ class TestMatchSEPEndTime(LoadMatch):
             print('is_win_overlap =', sphinx.is_win_overlap[i], '(always True)')
             print('is_eruption_in_range =', sphinx.is_eruption_in_range[forecast_threshold_key][i])
             print('trigger_input_end =', sphinx.trigger_input_end[forecast_threshold_key][i])
-            print('is_pred_sep_overlap =', sphinx.is_pred_sep_overlap[forecast_threshold_key][i])
+            print('prediction_window_sep_overlap =', sphinx.prediction_window_sep_overlap[forecast_threshold_key][i])
             print('==========')
             print('')
             
@@ -1355,7 +1355,7 @@ class TestMatchSEPEndTime(LoadMatch):
                                                                sphinx.is_win_overlap[i],
                                                                sphinx.is_eruption_in_range[forecast_threshold_key][i],
                                                                sphinx.trigger_input_end[forecast_threshold_key][i],
-                                                               sphinx.is_pred_sep_overlap[forecast_threshold_key][i])
+                                                               sphinx.prediction_window_sep_overlap[forecast_threshold_key][i])
                 function_evaluations.append(function_evaluation)
         self.utility_print_outputs(sphinx, function_evaluations)
         return sphinx, function_evaluations
@@ -1605,26 +1605,26 @@ class TestCalculateDerivedQuantities(LoadMatch):
                     peak_criteria = match.match_observed_onset_peak(sphinx,
                         observation_objs[i], sphinx.is_win_overlap[i],
                         sphinx.is_eruption_in_range[thresh_key][i],
-                        sphinx.is_trigger_before_onset_peak[i],
-                        sphinx.is_input_before_onset_peak[i], 
-                        sphinx.is_pred_sep_overlap[thresh_key][i])
+                        sphinx.triggers_before_peak_intensity[i],
+                        sphinx.inputs_before_peak_intensity[i], 
+                        sphinx.prediction_window_sep_overlap[thresh_key][i])
                     max_criteria = match.match_observed_max_flux(sphinx,
                         observation_objs[i], sphinx.is_win_overlap[i],
                         sphinx.is_eruption_in_range[thresh_key][i], 
-                        sphinx.is_trigger_before_max_time[i],
-                        sphinx.is_input_before_max_time[i], 
-                        sphinx.is_pred_sep_overlap[thresh_key][i])
+                        sphinx.triggers_before_peak_intensity_max[i],
+                        sphinx.triggers_before_peak_intensity_max[i], 
+                        sphinx.prediction_window_sep_overlap[thresh_key][i])
                     all_clear_status = match.match_all_clear(sphinx,
                         observation_objs[i], sphinx.is_win_overlap[i],
                         sphinx.is_eruption_in_range[thresh_key][i], 
                         sphinx.trigger_input_start[thresh_key][i],
-                        sphinx.contains_thresh_cross[thresh_key][i], 
-                        sphinx.is_sep_ongoing[thresh_key][i])
+                        sphinx.threshold_crossed_in_pred_win[thresh_key][i], 
+                        sphinx.observed_ongoing_events[thresh_key][i])
                     sep_status = match.match_sep_quantities(sphinx, observation_objs[i], fcast_thresh, sphinx.is_win_overlap[i],
                         sphinx.is_eruption_in_range[thresh_key][i], 
                         sphinx.trigger_input_start[thresh_key][i],
-                        sphinx.contains_thresh_cross[thresh_key][i], 
-                        sphinx.is_sep_ongoing[thresh_key][i])
+                        sphinx.threshold_crossed_in_pred_win[thresh_key][i], 
+                        sphinx.observed_ongoing_events[thresh_key][i])
                     if sep_status == True:
                         if sphinx.observed_threshold_crossing[thresh_key].crossing_time\
                         not in observed_sep_events[fcast.short_name][energy_key][thresh_key]:
@@ -1634,7 +1634,7 @@ class TestCalculateDerivedQuantities(LoadMatch):
                         sphinx.is_win_overlap[i],
                         sphinx.is_eruption_in_range[thresh_key][i], 
                         sphinx.trigger_input_end[thresh_key][i],
-                        sphinx.is_pred_sep_overlap[thresh_key][i])
+                        sphinx.prediction_window_sep_overlap[thresh_key][i])
                     function_evaluation = match.calculate_derived_quantities(sphinx)
                     function_evaluations.append(function_evaluation)
             matched_sphinx[fcast.short_name][energy_key][forecast_index] = sphinx
@@ -1761,26 +1761,26 @@ class TestReviseEruptionMatches(LoadMatch):
                     peak_criteria = match.match_observed_onset_peak(sphinx,
                         observation_objs[i], sphinx.is_win_overlap[i],
                         sphinx.is_eruption_in_range[thresh_key][i],
-                        sphinx.is_trigger_before_onset_peak[i],
-                        sphinx.is_input_before_onset_peak[i], 
-                        sphinx.is_pred_sep_overlap[thresh_key][i])
+                        sphinx.triggers_before_peak_intensity[i],
+                        sphinx.inputs_before_peak_intensity[i], 
+                        sphinx.prediction_window_sep_overlap[thresh_key][i])
                     max_criteria = match.match_observed_max_flux(sphinx,
                         observation_objs[i], sphinx.is_win_overlap[i],
                         sphinx.is_eruption_in_range[thresh_key][i], 
-                        sphinx.is_trigger_before_max_time[i],
-                        sphinx.is_input_before_max_time[i], 
-                        sphinx.is_pred_sep_overlap[thresh_key][i])
+                        sphinx.triggers_before_peak_intensity_max[i],
+                        sphinx.triggers_before_peak_intensity_max[i], 
+                        sphinx.prediction_window_sep_overlap[thresh_key][i])
                     all_clear_status = match.match_all_clear(sphinx,
                         observation_objs[i], sphinx.is_win_overlap[i],
                         sphinx.is_eruption_in_range[thresh_key][i], 
                         sphinx.trigger_input_start[thresh_key][i],
-                        sphinx.contains_thresh_cross[thresh_key][i], 
-                        sphinx.is_sep_ongoing[thresh_key][i])
+                        sphinx.threshold_crossed_in_pred_win[thresh_key][i], 
+                        sphinx.observed_ongoing_events[thresh_key][i])
                     sep_status = match.match_sep_quantities(sphinx, observation_objs[i], fcast_thresh, sphinx.is_win_overlap[i],
                         sphinx.is_eruption_in_range[thresh_key][i], 
                         sphinx.trigger_input_start[thresh_key][i],
-                        sphinx.contains_thresh_cross[thresh_key][i], 
-                        sphinx.is_sep_ongoing[thresh_key][i])
+                        sphinx.threshold_crossed_in_pred_win[thresh_key][i], 
+                        sphinx.observed_ongoing_events[thresh_key][i])
                     if sep_status == True:
                         if sphinx.observed_threshold_crossing[thresh_key].crossing_time\
                         not in observed_sep_events[fcast.short_name][self.energy_key][thresh_key]:
@@ -1790,7 +1790,7 @@ class TestReviseEruptionMatches(LoadMatch):
                         sphinx.is_win_overlap[i],
                         sphinx.is_eruption_in_range[thresh_key][i], 
                         sphinx.trigger_input_end[thresh_key][i],
-                        sphinx.is_pred_sep_overlap[thresh_key][i])
+                        sphinx.prediction_window_sep_overlap[thresh_key][i])
                     derived_status = match.calculate_derived_quantities(sphinx)
             matched_sphinx[fcast.short_name][self.energy_key][forecast_index] = sphinx
             last_fcast_shortname = fcast.short_name + ''
