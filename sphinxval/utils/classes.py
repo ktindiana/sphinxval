@@ -1550,30 +1550,7 @@ class SPHINX:
         self.observed_probability = {} #Probability object
         
         # MATCHING CRITERIA INITIALIZATION
-        self.is_win_overlap = None
-        self.is_onset_peak_in_pred_win = {}
-        self.td_trigger_onset_peak = {}
-        self.is_trigger_before_onset_peak = {}
-        self.td_input_onset_peak = {}
-        self.is_input_before_onset_peak = {}
-        self.is_trigger_before_max_time = {}
-        self.is_max_flux_in_pred_win = {}
-        self.td_trigger_max_time = {}
-        self.is_trigger_before_max_time = {}
-        self.is_input_before_max_time = {}
-        self.is_pred_sep_overlap = {}
-        self.contains_thresh_cross = {}
-        self.td_trigger_thresh_cross = {}
-        self.is_trigger_before_start = {}
-        self.td_input_thresh_cross = {}
-        self.is_input_before_start = {}
-        self.td_trigger_end = {}
-        self.is_trigger_before_end = {}
-        self.td_input_end = {}
-        self.is_input_before_end = {}
-        self.td_eruption_thresh_cross = {}
-        self.is_eruption_before_start = {}
-        self.is_sep_ongoing = {}
+        self.is_win_overlap = []
         self.is_eruption_in_range = {}
         self.trigger_input_start = {}
         self.trigger_input_end = {}
