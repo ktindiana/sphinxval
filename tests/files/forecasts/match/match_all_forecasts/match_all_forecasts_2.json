@@ -28,7 +28,7 @@
             },
             "all_clear": {
                 "all_clear_boolean": false,
-                "threshold": 3,
+                "threshold": 334289348,
                 "threshold_units": "pfu"
             }
         }

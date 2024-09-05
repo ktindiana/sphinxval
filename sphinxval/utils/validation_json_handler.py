@@ -39,6 +39,7 @@ def read_in_json(filename, verbose=True):
     if verbose:
         logger.info("Reading in " + filename)
 
+    print(filename)
     with open(filename) as f:
         info = json.load(f)
         if info == {}:

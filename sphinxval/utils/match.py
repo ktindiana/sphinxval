@@ -2230,11 +2230,11 @@ def setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_o
         forecasts = model_objs[energy_key] #all forecasts for channel
  
         n_tot = len(forecasts)
-        ii=0
+        ii = 0
         setup_start_time = datetime.datetime.now()
         for fcast in forecasts:
             #Report progress
-            if ii%1000 == 0 and ii != 0:
+            if ii % 1000 == 0 and ii != 0:
                 logger.info(f"MATCH SETUP PROGRESS: Set up {ii} out of {n_tot} forecasts.")
             ii += 1
 
@@ -2425,8 +2425,9 @@ def setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_o
 
 
         setup_end_time = datetime.datetime.now()
-        match_td = (setup_end_time - setup_start_time).total_seconds()
-        rate = ii/match_td
+        # MICROSECOND ADDED TO TIME DIFFERENCE TO AVOID DIVISION BY ZERO
+        match_td = (setup_end_time - setup_start_time).total_seconds() + 1e-6
+        rate = ii / match_td
         logger.info(f"MATCH SETUP PROGRESS: Completed {ii} matches in {match_td:0.3f} seconds at a rate of {rate:0.1f} forecasts/second.")
 
     total_sphinx = 0
@@ -2507,7 +2508,7 @@ def match_all_forecasts(all_energy_channels, model_names, obs_objs,
  
             for ii in range(len(matched_sphinx[model][energy_key])):
                 #Report progress
-                if ii%1000 == 0 and ii != 0:
+                if ii % 1000 == 0 and ii != 0:
                     logger.info(f"MATCH PROGRESS: Matched {ii} out of {n_tot} forecasts for {model} and {energy_key}.")
  
                 sphinx = matched_sphinx[model][energy_key][ii]
@@ -2607,8 +2608,8 @@ def match_all_forecasts(all_energy_channels, model_names, obs_objs,
                 logger.debug("Forecast index (position in matched_sphinx): " + str(ii))
 
             match_end_time = datetime.datetime.now()
-            match_td = (match_end_time - match_start_time).total_seconds()
-            rate = n_tot/match_td
+            match_td = (match_end_time - match_start_time).total_seconds() + 1e-6
+            rate = n_tot / match_td
             logger.info(f"MATCH PROGRESS: Completed {n_tot} matches for {model} and {energy_key} in {match_td:0.3f} seconds at a rate of {rate:0.1f} forecasts/second.")
 
     logger.info("Initial forecast-to-observation matching complete.")
