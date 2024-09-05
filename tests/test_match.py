@@ -1086,6 +1086,37 @@ class TestMatchAllClear(LoadMatch):
         self.assertEqual(sphinx.observed_all_clear.all_clear_boolean, False, '')
         self.assertEqual(function_evaluations, [False, None], '')
 
+    @make_docstring_printable
+    def test_match_all_clear_11(this, self):
+        """
+        The forecast/observation pair has the following attributes:
+           -- Prediction flux threshold is > 3 pfu
+           -- Prediction energy threshold is > 10 MeV
+           -- Observation flux threshold is > 10 pfu
+           -- Observation energy threshold is > 10 MeV
+           -- Prediction window overlaps with observation window
+                prediction window start:  2000-01-01T00:00:00Z
+                prediction window end:    2000-01-01T01:00:00Z
+                observation window start: 2000-01-01T00:00:00Z
+                observation window end:   2000-01-01T01:00:00Z
+           -- No ongoing SEP event at start of prediction window
+                event start:              2000-01-01T00:15:00Z
+                event end:                2000-01-01T00:20:00Z
+           -- The trigger (CME observation) for the forecast occurred before the threshold crossing 
+                CME start:                2000-01-01T00:00:00Z
+           -- A threshold crossing occurred within the prediction window
+                threshold crossing:       2000-01-01T00:15:00Z
+        The function should evaluate to [False] (All Clear = False is observed within the prediction window)
+        sphinx.all_clear_match_status should be 'No Matching Threshold'
+        """
+        forecast_json = './tests/files/forecasts/match/match_all_clear/match_all_clear_11.json'
+        sphinx, function_evaluations = self.utility_test_match_all_clear(this, forecast_json)
+        self.assertEqual(sphinx.all_clear_match_status, 'No Matching Threshold', '')
+        self.assertEqual(function_evaluations, [False], '')
+
+
+
+
 class TestMatchSEPQuantities(LoadMatch):
     """
     Unit test class for match_sep_quantities function in match.py
