@@ -1902,7 +1902,6 @@ class TestMatchAllForecasts(LoadMatch):
         for energy_key in self.all_energy_channels:
             forecast_objects[energy_key] = []
             for fcast_json in forecast_jsons:
-                print(fcast_json)
                 forecast_object = utility_load_forecast(fcast_json, self.energy_channel)
                 forecast_objects[energy_key].append(forecast_object)
         matched_sphinx, all_obs_thresholds, observed_sep_events = match.match_all_forecasts(self.all_energy_channels, model_names, self.observation_objects, forecast_objects)
