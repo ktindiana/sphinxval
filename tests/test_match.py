@@ -1086,6 +1086,57 @@ class TestMatchAllClear(LoadMatch):
         self.assertEqual(sphinx.observed_all_clear.all_clear_boolean, False, '')
         self.assertEqual(function_evaluations, [False, None], '')
 
+class TestNoMatchingThreshold(LoadMatch):
+    """
+    Unit test class for match_all_clear function in match.py
+    """        
+    def setUp(self):
+        energy_channel = {'min': 10, 'max': -1, 'units': 'MeV'}
+        observation_json = './tests/files/observations/match/match_all_clear/match_all_clear.json'
+        self.load_verbosity()
+        self.load_energy(energy_channel)
+        self.load_observation(observation_json)
+    
+    def utility_print_inputs(self, sphinx, forecast_threshold_key, i):
+        if self.verbosity == 2:
+            print('')
+            print('===== PRINT INPUTS =====')
+            print('sphinx.observed_all_clear.all_clear_boolean =', sphinx.observed_all_clear.all_clear_boolean)
+            print('sphinx.all_clear_match_status =', sphinx.all_clear_match_status)
+            print('is_win_overlap =', sphinx.is_win_overlap[i], '(always True)')
+            print('observed_ongoing_events =', sphinx.observed_ongoing_events[forecast_threshold_key][i])
+            print('trigger_input_start =', sphinx.trigger_input_start[forecast_threshold_key][i])
+            print('threshold_crossed_in_pred_win =', sphinx.threshold_crossed_in_pred_win[forecast_threshold_key][i])
+            print('==========')
+            print('')
+            
+    def utility_print_outputs(self, sphinx, function_evaluations):
+        if self.verbosity == 2:
+            print('')
+            print('===== PRINT OUTPUTS =====')
+            print('sphinx.all_clear_match_status =', sphinx.all_clear_match_status)
+            print('sphinx.observed_all_clear.all_clear_boolean =', sphinx.observed_all_clear.all_clear_boolean)
+            print('function_evaluations =', function_evaluations)
+            print('==========')
+            print('')
+            print('----------------------------------------------------//\n\n\n\n\n\n')
+    
+    def utility_test_no_matching_threshold(self, function, forecast_json):
+        """
+        Obtains SPHINX object and function evaluations given the forecast JSON.
+        """
+        self.utility_print_docstring(function)
+        forecast = utility_load_forecast(forecast_json, self.energy_channel)
+        # BUILD UP SPHINX OBJECT USING FORECAST AND OBSERVATION JSONS
+        all_forecast_thresholds = forecast.identify_all_thresholds()
+        sphinx, _ = self.load_sphinx_and_inputs(forecast, all_forecast_thresholds)
+        return sphinx
+
+
+
+
+
+
 class TestMatchSEPQuantities(LoadMatch):
     """
     Unit test class for match_sep_quantities function in match.py
@@ -1887,25 +1938,29 @@ class TestMatchAllForecasts(LoadMatch):
         self.assertEqual(sphinx.sep_match_status[self.threshold_key], 'SEP Event', '')
         self.assertEqual(sphinx.end_time_match_status[self.threshold_key], 'SEP Event', '')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
-    
-    
-    
-    
+    @make_docstring_printable
+    def test_match_all_forecasts_2(this, self):
+        """
+        The forecast/observation pair has the following attributes:
+           -- Prediction flux threshold is > 3 pfu
+           -- Prediction energy threshold is > 10 MeV
+           -- Observation flux threshold is > 10 pfu
+           -- Observation energy threshold is > 10 MeV
+           -- Prediction window overlaps with observation window
+                prediction window start:  2000-01-01T00:00:00Z
+                prediction window end:    2000-01-01T01:00:00Z
+                observation window start: 2000-01-01T00:00:00Z
+                observation window end:   2000-01-01T01:00:00Z
+           -- No ongoing SEP event at start of prediction window
+                event start:              2000-01-01T00:15:00Z
+                event end:                2000-01-01T00:20:00Z
+           -- The trigger (CME observation) for the forecast occurred before the threshold crossing 
+                CME start:                2000-01-01T00:00:00Z
+           -- A threshold crossing occurred within the prediction window
+                threshold crossing:       2000-01-01T00:15:00Z
+        sphinx.all_clear_match_status should be 'No Matching Threshold'
+        """
+        forecast_jsons = ['./tests/files/forecasts/match/match_all_forecasts/match_all_forecasts_2.json']
+        matched_sphinx, all_obs_thresholds, observed_sep_events = self.utility_test_match_all_forecasts(this, forecast_jsons)
+        sphinx = matched_sphinx['unit_test'][self.energy_key][0]
+        self.assertEqual(sphinx.all_clear_match_status, 'No Matching Threshold', '')
