@@ -287,9 +287,9 @@ class TestMatchObservedOnsetPeak(LoadMatch):
         """
         forecast_json = './tests/files/forecasts/match/match_observed_onset_peak/match_observed_onset_peak_1.json'
         sphinx, function_evaluations = self.utility_test_match_observed_onset_peak(this, forecast_json)
-        self.assertEqual(sphinx.observed_peak_intensity, self.observation.peak_intensity, '')
-        self.assertEqual(sphinx.peak_intensity_match_status, 'SEP Event', '')
-        self.assertEqual(function_evaluations, [True], '')
+        self.assertEqual(sphinx.observed_peak_intensity, self.observation.peak_intensity)
+        self.assertEqual(sphinx.peak_intensity_match_status, 'SEP Event')
+        self.assertEqual(function_evaluations, [True])
         
     @make_docstring_printable
     def test_match_observed_onset_peak_2(this, self):
@@ -311,9 +311,9 @@ class TestMatchObservedOnsetPeak(LoadMatch):
         """
         forecast_json = './tests/files/forecasts/match/match_observed_onset_peak/match_observed_onset_peak_2.json'
         sphinx, function_evaluations = self.utility_test_match_observed_onset_peak(this, forecast_json)
-        self.assertEqual(function_evaluations, [False], '')
-        self.assertEqual(sphinx.observed_match_peak_intensity_source, None, '')
-        self.assertEqual(sphinx.peak_intensity_match_status, 'No SEP Event', '')
+        self.assertEqual(function_evaluations, [False])
+        self.assertEqual(sphinx.observed_match_peak_intensity_source, None)
+        self.assertEqual(sphinx.peak_intensity_match_status, 'No SEP Event')
     
     @make_docstring_printable
     def test_match_observed_onset_peak_3(this, self):
@@ -335,9 +335,9 @@ class TestMatchObservedOnsetPeak(LoadMatch):
         """
         forecast_json = './tests/files/forecasts/match/match_observed_onset_peak/match_observed_onset_peak_3.json'
         sphinx, function_evaluations = self.utility_test_match_observed_onset_peak(this, forecast_json)
-        self.assertEqual(function_evaluations, [False], '')
-        self.assertEqual(sphinx.observed_match_peak_intensity_source, None, '')
-        self.assertEqual(sphinx.peak_intensity_match_status, 'Eruption Out of Range', '')
+        self.assertEqual(function_evaluations, [False])
+        self.assertEqual(sphinx.observed_match_peak_intensity_source, None)
+        self.assertEqual(sphinx.peak_intensity_match_status, 'Eruption Out of Range')
     
     @make_docstring_printable
     def test_match_observed_onset_peak_4(this, self):
@@ -359,9 +359,9 @@ class TestMatchObservedOnsetPeak(LoadMatch):
         """
         forecast_json = './tests/files/forecasts/match/match_observed_onset_peak/match_observed_onset_peak_4.json'
         sphinx, function_evaluations = self.utility_test_match_observed_onset_peak(this, forecast_json)
-        self.assertEqual(function_evaluations, [False], '')
-        self.assertEqual(sphinx.observed_match_peak_intensity_source, None, '')
-        self.assertEqual(sphinx.peak_intensity_match_status, 'Trigger/Input after Observed Phenomenon', '')
+        self.assertEqual(function_evaluations, [False])
+        self.assertEqual(sphinx.observed_match_peak_intensity_source, None)
+        self.assertEqual(sphinx.peak_intensity_match_status, 'Trigger/Input after Observed Phenomenon')
     
     @make_docstring_printable
     def test_match_observed_onset_peak_5(this, self):
@@ -383,9 +383,9 @@ class TestMatchObservedOnsetPeak(LoadMatch):
         """
         forecast_json = './tests/files/forecasts/match/match_observed_onset_peak/match_observed_onset_peak_5.json'
         sphinx, function_evaluations = self.utility_test_match_observed_onset_peak(this, forecast_json)
-        self.assertEqual(function_evaluations, [False], '')
-        self.assertEqual(sphinx.observed_match_peak_intensity_source, None, '')
-        self.assertEqual(sphinx.peak_intensity_match_status, 'Trigger/Input after Observed Phenomenon', '')
+        self.assertEqual(function_evaluations, [False])
+        self.assertEqual(sphinx.observed_match_peak_intensity_source, None)
+        self.assertEqual(sphinx.peak_intensity_match_status, 'Trigger/Input after Observed Phenomenon')
     
     @make_docstring_printable
     def test_match_observed_onset_peak_6(this, self):
@@ -412,8 +412,8 @@ class TestMatchObservedOnsetPeak(LoadMatch):
         self.observation_values = match.compile_all_obs(self.all_energy_channels, self.observation_objects)
         forecast_json = './tests/files/forecasts/match/match_observed_onset_peak/match_observed_onset_peak_6.json'
         sphinx, function_evaluations = self.utility_test_match_observed_onset_peak(this, forecast_json)
-        self.assertEqual(function_evaluations, [True, None], '')
-        self.assertEqual(sphinx.peak_intensity_match_status, 'SEP Event', '')
+        self.assertEqual(function_evaluations, [True, None])
+        self.assertEqual(sphinx.peak_intensity_match_status, 'SEP Event')
 
     @make_docstring_printable
     def test_match_observed_onset_peak_7(this, self):
@@ -435,8 +435,8 @@ class TestMatchObservedOnsetPeak(LoadMatch):
         """
         forecast_json = './tests/files/forecasts/match/match_observed_onset_peak/match_observed_onset_peak_7.json'
         sphinx, function_evaluations = self.utility_test_match_observed_onset_peak(this, forecast_json)
-        self.assertEqual(function_evaluations, [True], '')
-        self.assertEqual(sphinx.peak_intensity_match_status, 'SEP Event', '')
+        self.assertEqual(function_evaluations, [True])
+        self.assertEqual(sphinx.peak_intensity_match_status, 'SEP Event')
    
     @make_docstring_printable
     def test_match_observed_onset_peak_8(this, self):
@@ -458,8 +458,8 @@ class TestMatchObservedOnsetPeak(LoadMatch):
         """
         forecast_json = './tests/files/forecasts/match/match_observed_onset_peak/match_observed_onset_peak_8.json'
         sphinx, function_evaluations = self.utility_test_match_observed_onset_peak(this, forecast_json)
-        self.assertEqual(function_evaluations, [True], '')
-        self.assertEqual(sphinx.peak_intensity_match_status, 'SEP Event', '')
+        self.assertEqual(function_evaluations, [True])
+        self.assertEqual(sphinx.peak_intensity_match_status, 'SEP Event')
  
 
 
@@ -548,9 +548,9 @@ class TestMatchObservedMaxFlux(LoadMatch):
         """
         forecast_json = './tests/files/forecasts/match/match_observed_max_flux/match_observed_max_flux_1.json'
         sphinx, function_evaluations = self.utility_test_match_observed_max_flux(this, forecast_json)
-        self.assertEqual(sphinx.observed_peak_intensity_max, self.observation.peak_intensity_max, '')
-        self.assertEqual(sphinx.peak_intensity_max_match_status, 'SEP Event', '')
-        self.assertEqual(function_evaluations, [True], '')
+        self.assertEqual(sphinx.observed_peak_intensity_max, self.observation.peak_intensity_max)
+        self.assertEqual(sphinx.peak_intensity_max_match_status, 'SEP Event')
+        self.assertEqual(function_evaluations, [True])
         
     @make_docstring_printable
     def test_match_observed_max_flux_2(this, self):
@@ -572,9 +572,9 @@ class TestMatchObservedMaxFlux(LoadMatch):
         """
         forecast_json = './tests/files/forecasts/match/match_observed_max_flux/match_observed_max_flux_2.json'
         sphinx, function_evaluations = self.utility_test_match_observed_max_flux(this, forecast_json)
-        self.assertEqual(function_evaluations, [False], '')
-        self.assertEqual(sphinx.observed_match_peak_intensity_max_source, None, '')
-        self.assertEqual(sphinx.peak_intensity_max_match_status, 'No SEP Event', '')
+        self.assertEqual(function_evaluations, [False])
+        self.assertEqual(sphinx.observed_match_peak_intensity_max_source, None)
+        self.assertEqual(sphinx.peak_intensity_max_match_status, 'No SEP Event')
     
     @make_docstring_printable
     def test_match_observed_max_flux_3(this, self):
@@ -596,9 +596,9 @@ class TestMatchObservedMaxFlux(LoadMatch):
         """
         forecast_json = './tests/files/forecasts/match/match_observed_max_flux/match_observed_max_flux_3.json'
         sphinx, function_evaluations = self.utility_test_match_observed_max_flux(this, forecast_json)
-        self.assertEqual(function_evaluations, [False], '')
-        self.assertEqual(sphinx.observed_match_peak_intensity_max_source, None, '')
-        self.assertEqual(sphinx.peak_intensity_max_match_status, 'Eruption Out of Range', '')
+        self.assertEqual(function_evaluations, [False])
+        self.assertEqual(sphinx.observed_match_peak_intensity_max_source, None)
+        self.assertEqual(sphinx.peak_intensity_max_match_status, 'Eruption Out of Range')
     
     @make_docstring_printable
     def test_match_observed_max_flux_4(this, self):
@@ -620,9 +620,9 @@ class TestMatchObservedMaxFlux(LoadMatch):
         """
         forecast_json = './tests/files/forecasts/match/match_observed_max_flux/match_observed_max_flux_4.json'
         sphinx, function_evaluations = self.utility_test_match_observed_max_flux(this, forecast_json)
-        self.assertEqual(function_evaluations, [False], '')
-        self.assertEqual(sphinx.observed_match_peak_intensity_max_source, None, '')
-        self.assertEqual(sphinx.peak_intensity_max_match_status, 'Trigger/Input after Observed Phenomenon', '')
+        self.assertEqual(function_evaluations, [False])
+        self.assertEqual(sphinx.observed_match_peak_intensity_max_source, None)
+        self.assertEqual(sphinx.peak_intensity_max_match_status, 'Trigger/Input after Observed Phenomenon')
     
     @make_docstring_printable
     def test_match_observed_max_flux_5(this, self):
@@ -644,9 +644,9 @@ class TestMatchObservedMaxFlux(LoadMatch):
         """
         forecast_json = './tests/files/forecasts/match/match_observed_max_flux/match_observed_max_flux_5.json'
         sphinx, function_evaluations = self.utility_test_match_observed_max_flux(this, forecast_json)
-        self.assertEqual(function_evaluations, [False], '')
-        self.assertEqual(sphinx.observed_match_peak_intensity_max_source, None, '')
-        self.assertEqual(sphinx.peak_intensity_max_match_status, 'Trigger/Input after Observed Phenomenon', '')
+        self.assertEqual(function_evaluations, [False])
+        self.assertEqual(sphinx.observed_match_peak_intensity_max_source, None)
+        self.assertEqual(sphinx.peak_intensity_max_match_status, 'Trigger/Input after Observed Phenomenon')
     
     @make_docstring_printable
     def test_match_observed_max_flux_6(this, self):
@@ -673,8 +673,8 @@ class TestMatchObservedMaxFlux(LoadMatch):
         self.observation_values = match.compile_all_obs(self.all_energy_channels, self.observation_objects)
         forecast_json = './tests/files/forecasts/match/match_observed_max_flux/match_observed_max_flux_6.json'
         sphinx, function_evaluations = self.utility_test_match_observed_max_flux(this, forecast_json)
-        self.assertEqual(function_evaluations, [True, None], '')
-        self.assertEqual(sphinx.peak_intensity_max_match_status, 'SEP Event', '')
+        self.assertEqual(function_evaluations, [True, None])
+        self.assertEqual(sphinx.peak_intensity_max_match_status, 'SEP Event')
 
 
 class TestForecastValidity(LoadMatch):
@@ -697,7 +697,7 @@ class TestForecastValidity(LoadMatch):
         self.utility_print_docstring(this)
         forecast = utility_load_forecast(forecast_json, self.energy_channel)
         forecast.valid_forecast()
-        self.assertEqual(forecast.valid, False, '')
+        self.assertEqual(forecast.valid, False)
  
     @make_docstring_printable
     def test_forecast_validity_2(this, self):
@@ -709,7 +709,7 @@ class TestForecastValidity(LoadMatch):
         self.utility_print_docstring(this)
         forecast = utility_load_forecast(forecast_json, self.energy_channel)
         forecast.valid_forecast()
-        self.assertEqual(forecast.valid, False, '')
+        self.assertEqual(forecast.valid, False)
 
     @make_docstring_printable
     def test_forecast_validity_3(this, self):
@@ -721,7 +721,7 @@ class TestForecastValidity(LoadMatch):
         self.utility_print_docstring(this)
         forecast = utility_load_forecast(forecast_json, self.energy_channel)
         forecast.valid_forecast()
-        self.assertEqual(forecast.valid, False, '')
+        self.assertEqual(forecast.valid, False)
   
     @make_docstring_printable
     def test_forecast_validity_4(this, self):
@@ -735,7 +735,7 @@ class TestForecastValidity(LoadMatch):
         '''
         forecast = utility_load_forecast(forecast_json, self.energy_channel)
         forecast.valid_forecast()
-        self.assertEqual(forecast.valid, False, '')
+        self.assertEqual(forecast.valid, False)
         '''
  
     @make_docstring_printable
@@ -748,7 +748,7 @@ class TestForecastValidity(LoadMatch):
         self.utility_print_docstring(this)
         forecast = utility_load_forecast(forecast_json, self.energy_channel)
         self.assertRaises(TypeError, forecast.valid_forecast)
-        #self.assertEqual(forecast.valid, False, '')
+        #self.assertEqual(forecast.valid, False)
 
 
 # sphinx.py --> match.match_all_forecasts --> match.match_all_clear
@@ -835,8 +835,8 @@ class TestMatchAllClear(LoadMatch):
         """
         forecast_json = './tests/files/forecasts/match/match_all_clear/match_all_clear_1.json'
         sphinx, function_evaluations = self.utility_test_match_all_clear(this, forecast_json)
-        self.assertEqual(sphinx.all_clear_match_status, 'SEP Event', '')
-        self.assertEqual(function_evaluations, [False], '')
+        self.assertEqual(sphinx.all_clear_match_status, 'SEP Event')
+        self.assertEqual(function_evaluations, [False])
         
     @make_docstring_printable
     def test_match_all_clear_2(this, self):
@@ -859,8 +859,8 @@ class TestMatchAllClear(LoadMatch):
         """
         forecast_json = './tests/files/forecasts/match/match_all_clear/match_all_clear_2.json'
         sphinx, function_evaluations = self.utility_test_match_all_clear(this, forecast_json)
-        self.assertEqual(sphinx.all_clear_match_status, 'No SEP Event', '')
-        self.assertEqual(function_evaluations, [True], '')
+        self.assertEqual(sphinx.all_clear_match_status, 'No SEP Event')
+        self.assertEqual(function_evaluations, [True])
     
     @make_docstring_printable
     def test_match_all_clear_3(this, self):
@@ -884,8 +884,8 @@ class TestMatchAllClear(LoadMatch):
         """
         forecast_json = './tests/files/forecasts/match/match_all_clear/match_all_clear_3.json'
         sphinx, function_evaluations = self.utility_test_match_all_clear(this, forecast_json)
-        self.assertEqual(sphinx.all_clear_match_status, 'Trigger/Input after Observed Phenomenon', '')
-        self.assertEqual(function_evaluations, [None], '')
+        self.assertEqual(sphinx.all_clear_match_status, 'Trigger/Input after Observed Phenomenon')
+        self.assertEqual(function_evaluations, [None])
 
     @make_docstring_printable
     def test_match_all_clear_4(this, self):
@@ -908,8 +908,8 @@ class TestMatchAllClear(LoadMatch):
         """
         forecast_json = './tests/files/forecasts/match/match_all_clear/match_all_clear_4.json'
         sphinx, function_evaluations = self.utility_test_match_all_clear(this, forecast_json)
-        self.assertEqual(sphinx.all_clear_match_status, 'Eruption Out of Range', '')
-        self.assertEqual(function_evaluations, [True], '')
+        self.assertEqual(sphinx.all_clear_match_status, 'Eruption Out of Range')
+        self.assertEqual(function_evaluations, [True])
 
     @make_docstring_printable
     def test_match_all_clear_5(this, self):
@@ -932,8 +932,8 @@ class TestMatchAllClear(LoadMatch):
         """
         forecast_json = './tests/files/forecasts/match/match_all_clear/match_all_clear_5.json'
         sphinx, function_evaluations = self.utility_test_match_all_clear(this, forecast_json)
-        self.assertEqual(sphinx.all_clear_match_status, 'Eruption Out of Range', '')
-        self.assertEqual(function_evaluations, [True], '')
+        self.assertEqual(sphinx.all_clear_match_status, 'Eruption Out of Range')
+        self.assertEqual(function_evaluations, [True])
 
     @make_docstring_printable
     def test_match_all_clear_6(this, self):
@@ -958,8 +958,8 @@ class TestMatchAllClear(LoadMatch):
         """
         forecast_json = './tests/files/forecasts/match/match_all_clear/match_all_clear_6.json'
         sphinx, function_evaluations = self.utility_test_match_all_clear(this, forecast_json)
-        self.assertEqual(sphinx.all_clear_match_status, 'Ongoing SEP Event', '')
-        self.assertEqual(function_evaluations, [None], '')
+        self.assertEqual(sphinx.all_clear_match_status, 'Ongoing SEP Event')
+        self.assertEqual(function_evaluations, [None])
 
     @make_docstring_printable
     def test_match_all_clear_7(this, self):
@@ -991,9 +991,9 @@ class TestMatchAllClear(LoadMatch):
         self.observation_values = match.compile_all_obs(self.all_energy_channels, self.observation_objects)        
         forecast_json = './tests/files/forecasts/match/match_all_clear/match_all_clear_7.json'
         sphinx, function_evaluations = self.utility_test_match_all_clear(this, forecast_json)
-        self.assertEqual(sphinx.all_clear_match_status, 'SEP Event', '')
-        self.assertEqual(sphinx.observed_all_clear.all_clear_boolean, False, '')
-        self.assertEqual(function_evaluations, [False, None], '')
+        self.assertEqual(sphinx.all_clear_match_status, 'SEP Event')
+        self.assertEqual(sphinx.observed_all_clear.all_clear_boolean, False)
+        self.assertEqual(function_evaluations, [False, None])
         
     @make_docstring_printable
     def test_match_all_clear_8(this, self):
@@ -1015,8 +1015,8 @@ class TestMatchAllClear(LoadMatch):
         """
         forecast_json = './tests/files/forecasts/match/match_all_clear/match_all_clear_8.json'
         sphinx, function_evaluations = self.utility_test_match_all_clear(this, forecast_json)
-        self.assertEqual(sphinx.all_clear_match_status, 'Ongoing SEP Event', '')
-        self.assertEqual(function_evaluations, [None], '')
+        self.assertEqual(sphinx.all_clear_match_status, 'Ongoing SEP Event')
+        self.assertEqual(function_evaluations, [None])
 
     @make_docstring_printable
     def test_match_all_clear_9(this, self):
@@ -1048,9 +1048,9 @@ class TestMatchAllClear(LoadMatch):
         self.observation_values = match.compile_all_obs(self.all_energy_channels, self.observation_objects)        
         forecast_json = './tests/files/forecasts/match/match_all_clear/match_all_clear_9.json'
         sphinx, function_evaluations = self.utility_test_match_all_clear(this, forecast_json)
-        self.assertEqual(sphinx.all_clear_match_status, 'SEP Event', '')
-        self.assertEqual(sphinx.observed_all_clear.all_clear_boolean, False, '')
-        self.assertEqual(function_evaluations, [None, False], '')
+        self.assertEqual(sphinx.all_clear_match_status, 'SEP Event')
+        self.assertEqual(sphinx.observed_all_clear.all_clear_boolean, False)
+        self.assertEqual(function_evaluations, [None, False])
  
     @make_docstring_printable
     def test_match_all_clear_10(this, self):
@@ -1082,9 +1082,9 @@ class TestMatchAllClear(LoadMatch):
         self.observation_values = match.compile_all_obs(self.all_energy_channels, self.observation_objects)        
         forecast_json = './tests/files/forecasts/match/match_all_clear/match_all_clear_10.json'
         sphinx, function_evaluations = self.utility_test_match_all_clear(this, forecast_json)
-        self.assertEqual(sphinx.all_clear_match_status, 'SEP Event', '')
-        self.assertEqual(sphinx.observed_all_clear.all_clear_boolean, False, '')
-        self.assertEqual(function_evaluations, [False, None], '')
+        self.assertEqual(sphinx.all_clear_match_status, 'SEP Event')
+        self.assertEqual(sphinx.observed_all_clear.all_clear_boolean, False)
+        self.assertEqual(function_evaluations, [False, None])
 
 class TestNoMatchingThreshold(LoadMatch):
     """
@@ -1220,8 +1220,8 @@ class TestMatchSEPQuantities(LoadMatch):
         """
         forecast_json = './tests/files/forecasts/match/match_sep_quantities/match_sep_quantities_1.json'
         sphinx, function_evaluations = self.utility_test_match_sep_quantities(this, forecast_json)
-        self.assertEqual(sphinx.sep_match_status[self.threshold_key], 'SEP Event', '')
-        self.assertEqual(function_evaluations, [True], '')
+        self.assertEqual(sphinx.sep_match_status[self.threshold_key], 'SEP Event')
+        self.assertEqual(function_evaluations, [True])
         
     @make_docstring_printable
     def test_match_sep_quantities_2(this, self):
@@ -1244,8 +1244,8 @@ class TestMatchSEPQuantities(LoadMatch):
         """
         forecast_json = './tests/files/forecasts/match/match_sep_quantities/match_sep_quantities_2.json'
         sphinx, function_evaluations = self.utility_test_match_sep_quantities(this, forecast_json)
-        self.assertEqual(sphinx.sep_match_status[self.threshold_key], 'Eruption Out of Range', '')
-        self.assertEqual(function_evaluations, [None], '')
+        self.assertEqual(sphinx.sep_match_status[self.threshold_key], 'Eruption Out of Range')
+        self.assertEqual(function_evaluations, [None])
 
     @make_docstring_printable
     def test_match_sep_quantities_3(this, self):
@@ -1269,8 +1269,8 @@ class TestMatchSEPQuantities(LoadMatch):
         """
         forecast_json = './tests/files/forecasts/match/match_sep_quantities/match_sep_quantities_3.json'
         sphinx, function_evaluations = self.utility_test_match_sep_quantities(this, forecast_json)
-        self.assertEqual(sphinx.sep_match_status[self.threshold_key], 'Trigger/Input after Observed Phenomenon', '')
-        self.assertEqual(function_evaluations, [None], '')
+        self.assertEqual(sphinx.sep_match_status[self.threshold_key], 'Trigger/Input after Observed Phenomenon')
+        self.assertEqual(function_evaluations, [None])
         
     @make_docstring_printable
     def test_match_sep_quantities_4(this, self):
@@ -1293,8 +1293,8 @@ class TestMatchSEPQuantities(LoadMatch):
         """
         forecast_json = './tests/files/forecasts/match/match_sep_quantities/match_sep_quantities_4.json'
         sphinx, function_evaluations = self.utility_test_match_sep_quantities(this, forecast_json)
-        self.assertEqual(sphinx.sep_match_status[self.threshold_key], 'No SEP Event', '')
-        self.assertEqual(function_evaluations, [False], '')
+        self.assertEqual(sphinx.sep_match_status[self.threshold_key], 'No SEP Event')
+        self.assertEqual(function_evaluations, [False])
 
     @make_docstring_printable
     def test_match_sep_quantities_5(this, self):
@@ -1317,8 +1317,8 @@ class TestMatchSEPQuantities(LoadMatch):
         """
         forecast_json = './tests/files/forecasts/match/match_sep_quantities/match_sep_quantities_5.json'
         sphinx, function_evaluations = self.utility_test_match_sep_quantities(this, forecast_json)
-        self.assertEqual(sphinx.sep_match_status[self.threshold_key], 'Ongoing SEP Event', '')
-        self.assertEqual(function_evaluations, [False], '')
+        self.assertEqual(sphinx.sep_match_status[self.threshold_key], 'Ongoing SEP Event')
+        self.assertEqual(function_evaluations, [False])
 
     @make_docstring_printable
     def test_match_sep_quantities_6(this, self):
@@ -1348,8 +1348,8 @@ class TestMatchSEPQuantities(LoadMatch):
         self.observation_values = match.compile_all_obs(self.all_energy_channels, self.observation_objects)        
         forecast_json = './tests/files/forecasts/match/match_sep_quantities/match_sep_quantities_6.json'
         sphinx, function_evaluations = self.utility_test_match_sep_quantities(this, forecast_json)
-        self.assertEqual(sphinx.sep_match_status[self.threshold_key], 'SEP Event', '')
-        self.assertEqual(function_evaluations, [True, None], '')
+        self.assertEqual(sphinx.sep_match_status[self.threshold_key], 'SEP Event')
+        self.assertEqual(function_evaluations, [True, None])
 
 class TestMatchSEPEndTime(LoadMatch):
     """
@@ -1432,8 +1432,8 @@ class TestMatchSEPEndTime(LoadMatch):
         """
         forecast_json = './tests/files/forecasts/match/match_sep_end_time/match_sep_end_time_1.json'
         sphinx, function_evaluations = self.utility_test_match_sep_end_time(this, forecast_json)
-        self.assertEqual(sphinx.end_time_match_status[self.threshold_key], 'SEP Event', '')
-        self.assertEqual(function_evaluations, [True], '')
+        self.assertEqual(sphinx.end_time_match_status[self.threshold_key], 'SEP Event')
+        self.assertEqual(function_evaluations, [True])
 
     @make_docstring_printable
     def test_match_sep_end_time_2(this, self):
@@ -1456,8 +1456,8 @@ class TestMatchSEPEndTime(LoadMatch):
         """
         forecast_json = './tests/files/forecasts/match/match_sep_end_time/match_sep_end_time_2.json'
         sphinx, function_evaluations = self.utility_test_match_sep_end_time(this, forecast_json)
-        self.assertEqual(sphinx.end_time_match_status[self.threshold_key], 'Eruption Out of Range', '')
-        self.assertEqual(function_evaluations, [None], '')
+        self.assertEqual(sphinx.end_time_match_status[self.threshold_key], 'Eruption Out of Range')
+        self.assertEqual(function_evaluations, [None])
 
     @make_docstring_printable
     def test_match_sep_end_time_3(this, self):
@@ -1481,8 +1481,8 @@ class TestMatchSEPEndTime(LoadMatch):
         """
         forecast_json = './tests/files/forecasts/match/match_sep_end_time/match_sep_end_time_3.json'
         sphinx, function_evaluations = self.utility_test_match_sep_end_time(this, forecast_json)
-        self.assertEqual(sphinx.end_time_match_status[self.threshold_key], 'Trigger/Input after Observed Phenomenon', '')
-        self.assertEqual(function_evaluations, [None], '')
+        self.assertEqual(sphinx.end_time_match_status[self.threshold_key], 'Trigger/Input after Observed Phenomenon')
+        self.assertEqual(function_evaluations, [None])
         
     @make_docstring_printable
     def test_match_sep_end_time_4(this, self):
@@ -1505,8 +1505,8 @@ class TestMatchSEPEndTime(LoadMatch):
         """
         forecast_json = './tests/files/forecasts/match/match_sep_end_time/match_sep_end_time_4.json'
         sphinx, function_evaluations = self.utility_test_match_sep_end_time(this, forecast_json)
-        self.assertEqual(sphinx.end_time_match_status[self.threshold_key], 'No SEP Event', '')
-        self.assertEqual(function_evaluations, [False], '')
+        self.assertEqual(sphinx.end_time_match_status[self.threshold_key], 'No SEP Event')
+        self.assertEqual(function_evaluations, [False])
         
     @make_docstring_printable
     def test_match_sep_end_time_5(this, self):
@@ -1531,11 +1531,11 @@ class TestMatchSEPEndTime(LoadMatch):
         """
         forecast_json = './tests/files/forecasts/match/match_sep_end_time/match_sep_end_time_5.json'
         sphinx, function_evaluations = self.utility_test_match_sep_end_time(this, forecast_json)
-        self.assertEqual(sphinx.end_time_match_status[self.threshold_key], 'SEP Event', '')
-        self.assertEqual(function_evaluations, [True], '')
+        self.assertEqual(sphinx.end_time_match_status[self.threshold_key], 'SEP Event')
+        self.assertEqual(function_evaluations, [True])
         self.assertEqual(sphinx.observed_fluence[self.threshold_key].fluence, 1)
         self.assertEqual(sphinx.observed_fluence[self.threshold_key].units, 'cm^-2*sr^-1')
-        #self.assertEqual(sphinx.observed_fluence_spectrum[self.threshold_key].fluence_spectrum, '', '')
+        #self.assertEqual(sphinx.observed_fluence_spectrum[self.threshold_key].fluence_spectrum)
 
     @make_docstring_printable
     def test_match_sep_end_time_6(this, self):
@@ -1563,8 +1563,8 @@ class TestMatchSEPEndTime(LoadMatch):
         self.observation_values = match.compile_all_obs(self.all_energy_channels, self.observation_objects)        
         forecast_json = './tests/files/forecasts/match/match_sep_end_time/match_sep_end_time_6.json'
         sphinx, function_evaluations = self.utility_test_match_sep_end_time(this, forecast_json)
-        self.assertEqual(sphinx.end_time_match_status[self.threshold_key], 'SEP Event', '')
-        self.assertEqual(function_evaluations, [True, None], '')
+        self.assertEqual(sphinx.end_time_match_status[self.threshold_key], 'SEP Event')
+        self.assertEqual(function_evaluations, [True, None])
     
     @make_docstring_printable
     def test_match_sep_end_time_7(this, self):
@@ -1573,7 +1573,7 @@ class TestMatchSEPEndTime(LoadMatch):
         """
         forecast_json = './tests/files/forecasts/match/match_sep_end_time/match_sep_end_time_7.json'
         sphinx, _ = self.utility_test_match_sep_end_time(this, forecast_json)
-        self.assertEqual(sphinx.observed_fluence_spectrum[self.threshold_key].label, 'fluence_spectrum', '')        
+        self.assertEqual(sphinx.observed_fluence_spectrum[self.threshold_key].label, 'fluence_spectrum')        
         
 class TestCalculateDerivedQuantities(LoadMatch):
     """
@@ -1703,7 +1703,7 @@ class TestCalculateDerivedQuantities(LoadMatch):
         """
         forecast_json = ['./tests/files/forecasts/match/calculate_derived_quantities/calculate_derived_quantities_1.json']
         matched_sphinx, function_evaluations = self.utility_test_calculate_derived_quantities(this, forecast_json)
-        self.assertEqual(function_evaluations, [None], '')
+        self.assertEqual(function_evaluations, [None])
     
     @make_docstring_printable
     def test_calculate_derived_quantities_2(this, self):
@@ -1715,13 +1715,13 @@ class TestCalculateDerivedQuantities(LoadMatch):
         """
         forecast_jsons = ['./tests/files/forecasts/match/calculate_derived_quantities/calculate_derived_quantities_2.json']
         matched_sphinx, function_evaluations = self.utility_test_calculate_derived_quantities(this, forecast_jsons)
-        self.assertEqual(function_evaluations, [True], '') # WE REACHED status = True
-        self.assertEqual(matched_sphinx['unit_test'][self.energy_key][0].observed_max_flux_in_prediction_window.intensity, 10.0, '')
-        self.assertEqual(matched_sphinx['unit_test'][self.energy_key][0].observed_max_flux_in_prediction_window.time, vjson.zulu_to_time('2000-01-01T00:15:00Z'), '')
-        self.assertEqual(matched_sphinx['unit_test'][self.energy_key][0].max_flux_in_prediction_window_match_status, matched_sphinx['unit_test'][self.energy_key][0].end_time_match_status, '')
-        self.assertEqual(matched_sphinx['unit_test'][self.energy_key][0].observed_point_intensity.intensity, 10.0, '')
-        self.assertEqual(matched_sphinx['unit_test'][self.energy_key][0].observed_point_intensity.time, vjson.zulu_to_time('2000-01-01T00:15:00Z'), '')
-        self.assertEqual(matched_sphinx['unit_test'][self.energy_key][0].observed_point_intensity.units, matched_sphinx['unit_test'][self.energy_key][0].prediction.point_intensity.units, '')
+        self.assertEqual(function_evaluations, [True]) # WE REACHED status = True
+        self.assertEqual(matched_sphinx['unit_test'][self.energy_key][0].observed_max_flux_in_prediction_window.intensity, 10.0)
+        self.assertEqual(matched_sphinx['unit_test'][self.energy_key][0].observed_max_flux_in_prediction_window.time, vjson.zulu_to_time('2000-01-01T00:15:00Z'))
+        self.assertEqual(matched_sphinx['unit_test'][self.energy_key][0].max_flux_in_prediction_window_match_status, matched_sphinx['unit_test'][self.energy_key][0].end_time_match_status)
+        self.assertEqual(matched_sphinx['unit_test'][self.energy_key][0].observed_point_intensity.intensity, 10.0)
+        self.assertEqual(matched_sphinx['unit_test'][self.energy_key][0].observed_point_intensity.time, vjson.zulu_to_time('2000-01-01T00:15:00Z'))
+        self.assertEqual(matched_sphinx['unit_test'][self.energy_key][0].observed_point_intensity.units, matched_sphinx['unit_test'][self.energy_key][0].prediction.point_intensity.units)
         
     @make_docstring_printable
     def test_calculate_derived_quantities_3(this, self):
@@ -1732,7 +1732,7 @@ class TestCalculateDerivedQuantities(LoadMatch):
         """
         forecast_jsons = ['./tests/files/forecasts/match/calculate_derived_quantities/calculate_derived_quantities_3.json']
         matched_sphinx, function_evaluations = self.utility_test_calculate_derived_quantities(this, forecast_jsons)
-        self.assertEqual(function_evaluations, [], '')
+        self.assertEqual(function_evaluations, [])
         
     @make_docstring_printable
     def test_calculate_derived_quantities_4(this, self):
@@ -1744,7 +1744,7 @@ class TestCalculateDerivedQuantities(LoadMatch):
         """
         forecast_jsons = ['./tests/files/forecasts/match/calculate_derived_quantities/calculate_derived_quantities_4.json']
         matched_sphinx, function_evaluations = self.utility_test_calculate_derived_quantities(this, forecast_jsons)
-        self.assertEqual(function_evaluations, [True], '')
+        self.assertEqual(function_evaluations, [True])
         
     @make_docstring_printable
     def test_calculate_derived_quantities_5(this, self):
@@ -1757,7 +1757,7 @@ class TestCalculateDerivedQuantities(LoadMatch):
         """
         forecast_jsons = ['./tests/files/forecasts/match/calculate_derived_quantities/calculate_derived_quantities_5.json']
         matched_sphinx, function_evaluations = self.utility_test_calculate_derived_quantities(this, forecast_jsons)
-        self.assertEqual(function_evaluations, [True], '')
+        self.assertEqual(function_evaluations, [True])
 
  
 class TestReviseEruptionMatches(LoadMatch):
@@ -1858,7 +1858,7 @@ class TestReviseEruptionMatches(LoadMatch):
         """
         forecast_jsons = ['./tests/files/forecasts/match/revise_eruption_matches/revise_eruption_matches_1.json']
         matched_sphinx, initial_matched_sphinx = self.utility_test_revise_eruption_matches(this, forecast_jsons)
-        self.assertEqual(matched_sphinx, initial_matched_sphinx, '')
+        self.assertEqual(matched_sphinx, initial_matched_sphinx)
         
     @make_docstring_printable
     def test_revise_eruption_matches_2(this, self):
@@ -1868,7 +1868,7 @@ class TestReviseEruptionMatches(LoadMatch):
         """
         forecast_jsons = ['./tests/files/forecasts/match/revise_eruption_matches/revise_eruption_matches_2.json']
         matched_sphinx, initial_matched_sphinx = self.utility_test_revise_eruption_matches(this, forecast_jsons)
-        self.assertEqual(matched_sphinx, initial_matched_sphinx, '')
+        self.assertEqual(matched_sphinx, initial_matched_sphinx)
     
     @make_docstring_printable
     def test_revise_eruption_matches_3(this, self):
@@ -1882,7 +1882,7 @@ class TestReviseEruptionMatches(LoadMatch):
         forecast_jsons = ['./tests/files/forecasts/match/revise_eruption_matches/revise_eruption_matches_3_1.json',
                           './tests/files/forecasts/match/revise_eruption_matches/revise_eruption_matches_3_2.json']
         matched_sphinx, initial_matched_sphinx = self.utility_test_revise_eruption_matches(this, forecast_jsons)
-        self.assertEqual(matched_sphinx, initial_matched_sphinx, '')
+        self.assertEqual(matched_sphinx, initial_matched_sphinx)
         
 
 class TestMatchAllForecasts(LoadMatch):
@@ -1928,15 +1928,14 @@ class TestMatchAllForecasts(LoadMatch):
         
         """
         forecast_jsons = ['./tests/files/forecasts/match/match_all_forecasts/match_all_forecasts_1.json']
-        print(self.energy_key)
         matched_sphinx, all_obs_thresholds, observed_sep_events = self.utility_test_match_all_forecasts(this, forecast_jsons)
         
         sphinx = matched_sphinx['unit_test'][self.energy_key][0]
-        self.assertEqual(sphinx.peak_intensity_match_status, 'SEP Event', '')
-        self.assertEqual(sphinx.peak_intensity_max_match_status, 'SEP Event', '')
-        self.assertEqual(sphinx.all_clear_match_status, 'SEP Event', '')
-        self.assertEqual(sphinx.sep_match_status[self.threshold_key], 'SEP Event', '')
-        self.assertEqual(sphinx.end_time_match_status[self.threshold_key], 'SEP Event', '')
+        self.assertEqual(sphinx.peak_intensity_match_status, 'SEP Event')
+        self.assertEqual(sphinx.peak_intensity_max_match_status, 'SEP Event')
+        self.assertEqual(sphinx.all_clear_match_status, 'SEP Event')
+        self.assertEqual(sphinx.sep_match_status[self.threshold_key], 'SEP Event')
+        self.assertEqual(sphinx.end_time_match_status[self.threshold_key], 'SEP Event')
 
     @make_docstring_printable
     def test_match_all_forecasts_2(this, self):
@@ -1963,4 +1962,4 @@ class TestMatchAllForecasts(LoadMatch):
         forecast_jsons = ['./tests/files/forecasts/match/match_all_forecasts/match_all_forecasts_2.json']
         matched_sphinx, all_obs_thresholds, observed_sep_events = self.utility_test_match_all_forecasts(this, forecast_jsons)
         sphinx = matched_sphinx['unit_test'][self.energy_key][0]
-        self.assertEqual(sphinx.all_clear_match_status, 'No Matching Threshold', '')
+        self.assertEqual(sphinx.all_clear_match_status, 'No Matching Threshold')
