@@ -935,7 +935,11 @@ class Forecast():
                         last_flare_data_time = last_data_time
                     else:
                         last_flare_data_time = max(last_flare_data_time, last_data_time)
-
+                
+                #In the case where only flare last_data_time is
+                #provided, use that for the eruption information
+                if last_flare_time == None and last_flare_data_time != None:
+                    last_flare_time = last_flare_data_time
 
         #Find the latest particle intensity data used by the model
         last_pi_time = None

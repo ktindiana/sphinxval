@@ -2253,7 +2253,7 @@ def setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_o
             #Get Trigger and Input information
             sphinx.last_eruption_time, sphinx.last_trigger_time =\
                 fcast.last_trigger_time()
-
+            
             sphinx.last_input_time = fcast.last_input_time()
 
             logger.debug("\n")

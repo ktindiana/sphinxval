@@ -152,6 +152,7 @@ def initialize_dict():
             "Threshold Crossed in Prediction Window": [],
             "Eruption before Threshold Crossed": [],
             "Time Difference between Eruption and Threshold Crossing": [],
+            "Eruption in Range": [],
             "Triggers before Threshold Crossing": [],
             "Inputs before Threshold Crossing": [],
             "Triggers before Peak Intensity": [],
@@ -458,9 +459,11 @@ def fill_dict_row(sphinx, dict, energy_key, thresh_key, profname_dict):
     try:
         dict["Eruption before Threshold Crossed"].append(str(sphinx.eruptions_before_threshold_crossing[thresh_key]))
         dict["Time Difference between Eruption and Threshold Crossing"].append(str(sphinx.time_difference_eruptions_threshold_crossing[thresh_key]))
+        dict["Eruption in Range"].append(str(sphinx.is_eruption_in_range[thresh_key]))
     except:
         dict["Eruption before Threshold Crossed"].append(None)
         dict["Time Difference between Eruption and Threshold Crossing"].append(None)
+        dict["Eruption in Range"].append(None)
     
 
     
