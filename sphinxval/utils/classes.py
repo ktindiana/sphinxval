@@ -2290,7 +2290,6 @@ class SPHINX:
         match_status = self.all_clear_match_status
         
         if predicted == None:
-            match_status = "No Prediction Provided"
             return predicted, match_status
 
         pred_threshold = {'threshold': self.prediction.all_clear.threshold,
