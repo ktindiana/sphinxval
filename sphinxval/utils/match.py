@@ -448,14 +448,14 @@ def observed_time_in_pred_win_thresh(fcast, obs_values, obs_key,
 
     #Return if no prediction
     if fcast.prediction_window_start == None:
-        return [None]*len(obs_values[energy_key]['dataframes'][0])
+        return [None]*len(obs_values[energy_key]['dataframes'][0]), [pd.NaT]*len(obs_values[energy_key]['dataframes'][0])
        
     #Extract desired threshold
     obs_thresholds = obs_values[energy_key]['thresholds']
     try:
         ix = obs_thresholds.index(threshold)
     except:
-        return [None]*len(obs_values[energy_key]['dataframes'][0])
+        return [None]*len(obs_values[energy_key]['dataframes'][0]), [pd.NaT]*len(obs_values[energy_key]['dataframes'][0])
     
     #Extract pandas dataframe for correct energy and threshold
     obs = obs_values[energy_key]['dataframes'][ix] #all obs for threshold
