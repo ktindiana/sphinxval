@@ -465,7 +465,7 @@ def observed_time_in_pred_win_thresh(fcast, obs_values, obs_key,
     contains_obs_time = (obs[obs_key] >= pd.Timestamp(pred_win_st)) \
         & (obs[obs_key] < pd.Timestamp(pred_win_end))
  
-    return list(contains_obs_time)
+    return list(contains_obs_time), list(obs[obs_key])
 
 
 def is_time_before(time, obs_values, obs_key, energy_key):
@@ -837,12 +837,13 @@ def threshold_cross_criteria(sphinx, fcast, obs_values, observation_objs,
     """
     thresh_key = objh.threshold_to_key(thresh)
     
-    contains_thresh_cross = observed_time_in_pred_win_thresh(fcast,
+    contains_thresh_cross, crossing_times = observed_time_in_pred_win_thresh(fcast,
         obs_values, 'threshold_crossing_time', energy_key, thresh)
 
     if sphinx.overlapping_indices != []:
         for ix in sphinx.overlapping_indices:
             sphinx.threshold_crossed_in_pred_win[thresh_key].append(contains_thresh_cross[ix])
+            sphinx.all_threshold_crossing_times[thresh_key].append(crossing_times[ix])
             #logging
             logger.debug("Threshold crossed in prediction window?:  " +
                 str(sphinx.threshold_crossed_in_pred_win[thresh_key][-1]))

@@ -476,6 +476,9 @@ class Forecast():
         
         self.label = 'forecast'
         self.energy_channel = energy_channel #dict
+        #all thresholds applied in forecasted quantities for this
+        #energy channel. Will be a list if present.
+        self.all_thresholds = None
         self.short_name = None
         self.issue_time = None
         self.valid = None #indicates whether prediction window starts
@@ -844,6 +847,8 @@ class Forecast():
                     dict = {'threshold':thresh, 'threshold_units': units}
                     if dict not in all_thresholds:
                         all_thresholds.append(dict)
+    
+        self.all_thresholds = all_thresholds
 
         return all_thresholds
 
@@ -1464,6 +1469,10 @@ class SPHINX:
         self.thresholds = [] #all of the thresholds in the observations
         self.threshold_crossed_in_pred_win = {} #filenames of the
             #observations that satisfy the criteria (self.source)
+        self.all_threshold_crossing_times = {} #threshold crossing times
+            #that occur in the prediction window, regardless of whether
+            #SPHINX determines that the forecast should be associated
+            #with these times. Primary for interpretation of match results.
         self.last_eruption_time = None
         self.last_trigger_time = None
         self.last_input_time = None
@@ -1570,6 +1579,7 @@ class SPHINX:
         key = objh.threshold_to_key(threshold)
         
         self.threshold_crossed_in_pred_win.update({key:[]})
+        self.all_threshold_crossing_times.update({key:[]})
         
         #Criteria related to observed threshold crossing times
         self.eruptions_before_threshold_crossing.update({key:[]})
