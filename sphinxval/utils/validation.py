@@ -607,7 +607,7 @@ def fill_df(matched_sphinx, model_names, all_energy_channels,
     
     df = pd.DataFrame(dict)
     #Sort by prediction window start so in time order for AWT, etc
-    df = df.sort_values(by=["Model","Energy Channel Key","Threshold Key","Prediction Window Start"],ascending=[True, True, True, True])
+    df = df.sort_values(by=["Model","Energy Channel Key","Threshold Key","Prediction Window Start, Forecast Issue Time"],ascending=[True, True, True, True, True])
     
     #Check for duplicated forecasts and remove
     df = remove_duplicates(df)
