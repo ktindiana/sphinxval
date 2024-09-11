@@ -693,8 +693,12 @@ class Forecast():
         all_clear, threshold, threshold_units, probability_threshold = \
                 vjson.dict_to_all_clear(dataD)
         if all_clear != None:
-            self.all_clear = All_Clear(all_clear, threshold, threshold_units,
-                probability_threshold)
+            if threshold == None or threshold_units == None:
+                logger.warning("CORRUPT FORECAST: All clear value predicted "
+                    "but no threshold specified. Excluding " + self.source)
+            else:
+                self.all_clear = All_Clear(all_clear, threshold,
+                    threshold_units, probability_threshold)
 
         #Load Point Intensity
         intensity, units, uncertainty, uncertainty_low, uncertainty_high,\
@@ -724,8 +728,11 @@ class Forecast():
                 start_time, end_time, threshold, threshold_units,=\
                     vjson.dict_to_event_length(event)
                 if start_time != None:
-                    self.event_lengths.append(Event_Length(start_time,
-                        end_time, threshold, threshold_units))
+                    if threshold == None or threshold_units == None:
+                        logger.warning("CORRUPT FORECAST: Event Lengths predicted but no threshold specified. Excluding " + self.source)
+                    else:
+                        self.event_lengths.append(Event_Length(start_time,
+                            end_time, threshold, threshold_units))
         
 
         #Load Fluence
@@ -742,9 +749,12 @@ class Forecast():
                 if 'event_lengths' not in dataD:
                     threshold = self.all_clear.threshold
                     threshold_units = self.all_clear.threshold_units
-                
-                self.fluences.append(Fluence("id", fluence, units,
-                    threshold, threshold_units, uncertainty_low, uncertainty_high))
+                if fluence != None:
+                    if threshold == None or threshold_units == None:
+                        logger.warning("CORRUPT FORECAST: Fluence predicted but no threshold specified. Excluding " + self.source)
+                    else:
+                        self.fluences.append(Fluence("id", fluence, units,
+                            threshold, threshold_units, uncertainty_low, uncertainty_high))
 
 
         #Load Fluence Spectra
@@ -754,9 +764,12 @@ class Forecast():
                 threshold_units, fluence_units, fluence_spectrum =\
                     vjson.dict_to_fluence_spectrum(spectrum)
                 if fluence_spectrum != None:
-                    self.fluence_spectra.append(Fluence_Spectrum(start_time,
-                        end_time, threshold_start, threshold_end,
-                        threshold_units, fluence_units, fluence_spectrum))
+                    if threshold == None or threshold_units == None:
+                        logger.warning("CORRUPT FORECAST: Fluence Spectrum predicted but no threshold specified. Excluding " + self.source)
+                    else:
+                        self.fluence_spectra.append(Fluence_Spectrum(start_time,
+                            end_time, threshold_start, threshold_end,
+                            threshold_units, fluence_units, fluence_spectrum))
 
 
         #Load Threshold Crossings
@@ -765,8 +778,11 @@ class Forecast():
                 crossing_time, uncertainty, threshold, \
                 threshold_units = vjson.dict_to_threshold_crossing(cross)
                 if crossing_time != None:
-                    self.threshold_crossings.append(Threshold_Crossing(
-                    crossing_time, uncertainty, threshold, threshold_units))
+                    if threshold == None or threshold_units == None:
+                        logger.warning("CORRUPT FORECAST: Threshold Crossing predicted but no threshold specified. Excluding " + self.source)
+                    else:
+                        self.threshold_crossings.append(Threshold_Crossing(
+                            crossing_time, uncertainty, threshold, threshold_units))
 
 
         #Load Probabilities
@@ -775,8 +791,11 @@ class Forecast():
                 probability_value, uncertainty, threshold,\
                 threshold_units = vjson.dict_to_probability(prob)
                 if probability_value != None:
-                    self.probabilities.append(Probability(probability_value,
-                        uncertainty, threshold, threshold_units))
+                    if threshold == None or threshold_units == None:
+                        logger.warning("CORRUPT FORECAST: Probability predicted but no threshold specified. Excluding " + self.source)
+                    else:
+                        self.probabilities.append(Probability(probability_value,
+                            uncertainty, threshold, threshold_units))
                     
         return is_good
 
@@ -2352,7 +2371,7 @@ class SPHINX:
         #Check if a forecast exists for probability
         if self.prediction.probabilities == []:
             return pred_prob, match_status
-
+        
         #Check each forecast for probability
         for prob_obj in self.prediction.probabilities:
             pred_thresh = {'threshold': prob_obj.threshold,
