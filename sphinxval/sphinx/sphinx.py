@@ -5,6 +5,7 @@ from ..utils import validation as valid
 from ..utils import match
 from ..utils import resume
 from ..utils import report
+from ..utils import duplicates
 import datetime
 import pickle
 import logging
@@ -73,6 +74,9 @@ def validate(data_list, model_list, top=None, Resume=None):
     all_energy_channels, obs_objs, model_objs =\
         vjson.load_objects_from_json(data_list, model_list)
     logger.info("Loaded all JSON files into Objects.")
+
+    #Check for duplicates in the set of forecasts and remove any
+    model_objs = duplicates.remove_forecast_duplicates(all_energy_channels, model_objs)
 
     #Dictionary containing the location of all the .txt files
     #in the subdirectories below top.

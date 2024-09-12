@@ -5,6 +5,7 @@ from . import plotting_tools as plt_tools
 from . import config
 from . import time_profile as profile
 from . import resume
+from . import duplicates
 import matplotlib.pylab as plt
 from scipy.stats import pearsonr
 import statistics
@@ -34,9 +35,9 @@ logger = logging.getLogger(__name__)
 
 ######### DATAFRAMES CONTAINING OBSERVATIONS AND PREDICTIONS ######
 
-def initialize_dict():
-    """ Set up a pandas df to hold each possible quantity,
-        each observed energy channel, and predicted and
+def initialize_sphinx_dict():
+    """ Set up a dictionary for a pandas df to hold each possible
+        quantity, each observed energy channel, and predicted and
         observed values.
         
     """
@@ -178,25 +179,26 @@ def initialize_dict():
 
 
 
-def fill_dict_row(sphinx, dict, energy_key, thresh_key, profname_dict):
+def fill_sphinx_dict_row(sphinx, dict, energy_key, thresh_key, profname_dict):
     """ Add a row to a dataframe with all of the supporting information
         for the forecast and observations that needs to be passed to
-        SPHINX-Web.
+        VIVID and contains traceability for the matching process and outcomes.
         
     Input:
     
         :sphinx: (SPHINX object) contains all prediction and matched observation
             information
-        :predicted: The predicted value for one specific type of quantity (e.g.
-            peak_intensity, all_clear, start_time)
-        :observed: The matched up observed value of the same quantity
-        :df: (pandas DataFrame) contains all matched and observed values for
-            a specific quantity along with supporting information
-        
+        :dict: (dictionary) dictionary initialized with initialize_sphinx_dict()
+        :energy_key: (string) energy channel key
+        :thresh_key: (string) threshold key
+        :profname_dict: (dictionary) dictionary that might have been created if
+            TopDirectory was specified at run time. Contains location of all txt
+            files in the subdirectories of interest, including the locations of
+            time profiles specified in the sep_profile field.
+
     Output:
     
-        :updated_df: (pandas DataFrame) The dataframe is updated another
-            another row
+        None; dict filled by reference
         
     """
 
@@ -295,7 +297,6 @@ def fill_dict_row(sphinx, dict, energy_key, thresh_key, profname_dict):
                 try:
                     pred_time_profile = profname_dict[pred_time_profile]
                 except:
-                    #sys.exit('fill_dict_row: Cannot locate time profile file ' + pred_time_profile)
                     logger.warning('Cannot locate time profile file ' + pred_time_profile)
                     pred_time_profile = None
                 
@@ -544,62 +545,13 @@ def write_df(df, name, verbose=True):
             logger.debug('Wrote ' + filepath)
 
 
-def remove_duplicates(df):
-    """ Check dataframe for duplicate entries. Issue warning and remove
-        repeated forecasts.
-        
-        Forecasts will be considered duplicate if all fields in the
-        dataframe are exactly the same.
-        
-        Output:
-        
-            :df: (dataframe) with unique entries
-        
-    """
-    #Extract key rows from the df that uniquely identify a forecast
-    #Cannot use all df entries, because the hash command cannot hash lists.
-    sub = df[["Model", "Energy Channel Key", "Threshold Key", "Mismatch Allowed",
-            "Prediction Energy Channel Key", "Prediction Threshold Key", "Forecast Source",
-            "Forecast Path", "Forecast Issue Time", "Prediction Window Start",
-            "Prediction Window End", "Number of CMEs","CME Start Time", "CME Liftoff Time",
-            "CME Latitude", "CME Longitude", "CME Speed", "CME Half Width", "CME PA",
-            "Number of Flares", "Flare Latitude", "Flare Longitude", "Flare Start Time",
-            "Flare Peak Time", "Flare End Time", "Flare Last Data Time", "Flare Intensity",
-            "Flare Integrated Intensity", "Flare NOAA AR", "Observatory", "Observed SEP All Clear",
-            "Predicted SEP All Clear", "All Clear Match Status", "Predicted SEP Probability",
-            "Probability Match Status", "Predicted SEP Threshold Crossing Time",
-            "Threshold Crossing Time Match Status", "Predicted SEP Start Time",
-            "Start Time Match Status", "Predicted SEP End Time", "End Time Match Status",
-            "Predicted SEP Duration", "Duration Match Status", "Predicted SEP Fluence",
-            "Fluence Match Status", "Predicted SEP Peak Intensity (Onset Peak)",
-            "Peak Intensity Match Status", "Predicted SEP Peak Intensity Max (Max Flux)",
-            "Peak Intensity Max Match Status", "Predicted Point Intensity", "Predicted Time Profile",
-            "Time Profile Match Status", "Last Data Time to Issue Time"]]
-    
-    #Create a hash for each row of the dataframe
-    hash = pd.util.hash_pandas_object(sub, index=False)
-    duplicates = hash.duplicated()
-    dup = pd.DataFrame(duplicates)
-    
-    #Duplicated entries
-    dup_df = df.loc[(dup[0] == True)]
-    for entry in dup_df["Forecast Source"]:
-        logging.warning("DUPLICATE: " + str(entry) + " is a duplicated forecast. Removing." )
-    
-    #Keep only the entries that are marked as False for duplicates
-    unique_df = df.loc[(dup[0] == False)]
-    
-    return unique_df
-
-
-
-def fill_df(matched_sphinx, model_names, all_energy_channels,
+def fill_sphinx_df(matched_sphinx, model_names, all_energy_channels,
     all_obs_thresholds, profname_dict):
     """ Fill in a dictionary with the all clear predictions and observations
         organized by model and energy channel.
     """
     #sorted by model, quantity, energy channel, threshold
-    dict = initialize_dict()
+    dict = initialize_sphinx_dict()
 
     #Loop through the forecasts for each model and fill in quantity_dict
     #as appropriate
@@ -608,7 +560,7 @@ def fill_df(matched_sphinx, model_names, all_energy_channels,
             logger.debug("---Model: " + model + ", Energy Channel: " + ek)
             for sphinx in matched_sphinx[model][ek]:
                 for tk in all_obs_thresholds[ek]:
-                    fill_dict_row(sphinx, dict, ek, tk, profname_dict)
+                    fill_sphinx_dict_row(sphinx, dict, ek, tk, profname_dict)
                 
     
     df = pd.DataFrame(dict)
@@ -616,7 +568,7 @@ def fill_df(matched_sphinx, model_names, all_energy_channels,
     df = df.sort_values(by=["Model","Energy Channel Key","Threshold Key","Prediction Window Start", "Forecast Issue Time"],ascending=[True, True, True, True, True])
     
     #Check for duplicated forecasts and remove
-    df = remove_duplicates(df)
+    df = duplicates.remove_sphinx_duplicates(df)
     
     return df
 
@@ -3936,7 +3888,7 @@ def intuitive_validation(matched_sphinx, model_names, all_energy_channels,
     #so can calculate metrics
     logger.info("Filling dataframe with information from matched sphinx objects.")
 
-    df = fill_df(matched_sphinx, model_names, all_energy_channels,
+    df = fill_sphinx_df(matched_sphinx, model_names, all_energy_channels,
             all_observed_thresholds, profname_dict)
     logger.debug("Completed filling dataframe. ")
 
