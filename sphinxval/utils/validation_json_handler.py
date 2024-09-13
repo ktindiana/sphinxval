@@ -917,9 +917,9 @@ def dict_to_all_clear(dataD):
             
     """
     all_clear = None
-    threshold = None
+    threshold = np.nan
     threshold_units = None
-    probability_threshold = None
+    probability_threshold = np.nan
     
     if 'all_clear' in dataD:
         if 'all_clear_boolean' in dataD['all_clear']:
@@ -1203,7 +1203,7 @@ def dict_to_threshold_crossing(cross):
             
     """
     crossing_time = pd.NaT
-    uncertainty = None
+    uncertainty = np.nan
     threshold = np.nan
     threshold_units = None
     
