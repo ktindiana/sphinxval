@@ -2130,7 +2130,7 @@ class SPHINX:
         self.observed_start_time[thresh_key] = pd.NaT
         self.observed_end_time[thresh_key] = pd.NaT
         self.observed_duration[thresh_key] = np.nan
-        self.observed_fluence[thresh_key] = Fluence("id",None, None, None, None, None, None)
+        self.observed_fluence[thresh_key] = Fluence("id",np.nan, None, np.nan, None, np.nan, np.nan)
         self.observed_fluence_spectrum[thresh_key] = Fluence_Spectrum(None, np.nan, None, np.nan, None, np.nan, np.nan)
         
         return
@@ -2455,7 +2455,7 @@ class SPHINX:
                 'threshold_units': obj.threshold_units}
             
             #Check that predicted threshold was applied in the observations
-            if obj.threshold == None:
+            if pd.isnull(obj.threshold):
                 continue
 
             tk = objh.threshold_to_key(pred_thresh)
