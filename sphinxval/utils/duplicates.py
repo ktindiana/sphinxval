@@ -260,16 +260,10 @@ def identify_forecast_duplicates(df):
             :df: (dataframe) with unique entries
         
     """
-#    if not df.empty:
-#        print("DF prior to sorting")
-#        print(df)
     
     #Sort the dataframe in time order
     df = df.sort_values(by=["Model","Energy Channel Key", "Forecast Issue Time", "Prediction Window Start"],ascending=[True, True, True, True])
 
-#    if not df.empty:
-#        print("DF after sorting")
-#        print(df)
 
     #Extract key rows from the df that uniquely identify a forecast
     #Cannot use all df entries, because the hash command cannot hash lists.
@@ -297,7 +291,6 @@ def identify_forecast_duplicates(df):
     #Duplicated entries
     dup_df = df.loc[(dup[0] == True)]
     dup_indices = dup_df["Prediction Index"].to_list()
-#    print(dup_indices)
     
     #Keep only the entries that are marked as False for duplicates
     unique_df = df.loc[(dup[0] == False)]
@@ -327,21 +320,54 @@ def remove_forecast_duplicates(all_energy_channels, model_objs):
     """ Remove any duplicated Forecast objects from the model_objs array.
     
     """
+    
+    fcast_df = {}
 
     for energy_key in all_energy_channels:
         df = fill_forecast_df(model_objs[energy_key])
 
         #Check for duplicated forecasts and remove
         df, dup_indices = identify_forecast_duplicates(df)
+        fcast_df.update({energy_key: df})
 
         for i in range(len(dup_indices)-1,-1,-1):
-            logger.warning(f"DUPLICATE: Removing duplicated forecast for energy channel {energy_key},  {model_objs[energy_key][dup_indices[i]].source}")
+            logger.warning(f"DUPLICATE INPUT FORECAST: Removing duplicated forecast for energy channel {energy_key},  {model_objs[energy_key][dup_indices[i]].source}")
             model_objs[energy_key].pop(dup_indices[i])
+        
+    return model_objs, fcast_df
+
+
+
+def remove_resume_duplicates(r_df, fcast_df, model_objs):
+    """ Compare exact filenames in the resume dataframe with filenames
+        in the dataframe of Forecast objects from model_objs
     
-    return model_objs, df
+        INPUTS:
+        
+            :r_df: (pandas DataFrame) SPHINX_dataframe read back in from a previous run
+            :fcast_df: (dict of DataFrames) df sorted by energy channel containing the unique
+                forecasts read in to sphinx. Created in remove_forecast_duplicates().
+            :model_objs: (dict of Forecast objects) unique forecast objects sorted by energy channel
+            
+        OUTPUTS:
+        
+            :model_objs: (dict of Forecast objects) forecasts with filenames already
+                present in r_df have been removed
+    
+    """
+    
+    for energy_key in model_objs.keys():
+        df = fcast_df[energy_key]
+
+        df_dup = df[df['Forecast Source'].isin(r_df['Forecast Source'])]
+        dup_indices = df_dup['Prediction Index'].to_list()
+        
+        for i in range(len(dup_indices)-1,-1,-1):
+            logger.warning(f"DUPLICATE RESUME FORECAST: Removing duplicated forecast already present in the resume SPHINX_dataframe for energy channel {energy_key},  {model_objs[energy_key][dup_indices[i]].source}")
+            model_objs[energy_key].pop(dup_indices[i])
 
 
-
+    return model_objs
 
 
 def remove_sphinx_duplicates(df):
@@ -383,7 +409,7 @@ def remove_sphinx_duplicates(df):
     #Duplicated entries
     dup_df = df.loc[(dup[0] == True)]
     for entry in dup_df["Forecast Source"]:
-        logger.warning("DUPLICATE: " + str(entry) + " is a duplicated forecast in the SPHINX dataframe. Removing." )
+        logger.warning("DUPLICATE SPHINX FORECAST: " + str(entry) + " is a duplicated forecast in the SPHINX dataframe. Removing." )
     
     #Keep only the entries that are marked as False for duplicates
     unique_df = df.loc[(dup[0] == False)]

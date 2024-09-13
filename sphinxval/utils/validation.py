@@ -3897,7 +3897,7 @@ def intuitive_validation(matched_sphinx, model_names, all_energy_channels,
         logger.info("RESUME: Resuming from a previous run. Concatenating current and previous forecasts, ensuring that any duplicates are removed. ")
  
         df = pd.concat([r_df, df], ignore_index=True)
-        df = remove_duplicates(df)
+        df = duplicates.remove_sphinx_duplicates(df)
         logger.debug("RESUME: Completed concatenation and removed any duplicates. Writing SPHINX_dataframe to file.")
 
         model_names = resume.identify_unique(df, 'Model')

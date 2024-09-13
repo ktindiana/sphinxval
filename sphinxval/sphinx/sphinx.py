@@ -100,6 +100,8 @@ def validate(data_list, model_list, top=None, Resume=None):
         logger.info("RESUME: Reading in previous dataframe: "
             + Resume)
         r_df = resume.read_in_df(Resume)
+        
+        model_objs = duplicates.remove_resume_duplicates(r_df, fcast_df, model_objs)
     ################
     
     
