@@ -78,7 +78,7 @@ def validate(data_list, model_list, top=None, Resume=None):
     #in the subdirectories below top.
     #Used to specify where the time profile .txt files are.
     profname_dict = None
-    if top != None:
+    if top is not None:
         profname_dict = vjson.generate_profile_dict(top)
         logger.info("Generated dictionary of all txt files in " + top)
 
