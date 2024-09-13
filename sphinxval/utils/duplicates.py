@@ -30,14 +30,14 @@ def initialize_forecast_dict():
 
     dict = {"Model": [],
             "Energy Channel Key": [],
-            "Threshold Key": [],
+            "Prediction Index": [],
+            "All Thresholds in Prediction": [],
             "Forecast Source": [],
             "Forecast Path": [],
             "Forecast Issue Time":[],
             "Prediction Window Start": [],
             "Prediction Window End": [],
             
-            #OBSERVATIONS
             "Number of CMEs": [],
             "CME Start Time": [], #Timestamp of 1st
                 #coronagraph image CME is visible in
@@ -61,7 +61,6 @@ def initialize_forecast_dict():
             "Flare Integrated Intensity": [],
             "Flare NOAA AR": [],
             
-            #PREDICTIONS
             "Predicted SEP All Clear": [],
             "Predicted SEP Probability": [],
             "Predicted SEP Threshold Crossing Time": [],
@@ -89,7 +88,7 @@ def initialize_forecast_dict():
     return dict
 
 
-def fill_forecast_dict_row(prediction, dict):
+def fill_forecast_dict_row(index, prediction, dict):
     """ Add a row to a dataframe with all of the supporting information
         inside of a forecast.
 
@@ -99,6 +98,7 @@ def fill_forecast_dict_row(prediction, dict):
         
     Input:
     
+        :index: (int) index of prediction in the model_objs[energy_key] list
         :prediction: (Forecast object) contains all prediction and matched observation
             information
         :dict: (Dictionary) dictionary initialized with initialize_forecast_dict()
@@ -195,6 +195,7 @@ def fill_forecast_dict_row(prediction, dict):
 
     dict["Model"].append(prediction.short_name)
     dict["Energy Channel Key"].append(energy_key)
+    dict["Prediction Index"].append(index)
     dict["All Thresholds in Prediction"].append(repr(prediction.all_thresholds))
     dict["Forecast Source"].append(prediction.source)
     dict["Forecast Path"].append(prediction.path)
@@ -259,6 +260,17 @@ def identify_forecast_duplicates(df):
             :df: (dataframe) with unique entries
         
     """
+#    if not df.empty:
+#        print("DF prior to sorting")
+#        print(df)
+    
+    #Sort the dataframe in time order
+    df = df.sort_values(by=["Model","Energy Channel Key", "Forecast Issue Time", "Prediction Window Start"],ascending=[True, True, True, True])
+
+#    if not df.empty:
+#        print("DF after sorting")
+#        print(df)
+
     #Extract key rows from the df that uniquely identify a forecast
     #Cannot use all df entries, because the hash command cannot hash lists.
     sub = df[["Model", "Energy Channel Key", "All Thresholds in Prediction",
@@ -284,7 +296,8 @@ def identify_forecast_duplicates(df):
     
     #Duplicated entries
     dup_df = df.loc[(dup[0] == True)]
-    dup_indices = dup_df.index.to_list()
+    dup_indices = dup_df["Prediction Index"].to_list()
+#    print(dup_indices)
     
     #Keep only the entries that are marked as False for duplicates
     unique_df = df.loc[(dup[0] == False)]
@@ -301,16 +314,13 @@ def fill_forecast_df(model_objs):
 
     #Loop through the forecasts for each model and fill in quantity_dict
     #as appropriate
-    for fcast in model_objs:
-        fill_forecast_dict_row(fcast, dict)
+    for ix in range(len(model_objs)):
+        fill_forecast_dict_row(ix, model_objs[ix], dict)
  
     df = pd.DataFrame(dict)
     
     return df
     
-    
-
-
 
 
 def remove_forecast_duplicates(all_energy_channels, model_objs):
@@ -328,7 +338,7 @@ def remove_forecast_duplicates(all_energy_channels, model_objs):
             logger.warning(f"DUPLICATE: Removing duplicated forecast for energy channel {energy_key},  {model_objs[energy_key][dup_indices[i]].source}")
             model_objs[energy_key].pop(dup_indices[i])
     
-    return model_objs
+    return model_objs, df
 
 
 
