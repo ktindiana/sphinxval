@@ -8,6 +8,7 @@ from . import object_handler as objh
 from . import config as cfg
 import datetime
 import pandas as pd
+import numpy as np
 import logging
 
 __author__ = "Katie Whitman"
@@ -1433,7 +1434,7 @@ class SPHINX:
         #Only one All Clear status allowed per energy channel
         self.observed_match_all_clear_source = None
         self.all_clear_match_status = ""
-        self.observed_all_clear = All_Clear(one, np.nan, None, np.nan)  #All Clear Object
+        self.observed_all_clear = All_Clear(None, np.nan, None, np.nan)  #All Clear Object
 
         #Uses thresholds from self.thresholds as keys
         self.observed_match_sep_source = {}
