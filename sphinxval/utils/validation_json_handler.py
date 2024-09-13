@@ -63,9 +63,9 @@ def make_ccmc_zulu_time(dt):
         :zuludate: (string) in the format YYYY-MM-DDTHH:MM:SSZ
     
     """
-    if dt == None:
+    if dt is None:
         return None
-    if dt == pd.NaT:
+    if dt is pd.NaT:
         return pd.NaT
     if dt == 0:
         return 0
@@ -92,9 +92,9 @@ def zulu_to_time(zt):
     #Time e.g. 2014-01-08T05:05:00Z or 2012-07-12T22:25Z
     if zt == '':
         return ''
-    if zt == None:
+    if zt is None:
         return None
-    if zt == pd.NaT:
+    if zt is pd.NaT:
         return pd.NaT
     if zt == 0:
         return 0
