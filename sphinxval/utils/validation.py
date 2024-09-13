@@ -31,6 +31,8 @@ __email__ = "kathryn.whitman@nasa.gov"
 
 #Create logger
 logger = logging.getLogger(__name__)
+mpl_logger = logging.getLogger("matplotlib")
+mpl_logger.setLevel(logging.WARNING)
 
 ######### DATAFRAMES CONTAINING OBSERVATIONS AND PREDICTIONS ######
 
@@ -256,6 +258,9 @@ def fill_dict_row(sphinx, dict, energy_key, thresh_key, profname_dict):
     
     #If mismatch allowed for this prediction
     mismatch = sphinx.mismatch
+    logger.debug('fill dict row')
+    logger.debug(sphinx.mismatch)
+    logger.debug(config.do_mismatch)
     if mismatch:
         pred_energy_key = objh.energy_channel_to_key(config.mm_pred_energy_channel)
         pred_thresh_key = objh.threshold_to_key(config.mm_pred_threshold)
@@ -298,7 +303,8 @@ def fill_dict_row(sphinx, dict, energy_key, thresh_key, profname_dict):
                 
 
     tp_match_status = et_match_status
-        
+    logger.debug('Testing mismatch')
+    logger.debug(mismatch)  
 
     dict["Model"].append(sphinx.prediction.short_name)
     dict["Energy Channel Key"].append(energy_key)
@@ -597,8 +603,11 @@ def fill_df(matched_sphinx, model_names, all_energy_channels,
     for model in model_names:
         for ek in all_energy_channels:
             logger.debug("---Model: " + model + ", Energy Channel: " + ek)
+
             for sphinx in matched_sphinx[model][ek]:
                 for tk in all_obs_thresholds[ek]:
+                    logger.debug('threshold key')
+                    logger.debug(tk)
                     fill_dict_row(sphinx, dict, ek, tk, profname_dict)
                 
     

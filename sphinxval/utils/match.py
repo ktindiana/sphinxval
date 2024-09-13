@@ -2245,7 +2245,11 @@ def setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_o
             #If this is a set of predictions and observations that are
             #allowed to have a set of mismatched energy channels and
             #thresholds
-            if cfg.do_mismatch and energy_key == cfg.mm_energy_key\
+            logger.debug('Is mock working rihgt')
+            logger.debug(cfg.do_mismatch)
+            logger.debug(energy_key)
+            logger.debug(cfg.mm_energy_key)
+            if cfg.do_mismatch and energy_key in cfg.mm_energy_key\
                 and cfg.mm_model in fcast.short_name:
                 sphinx.mismatch = True
                 logger.debug("Mismatched channel allowed.")

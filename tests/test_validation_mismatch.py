@@ -148,6 +148,18 @@ def attributes_of_mismatch_sphinx_obj(keyword, sphinx_obj, energy_channel_key, t
     #     mismatch_ek = 
     # energy_channel_key = obs_energy_channel_key
     # threshold_key = obs_threshold_key
+def attributes_of_mismatch_sphinx_obj(keyword, sphinx_obj, energy_channel_key, threshold_key, mm_pred_energy_channel_key, mm_pred_thresh_key):
+    """
+    Function that takes the keyword from the SPHINX dataframe and matches the keyword
+    to the matched sphinx object to compare/assertEqual to - ensures that the 
+    dataframe is being correctly built
+    MISMATCH TEST
+    """
+    # if getattr(sphinx_obj, 'mismatch', None) == True and keyword != 'Threshold Key':
+    #     mismatch_tk = config.mm_pred_tk
+    #     mismatch_ek = 
+    # energy_channel_key = obs_energy_channel_key
+    # threshold_key = obs_threshold_key
 
     if keyword == "Model": 
         attribute = getattr(sphinx_obj.prediction, 'short_name', None)
@@ -158,8 +170,7 @@ def attributes_of_mismatch_sphinx_obj(keyword, sphinx_obj, energy_channel_key, t
         #     attribute = 
         attribute = threshold_key[energy_channel_key][0]
     elif keyword == 'Mismatch Allowed':
-        attribute = True
-        # attribute = getattr(sphinx_obj, 'mismatch', None)
+        attribute = getattr(sphinx_obj, 'mismatch', None)
     elif keyword == 'Prediction Energy Channel Key':
         if getattr(sphinx_obj, 'mismatch', None) == True:
             
@@ -248,23 +259,23 @@ def attributes_of_mismatch_sphinx_obj(keyword, sphinx_obj, energy_channel_key, t
     elif keyword == "Observed SEP All Clear":
         attribute = getattr(sphinx_obj.observed_all_clear, 'all_clear_boolean', None)
     elif keyword == "Observed SEP Probability":
-        attribute = getattr(sphinx_obj.observed_probability, 'probability_value', None)
+        attribute = getattr(sphinx_obj.observed_probability[config_tests.mm_obs_tk], 'probability_value', None)
     elif keyword == 'Observed SEP Threshold Crossing Time':
-        attribute = getattr(sphinx_obj.observed_threshold_crossing, 'crossing_time', None)        
+        attribute = getattr(sphinx_obj.observed_threshold_crossing[config_tests.mm_obs_tk], 'crossing_time', None)        
     elif keyword == 'Observed SEP Start Time':
-        attribute = getattr(sphinx_obj, 'observed_start_time', '')
+        attribute = getattr(sphinx_obj, 'observed_start_time', '')[config_tests.mm_obs_tk]
     elif keyword == 'Observed SEP End Time':
-        attribute = getattr(sphinx_obj, 'observed_end_time', None)
+        attribute = getattr(sphinx_obj, 'observed_end_time', None)[config_tests.mm_obs_tk]
     elif keyword == 'Observed SEP Duration':
-        attribute = getattr(sphinx_obj, 'observed_duration', None)
+        attribute = getattr(sphinx_obj, 'observed_duration', None)[config_tests.mm_obs_tk]
     elif keyword == 'Observed SEP Fluence':
-        attribute = getattr(sphinx_obj.observed_fluence, 'fluence', None)
+        attribute = getattr(sphinx_obj.observed_fluence[config_tests.mm_obs_tk], 'fluence', None)
     elif keyword == 'Observed SEP Fluence Units':
-        attribute = getattr(sphinx_obj.observed_fluence, 'units', None)
+        attribute = getattr(sphinx_obj.observed_fluence[config_tests.mm_obs_tk], 'units', None)
     elif keyword == 'Observed SEP Fluence Spectrum':
-        attribute = getattr(sphinx_obj.observed_fluence_spectrum, 'fluence_spectrum', None)
+        attribute = getattr(sphinx_obj.observed_fluence_spectrum[config_tests.mm_obs_tk], 'fluence_spectrum', None)
     elif keyword == 'Observed SEP Fluence Spectrum Units':
-        attribute = getattr(sphinx_obj.observed_fluence_spectrum, 'fluence_units', None)
+        attribute = getattr(sphinx_obj.observed_fluence_spectrum[config_tests.mm_obs_tk], 'fluence_units', None)
     elif keyword == "Observed SEP Peak Intensity (Onset Peak)":
         attribute = getattr(sphinx_obj.observed_peak_intensity, 'intensity', None)
     elif keyword == "Observed SEP Peak Intensity (Onset Peak) Units":
@@ -357,6 +368,7 @@ def attributes_of_mismatch_sphinx_obj(keyword, sphinx_obj, energy_channel_key, t
         attribute = getattr(sphinx_obj, 'return_predicted_end_time', None)(threshold_key[energy_channel_key][0])[1]
     elif keyword == 'Last Data Time to Issue Time':
         attribute = getattr(sphinx_obj.prediction, 'last_data_time_to_issue_time' , None)()
+
     elif keyword == 'Last Eruption Time':
         attribute = str(getattr(sphinx_obj, 'last_eruption_time' , None))
     elif keyword == 'Last Trigger Time':
@@ -364,15 +376,15 @@ def attributes_of_mismatch_sphinx_obj(keyword, sphinx_obj, energy_channel_key, t
     elif keyword == 'Last Input Time': 
         attribute = str(getattr(sphinx_obj, 'last_input_time' , None))
     elif keyword == 'Threshold Crossed in Prediction Window': 
-        attribute = getattr(sphinx_obj, 'threshold_crossed_in_pred_win', None)
+        attribute = str(getattr(sphinx_obj, 'threshold_crossed_in_pred_win', None)[config_tests.mm_obs_tk])
     elif keyword == 'Eruption before Threshold Crossed':
-        attribute = getattr(sphinx_obj, 'eruptions_before_threshold_crossing', None)
+        attribute = str(getattr(sphinx_obj, 'eruptions_before_threshold_crossing', None)[config_tests.mm_obs_tk])
     elif keyword == 'Time Difference between Eruption and Threshold Crossing':
-        attribute = getattr(sphinx_obj, 'time_difference_eruptions_threshold_crossing', None)
+        attribute = str(getattr(sphinx_obj, 'time_difference_eruptions_threshold_crossing', None)[config_tests.mm_obs_tk])
     elif keyword == 'Triggers before Threshold Crossing':
-        attribute = getattr(sphinx_obj, 'triggers_before_threshold_crossing', None)
+        attribute = str(getattr(sphinx_obj, 'triggers_before_threshold_crossing', None)[config_tests.mm_obs_tk])
     elif keyword == 'Inputs before Threshold Crossing':
-        attribute = getattr(sphinx_obj, 'inputs_before_threshold_crossing', None)
+        attribute = str(getattr(sphinx_obj, 'inputs_before_threshold_crossing', None)[config_tests.mm_obs_tk])
     elif keyword == 'Triggers before Peak Intensity':
         attribute = str(getattr(sphinx_obj, 'triggers_before_peak_intensity', None))
     elif keyword == 'Time Difference between Triggers and Peak Intensity':
@@ -390,17 +402,17 @@ def attributes_of_mismatch_sphinx_obj(keyword, sphinx_obj, energy_channel_key, t
     elif keyword == 'Time Difference between Inputs and Peak Intensity Max':
         attribute = str(getattr(sphinx_obj, 'time_difference_inputs_peak_intensity_max', None))
     elif keyword == 'Triggers before SEP End':
-        attribute = getattr(sphinx_obj, 'triggers_before_sep_end', None)
+        attribute = str(getattr(sphinx_obj, 'triggers_before_sep_end', None)[config_tests.mm_obs_tk])
     elif keyword == 'Inputs before SEP End':
-        attribute = getattr(sphinx_obj, 'inputs_before_sep_end', None)
+        attribute = str(getattr(sphinx_obj, 'inputs_before_sep_end', None)[config_tests.mm_obs_tk])
     elif keyword == 'Time Difference between Triggers and SEP End':
-        attribute = getattr(sphinx_obj, 'time_difference_triggers_sep_end', None)
+        attribute = str(getattr(sphinx_obj, 'time_difference_triggers_sep_end', None)[config_tests.mm_obs_tk])
     elif keyword == 'Time Difference between Inputs and SEP End':
-        attribute = getattr(sphinx_obj, 'time_difference_inputs_sep_end', None)
+        attribute = str(getattr(sphinx_obj, 'time_difference_inputs_sep_end', None)[config_tests.mm_obs_tk])
     elif keyword == 'Prediction Window Overlap with Observed SEP Event':
-        attribute = getattr(sphinx_obj, 'prediction_window_sep_overlap', None)
+        attribute = str(getattr(sphinx_obj, 'prediction_window_sep_overlap', None)[config_tests.mm_obs_tk])
     elif keyword == 'Ongoing SEP Event':
-        attribute = getattr(sphinx_obj, 'observed_ongoing_events', None)
+        attribute = str(getattr(sphinx_obj, 'observed_ongoing_events', None)[config_tests.mm_obs_tk])
     else:
         attribute = 'Keyword not in sphinx object  ERROR'
     if attribute == {}:
@@ -472,9 +484,9 @@ class Test_AllFields_Mismatch(unittest.TestCase):
         
         
         self.profname_dict = None
-        self.DoResume = False
-        print('mm pred thresh key',self.pred_thresh_key)
-        print('obs thresh key', self.obs_thresholds)
+        
+        logger.debug('mm pred thresh key ' + str(self.pred_thresh_key))
+        logger.debug('obs thresh key ' +  str(self.obs_thresholds))
         self.validation_quantity = ['all_clear', 'awt', 'duration', 'end_time', 'fluence', 'max_flux_in_pred_window', 'peak_intensity_max', 'peak_intensity_max_time', 'peak_intensity' \
             'peak_intensity_time', 'probability', 'start_time', 'threshold_crossing', 'time_profile']
         # self.quantities_tested = ['probability']
@@ -528,7 +540,7 @@ class Test_AllFields_Mismatch(unittest.TestCase):
         validate.calculate_intuitive_metrics(self.dataframe, self.model_names, self.all_energy_channels, \
                 self.obs_thresholds, 'All')
 
-        self.validation_quantity = ['awt', 'duration', 'end_time', 'fluence', 'max_flux_in_pred_window', 'peak_intensity_max', 'peak_intensity_max_time', 'peak_intensity' \
+        self.validation_quantity = ['awt', 'duration', 'end_time', 'fluence', 'max_flux_in_pred_win', 'peak_intensity_max', 'peak_intensity_max_time', 'peak_intensity', \
             'peak_intensity_time', 'probability', 'start_time', 'threshold_crossing', 'time_profile']
         for model in self.model_names:
             for quantities in self.validation_quantity:
@@ -542,23 +554,30 @@ class Test_AllFields_Mismatch(unittest.TestCase):
                 for energy_channels in self.all_energy_channels:
                     for thresholds in self.obs_thresholds[energy_channels]:
                         threshold_shortened = thresholds.rsplit('.')[0]+ '_' + thresholds.rsplit('.')[1] + '.' + thresholds.rsplit('.')[2]
-
+                        logger.debug(quantities)
                         if quantities == 'awt':
                             # pkl_filename = './output\\pkl\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + '.pkl'
                             # csv_filename = './output\\csv\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + '.csv'
-                            pkl_filename = '.\\tests\\output\\pkl\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + "_Predicted SEP All Clear.pkl"
-                            csv_filename = '.\\tests\\output\\csv\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + "_Predicted SEP All Clear.csv"
+                            pkl_filename = '.\\tests\\output\\pkl\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + "_Predicted SEP All Clear_mm.pkl"
+                            csv_filename = '.\\tests\\output\\csv\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + "_Predicted SEP All Clear_mm.csv"
                             self.assertTrue(os.path.isfile(pkl_filename) , \
                                 msg = pkl_filename + ' does not exist, check the file is output correctly')
                             self.assertTrue(os.path.isfile(csv_filename), \
                                 msg = csv_filename + ' does not exist, check the file is output correctly')
-                            
-                        # else:
-                        pkl_filename = '.\\tests\\output\\pkl\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + '.pkl'
-                        csv_filename = '.\\tests\\output\\csv\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + '.csv'
-                    
-                        self.assertTrue(os.path.isfile(pkl_filename), msg = pkl_filename + ' does not exist, check the file is output correctly')
-                        self.assertTrue(os.path.isfile(csv_filename), msg = csv_filename + ' does not exist, check the file is output correctly')
+                        elif quantities == 'threshold_crossing':
+                            pkl_filename = '.\\tests\\output\\pkl\\' + quantities + '_time_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + "_mm.pkl"
+                            csv_filename = '.\\tests\\output\\csv\\' + quantities + '_time_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + "_mm.csv"
+                            self.assertTrue(os.path.isfile(pkl_filename) , \
+                                msg = pkl_filename + ' does not exist, check the file is output correctly')
+                            self.assertTrue(os.path.isfile(csv_filename), \
+                                msg = csv_filename + ' does not exist, check the file is output correctly')
+                        
+                        else:
+                            pkl_filename = '.\\tests\\output\\pkl\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + '_mm.pkl'
+                            csv_filename = '.\\tests\\output\\csv\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + '_mm.csv'
+                        
+                            self.assertTrue(os.path.isfile(pkl_filename), msg = pkl_filename + ' does not exist, check the file is output correctly')
+                            self.assertTrue(os.path.isfile(csv_filename), msg = csv_filename + ' does not exist, check the file is output correctly')
         
     
     def utility_print_docstring(self, function):
