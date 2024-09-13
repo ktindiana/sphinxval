@@ -393,7 +393,7 @@ def check_forecast_json(full_json, energy_channel):
     """
     is_good = True
     dataD = {}
-    if full_json == {} or full_json is None:
+    if not full_json:
         logger.warning("EMPTY forecast json for  "
             + full_json['filename'] +
             ". Initializing all to None.")
@@ -450,7 +450,7 @@ def check_observation_json(full_json, energy_channel):
     """
     is_good = True
     dataD = {}
-    if full_json == {} or full_json is None:
+    if not full_json:
         logger.debug("Empty observation json "
                 + full_json['filename'] +
                 ". Initializing all to None.")
