@@ -969,7 +969,7 @@ def identify_not_clear_forecast(df, validation_type):
             if all_clear[i] == True:
                 continue
             if all_clear[i] == False:
-                return df.iloc[i]
+                return df.iloc[[i]]
             
     if validation_type == "Last":
         #Search in reverse order checking of forecast is False All Clear
@@ -979,7 +979,7 @@ def identify_not_clear_forecast(df, validation_type):
             if all_clear[i] == True:
                 continue
             if all_clear[i] == False:
-                return df.iloc[i]
+                return df.iloc[[i]]
     
     #if make it here, then no All Clear = False forecasts were made
     #for this particular SEP event.
@@ -1018,7 +1018,7 @@ def identify_flux_forecast(df, thresh_key, pred_key, validation_type):
             if df.iloc[i][pred_key] < thresh:
                 continue
             if df.iloc[i][pred_key] >= thresh:
-                return df.iloc[i]
+                return df.iloc[[i]]
             
     if validation_type == "Last":
         #Search in reverse order checking of forecast
@@ -1028,7 +1028,7 @@ def identify_flux_forecast(df, thresh_key, pred_key, validation_type):
             if df.iloc[i][pred_key] < thresh:
                 continue
             if df.iloc[i][pred_key] >= thresh:
-                return df.iloc[i]
+                return df.iloc[[i]]
     
     return pd.DataFrame()
 
@@ -1060,7 +1060,7 @@ def identify_time_forecast(df, pred_key, validation_type):
             if pd.isnull(df.iloc[i][pred_key]):
                 continue
             else:
-                return df.iloc[i]
+                return df.iloc[[i]]
             
     if validation_type == "Last":
         #Search in reverse order checking of forecast is False All Clear
@@ -1068,7 +1068,7 @@ def identify_time_forecast(df, pred_key, validation_type):
             if pd.isnull(df.iloc[i][pred_key]):
                 continue
             else:
-                return df.iloc[i]
+                return df.iloc[[i]]
     
     return pd.DataFrame()
 
@@ -1095,7 +1095,7 @@ def identify_max_forecast(df, pred_key):
 
     #If only one entry, no need to calculate max
     if len(df) == 1:
-        return df.iloc[0]
+        return df.iloc[[0]]
 
     maxval = df[pred_key].max()
     if pd.isnull(maxval):
@@ -1103,7 +1103,7 @@ def identify_max_forecast(df, pred_key):
     
     idx = df[pred_key].idxmax() #first instance of max value
             
-    return df.loc[idx]
+    return df.loc[[idx]]
     
 
 
@@ -1128,7 +1128,7 @@ def calculate_mean_forecast(df, pred_key):
 
     #If only one entry, no need to calculate mean
     if len(df) == 1:
-        return df.iloc[0]
+        return df.iloc[[0]]
 
     cols = df.columns.to_list() #Can I do this without going to lists?
     pred_idx = cols.index(pred_key) #index in row where predicted value is stored
@@ -1159,7 +1159,7 @@ def calculate_mean_forecast(df, pred_key):
     sub.loc[0,'Prediction Window End'] = pred_end
     sub.loc[0,pred_key] = meanval
 
-    return sub.iloc[0]
+    return sub.iloc[[0]]
     
  
  
@@ -1185,6 +1185,7 @@ def extract_all_clear_forecast_type(df, validation_type):
 
     #Create an empty dataframe with the same columns plus AWT info
     sel_df = pd.DataFrame(columns=df.columns) #Selected forecasts
+    sel_df = sel_df.astype(dtype=df.dtypes)
 
     if validation_type == "Max" or validation_type == "Mean":
         return sel_df
@@ -1206,9 +1207,9 @@ def extract_all_clear_forecast_type(df, validation_type):
             #In this case, if row is empty, it is because the model
             #didn't issue an All Clear = False forecast for this
             #event. To account for this, save the first row in sep_sub
-            row = sep_sub.iloc[0]
+            row = sep_sub.iloc[[0]]
 
-        sel_df.loc[len(sel_df)] = row.values
+        sel_df = pd.concat([sel_df,row],ignore_index=True)
         
     return sel_df
 
@@ -1241,6 +1242,7 @@ def extract_probability_forecast_type(df, validation_type):
     
     #Create an empty dataframe with the same columns plus AWT info
     sel_df = pd.DataFrame(columns=df.columns) #Selected forecasts
+    sel_df = sel_df.astype(dtype=df.dtypes)
     
     #First and last probabilities will only save the probabilities for
     #events that the model correctly predicted to occur. The resulting
@@ -1266,7 +1268,7 @@ def extract_probability_forecast_type(df, validation_type):
         if row.empty:
             continue
 
-        sel_df.loc[len(sel_df)] = row.values
+        sel_df = pd.concat([sel_df,row], ignore_index=True)
 
     return sel_df
 
@@ -1302,6 +1304,7 @@ def extract_flux_forecast_type(df, thresh_key, pred_key, time_key, validation_ty
     
     #Create an empty dataframe with the same columns plus AWT info
     sel_df = pd.DataFrame(columns=df.columns) #Selected forecasts
+    sel_df = sel_df.astype(dtype=df.dtypes)
     
     #Extract all unique SEP events
     sep_events = resume.identify_unique(df, time_key)
@@ -1328,7 +1331,7 @@ def extract_flux_forecast_type(df, thresh_key, pred_key, time_key, validation_ty
         if row.empty:
             continue
 
-        sel_df.loc[len(sel_df)] = row.values
+        sel_df = pd.concat([sel_df,row], ignore_index=True)
 
     return sel_df, True
 
@@ -1364,6 +1367,7 @@ def extract_time_forecast_type(df, pred_key, validation_type):
     
     #Create an empty dataframe with the same columns plus AWT info
     sel_df = pd.DataFrame(columns=df.columns) #Selected forecasts
+    sel_df = sel_df.astype(dtype=df.dtypes)
     
     if validation_type == "Max" or validation_type == "Mean":
         return sel_df, False
@@ -1386,8 +1390,9 @@ def extract_time_forecast_type(df, pred_key, validation_type):
             row = identify_time_forecast(sep_sub, pred_key, validation_type)
         
             if not row.empty:
-                sel_df.loc[len(sel_df)] = row.values
-
+                sel_df = pd.concat([sel_df,row], ignore_index=True)
+    
+        
     return sel_df, True
     
 ##### END FIRST, LAST, MEAN, MAX #####################
@@ -2455,10 +2460,6 @@ def threshold_crossing_intuitive_metrics(df, dict, model, energy_key,
     pred = sub['Predicted SEP Threshold Crossing Time'].to_list()
     td = (sub['Predicted SEP Threshold Crossing Time'] - sub['Observed SEP Threshold Crossing Time'])
 
-    #Explicitly cast as timedelta because actions in extract_time_forecast can change
-    #the datatype, which causes problems
-#    td = pd.to_timedelta(td)
-
     td = td.dt.total_seconds()/(60*60) #convert to hours
     td = td.to_list()
     abs_td = [abs(x) for x in td]
@@ -2542,10 +2543,6 @@ def start_time_intuitive_metrics(df, dict, model, energy_key, thresh_key,
     pred = sub['Predicted SEP Start Time'].to_list()
     td = (sub['Predicted SEP Start Time'] - sub['Observed SEP Start Time'])
     
-    #Explicitly cast as timedelta because actions in extract_time_forecast can change
-    #the datatype, which causes problems
-#    td = pd.to_timedelta(td)
-    
     td = td.dt.total_seconds()/(60*60) #convert to hours
     td = td.to_list()
     abs_td = [abs(x) for x in td]
@@ -2628,10 +2625,6 @@ def end_time_intuitive_metrics(df, dict, model, energy_key,
     pred = sub['Predicted SEP End Time'].to_list()
     td = (sub['Predicted SEP End Time'] - sub['Observed SEP End Time'])
 
-    #Explicitly cast as timedelta because actions in extract_time_forecast can change
-    #the datatype, which causes problems
-#    td = pd.to_timedelta(td)
-    
     td = td.dt.total_seconds()/(60*60) #convert to hours
     td = td.to_list()
     abs_td = [abs(x) for x in td]
@@ -2759,6 +2752,7 @@ def peak_intensity_time_intuitive_metrics(df, dict, model, energy_key,
             'Predicted SEP Peak Intensity (Onset Peak)']]
     sub = sub.loc[(sub['Peak Intensity Match Status'] == 'SEP Event')]
 
+
     #Find predicted None values
     noneval = pd.isna(sub['Predicted SEP Peak Intensity (Onset Peak) Time'])
     #Extract only indices for Nones
@@ -2809,9 +2803,6 @@ def peak_intensity_time_intuitive_metrics(df, dict, model, energy_key,
     pred = sub['Predicted SEP Peak Intensity (Onset Peak) Time'].to_list()
     td = (sub['Predicted SEP Peak Intensity (Onset Peak) Time'] - sub['Observed SEP Peak Intensity (Onset Peak) Time'])
 
-    #Explicitly cast as timedelta because actions in extract_time_forecast can change
-    #the datatype, which causes problems
- #   td = pd.to_timedelta(td)
     
     td = td.dt.total_seconds()/(60*60) #convert to hours
     td = td.to_list()
@@ -2918,9 +2909,6 @@ def peak_intensity_max_time_intuitive_metrics(df, dict, model, energy_key,
     pred = sub['Predicted SEP Peak Intensity Max (Max Flux) Time'].to_list()
     td = (sub['Predicted SEP Peak Intensity Max (Max Flux) Time'] - sub['Observed SEP Peak Intensity Max (Max Flux) Time'])
 
-    #Explicitly cast as timedelta because actions in extract_time_forecast_type can change
-    #the datatype, which causes problems
-#    td = pd.to_timedelta(td)
 
     td = td.dt.total_seconds()/(60*60) #convert to hours
     td = td.to_list()
@@ -3500,7 +3488,6 @@ def awt_metrics(df, dict, model, energy_key, thresh_key, validation_type):
             cols.append('AWT to ' + ftype['obs_key'])
         sel_df = pd.DataFrame(columns=cols) #Selected forecasts and AWT results
        
-       
         #Make a list of the unique SEP events in the df
         sep_events = resume.identify_unique(sub, 'Observed SEP Threshold Crossing Time')
         
@@ -3931,6 +3918,7 @@ def intuitive_validation(matched_sphinx, model_names, all_energy_channels,
     df = fill_df(matched_sphinx, model_names, all_energy_channels,
             all_observed_thresholds, profname_dict)
     logger.debug("Completed filling dataframe. ")
+
 
     ### RESUME WILL APPEND DF TO PREVIOUS DF
     if r_df is not None:
