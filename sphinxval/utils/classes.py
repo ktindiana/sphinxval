@@ -1501,7 +1501,7 @@ class SPHINX:
 
         self.end_time_match_status.update({key:""})
         self.observed_end_time.update({key:pd.NaT})
-        self.observed_duration.update({key: pd.NaT})
+        self.observed_duration.update({key: np.nan})
         self.observed_fluence.update({key:Fluence("id",np.nan, None, np.nan, None, np.nan, np.nan)})
  
  
