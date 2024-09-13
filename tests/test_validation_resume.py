@@ -6,11 +6,6 @@ import sys
 from . import config_tests
 from sphinxval.utils import config
 
-module_name = 'config'
-mocked_config = types.ModuleType(module_name)
-sys.modules[module_name] = mocked_config
-mocked_config = Mock(name='sphinxval.utils.' + module_name)
-
 from sphinxval.utils import units_handler as vunits
 from sphinxval.utils import validation as validate
 from sphinxval.utils import metrics
@@ -440,10 +435,10 @@ def mock_df_populate(dict):
     
     dict["Model"].append("Test_model_resume_old")
     dict["Energy Channel Key"].append("min.10.0.max.-1.0.units.MeV")
-    dict["Threshold Key"].append("threshold.10.0.units.1 / (cm2 s sr)")
-    dict["Mismatch Allowed"].append("False")
+    dict["Threshold Key"].append("threshold.1.0.units.1 / (cm2 s sr)")
+    dict["Mismatch Allowed"].append(False)
     dict["Prediction Energy Channel Key"].append("min.10.0.max.-1.0.units.MeV")
-    dict["Prediction Threshold Key"].append("threshold.10.0.units.1 / (cm2 s sr)")
+    dict["Prediction Threshold Key"].append("threshold.1.0.units.1 / (cm2 s sr)")
     dict["Forecast Source"].append("/home/m_sphinx/data/forecasts/enlil2.9e/2022/SEPMOD.20220402_000000.20220402_174512.20220402_172002/json/SEPMOD.2022-04-02T000000Z.2022-04-02T174804Z.json")
     dict["Forecast Path"].append("/home/m_sphinx/data/forecasts/enlil2.9e/2022/SEPMOD.20220402_000000.20220402_174512.20220402_172002/json/")
     dict["Forecast Issue Time"].append(datetime.datetime(year = 2022, month = 4, day = 2, hour =  17, minute = 48, second =4))
@@ -452,12 +447,12 @@ def mock_df_populate(dict):
             
             #OBSERVATIONS
     dict["Number of CMEs"].append("1")
-    dict["CME Start Time"].append("2022-04-02 13:38:00") #Timestamp of 1st coronagraph image CME is visible in
+    dict["CME Start Time"].append(datetime.datetime(year = 2022, month = 4, day = 2, hour = 13, minute =38)) #Timestamp of 1st coronagraph image CME is visible in
     dict["CME Liftoff Time"].append(""), #Timestamp of coronagraph image with 1st indication of CME liftoff (used by CACTUS)
-    dict["CME Latitude"].append("-15.0")
-    dict["CME Longitude"].append("54.0")
-    dict["CME Speed"].append("1370.0")
-    dict["CME Half Width"].append("45.0")
+    dict["CME Latitude"].append(-15.0)
+    dict["CME Longitude"].append(54.0)
+    dict["CME Speed"].append(1370.0)
+    dict["CME Half Width"].append(45.0)
     dict["CME PA"].append("")
     dict["CME Catalog"].append("2022-04-02T13:38:00-CME-001")
     dict["Number of Flares"].append("0")
@@ -478,8 +473,8 @@ def mock_df_populate(dict):
     dict["Observed SEP Threshold Crossing Time"].append(datetime.datetime(year = 2022, month = 4, day = 2,  hour = 14, minute = 40))
     dict["Observed SEP Start Time"].append(datetime.datetime(year = 2022, month = 4, day = 2,  hour = 14, minute = 40))
     dict["Observed SEP End Time"].append(datetime.datetime(year = 2022, month = 4, day = 3,  hour = 0, minute = 10))
-    dict["Observed SEP Duration"].append("9.5")
-    dict["Observed SEP Fluence"].append("7608871.653746902")
+    dict["Observed SEP Duration"].append(9.5)
+    dict["Observed SEP Fluence"].append(7608871.653746902)
     dict["Observed SEP Fluence Units"].append("1 / cm2")
     dict["Observed SEP Fluence Spectrum"].append("[{'energy_min': 1, 'energy_max': -1, 'fluence': 82103217.4768976}, {'energy_min': 5, 'energy_max': -1, 'fluence': 17401577.903146088}, {'energy_min': 10, 'energy_max': -1, 'fluence': 7608871.653746902}, {'energy_min': 30, 'energy_max': -1, 'fluence': 1637019.4533599885}, {'energy_min': 50, 'energy_max': -1, 'fluence': 644477.238211527}, {'energy_min': 100, 'energy_max': -1, 'fluence': 216056.99133072246}]")
     dict["Observed SEP Fluence Spectrum Units"].append("1 / cm2")
@@ -508,10 +503,10 @@ def mock_df_populate(dict):
     dict["Start Time Match Status"].append("SEP Event")
     dict["Predicted SEP End Time"].append(np.datetime64('NaT'))
     dict["End Time Match Status"].append("SEP Event")
-    dict["Predicted SEP Duration"].append(None)
+    dict["Predicted SEP Duration"].append(48)
     dict["Duration Match Status"].append("SEP Event")
-    dict["Predicted SEP Fluence"].append(None)
-    dict["Predicted SEP Fluence Units"].append("")
+    dict["Predicted SEP Fluence"].append(123)
+    dict["Predicted SEP Fluence Units"].append("1 / cm2")
     dict["Fluence Match Status"].append("SEP Event")
     dict["Predicted SEP Fluence Spectrum"].append(None)
     dict["Predicted SEP Fluence Spectrum Units"].append("")
@@ -563,7 +558,7 @@ def mock_df_populate(dict):
 
 
 
-class Test_AllFields_Resume(unittest.TestCase):
+class Test_Resume(unittest.TestCase):
 
     def load_verbosity(self):
         self.verbosity = utility_get_verbosity()
@@ -572,13 +567,8 @@ class Test_AllFields_Resume(unittest.TestCase):
     
     def step_1(self):
         """
-        Tests that the dataframe is built correctly with the correct fields being filled in/added.
-        The observation and forecast have exactly the same observation/prediction windows. 
-        Matching requires (at a minimum) that there is a prediction window start/end with an observed
-        SEP start time within the prediction window and that the last data time/trigger occur before the
-        observed SEP start time.
-        Observed all clear is False
-        Forecast all clear is False
+        Step 1 prepares the matched_sphinx object from the input jsons as we normally would
+        do in the sphinx workflow
         """
         validate.prepare_outdirs()
         
@@ -613,9 +603,8 @@ class Test_AllFields_Resume(unittest.TestCase):
         self.sphinx, self.obs_thresholds, self.obs_sep_events = utility_match_sphinx(self.all_energy_channels, self.model_names, observation_objects, forecast_objects)
         self.profname_dict = None
 
-        self.validation_quantity = ['all_clear', 'awt', 'duration', 'end_time', 'fluence', 'max_flux_in_pred_window', 'peak_intensity_max', 'peak_intensity_max_time', 'peak_intensity' \
-            'peak_intensity_time', 'probability', 'start_time', 'threshold_crossing', 'time_profile']
-        # self.quantities_tested = ['probability']
+        
+        
         self.validation_type = ["All", "First", "Last", "Max", "Mean"]
 
         self.dataframe = validate.fill_df(self.sphinx, self.model_names, self.all_energy_channels, \
@@ -648,6 +637,13 @@ class Test_AllFields_Resume(unittest.TestCase):
         
 
     def step_2(self):
+        """ 
+        step 2 creates a fake pickle file via mock and then the mocked file is 'read in' where
+        we tell it what data is seen - via the mock_df_populate. Once this happens
+        we go back to the normal resume schema which concatenates the mock data
+        with the dataframe from step 1. Test is to show the length of this new data frame
+        is equal to the length of the fake df and the step 1 df
+        """
         self.Resume = '.\\tests\\files\\fake_resume_dataframe.pkl'
         mock_dict = validate.initialize_dict()
         data = mock_df_populate(mock_dict)
@@ -680,8 +676,53 @@ class Test_AllFields_Resume(unittest.TestCase):
         logger.debug("Completed writing SPHINX_dataframe to file.")
         self.assertEqual(len(self.df), len(r_df)+len(self.dataframe), msg = 'The dataframe from the resume feature is not equal to the "old" dataframe and the new dataframe')
     def step_3(self):
+        """
+        step 3 uses the step 2 dataframe to follow the rest of the normal validation workflow.
+        The tests here look to the output files created as a check to ensure the workflow
+        is followed as expected - since we have 2 models here you expect metric outputs
+        for the various quantities as well as the selections for those quantities for each model
+
+        """
         validate.calculate_intuitive_metrics(self.df, self.model_names, self.all_energy_channels, \
                 self.all_observed_thresholds, 'All')
+        # taking the 'easy way' of doing this test- just going to check that there are outputs for each
+        # of the models that are created - should be files for 'Test_model_0' and "Test_model_resume_old"
+        # the validation_quantity array lists the expected quantities that should have been calculated based
+        # on the input json and the resume stuff, so there may be files created it doesn't test for, like end
+        # time since both models don't output for that
+        self.validation_quantity = ['all_clear','duration', 'fluence', 'max_flux_in_pred_win', 'peak_intensity_max', 'peak_intensity_max_time', 'peak_intensity', \
+            'peak_intensity_time', 'time_profile']
+        for model in self.model_names:
+            for quantities in self.validation_quantity:
+               
+                metrics_filename = '.\\tests\\output\\csv\\' + quantities + '_metrics' 
+                self.assertTrue(os.path.isfile(metrics_filename + '.csv'), msg = metrics_filename + '.csv does not exist, check the file is output correctly')
+                metrics_filename = '.\\tests\\output\\pkl\\' + quantities + '_metrics' 
+                self.assertTrue(os.path.isfile(metrics_filename + '.pkl'), msg = metrics_filename + '.pkl does not exist, check the file is output correctly')
+                
+                
+                for energy_channels in self.all_energy_channels:
+                    for thresholds in self.obs_thresholds[energy_channels]:
+                        threshold_shortened = thresholds.rsplit('.')[0]+ '_' + thresholds.rsplit('.')[1] + '.' + thresholds.rsplit('.')[2]
+
+                        # if quantities == 'awt':
+                        #     # pkl_filename = './output\\pkl\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + '.pkl'
+                        #     # csv_filename = './output\\csv\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + '.csv'
+                        #     pkl_filename = '.\\tests\\output\\pkl\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + "_Predicted SEP All Clear.pkl"
+                        #     csv_filename = '.\\tests\\output\\csv\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + "_Predicted SEP All Clear.csv"
+                        #     self.assertTrue(os.path.isfile(pkl_filename) , \
+                        #         msg = pkl_filename + ' does not exist, check the file is output correctly')
+                        #     self.assertTrue(os.path.isfile(csv_filename), \
+                        #         msg = csv_filename + ' does not exist, check the file is output correctly')
+                            
+                        # else:
+                        pkl_filename = '.\\tests\\output\\pkl\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + '.pkl'
+                        csv_filename = '.\\tests\\output\\csv\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + '.csv'
+                    
+                        self.assertTrue(os.path.isfile(pkl_filename), msg = pkl_filename + ' does not exist, check the file is output correctly')
+                        self.assertTrue(os.path.isfile(csv_filename), msg = csv_filename + ' does not exist, check the file is output correctly')
+                            
+
         
     
     def utility_print_docstring(self, function):
@@ -694,22 +735,7 @@ class Test_AllFields_Resume(unittest.TestCase):
             if name.startswith("step"):
                 yield name, getattr(self, name)
         
-    # @make_docstring_printable
-    # def test_df_all_clear_1(this, self):
-    #     """
-    #     Tests that the dataframe is built correctly with the correct fields being filled in/added.
-    #     The observation and forecast have exactly the same observation/prediction windows. 
-    #     Matching requires (at a minimum) that there is a prediction window start/end with an observed
-    #     SEP start time within the prediction window and that the last data time/trigger occur before the
-    #     observed SEP start time.
-    #     Observed all clear is False
-    #     Forecast all clear is False
 
-    #     The tests in this block are:
-    #         Observed SEP All Clear is False
-    #         Predicted SEP All Clear is False
-
-    #     """
     # @patch('sphinxval.utils.config', 'config_tests')
     @patch('sphinxval.utils.config.outpath', './tests/output')
     @patch('sphinxval.utils.config.logpath', './tests/logs')
@@ -730,4 +756,4 @@ class Test_AllFields_Resume(unittest.TestCase):
                 step()
             except Exception as e:
                 self.fail("{} failed ({}: {})".format(step, type(e), e))
-        # utility_delete_output()
+        

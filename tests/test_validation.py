@@ -345,30 +345,21 @@ def attributes_of_sphinx_obj(keyword, sphinx_obj, energy_channel_key, threshold_
     to the matched sphinx object to compare/assertEqual to - ensures that the 
     dataframe is being correctly built
     """
-    # if getattr(sphinx_obj, 'mismatch', None) == True and keyword != 'Threshold Key':
-    #     mismatch_tk = config.mm_pred_tk
-    #     mismatch_ek = 
     if keyword == "Model": 
         attribute = getattr(sphinx_obj.prediction, 'short_name', None)
     elif keyword == "Energy Channel Key":
         attribute = energy_channel_key
     elif keyword == 'Threshold Key':
-        # if getattr(sphinx_obj, 'mismatch', None) == True
-        #     attribute = 
         attribute = threshold_key[energy_channel_key][0]
     elif keyword == 'Mismatch Allowed':
         attribute = getattr(sphinx_obj, 'mismatch', None)
     elif keyword == 'Prediction Energy Channel Key':
         if getattr(sphinx_obj, 'mismatch', None) == True:
-            
-            # attribute = mm_pred_energy_channel
             attribute = config.mm_pred_ek
         else:
             attribute = energy_channel_key
     elif keyword == 'Prediction Threshold Key':
         if getattr(sphinx_obj, 'mismatch', None) == True:
-           
-            # attribute = mm_pred_threshold
             attribute = config.mm_pred_tk
         else:
             attribute = threshold_key[energy_channel_key][0]

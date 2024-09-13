@@ -27,3 +27,5 @@ sphinxval/utils/sepval_post_analysis.py
 
 *tmp.txt
 **/*tmp.txt
+
+/tests/output/*

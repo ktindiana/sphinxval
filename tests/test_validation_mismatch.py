@@ -46,33 +46,13 @@ logger = logging.getLogger(__name__)
 
 
 """
-General outline as I start the validation.py workflow unittest
-    validation.py (intuitive_validation function) is called after matching,
-    where intuitive_validation is handed: 
-        matched_sphinx: matched sphinx object 
-        model_names
-        all_energy_channels
-        all_observed_thresholds
-        observed_sep_events
-        profname_dict
-        DoResume
-        r_df
-    There are three core elements to intuitive_validation:
-        Fill the SPHINX dataframe using the obs/pred matching pairs
-            fill_df(matched_sphinx, model_names, all_energy_channels,
-            all_observed_thresholds, profname_dict, DoResume)
-        Checking if we are resuming a SPHINX validation via DoResume
-            if DoResume:
-        Performing the validation 
-            validation_type = ["All", "First", "Last", "Max", "Mean"]
-            for type in validation_type:
-            calculate_intuitive_metrics(df, model_names, all_energy_channels,
-                all_observed_thresholds, type)
-    My thinking is that each class I build will go through each of the core
-    elements of intuitive_validation but supply different matched_sphinx objects
-    of different kinds of forecast types. Each test in the class will then be
-    testing the various output of fill_df and the dictionary for each of the
-    validation sections that class goes through. 
+Mismatch unit test requires a slightly different 
+set up from the regular validation unit test
+since the dataframe takes different values
+from the config file (which I mock so that I can
+more easily control the values of). Also since
+this is mismatch the output file names may contain
+_mm at the end 
 """
 
 
@@ -178,7 +158,8 @@ def attributes_of_mismatch_sphinx_obj(keyword, sphinx_obj, energy_channel_key, t
         #     attribute = 
         attribute = threshold_key[energy_channel_key][0]
     elif keyword == 'Mismatch Allowed':
-        attribute = getattr(sphinx_obj, 'mismatch', None)
+        attribute = True
+        # attribute = getattr(sphinx_obj, 'mismatch', None)
     elif keyword == 'Prediction Energy Channel Key':
         if getattr(sphinx_obj, 'mismatch', None) == True:
             
@@ -476,7 +457,20 @@ class Test_AllFields_Mismatch(unittest.TestCase):
 
         self.pred_thresh_key = {self.pred_energy_key: [config_tests.mm_pred_tk]}
         
+
         self.sphinx, self.obs_thresholds, self.obs_sep_events = utility_match_sphinx(self.all_energy_channels, self.model_names, observation_objects, forecast_objects)
+        
+        
+        logger.debug('Testing mismatched tk and ek')
+        logger.debug(config_tests.mm_obs_energy_channel)
+        logger.debug(config_tests.mm_obs_threshold)
+        logger.debug(config_tests.mm_pred_tk)
+        logger.debug(config.do_mismatch)
+        
+        
+        
+        
+        
         self.profname_dict = None
         self.DoResume = False
         print('mm pred thresh key',self.pred_thresh_key)
@@ -514,16 +508,58 @@ class Test_AllFields_Mismatch(unittest.TestCase):
 
            
         
+        
+
+    def step_2(self):
+        """
+        step 2 writes the dataframe to a file and then checks that those files exist
+        """
+        validate.write_df(self.dataframe, "SPHINX_dataframe")
+        
+        self.assertTrue(os.path.isfile('.\\tests\\output\\csv\\SPHINX_dataframe.csv'), msg = 'SPHINX_dataframe.csv does not exist, check the file is output correctly')
+        self.assertTrue(os.path.isfile('.\\tests\\output\\pkl\\SPHINX_dataframe.pkl'), msg = 'SPHINX_dataframe.pkl does not exist, check the file is output correctly')
+    
+    def step_3(self):
+        """
+        step 3 does the actual validation workflow on the mismatch dataframe, and then tests its output files
+        exist
+        """
+        
         validate.calculate_intuitive_metrics(self.dataframe, self.model_names, self.all_energy_channels, \
                 self.obs_thresholds, 'All')
 
-    def step_2(self):
-        print('Test for DoResume feature - this is false right now though so moving on after a quick assertFalse')
-        self.assertFalse(self.DoResume)
-    
-    def step_3(self):
+        self.validation_quantity = ['awt', 'duration', 'end_time', 'fluence', 'max_flux_in_pred_window', 'peak_intensity_max', 'peak_intensity_max_time', 'peak_intensity' \
+            'peak_intensity_time', 'probability', 'start_time', 'threshold_crossing', 'time_profile']
+        for model in self.model_names:
+            for quantities in self.validation_quantity:
+               
+                metrics_filename = '.\\tests\\output\\csv\\' + quantities + '_metrics' 
+                self.assertTrue(os.path.isfile(metrics_filename + '.csv'), msg = metrics_filename + '.csv does not exist, check the file is output correctly')
+                metrics_filename = '.\\tests\\output\\pkl\\' + quantities + '_metrics' 
+                self.assertTrue(os.path.isfile(metrics_filename + '.pkl'), msg = metrics_filename + '.pkl does not exist, check the file is output correctly')
+                
+                
+                for energy_channels in self.all_energy_channels:
+                    for thresholds in self.obs_thresholds[energy_channels]:
+                        threshold_shortened = thresholds.rsplit('.')[0]+ '_' + thresholds.rsplit('.')[1] + '.' + thresholds.rsplit('.')[2]
+
+                        if quantities == 'awt':
+                            # pkl_filename = './output\\pkl\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + '.pkl'
+                            # csv_filename = './output\\csv\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + '.csv'
+                            pkl_filename = '.\\tests\\output\\pkl\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + "_Predicted SEP All Clear.pkl"
+                            csv_filename = '.\\tests\\output\\csv\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + "_Predicted SEP All Clear.csv"
+                            self.assertTrue(os.path.isfile(pkl_filename) , \
+                                msg = pkl_filename + ' does not exist, check the file is output correctly')
+                            self.assertTrue(os.path.isfile(csv_filename), \
+                                msg = csv_filename + ' does not exist, check the file is output correctly')
+                            
+                        # else:
+                        pkl_filename = '.\\tests\\output\\pkl\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + '.pkl'
+                        csv_filename = '.\\tests\\output\\csv\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + '.csv'
+                    
+                        self.assertTrue(os.path.isfile(pkl_filename), msg = pkl_filename + ' does not exist, check the file is output correctly')
+                        self.assertTrue(os.path.isfile(csv_filename), msg = csv_filename + ' does not exist, check the file is output correctly')
         
-        print('Made it to step 3')
     
     def utility_print_docstring(self, function):
         if self.verbosity == 2:
@@ -564,13 +600,12 @@ class Test_AllFields_Mismatch(unittest.TestCase):
     @patch('sphinxval.utils.config.mm_obs_tk', config_tests.mm_obs_tk)
     
     def test_all(self):
-        print("Test_AllFields_Mismatch starts here")
-        logger.debug('Testing mismatched tk and ek')
-        logger.debug(config_tests.mm_obs_energy_channel)
-        logger.debug(config_tests.mm_obs_threshold)
-        logger.debug(config_tests.mm_pred_tk)
-
         validate.prepare_outdirs()
+        utility_delete_output()
+        
+        
+
+        
         for name, step in self._steps():
             try:
                 step()
