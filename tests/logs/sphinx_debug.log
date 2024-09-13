@@ -1,151 +1,139 @@
-2024-09-13 13:30:53 - [INFO] sphinxval.utils.match.match_all_forecasts,2488: Compiling all observations into a dataframe.
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.compile_all_obs,219: Extracting observation arrays for matching for threshold min.10.0.max.-1.0.units.MeV
-2024-09-13 13:30:53 - [INFO] sphinxval.utils.match.match_all_forecasts,2491: Completed observations dataframe, identifying all thresholds applied to observed energy channels.
-2024-09-13 13:30:53 - [INFO] sphinxval.utils.match.match_all_forecasts,2500: Starting matching process. Setting up dictionary for observed SEP events to go into a list for each model.
-2024-09-13 13:30:53 - [INFO] sphinxval.utils.match.setup_match_all_forecasts,2227: MATCHING SETUP STARTING FOR: min.10.0.max.-1.0.units.MeV
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2248: Is mock working rihgt
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2249: True
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2250: min.10.0.max.-1.0.units.MeV
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2251: min.10.0.max.-1.0.units.MeV_min.5.0.max.-1.0.units.MeV
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2255: Mismatched channel allowed.
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2263: 
+2024-09-13 15:58:10 - [INFO] sphinxval.utils.match.match_all_forecasts,2484: Compiling all observations into a dataframe.
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.compile_all_obs,219: Extracting observation arrays for matching for threshold min.10.0.max.-1.0.units.MeV
+2024-09-13 15:58:10 - [INFO] sphinxval.utils.match.match_all_forecasts,2487: Completed observations dataframe, identifying all thresholds applied to observed energy channels.
+2024-09-13 15:58:10 - [INFO] sphinxval.utils.match.match_all_forecasts,2496: Starting matching process. Setting up dictionary for observed SEP events to go into a list for each model.
+2024-09-13 15:58:10 - [INFO] sphinxval.utils.match.setup_match_all_forecasts,2227: MATCHING SETUP STARTING FOR: min.10.0.max.-1.0.units.MeV
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2259: 
 
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2264: Test_model_0
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2265: ./tests/files/forecasts/validation/mismatch/pred_all_clear_false_mismatch.json
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2266: Issue time: 2000-01-01 00:00:00
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2267: Last trigger time: 2000-01-01 00:00:00
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2268: Last eruption time: 2000-01-01 00:00:00
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2269: Last input time: None
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.pred_and_obs_overlap,320: Prediction window: 2000-01-01 00:01:00 to 2000-01-02 00:00:00
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2291: Prediction and Observation windows overlap (if any): 
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2300:   ./tests/files/observations/validation/mismatch/all_clear_false.json
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2302:   ./tests/files/observations/validation/mismatch\obs_flux00.txt
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.onset_peak_criteria,679: Stored Peak Intensity Time:  [True]
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.onset_peak_criteria,681:   Observed peak_intensity time: 2000-01-01 01:00:00
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.onset_peak_criteria,698: Triggers before Peak Time and time difference:  True
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.onset_peak_criteria,700:   -1.0
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.onset_peak_criteria,702:   Observed peak_intensity time: 2000-01-01 01:00:00
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.onset_peak_criteria,718: Inputs before Peak Intensity Time and time difference  None
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.onset_peak_criteria,720:   None
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.onset_peak_criteria,722:   Observed peak_intensity time: 2000-01-01 01:00:00
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.max_flux_criteria,765: Stored Max Flux Time:  True
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.max_flux_criteria,767:   Observed peak_intensity_max time: 2000-01-01 01:00:00
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.max_flux_criteria,784: Triggers before Max Intensity and Time Difference:  True
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.max_flux_criteria,786:   -1.0
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.max_flux_criteria,788:   Observed peak_intensity_max time: 2000-01-01 01:00:00
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.max_flux_criteria,804: Inputs before Max Intensity Time and Time Difference:  None
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.max_flux_criteria,806:   None
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.max_flux_criteria,808:   Observed peak_intensity time: 2000-01-01 01:00:00
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2336: Checking Threshold: {'threshold': 10.0, 'threshold_units': Unit("1 / (cm2 s sr)")}
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2345: Predicted threshold associated with 'mismatched' observational threshold {'threshold': 1, 'threshold_units': Unit("1 / (cm2 s sr)")}
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.threshold_cross_criteria,847: Threshold crossed in prediction window?:  True
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.before_threshold_crossing,895: Triggers before threshold crossing and time difference:  True
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.before_threshold_crossing,897:   -1.0
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.before_threshold_crossing,902:   Observed threshold crossing time: 2000-01-01 01:00:00
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.before_threshold_crossing,918: Inputs before threshold crossing time and time difference:  None
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.before_threshold_crossing,920:   None
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.before_threshold_crossing,925:   Observed threshold crossing time: 2000-01-01 01:00:00
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.before_sep_end,971: Triggers before SEP end and time difference:  True
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.before_sep_end,973:   -24.0
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.before_sep_end,989: Inputs before SEP end and time difference:  None
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.before_sep_end,991:   None
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.eruption_before_threshold_crossing,1037: Eruption before SEP crossing time and time difference:  True
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.eruption_before_threshold_crossing,1039:   -1.0
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.eruption_before_threshold_crossing,1044:   Observed threshold crossing time: 2000-01-01 01:00:00
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.observed_ongoing_event,1254: Ongoing observed SEP event at start of prediction window (if any):
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2424: Model: Test_model_0
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2425: Forecast energy channel: {'min': 10, 'max': -1, 'units': Unit("MeV")}
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2426: Prediction Thresholds: [{'threshold': 10.0, 'threshold_units': Unit("1 / (cm2 s sr)")}]
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2427: Observed Thresholds: [{'threshold': 1, 'threshold_units': Unit("1 / (cm2 s sr)")}]
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2428: Forecast index (position in matched_sphinx): 0
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2248: Is mock working rihgt
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2249: True
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2250: min.10.0.max.-1.0.units.MeV
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2251: min.10.0.max.-1.0.units.MeV_min.5.0.max.-1.0.units.MeV
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2255: Mismatched channel allowed.
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2263: 
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2260: Test_model_0
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2261: ./tests/files/forecasts/validation/all/pred_timeprof_all_clear_false.json
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2262: Issue time: 2000-01-01 00:00:00
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2263: Last trigger time: 2000-01-01 00:00:00
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2264: Last eruption time: 2000-01-01 00:00:00
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2265: Last input time: None
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.pred_and_obs_overlap,320: Prediction window: 2000-01-01 00:01:00 to 2000-01-02 00:00:00
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2287: Prediction and Observation windows overlap (if any): 
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2296:   ./tests/files/observations/validation/all/all_clear_false.json
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2298:   ./tests/files/observations/validation/all\obs_flux00.txt
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.onset_peak_criteria,679: Stored Peak Intensity Time:  [True]
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.onset_peak_criteria,681:   Observed peak_intensity time: 2000-01-01 01:00:00
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.onset_peak_criteria,698: Triggers before Peak Time and time difference:  True
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.onset_peak_criteria,700:   -1.0
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.onset_peak_criteria,702:   Observed peak_intensity time: 2000-01-01 01:00:00
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.onset_peak_criteria,718: Inputs before Peak Intensity Time and time difference  None
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.onset_peak_criteria,720:   None
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.onset_peak_criteria,722:   Observed peak_intensity time: 2000-01-01 01:00:00
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.max_flux_criteria,765: Stored Max Flux Time:  True
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.max_flux_criteria,767:   Observed peak_intensity_max time: 2000-01-01 01:00:00
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.max_flux_criteria,784: Triggers before Max Intensity and Time Difference:  True
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.max_flux_criteria,786:   -1.0
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.max_flux_criteria,788:   Observed peak_intensity_max time: 2000-01-01 01:00:00
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.max_flux_criteria,804: Inputs before Max Intensity Time and Time Difference:  None
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.max_flux_criteria,806:   None
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.max_flux_criteria,808:   Observed peak_intensity time: 2000-01-01 01:00:00
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2332: Checking Threshold: {'threshold': 1.0, 'threshold_units': Unit("1 / (cm2 s sr)")}
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.threshold_cross_criteria,847: Threshold crossed in prediction window?:  True
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.before_threshold_crossing,895: Triggers before threshold crossing and time difference:  True
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.before_threshold_crossing,897:   -1.0
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.before_threshold_crossing,902:   Observed threshold crossing time: 2000-01-01 01:00:00
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.before_threshold_crossing,918: Inputs before threshold crossing time and time difference:  None
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.before_threshold_crossing,920:   None
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.before_threshold_crossing,925:   Observed threshold crossing time: 2000-01-01 01:00:00
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.before_sep_end,971: Triggers before SEP end and time difference:  True
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.before_sep_end,973:   -24.0
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.before_sep_end,989: Inputs before SEP end and time difference:  None
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.before_sep_end,991:   None
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.eruption_before_threshold_crossing,1037: Eruption before SEP crossing time and time difference:  True
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.eruption_before_threshold_crossing,1039:   -1.0
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.eruption_before_threshold_crossing,1044:   Observed threshold crossing time: 2000-01-01 01:00:00
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.observed_ongoing_event,1254: Ongoing observed SEP event at start of prediction window (if any):
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2420: Model: Test_model_0
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2421: Forecast energy channel: {'min': 10, 'max': -1, 'units': Unit("MeV")}
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2422: Prediction Thresholds: [{'threshold': 1.0, 'threshold_units': Unit("1 / (cm2 s sr)")}]
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2423: Observed Thresholds: [{'threshold': 1.0, 'threshold_units': Unit("1 / (cm2 s sr)")}]
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2424: Forecast index (position in matched_sphinx): 0
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2259: 
 
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2264: Test_model_0
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2265: ./tests/files/forecasts/validation/mismatch/pred_all_clear_false_mismatch_02.json
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2266: Issue time: 2001-01-01 00:00:00
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2267: Last trigger time: 2001-01-01 00:00:00
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2268: Last eruption time: 2001-01-01 00:00:00
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2269: Last input time: None
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.pred_and_obs_overlap,320: Prediction window: 2001-01-01 00:01:00 to 2001-01-02 00:00:00
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2291: Prediction and Observation windows overlap (if any): 
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2300:   ./tests/files/observations/validation/mismatch/all_clear_false_02.json
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2302:   ./tests/files/observations/validation/mismatch\obs_flux02.txt
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.onset_peak_criteria,679: Stored Peak Intensity Time:  [True]
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.onset_peak_criteria,681:   Observed peak_intensity time: 2001-01-01 01:00:00
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.onset_peak_criteria,698: Triggers before Peak Time and time difference:  True
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.onset_peak_criteria,700:   -1.0
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.onset_peak_criteria,702:   Observed peak_intensity time: 2001-01-01 01:00:00
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.onset_peak_criteria,718: Inputs before Peak Intensity Time and time difference  None
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.onset_peak_criteria,720:   None
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.onset_peak_criteria,722:   Observed peak_intensity time: 2001-01-01 01:00:00
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.max_flux_criteria,765: Stored Max Flux Time:  True
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.max_flux_criteria,767:   Observed peak_intensity_max time: 2001-01-01 01:00:00
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.max_flux_criteria,784: Triggers before Max Intensity and Time Difference:  True
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.max_flux_criteria,786:   -1.0
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.max_flux_criteria,788:   Observed peak_intensity_max time: 2001-01-01 01:00:00
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.max_flux_criteria,804: Inputs before Max Intensity Time and Time Difference:  None
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.max_flux_criteria,806:   None
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.max_flux_criteria,808:   Observed peak_intensity time: 2001-01-01 01:00:00
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2336: Checking Threshold: {'threshold': 10.0, 'threshold_units': Unit("1 / (cm2 s sr)")}
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2345: Predicted threshold associated with 'mismatched' observational threshold {'threshold': 1, 'threshold_units': Unit("1 / (cm2 s sr)")}
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.threshold_cross_criteria,847: Threshold crossed in prediction window?:  True
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.before_threshold_crossing,895: Triggers before threshold crossing and time difference:  True
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.before_threshold_crossing,897:   -1.0
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.before_threshold_crossing,902:   Observed threshold crossing time: 2001-01-01 01:00:00
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.before_threshold_crossing,918: Inputs before threshold crossing time and time difference:  None
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.before_threshold_crossing,920:   None
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.before_threshold_crossing,925:   Observed threshold crossing time: 2001-01-01 01:00:00
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.before_sep_end,971: Triggers before SEP end and time difference:  True
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.before_sep_end,973:   -24.0
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.before_sep_end,989: Inputs before SEP end and time difference:  None
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.before_sep_end,991:   None
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.eruption_before_threshold_crossing,1037: Eruption before SEP crossing time and time difference:  True
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.eruption_before_threshold_crossing,1039:   -1.0
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.eruption_before_threshold_crossing,1044:   Observed threshold crossing time: 2001-01-01 01:00:00
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.observed_ongoing_event,1254: Ongoing observed SEP event at start of prediction window (if any):
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2424: Model: Test_model_0
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2425: Forecast energy channel: {'min': 10, 'max': -1, 'units': Unit("MeV")}
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2426: Prediction Thresholds: [{'threshold': 10.0, 'threshold_units': Unit("1 / (cm2 s sr)")}]
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2427: Observed Thresholds: [{'threshold': 1, 'threshold_units': Unit("1 / (cm2 s sr)")}]
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2428: Forecast index (position in matched_sphinx): 1
-2024-09-13 13:30:53 - [INFO] sphinxval.utils.match.setup_match_all_forecasts,2435: MATCH SETUP PROGRESS: Completed 2 matches in 0.016 seconds at a rate of 127.4 forecasts/second.
-2024-09-13 13:30:53 - [INFO] sphinxval.utils.match.setup_match_all_forecasts,2440: STATS: SPHINX objects created for Test_model_0, min.10.0.max.-1.0.units.MeV: 2
-2024-09-13 13:30:53 - [INFO] sphinxval.utils.match.setup_match_all_forecasts,2444: STATS: TOTAL SPHINX OBJECTS: 2
-2024-09-13 13:30:53 - [INFO] sphinxval.utils.match.match_all_forecasts,2505: MATCHING STARTING FOR: Test_model_0
-2024-09-13 13:30:53 - [INFO] sphinxval.utils.match.match_all_forecasts,2509: MATCHING STARTING FOR: min.10.0.max.-1.0.units.MeV
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.match_observed_onset_peak,1349: Observed peak_intensity matched:
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.match_observed_onset_peak,1350: ./tests/files/observations/validation/mismatch/all_clear_false.json
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.match_observed_onset_peak,1351: 10.0
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.match_observed_onset_peak,1352: 2000-01-01 01:00:00
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.match_all_clear,1521: Prediction window: 2000-01-01 00:01:00 to 2000-01-02 00:00:00
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.match_all_clear,1524: Observed all_clear matched:
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.match_all_clear,1525:   ./tests/files/observations/validation/mismatch/all_clear_false.json
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.match_all_clear,1526:   False
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.match_sep_quantities,1667: Prediction window: 2000-01-01 00:01:00 to 2000-01-02 00:00:00
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.match_sep_quantities,1670: Observed SEP event matched:
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.match_sep_quantities,1671:   ./tests/files/observations/validation/mismatch/all_clear_false.json
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.match_sep_end_time,1769: Observed SEP end time matched:
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.match_sep_end_time,1770:   ./tests/files/observations/validation/mismatch/all_clear_false.json
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.match_all_forecasts,2605: 
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2260: Test_model_0
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2261: ./tests/files/forecasts/validation/all/pred_timeprof_all_clear_true.json
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2262: Issue time: 2001-01-01 01:30:00
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2263: Last trigger time: 2001-01-01 01:00:00
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2264: Last eruption time: 2001-01-01 01:00:00
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2265: Last input time: None
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.pred_and_obs_overlap,320: Prediction window: 2001-01-01 00:00:00 to 2001-01-02 00:00:00
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2287: Prediction and Observation windows overlap (if any): 
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2296:   ./tests/files/observations/validation/all/all_clear_true.json
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2298:   ./tests/files/observations/validation/all\obs_flux01.txt
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.onset_peak_criteria,679: Stored Peak Intensity Time:  [True]
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.onset_peak_criteria,681:   Observed peak_intensity time: 2001-01-01 01:00:00
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.onset_peak_criteria,698: Triggers before Peak Time and time difference:  True
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.onset_peak_criteria,700:   0.0
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.onset_peak_criteria,702:   Observed peak_intensity time: 2001-01-01 01:00:00
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.onset_peak_criteria,718: Inputs before Peak Intensity Time and time difference  None
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.onset_peak_criteria,720:   None
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.onset_peak_criteria,722:   Observed peak_intensity time: 2001-01-01 01:00:00
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.max_flux_criteria,765: Stored Max Flux Time:  True
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.max_flux_criteria,767:   Observed peak_intensity_max time: 2001-01-01 01:00:00
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.max_flux_criteria,784: Triggers before Max Intensity and Time Difference:  True
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.max_flux_criteria,786:   0.0
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.max_flux_criteria,788:   Observed peak_intensity_max time: 2001-01-01 01:00:00
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.max_flux_criteria,804: Inputs before Max Intensity Time and Time Difference:  None
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.max_flux_criteria,806:   None
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.max_flux_criteria,808:   Observed peak_intensity time: 2001-01-01 01:00:00
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2332: Checking Threshold: {'threshold': 1.0, 'threshold_units': Unit("1 / (cm2 s sr)")}
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.threshold_cross_criteria,847: Threshold crossed in prediction window?:  False
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.before_threshold_crossing,895: Triggers before threshold crossing and time difference:  None
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.before_threshold_crossing,897:   nan
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.before_threshold_crossing,902:   Observed threshold crossing time: None
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.before_threshold_crossing,918: Inputs before threshold crossing time and time difference:  None
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.before_threshold_crossing,920:   None
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.before_threshold_crossing,925:   Observed threshold crossing time: None
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.before_sep_end,971: Triggers before SEP end and time difference:  None
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.before_sep_end,973:   nan
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.before_sep_end,989: Inputs before SEP end and time difference:  None
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.before_sep_end,991:   None
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.eruption_before_threshold_crossing,1037: Eruption before SEP crossing time and time difference:  None
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.eruption_before_threshold_crossing,1039:   nan
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.eruption_before_threshold_crossing,1044:   Observed threshold crossing time: None
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.observed_ongoing_event,1254: Ongoing observed SEP event at start of prediction window (if any):
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2420: Model: Test_model_0
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2421: Forecast energy channel: {'min': 10, 'max': -1, 'units': Unit("MeV")}
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2422: Prediction Thresholds: [{'threshold': 1.0, 'threshold_units': Unit("1 / (cm2 s sr)")}]
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2423: Observed Thresholds: [{'threshold': 1.0, 'threshold_units': Unit("1 / (cm2 s sr)")}]
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.setup_match_all_forecasts,2424: Forecast index (position in matched_sphinx): 1
+2024-09-13 15:58:10 - [INFO] sphinxval.utils.match.setup_match_all_forecasts,2431: MATCH SETUP PROGRESS: Completed 2 matches in 0.023 seconds at a rate of 87.3 forecasts/second.
+2024-09-13 15:58:10 - [INFO] sphinxval.utils.match.setup_match_all_forecasts,2436: STATS: SPHINX objects created for Test_model_0, min.10.0.max.-1.0.units.MeV: 2
+2024-09-13 15:58:10 - [INFO] sphinxval.utils.match.setup_match_all_forecasts,2440: STATS: TOTAL SPHINX OBJECTS: 2
+2024-09-13 15:58:10 - [INFO] sphinxval.utils.match.match_all_forecasts,2501: MATCHING STARTING FOR: Test_model_0
+2024-09-13 15:58:10 - [INFO] sphinxval.utils.match.match_all_forecasts,2505: MATCHING STARTING FOR: min.10.0.max.-1.0.units.MeV
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.match_observed_onset_peak,1349: Observed peak_intensity matched:
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.match_observed_onset_peak,1350: ./tests/files/observations/validation/all/all_clear_false.json
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.match_observed_onset_peak,1351: 10.0
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.match_observed_onset_peak,1352: 2000-01-01 01:00:00
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.match_all_clear,1521: Prediction window: 2000-01-01 00:01:00 to 2000-01-02 00:00:00
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.match_all_clear,1524: Observed all_clear matched:
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.match_all_clear,1525:   ./tests/files/observations/validation/all/all_clear_false.json
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.match_all_clear,1526:   False
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.match_sep_quantities,1667: Prediction window: 2000-01-01 00:01:00 to 2000-01-02 00:00:00
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.match_sep_quantities,1670: Observed SEP event matched:
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.match_sep_quantities,1671:   ./tests/files/observations/validation/all/all_clear_false.json
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.match_sep_end_time,1769: Observed SEP end time matched:
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.match_sep_end_time,1770:   ./tests/files/observations/validation/all/all_clear_false.json
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.match_all_forecasts,2601: 
 =================== Matching Report =========================
   Model: Test_model_0
-  Original prediction source: ./tests/files/forecasts/validation/mismatch/pred_all_clear_false_mismatch.json
+  Original prediction source: ./tests/files/forecasts/validation/all/pred_timeprof_all_clear_false.json
   Prediction Issue time: 2000-01-01 00:00:00
   Energy Channel: {'min': 10, 'max': -1, 'units': Unit("MeV")}
-  User allowed mismatch: True
+  User allowed mismatch: False
 
 All Observations overlapping with the Prediction Window
 -------------------------------------------------------------
   Prediction Window: 2000-01-01 00:01:00 to 2000-01-02 00:00:00
   Observations that overlapped with Prediction Window:
   Observation Sources: 
-  ./tests/files/observations/validation/mismatch/all_clear_false.json  Observed Time Profiles: 
-  ./tests/files/observations/validation/mismatch\obs_flux00.txt
+  ./tests/files/observations/validation/all/all_clear_false.json  Observed Time Profiles: 
+  ./tests/files/observations/validation/all\obs_flux00.txt
 Prediction Eruption/Trigger/Input Timing
 -------------------------------------------------------------
   Prediction last eruption time: 2000-01-01 00:00:00
@@ -154,11 +142,11 @@ Prediction Eruption/Trigger/Input Timing
 
 Thresholds Applied to the Energy Channel
 -------------------------------------------------------------
-  {'threshold': 1, 'threshold_units': Unit("1 / (cm2 s sr)")}
+  {'threshold': 1.0, 'threshold_units': Unit("1 / (cm2 s sr)")}
 
 Were thresholds crossed inside of the Prediction Window?
 -------------------------------------------------------------
- Threshold: {'threshold': 1, 'threshold_units': Unit("1 / (cm2 s sr)")}
+ Threshold: {'threshold': 1.0, 'threshold_units': Unit("1 / (cm2 s sr)")}
  Match Status: SEP Event
   [True]
   Observed times (NaT = no crossing: 
@@ -166,19 +154,19 @@ Were thresholds crossed inside of the Prediction Window?
 
 Was the Eruption (flare/CME) before Threshold Crossing?
 -------------------------------------------------------------
- Threshold: {'threshold': 1, 'threshold_units': Unit("1 / (cm2 s sr)")}
+ Threshold: {'threshold': 1.0, 'threshold_units': Unit("1 / (cm2 s sr)")}
   [True]
   Time diff (hrs) (eruption time - crossing):
   [-1.0]
 
 Were all Triggers before Threshold Crossing? 
 -------------------------------------------------------------
- Threshold: {'threshold': 1, 'threshold_units': Unit("1 / (cm2 s sr)")}
+ Threshold: {'threshold': 1.0, 'threshold_units': Unit("1 / (cm2 s sr)")}
   [True]
 
 Were all Inputs before Threshold Crossing?
 -------------------------------------------------------------
- Threshold: {'threshold': 1, 'threshold_units': Unit("1 / (cm2 s sr)")}
+ Threshold: {'threshold': 1.0, 'threshold_units': Unit("1 / (cm2 s sr)")}
   [None]
 
 Is the last Trigger before the Onset Peak (peak_intensity)?
@@ -209,102 +197,93 @@ Is the last Input before the Max Flux (peak_intensity_max)?
 
 Is the last Trigger before the SEP End Time?
 -------------------------------------------------------------
- Threshold: {'threshold': 1, 'threshold_units': Unit("1 / (cm2 s sr)")}
+ Threshold: {'threshold': 1.0, 'threshold_units': Unit("1 / (cm2 s sr)")}
   [True]
   Time difference (hrs) (last trigger - SEP end time):
   [-24.0]
 
 Is the last Input before the SEP End Time?
 -------------------------------------------------------------
- Threshold: {'threshold': 1, 'threshold_units': Unit("1 / (cm2 s sr)")}
+ Threshold: {'threshold': 1.0, 'threshold_units': Unit("1 / (cm2 s sr)")}
   [None]
   Time difference (hrs) (last input - SEP end time):
   [None]
 
 Does the Prediction Window overlap at all with an observed SEP event?
 -------------------------------------------------------------
- Threshold: {'threshold': 1, 'threshold_units': Unit("1 / (cm2 s sr)")}
+ Threshold: {'threshold': 1.0, 'threshold_units': Unit("1 / (cm2 s sr)")}
   [True]
 
 Is there an ongoing observed SEP event at start of prediction window?
 -------------------------------------------------------------
- Threshold: {'threshold': 1, 'threshold_units': Unit("1 / (cm2 s sr)")}
+ Threshold: {'threshold': 1.0, 'threshold_units': Unit("1 / (cm2 s sr)")}
   [False]
 ================== END REPORT ===============================
 
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.match_all_forecasts,2608: Model: Test_model_0
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.match_all_forecasts,2609: Forecast energy channel: {'min': 10, 'max': -1, 'units': Unit("MeV")}
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.match_all_forecasts,2610: Predicted Thresholds: [{'threshold': 10.0, 'threshold_units': Unit("1 / (cm2 s sr)")}]
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.match_all_forecasts,2611: Observed Thresholds: [{'threshold': 1, 'threshold_units': Unit("1 / (cm2 s sr)")}]
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.match_all_forecasts,2612: Forecast index (position in matched_sphinx): 0
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.match_observed_onset_peak,1349: Observed peak_intensity matched:
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.match_observed_onset_peak,1350: ./tests/files/observations/validation/mismatch/all_clear_false_02.json
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.match_observed_onset_peak,1351: 10.0
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.match_observed_onset_peak,1352: 2001-01-01 01:00:00
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.match_all_clear,1521: Prediction window: 2001-01-01 00:01:00 to 2001-01-02 00:00:00
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.match_all_clear,1524: Observed all_clear matched:
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.match_all_clear,1525:   ./tests/files/observations/validation/mismatch/all_clear_false_02.json
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.match_all_clear,1526:   False
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.match_sep_quantities,1667: Prediction window: 2001-01-01 00:01:00 to 2001-01-02 00:00:00
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.match_sep_quantities,1670: Observed SEP event matched:
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.match_sep_quantities,1671:   ./tests/files/observations/validation/mismatch/all_clear_false_02.json
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.match_sep_end_time,1769: Observed SEP end time matched:
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.match_sep_end_time,1770:   ./tests/files/observations/validation/mismatch/all_clear_false_02.json
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.match_all_forecasts,2605: 
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.match_all_forecasts,2604: Model: Test_model_0
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.match_all_forecasts,2605: Forecast energy channel: {'min': 10, 'max': -1, 'units': Unit("MeV")}
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.match_all_forecasts,2606: Predicted Thresholds: [{'threshold': 1.0, 'threshold_units': Unit("1 / (cm2 s sr)")}]
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.match_all_forecasts,2607: Observed Thresholds: [{'threshold': 1.0, 'threshold_units': Unit("1 / (cm2 s sr)")}]
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.match_all_forecasts,2608: Forecast index (position in matched_sphinx): 0
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.match_all_clear,1521: Prediction window: 2001-01-01 00:00:00 to 2001-01-02 00:00:00
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.match_all_clear,1524: Observed all_clear matched:
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.match_all_clear,1525:   ./tests/files/observations/validation/all/all_clear_true.json
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.match_all_clear,1526:   True
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.match_all_forecasts,2601: 
 =================== Matching Report =========================
   Model: Test_model_0
-  Original prediction source: ./tests/files/forecasts/validation/mismatch/pred_all_clear_false_mismatch_02.json
-  Prediction Issue time: 2001-01-01 00:00:00
+  Original prediction source: ./tests/files/forecasts/validation/all/pred_timeprof_all_clear_true.json
+  Prediction Issue time: 2001-01-01 01:30:00
   Energy Channel: {'min': 10, 'max': -1, 'units': Unit("MeV")}
-  User allowed mismatch: True
+  User allowed mismatch: False
 
 All Observations overlapping with the Prediction Window
 -------------------------------------------------------------
-  Prediction Window: 2001-01-01 00:01:00 to 2001-01-02 00:00:00
+  Prediction Window: 2001-01-01 00:00:00 to 2001-01-02 00:00:00
   Observations that overlapped with Prediction Window:
   Observation Sources: 
-  ./tests/files/observations/validation/mismatch/all_clear_false_02.json  Observed Time Profiles: 
-  ./tests/files/observations/validation/mismatch\obs_flux02.txt
+  ./tests/files/observations/validation/all/all_clear_true.json  Observed Time Profiles: 
+  ./tests/files/observations/validation/all\obs_flux01.txt
 Prediction Eruption/Trigger/Input Timing
 -------------------------------------------------------------
-  Prediction last eruption time: 2001-01-01 00:00:00
-  Prediction last trigger time: 2001-01-01 00:00:00
+  Prediction last eruption time: 2001-01-01 01:00:00
+  Prediction last trigger time: 2001-01-01 01:00:00
   Prediction last input time: None
 
 Thresholds Applied to the Energy Channel
 -------------------------------------------------------------
-  {'threshold': 1, 'threshold_units': Unit("1 / (cm2 s sr)")}
+  {'threshold': 1.0, 'threshold_units': Unit("1 / (cm2 s sr)")}
 
 Were thresholds crossed inside of the Prediction Window?
 -------------------------------------------------------------
- Threshold: {'threshold': 1, 'threshold_units': Unit("1 / (cm2 s sr)")}
- Match Status: SEP Event
-  [True]
+ Threshold: {'threshold': 1.0, 'threshold_units': Unit("1 / (cm2 s sr)")}
+ Match Status: No SEP Event
+  [False]
   Observed times (NaT = no crossing: 
-  2001-01-01 01:00:00
+  None
 
 Was the Eruption (flare/CME) before Threshold Crossing?
 -------------------------------------------------------------
- Threshold: {'threshold': 1, 'threshold_units': Unit("1 / (cm2 s sr)")}
-  [True]
+ Threshold: {'threshold': 1.0, 'threshold_units': Unit("1 / (cm2 s sr)")}
+  [None]
   Time diff (hrs) (eruption time - crossing):
-  [-1.0]
+  [nan]
 
 Were all Triggers before Threshold Crossing? 
 -------------------------------------------------------------
- Threshold: {'threshold': 1, 'threshold_units': Unit("1 / (cm2 s sr)")}
-  [True]
+ Threshold: {'threshold': 1.0, 'threshold_units': Unit("1 / (cm2 s sr)")}
+  [None]
 
 Were all Inputs before Threshold Crossing?
 -------------------------------------------------------------
- Threshold: {'threshold': 1, 'threshold_units': Unit("1 / (cm2 s sr)")}
+ Threshold: {'threshold': 1.0, 'threshold_units': Unit("1 / (cm2 s sr)")}
   [None]
 
 Is the last Trigger before the Onset Peak (peak_intensity)?
 -------------------------------------------------------------
   [True]
   Time difference (hrs) (last trigger - onset peak time):
-  [-1.0]
+  [0.0]
 
 Is the last Input before the Onset Peak (peak_intensity)?
 -------------------------------------------------------------
@@ -317,7 +296,7 @@ Is the last Trigger before the Max Flux (peak_intensity_max)?
 -------------------------------------------------------------
   [True]
   Time difference (hrs) (last trigger - max flux time):
-  [-1.0]
+  [0.0]
 
 Is the last Input before the Max Flux (peak_intensity_max)?
 **If no SEP event, Max Flux is the maximum value in the observation period.
@@ -328,162 +307,197 @@ Is the last Input before the Max Flux (peak_intensity_max)?
 
 Is the last Trigger before the SEP End Time?
 -------------------------------------------------------------
- Threshold: {'threshold': 1, 'threshold_units': Unit("1 / (cm2 s sr)")}
-  [True]
+ Threshold: {'threshold': 1.0, 'threshold_units': Unit("1 / (cm2 s sr)")}
+  [None]
   Time difference (hrs) (last trigger - SEP end time):
-  [-24.0]
+  [nan]
 
 Is the last Input before the SEP End Time?
 -------------------------------------------------------------
- Threshold: {'threshold': 1, 'threshold_units': Unit("1 / (cm2 s sr)")}
+ Threshold: {'threshold': 1.0, 'threshold_units': Unit("1 / (cm2 s sr)")}
   [None]
   Time difference (hrs) (last input - SEP end time):
   [None]
 
 Does the Prediction Window overlap at all with an observed SEP event?
 -------------------------------------------------------------
- Threshold: {'threshold': 1, 'threshold_units': Unit("1 / (cm2 s sr)")}
-  [True]
+ Threshold: {'threshold': 1.0, 'threshold_units': Unit("1 / (cm2 s sr)")}
+  [False]
 
 Is there an ongoing observed SEP event at start of prediction window?
 -------------------------------------------------------------
- Threshold: {'threshold': 1, 'threshold_units': Unit("1 / (cm2 s sr)")}
-  [False]
+ Threshold: {'threshold': 1.0, 'threshold_units': Unit("1 / (cm2 s sr)")}
+  [None]
 ================== END REPORT ===============================
 
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.match_all_forecasts,2608: Model: Test_model_0
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.match_all_forecasts,2609: Forecast energy channel: {'min': 10, 'max': -1, 'units': Unit("MeV")}
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.match_all_forecasts,2610: Predicted Thresholds: [{'threshold': 10.0, 'threshold_units': Unit("1 / (cm2 s sr)")}]
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.match_all_forecasts,2611: Observed Thresholds: [{'threshold': 1, 'threshold_units': Unit("1 / (cm2 s sr)")}]
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.match_all_forecasts,2612: Forecast index (position in matched_sphinx): 1
-2024-09-13 13:30:53 - [INFO] sphinxval.utils.match.match_all_forecasts,2617: MATCH PROGRESS: Completed 2 matches for Test_model_0 and min.10.0.max.-1.0.units.MeV in 0.020 seconds at a rate of 101.2 forecasts/second.
-2024-09-13 13:30:53 - [INFO] sphinxval.utils.match.match_all_forecasts,2619: Initial forecast-to-observation matching complete.
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.sep_report,2004: 
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.match_all_forecasts,2604: Model: Test_model_0
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.match_all_forecasts,2605: Forecast energy channel: {'min': 10, 'max': -1, 'units': Unit("MeV")}
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.match_all_forecasts,2606: Predicted Thresholds: [{'threshold': 1.0, 'threshold_units': Unit("1 / (cm2 s sr)")}]
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.match_all_forecasts,2607: Observed Thresholds: [{'threshold': 1.0, 'threshold_units': Unit("1 / (cm2 s sr)")}]
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.match_all_forecasts,2608: Forecast index (position in matched_sphinx): 1
+2024-09-13 15:58:10 - [INFO] sphinxval.utils.match.match_all_forecasts,2613: MATCH PROGRESS: Completed 2 matches for Test_model_0 and min.10.0.max.-1.0.units.MeV in 0.009 seconds at a rate of 225.8 forecasts/second.
+2024-09-13 15:58:10 - [INFO] sphinxval.utils.match.match_all_forecasts,2615: Initial forecast-to-observation matching complete.
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.sep_report,2004: 
 ====== All observed SEP events ======
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.sep_report,2006: 
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.sep_report,2006: 
 
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.sep_report,2007: Model: Test_model_0
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.sep_report,2009: Energy Channel: min.10.0.max.-1.0.units.MeV
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.sep_report,2011: Threshold: {'threshold': 1.0, 'threshold_units': Unit("1 / (cm2 s sr)")}
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.match.sep_report,2015: 2 SEP Events: [datetime.datetime(2000, 1, 1, 1, 0), datetime.datetime(2001, 1, 1, 1, 0)]
-2024-09-13 13:30:53 - [INFO] sphinxval.utils.match.match_all_forecasts,2625: Checking forecasts to determine if revisions should be made in matches to observed SEP events. Revising for all predictions triggered by flares and/or CMEs.
-2024-09-13 13:30:53 - [INFO] sphinxval.utils.match.match_all_forecasts,2634: The revision process is complete. All forecast-to-observation matches have been finalized.
-2024-09-13 13:30:53 - [DEBUG] tests.test_validation_mismatch.step_1,476: Testing mismatched tk and ek
-2024-09-13 13:30:53 - [DEBUG] tests.test_validation_mismatch.step_1,477: {'min': 1, 'max': -1, 'units': Unit("MeV")}
-2024-09-13 13:30:53 - [DEBUG] tests.test_validation_mismatch.step_1,478: {'threshold': 1, 'threshold_units': Unit("1 / (cm2 s sr)")}
-2024-09-13 13:30:53 - [DEBUG] tests.test_validation_mismatch.step_1,479: threshold.10.0.units.1 / (cm2 s sr)
-2024-09-13 13:30:53 - [DEBUG] tests.test_validation_mismatch.step_1,480: True
-2024-09-13 13:30:53 - [DEBUG] tests.test_validation_mismatch.step_1,488: mm pred thresh key {'min.10.0.max.-1.0.units.MeV': ['threshold.10.0.units.1 / (cm2 s sr)']}
-2024-09-13 13:30:53 - [DEBUG] tests.test_validation_mismatch.step_1,489: obs thresh key {'min.10.0.max.-1.0.units.MeV': ['threshold.1.0.units.1 / (cm2 s sr)']}
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.validation.fill_df,605: ---Model: Test_model_0, Energy Channel: min.10.0.max.-1.0.units.MeV
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.validation.fill_df,609: threshold key
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.validation.fill_df,610: threshold.1.0.units.1 / (cm2 s sr)
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.validation.fill_dict_row,261: fill dict row
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.validation.fill_dict_row,262: True
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.validation.fill_dict_row,263: True
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.validation.fill_dict_row,306: Testing mismatch
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.validation.fill_dict_row,307: True
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.validation.fill_df,609: threshold key
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.validation.fill_df,610: threshold.1.0.units.1 / (cm2 s sr)
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.validation.fill_dict_row,261: fill dict row
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.validation.fill_dict_row,262: True
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.validation.fill_dict_row,263: True
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.validation.fill_dict_row,306: Testing mismatch
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.validation.fill_dict_row,307: True
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\SPHINX_dataframe.pkl
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\SPHINX_dataframe.csv
-2024-09-13 13:30:53 - [INFO] root.calculate_intuitive_metrics,3786: Calculating metrics for Test_model_0, min.10.0.max.-1.0.units.MeV, threshold.1.0.units.1 / (cm2 s sr)
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\probability_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_mm.pkl
-2024-09-13 13:30:53 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\probability_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_mm.csv
-2024-09-13 13:30:54 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\peak_intensity_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_mm.pkl
-2024-09-13 13:30:54 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\peak_intensity_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_mm.csv
-2024-09-13 13:30:54 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\peak_intensity_max_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_mm.pkl
-2024-09-13 13:30:54 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\peak_intensity_max_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_mm.csv
-2024-09-13 13:30:55 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\fluence_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_mm.pkl
-2024-09-13 13:30:55 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\fluence_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_mm.csv
-2024-09-13 13:30:55 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\threshold_crossing_time_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_mm.pkl
-2024-09-13 13:30:55 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\threshold_crossing_time_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_mm.csv
-2024-09-13 13:30:55 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\start_time_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_mm.pkl
-2024-09-13 13:30:55 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\start_time_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_mm.csv
-2024-09-13 13:30:55 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\end_time_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_mm.pkl
-2024-09-13 13:30:55 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\end_time_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_mm.csv
-2024-09-13 13:30:55 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\duration_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_mm.pkl
-2024-09-13 13:30:55 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\duration_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_mm.csv
-2024-09-13 13:30:55 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\peak_intensity_time_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_mm.pkl
-2024-09-13 13:30:55 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\peak_intensity_time_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_mm.csv
-2024-09-13 13:30:55 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\peak_intensity_max_time_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_mm.pkl
-2024-09-13 13:30:55 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\peak_intensity_max_time_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_mm.csv
-2024-09-13 13:30:55 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\all_clear_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_mm.pkl
-2024-09-13 13:30:55 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\all_clear_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_mm.csv
-2024-09-13 13:30:55 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\time_profile_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_mm.pkl
-2024-09-13 13:30:55 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\time_profile_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_mm.csv
-2024-09-13 13:30:55 - [DEBUG] sphinxval.utils.validation.time_profile_intuitive_metrics,3020: Extracted SEP start and end times
-2024-09-13 13:30:55 - [DEBUG] sphinxval.utils.validation.time_profile_intuitive_metrics,3021: [Timestamp('2000-01-01 01:00:00'), Timestamp('2001-01-01 01:00:00')]
-2024-09-13 13:30:55 - [DEBUG] sphinxval.utils.validation.time_profile_intuitive_metrics,3022: [Timestamp('2000-01-02 00:00:00'), Timestamp('2001-01-02 00:00:00')]
-2024-09-13 13:30:55 - [DEBUG] sphinxval.utils.validation.time_profile_intuitive_metrics,3045: Comparing time profile of ./tests/files/forecasts/validation/mismatch/model_flux00.txt to observations.
-2024-09-13 13:30:55 - [DEBUG] sphinxval.utils.validation.time_profile_intuitive_metrics,3051: Comparing to OBSERVED TIME PROFILES: ['./tests/files/observations/validation/mismatch\\obs_flux00.txt']
-2024-09-13 13:30:55 - [DEBUG] sphinxval.utils.validation.time_profile_intuitive_metrics,3082: Trimming between 2000-01-01 01:00:00 and 2000-01-02 00:00:00
-2024-09-13 13:30:56 - [DEBUG] sphinxval.utils.validation.time_profile_intuitive_metrics,3045: Comparing time profile of ./tests/files/forecasts/validation/mismatch/model_flux02.txt to observations.
-2024-09-13 13:30:56 - [DEBUG] sphinxval.utils.validation.time_profile_intuitive_metrics,3051: Comparing to OBSERVED TIME PROFILES: ['./tests/files/observations/validation/mismatch\\obs_flux02.txt']
-2024-09-13 13:30:56 - [DEBUG] sphinxval.utils.validation.time_profile_intuitive_metrics,3082: Trimming between 2001-01-01 01:00:00 and 2001-01-02 00:00:00
-2024-09-13 13:30:57 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\max_flux_in_pred_win_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_mm.pkl
-2024-09-13 13:30:57 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\max_flux_in_pred_win_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_mm.csv
-2024-09-13 13:30:57 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\awt_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_Predicted SEP All Clear_mm.pkl
-2024-09-13 13:30:57 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\awt_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_Predicted SEP All Clear_mm.csv
-2024-09-13 13:30:57 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\awt_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_Predicted SEP Threshold Crossing Time_mm.pkl
-2024-09-13 13:30:57 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\awt_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_Predicted SEP Threshold Crossing Time_mm.csv
-2024-09-13 13:30:57 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\awt_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_Predicted SEP Start Time_mm.pkl
-2024-09-13 13:30:57 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\awt_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_Predicted SEP Start Time_mm.csv
-2024-09-13 13:30:57 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\awt_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_Predicted SEP Peak Intensity (Onset Peak)_mm.pkl
-2024-09-13 13:30:57 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\awt_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_Predicted SEP Peak Intensity (Onset Peak)_mm.csv
-2024-09-13 13:30:57 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\awt_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_Predicted SEP Peak Intensity Max (Max Flux)_mm.pkl
-2024-09-13 13:30:57 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\awt_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_Predicted SEP Peak Intensity Max (Max Flux)_mm.csv
-2024-09-13 13:30:57 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\awt_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_Predicted SEP End Time_mm.pkl
-2024-09-13 13:30:57 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\awt_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_Predicted SEP End Time_mm.csv
-2024-09-13 13:30:57 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\last_data_time_to_issue_time_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_mm.pkl
-2024-09-13 13:30:57 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\last_data_time_to_issue_time_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_mm.csv
-2024-09-13 13:30:57 - [INFO] sphinxval.utils.validation.calculate_intuitive_metrics,3820: Completed calculating all metrics.
-2024-09-13 13:30:57 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\probability_metrics.pkl
-2024-09-13 13:30:57 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\probability_metrics.csv
-2024-09-13 13:30:57 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\peak_intensity_metrics.pkl
-2024-09-13 13:30:57 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\peak_intensity_metrics.csv
-2024-09-13 13:30:57 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\peak_intensity_max_metrics.pkl
-2024-09-13 13:30:57 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\peak_intensity_max_metrics.csv
-2024-09-13 13:30:57 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\fluence_metrics.pkl
-2024-09-13 13:30:57 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\fluence_metrics.csv
-2024-09-13 13:30:57 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\threshold_crossing_metrics.pkl
-2024-09-13 13:30:57 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\threshold_crossing_metrics.csv
-2024-09-13 13:30:57 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\start_time_metrics.pkl
-2024-09-13 13:30:57 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\start_time_metrics.csv
-2024-09-13 13:30:57 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\end_time_metrics.pkl
-2024-09-13 13:30:57 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\end_time_metrics.csv
-2024-09-13 13:30:57 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\duration_metrics.pkl
-2024-09-13 13:30:57 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\duration_metrics.csv
-2024-09-13 13:30:57 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\peak_intensity_time_metrics.pkl
-2024-09-13 13:30:57 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\peak_intensity_time_metrics.csv
-2024-09-13 13:30:57 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\peak_intensity_max_time_metrics.pkl
-2024-09-13 13:30:57 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\peak_intensity_max_time_metrics.csv
-2024-09-13 13:30:57 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\all_clear_metrics.pkl
-2024-09-13 13:30:57 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\all_clear_metrics.csv
-2024-09-13 13:30:57 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\time_profile_metrics.pkl
-2024-09-13 13:30:57 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\time_profile_metrics.csv
-2024-09-13 13:30:57 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\max_flux_in_pred_win_metrics.pkl
-2024-09-13 13:30:57 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\max_flux_in_pred_win_metrics.csv
-2024-09-13 13:30:57 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\awt_metrics.pkl
-2024-09-13 13:30:57 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\awt_metrics.csv
-2024-09-13 13:30:57 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\last_data_to_issue_time_metrics.pkl
-2024-09-13 13:30:57 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\last_data_to_issue_time_metrics.csv
-2024-09-13 13:30:57 - [INFO] sphinxval.utils.validation.calculate_intuitive_metrics,3875: Wrote out all metrics.
-2024-09-13 13:30:57 - [DEBUG] tests.test_validation_mismatch.step_3,557: awt
-2024-09-13 13:30:57 - [DEBUG] tests.test_validation_mismatch.step_3,557: duration
-2024-09-13 13:30:57 - [DEBUG] tests.test_validation_mismatch.step_3,557: end_time
-2024-09-13 13:30:57 - [DEBUG] tests.test_validation_mismatch.step_3,557: fluence
-2024-09-13 13:30:57 - [DEBUG] tests.test_validation_mismatch.step_3,557: max_flux_in_pred_win
-2024-09-13 13:30:57 - [DEBUG] tests.test_validation_mismatch.step_3,557: peak_intensity_max
-2024-09-13 13:30:57 - [DEBUG] tests.test_validation_mismatch.step_3,557: peak_intensity_max_time
-2024-09-13 13:30:57 - [DEBUG] tests.test_validation_mismatch.step_3,557: peak_intensity
-2024-09-13 13:30:57 - [DEBUG] tests.test_validation_mismatch.step_3,557: peak_intensity_time
-2024-09-13 13:30:57 - [DEBUG] tests.test_validation_mismatch.step_3,557: probability
-2024-09-13 13:30:57 - [DEBUG] tests.test_validation_mismatch.step_3,557: start_time
-2024-09-13 13:30:57 - [DEBUG] tests.test_validation_mismatch.step_3,557: threshold_crossing
-2024-09-13 13:30:57 - [DEBUG] tests.test_validation_mismatch.step_3,557: time_profile
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.sep_report,2007: Model: Test_model_0
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.sep_report,2009: Energy Channel: min.10.0.max.-1.0.units.MeV
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.sep_report,2011: Threshold: {'threshold': 1.0, 'threshold_units': Unit("1 / (cm2 s sr)")}
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.match.sep_report,2015: 1 SEP Events: [datetime.datetime(2000, 1, 1, 1, 0)]
+2024-09-13 15:58:10 - [INFO] sphinxval.utils.match.match_all_forecasts,2621: Checking forecasts to determine if revisions should be made in matches to observed SEP events. Revising for all predictions triggered by flares and/or CMEs.
+2024-09-13 15:58:10 - [INFO] sphinxval.utils.match.match_all_forecasts,2630: The revision process is complete. All forecast-to-observation matches have been finalized.
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.validation.fill_df,605: ---Model: Test_model_0, Energy Channel: min.10.0.max.-1.0.units.MeV
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.validation.fill_df,609: threshold key
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.validation.fill_df,610: threshold.1.0.units.1 / (cm2 s sr)
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.validation.fill_dict_row,261: fill dict row
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.validation.fill_dict_row,262: False
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.validation.fill_dict_row,263: False
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.validation.fill_dict_row,306: Testing mismatch
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.validation.fill_dict_row,307: False
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.validation.fill_df,609: threshold key
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.validation.fill_df,610: threshold.1.0.units.1 / (cm2 s sr)
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.validation.fill_dict_row,261: fill dict row
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.validation.fill_dict_row,262: False
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.validation.fill_dict_row,263: False
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.validation.fill_dict_row,306: Testing mismatch
+2024-09-13 15:58:10 - [DEBUG] sphinxval.utils.validation.fill_dict_row,307: False
+2024-09-13 15:58:11 - [DEBUG] tests.test_validation_resume.step_2,651: mock df data
+2024-09-13 15:58:11 - [DEBUG] tests.test_validation_resume.step_2,652:                    Model           Energy Channel Key  ... Prediction Window Overlap with Observed SEP Event  Ongoing SEP Event
+0  Test_model_resume_old  min.10.0.max.-1.0.units.MeV  ...                                     [True, False]      [False, None]
+
+[1 rows x 108 columns]
+2024-09-13 15:58:11 - [DEBUG] tests.test_validation_resume.step_2,658: r_df
+2024-09-13 15:58:11 - [DEBUG] tests.test_validation_resume.step_2,659:                    Model           Energy Channel Key  ... Prediction Window Overlap with Observed SEP Event  Ongoing SEP Event
+0  Test_model_resume_old  min.10.0.max.-1.0.units.MeV  ...                                     [True, False]      [False, None]
+
+[1 rows x 108 columns]
+2024-09-13 15:58:11 - [DEBUG] tests.test_validation_resume.step_2,660: self.dataframe
+2024-09-13 15:58:11 - [DEBUG] tests.test_validation_resume.step_2,661:           Model           Energy Channel Key  ... Prediction Window Overlap with Observed SEP Event  Ongoing SEP Event
+0  Test_model_0  min.10.0.max.-1.0.units.MeV  ...                                            [True]            [False]
+1  Test_model_0  min.10.0.max.-1.0.units.MeV  ...                                           [False]             [None]
+
+[2 rows x 108 columns]
+2024-09-13 15:58:11 - [DEBUG] tests.test_validation_resume.step_2,664: df (concat the dfs)
+2024-09-13 15:58:11 - [DEBUG] tests.test_validation_resume.step_2,665:                    Model           Energy Channel Key  ... Prediction Window Overlap with Observed SEP Event  Ongoing SEP Event
+0  Test_model_resume_old  min.10.0.max.-1.0.units.MeV  ...                                     [True, False]      [False, None]
+1           Test_model_0  min.10.0.max.-1.0.units.MeV  ...                                            [True]            [False]
+2           Test_model_0  min.10.0.max.-1.0.units.MeV  ...                                           [False]             [None]
+
+[3 rows x 108 columns]
+2024-09-13 15:58:11 - [DEBUG] tests.test_validation_resume.step_2,667: RESUME: Completed concatenation and removed any duplicates. Writing SPHINX_dataframe to file.
+2024-09-13 15:58:11 - [DEBUG] tests.test_validation_resume.step_2,668: ['Test_model_0']
+2024-09-13 15:58:11 - [DEBUG] tests.test_validation_resume.step_2,670: ['Test_model_resume_old', 'Test_model_0']
+2024-09-13 15:58:11 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\SPHINX_dataframe.pkl
+2024-09-13 15:58:11 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\SPHINX_dataframe.csv
+2024-09-13 15:58:11 - [DEBUG] tests.test_validation_resume.step_2,674: Completed writing SPHINX_dataframe to file.
+2024-09-13 15:58:11 - [INFO] root.calculate_intuitive_metrics,3786: Calculating metrics for Test_model_resume_old, min.10.0.max.-1.0.units.MeV, threshold.1.0.units.1 / (cm2 s sr)
+2024-09-13 15:58:11 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\peak_intensity_selections_Test_model_resume_old_min.10.0.max.-1.0.units.MeV_threshold_1.0.pkl
+2024-09-13 15:58:11 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\peak_intensity_selections_Test_model_resume_old_min.10.0.max.-1.0.units.MeV_threshold_1.0.csv
+2024-09-13 15:58:11 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\peak_intensity_max_selections_Test_model_resume_old_min.10.0.max.-1.0.units.MeV_threshold_1.0.pkl
+2024-09-13 15:58:11 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\peak_intensity_max_selections_Test_model_resume_old_min.10.0.max.-1.0.units.MeV_threshold_1.0.csv
+2024-09-13 15:58:11 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\fluence_selections_Test_model_resume_old_min.10.0.max.-1.0.units.MeV_threshold_1.0.pkl
+2024-09-13 15:58:11 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\fluence_selections_Test_model_resume_old_min.10.0.max.-1.0.units.MeV_threshold_1.0.csv
+2024-09-13 15:58:11 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\duration_selections_Test_model_resume_old_min.10.0.max.-1.0.units.MeV_threshold_1.0.pkl
+2024-09-13 15:58:11 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\duration_selections_Test_model_resume_old_min.10.0.max.-1.0.units.MeV_threshold_1.0.csv
+2024-09-13 15:58:11 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\peak_intensity_time_selections_Test_model_resume_old_min.10.0.max.-1.0.units.MeV_threshold_1.0.pkl
+2024-09-13 15:58:11 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\peak_intensity_time_selections_Test_model_resume_old_min.10.0.max.-1.0.units.MeV_threshold_1.0.csv
+2024-09-13 15:58:11 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\peak_intensity_max_time_selections_Test_model_resume_old_min.10.0.max.-1.0.units.MeV_threshold_1.0.pkl
+2024-09-13 15:58:11 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\peak_intensity_max_time_selections_Test_model_resume_old_min.10.0.max.-1.0.units.MeV_threshold_1.0.csv
+2024-09-13 15:58:11 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\all_clear_selections_Test_model_resume_old_min.10.0.max.-1.0.units.MeV_threshold_1.0.pkl
+2024-09-13 15:58:11 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\all_clear_selections_Test_model_resume_old_min.10.0.max.-1.0.units.MeV_threshold_1.0.csv
+2024-09-13 15:58:11 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\time_profile_selections_Test_model_resume_old_min.10.0.max.-1.0.units.MeV_threshold_1.0.pkl
+2024-09-13 15:58:11 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\time_profile_selections_Test_model_resume_old_min.10.0.max.-1.0.units.MeV_threshold_1.0.csv
+2024-09-13 15:58:11 - [DEBUG] sphinxval.utils.validation.time_profile_intuitive_metrics,3020: Extracted SEP start and end times
+2024-09-13 15:58:11 - [DEBUG] sphinxval.utils.validation.time_profile_intuitive_metrics,3021: [Timestamp('2022-04-02 14:40:00')]
+2024-09-13 15:58:11 - [DEBUG] sphinxval.utils.validation.time_profile_intuitive_metrics,3022: [Timestamp('2022-04-03 00:10:00')]
+2024-09-13 15:58:11 - [DEBUG] sphinxval.utils.validation.time_profile_intuitive_metrics,3045: Comparing time profile of .\tests\files\forecasts\validation\resume\SEPMOD.2022-04-02T000000Z.2022-04-02T174804Z.10mev.txt to observations.
+2024-09-13 15:58:11 - [DEBUG] sphinxval.utils.validation.time_profile_intuitive_metrics,3051: Comparing to OBSERVED TIME PROFILES: ['.\\tests\\files\\observations\\validation\\resume\\GOES-16_integral.2022-04-02T000000Z.10MeV.txt', '.\\tests\\files\\observations\\validation\\resume\\GOES-16_integral.2022-04-05T034500Z.10MeV.txt']
+2024-09-13 15:58:11 - [DEBUG] sphinxval.utils.validation.time_profile_intuitive_metrics,3082: Trimming between 2022-04-02 14:40:00 and 2022-04-03 00:10:00
+2024-09-13 15:58:13 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\max_flux_in_pred_win_selections_Test_model_resume_old_min.10.0.max.-1.0.units.MeV_threshold_1.0.pkl
+2024-09-13 15:58:13 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\max_flux_in_pred_win_selections_Test_model_resume_old_min.10.0.max.-1.0.units.MeV_threshold_1.0.csv
+2024-09-13 15:58:13 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\awt_selections_Test_model_resume_old_min.10.0.max.-1.0.units.MeV_threshold_1.0_Predicted SEP Peak Intensity (Onset Peak).pkl
+2024-09-13 15:58:13 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\awt_selections_Test_model_resume_old_min.10.0.max.-1.0.units.MeV_threshold_1.0_Predicted SEP Peak Intensity (Onset Peak).csv
+2024-09-13 15:58:13 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\awt_selections_Test_model_resume_old_min.10.0.max.-1.0.units.MeV_threshold_1.0_Predicted SEP Peak Intensity Max (Max Flux).pkl
+2024-09-13 15:58:13 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\awt_selections_Test_model_resume_old_min.10.0.max.-1.0.units.MeV_threshold_1.0_Predicted SEP Peak Intensity Max (Max Flux).csv
+2024-09-13 15:58:13 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\last_data_time_to_issue_time_selections_Test_model_resume_old_min.10.0.max.-1.0.units.MeV_threshold_1.0.pkl
+2024-09-13 15:58:13 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\last_data_time_to_issue_time_selections_Test_model_resume_old_min.10.0.max.-1.0.units.MeV_threshold_1.0.csv
+2024-09-13 15:58:13 - [INFO] root.calculate_intuitive_metrics,3786: Calculating metrics for Test_model_0, min.10.0.max.-1.0.units.MeV, threshold.1.0.units.1 / (cm2 s sr)
+2024-09-13 15:58:13 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\probability_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pkl
+2024-09-13 15:58:13 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\probability_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.csv
+2024-09-13 15:58:13 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\peak_intensity_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pkl
+2024-09-13 15:58:13 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\peak_intensity_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.csv
+2024-09-13 15:58:13 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\peak_intensity_max_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pkl
+2024-09-13 15:58:13 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\peak_intensity_max_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.csv
+2024-09-13 15:58:13 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\fluence_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pkl
+2024-09-13 15:58:13 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\fluence_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.csv
+2024-09-13 15:58:13 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\threshold_crossing_time_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pkl
+2024-09-13 15:58:13 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\threshold_crossing_time_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.csv
+2024-09-13 15:58:13 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\start_time_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pkl
+2024-09-13 15:58:13 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\start_time_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.csv
+2024-09-13 15:58:13 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\end_time_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pkl
+2024-09-13 15:58:13 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\end_time_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.csv
+2024-09-13 15:58:13 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\duration_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pkl
+2024-09-13 15:58:13 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\duration_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.csv
+2024-09-13 15:58:13 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\peak_intensity_time_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pkl
+2024-09-13 15:58:13 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\peak_intensity_time_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.csv
+2024-09-13 15:58:13 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\peak_intensity_max_time_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pkl
+2024-09-13 15:58:13 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\peak_intensity_max_time_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.csv
+2024-09-13 15:58:13 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\all_clear_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pkl
+2024-09-13 15:58:13 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\all_clear_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.csv
+2024-09-13 15:58:13 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\time_profile_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pkl
+2024-09-13 15:58:13 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\time_profile_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.csv
+2024-09-13 15:58:13 - [DEBUG] sphinxval.utils.validation.time_profile_intuitive_metrics,3020: Extracted SEP start and end times
+2024-09-13 15:58:13 - [DEBUG] sphinxval.utils.validation.time_profile_intuitive_metrics,3021: [Timestamp('2000-01-01 01:00:00')]
+2024-09-13 15:58:13 - [DEBUG] sphinxval.utils.validation.time_profile_intuitive_metrics,3022: [Timestamp('2000-01-02 00:00:00')]
+2024-09-13 15:58:13 - [DEBUG] sphinxval.utils.validation.time_profile_intuitive_metrics,3045: Comparing time profile of ./tests/files/forecasts/validation/all/model_flux00.txt to observations.
+2024-09-13 15:58:13 - [DEBUG] sphinxval.utils.validation.time_profile_intuitive_metrics,3051: Comparing to OBSERVED TIME PROFILES: ['./tests/files/observations/validation/all\\obs_flux00.txt']
+2024-09-13 15:58:13 - [DEBUG] sphinxval.utils.validation.time_profile_intuitive_metrics,3082: Trimming between 2000-01-01 01:00:00 and 2000-01-02 00:00:00
+2024-09-13 15:58:14 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\max_flux_in_pred_win_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pkl
+2024-09-13 15:58:14 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\max_flux_in_pred_win_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.csv
+2024-09-13 15:58:14 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\awt_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_Predicted SEP All Clear.pkl
+2024-09-13 15:58:14 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\awt_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_Predicted SEP All Clear.csv
+2024-09-13 15:58:14 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\awt_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_Predicted SEP Threshold Crossing Time.pkl
+2024-09-13 15:58:14 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\awt_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_Predicted SEP Threshold Crossing Time.csv
+2024-09-13 15:58:14 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\awt_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_Predicted SEP Start Time.pkl
+2024-09-13 15:58:14 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\awt_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_Predicted SEP Start Time.csv
+2024-09-13 15:58:14 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\awt_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_Predicted SEP Peak Intensity (Onset Peak).pkl
+2024-09-13 15:58:14 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\awt_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_Predicted SEP Peak Intensity (Onset Peak).csv
+2024-09-13 15:58:14 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\awt_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_Predicted SEP Peak Intensity Max (Max Flux).pkl
+2024-09-13 15:58:14 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\awt_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_Predicted SEP Peak Intensity Max (Max Flux).csv
+2024-09-13 15:58:14 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\awt_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_Predicted SEP End Time.pkl
+2024-09-13 15:58:14 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\awt_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_Predicted SEP End Time.csv
+2024-09-13 15:58:14 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\last_data_time_to_issue_time_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pkl
+2024-09-13 15:58:14 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\last_data_time_to_issue_time_selections_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.csv
+2024-09-13 15:58:14 - [INFO] sphinxval.utils.validation.calculate_intuitive_metrics,3820: Completed calculating all metrics.
+2024-09-13 15:58:14 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\probability_metrics.pkl
+2024-09-13 15:58:14 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\probability_metrics.csv
+2024-09-13 15:58:14 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\peak_intensity_metrics.pkl
+2024-09-13 15:58:14 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\peak_intensity_metrics.csv
+2024-09-13 15:58:14 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\peak_intensity_max_metrics.pkl
+2024-09-13 15:58:14 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\peak_intensity_max_metrics.csv
+2024-09-13 15:58:14 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\fluence_metrics.pkl
+2024-09-13 15:58:14 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\fluence_metrics.csv
+2024-09-13 15:58:14 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\threshold_crossing_metrics.pkl
+2024-09-13 15:58:14 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\threshold_crossing_metrics.csv
+2024-09-13 15:58:14 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\start_time_metrics.pkl
+2024-09-13 15:58:14 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\start_time_metrics.csv
+2024-09-13 15:58:14 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\end_time_metrics.pkl
+2024-09-13 15:58:14 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\end_time_metrics.csv
+2024-09-13 15:58:14 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\duration_metrics.pkl
+2024-09-13 15:58:14 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\duration_metrics.csv
+2024-09-13 15:58:14 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\peak_intensity_time_metrics.pkl
+2024-09-13 15:58:14 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\peak_intensity_time_metrics.csv
+2024-09-13 15:58:14 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\peak_intensity_max_time_metrics.pkl
+2024-09-13 15:58:14 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\peak_intensity_max_time_metrics.csv
+2024-09-13 15:58:14 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\all_clear_metrics.pkl
+2024-09-13 15:58:14 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\all_clear_metrics.csv
+2024-09-13 15:58:14 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\time_profile_metrics.pkl
+2024-09-13 15:58:14 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\time_profile_metrics.csv
+2024-09-13 15:58:14 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\max_flux_in_pred_win_metrics.pkl
+2024-09-13 15:58:14 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\max_flux_in_pred_win_metrics.csv
+2024-09-13 15:58:14 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\awt_metrics.pkl
+2024-09-13 15:58:14 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\awt_metrics.csv
+2024-09-13 15:58:14 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\pkl\last_data_to_issue_time_metrics.pkl
+2024-09-13 15:58:14 - [DEBUG] sphinxval.utils.validation.write_df,541: Wrote ./tests/output\csv\last_data_to_issue_time_metrics.csv
+2024-09-13 15:58:14 - [INFO] sphinxval.utils.validation.calculate_intuitive_metrics,3875: Wrote out all metrics.

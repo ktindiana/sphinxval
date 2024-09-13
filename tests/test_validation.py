@@ -26,6 +26,9 @@ import json
 from unittest.mock import patch
 import shutil # using this to delete the contents of the output folder each run - since the unittest is based on the existence/creation of certain files each loop
 
+
+logger = logging.getLogger(__name__)
+
 """
 General outline as I start the validation.py workflow unittest
     validation.py (intuitive_validation function) is called after matching,
@@ -1375,12 +1378,10 @@ def fill_fluence_dict_all(dict, self):
 class TestAllClear0(unittest.TestCase):
     
 
-
     def load_verbosity(self):
         self.verbosity = utility_get_verbosity()
     
     
-
     def step_0(self): 
         validate.prepare_outdirs()
         
@@ -1408,16 +1409,7 @@ class TestAllClear0(unittest.TestCase):
         self.validation_type = ['All']
         
     def step_1(self):
-        """
-        Tests that the dataframe is built correctly with the correct fields being filled in/added.
-        The observation and forecast have exactly the same observation/prediction windows. 
-        Matching requires (at a minimum) that there is a prediction window start/end with an observed
-        SEP start time within the prediction window and that the last data time/trigger occur before the
-        observed SEP start time.
-
-        Observed all clear is False
-        Forecast all clear is False
-        """
+       
         self.dataframe = validate.fill_df(self.sphinx, self.model_names, self.all_energy_channels, \
             self.obs_thresholds, self.profname_dict)
         for keywords in self.dataframe:
@@ -1425,60 +1417,17 @@ class TestAllClear0(unittest.TestCase):
             
             temp = attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][0],\
                  self.energy_key, self.obs_thresholds)
-            # if keywords == 'Duration Match Status': # Leaving this commented out until Katie determines if the correct logic is being used to determine this match status
-            #     print(self.dataframe[keywords][0], temp, 'WHY IS THIS BUGGED')
-            self.assertEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
+            if pd.isnull(temp) and pd.isnull(self.dataframe[keywords][0]):
+                self.assertTrue(pd.isnull(self.dataframe[keywords][0]))
+            else:
+                self.assertEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
 
     def step_2(self):
-        print('Test for DoResume feature - this is false right now though so moving on after a quick assertFalse')
-        self.assertFalse(self.DoResume)
-    
+        validate.calculate_intuitive_metrics(self.dataframe, self.model_names, self.all_energy_channels, \
+                self.obs_thresholds, 'All')
     
 
     def step_3(self):
-        
-        with patch('sphinxval.utils.config.outpath', './tests/output'):
-            validate.calculate_intuitive_metrics(self.dataframe, self.model_names, self.all_energy_channels, \
-                self.obs_thresholds, 'All')
-            print('Made it to step 3')
-        # for model in self.model_names:
-        #     for quantities in self.validation_quantity:
-        #         if quantities in self.quantities_tested:
-        #             metrics_filename = './output\\csv\\' + quantities + '_metrics' 
-        #             self.assertTrue(os.path.isfile(metrics_filename + '.csv'), msg = metrics_filename + '.csv does not exist, check the file is output correctly')
-        #             metrics_filename = './output\\pkl\\' + quantities + '_metrics' 
-        #             self.assertTrue(os.path.isfile(metrics_filename + '.pkl'), msg = metrics_filename + '.pkl does not exist, check the file is output correctly')
-        #         else:
-        #             filename =  './output\\csv\\' + quantities + '_metrics.csv'
-        #             self.assertFalse(os.path.isfile(metrics_filename), msg = metrics_filename + ' should not exist') 
-                
-        #         for energy_channels in self.all_energy_channels:
-        #             for thresholds in self.obs_thresholds[energy_channels]:
-        #                 threshold_shortened = thresholds.rsplit('.')[0]+ '_' + thresholds.rsplit('.')[1] + '.' + thresholds.rsplit('.')[2]
-
-        #                 if quantities == 'awt':
-        #                     # pkl_filename = './output\\pkl\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + '.pkl'
-        #                     # csv_filename = './output\\csv\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + '.csv'
-        #                     pkl_filename = '.\\output\\pkl\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + "_Predicted SEP All Clear.pkl"
-        #                     csv_filename = '.\\output\\csv\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + "_Predicted SEP All Clear.csv"
-        #                     self.assertTrue(os.path.isfile(pkl_filename) , \
-        #                         msg = pkl_filename + ' does not exist, check the file is output correctly')
-        #                     self.assertTrue(os.path.isfile(csv_filename), \
-        #                         msg = csv_filename + ' does not exist, check the file is output correctly')
-                            
-        #                 else:
-        #                     pkl_filename = './output\\pkl\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + '.pkl'
-        #                     csv_filename = './output\\csv\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + '.csv'
-        #                     if quantities in self.quantities_tested:
-        #                         self.assertTrue(os.path.isfile(pkl_filename), msg = pkl_filename + ' does not exist, check the file is output correctly')
-        #                         self.assertTrue(os.path.isfile(csv_filename), msg = csv_filename + ' does not exist, check the file is output correctly')
-        #                     else:
-        #                         self.assertFalse(os.path.isfile(pkl_filename), msg = pkl_filename + ' should not exist')
-        #                         self.assertFalse(os.path.isfile(csv_filename), msg = csv_filename + ' should not exist')
-
-
-    def step_4(self):
-        print('In Step 4')
         test_dict = initialize_all_clear_dict()
         test_dict = fill_all_clear_dict_hit(test_dict, self)
         
@@ -1598,15 +1547,7 @@ class TestAllClear1(unittest.TestCase):
         self.validation_type = ['All']
         
     def step_1(self):
-        """
-        Tests that the dataframe is built correctly with the correct fields being filled in/added.
-        The observation and forecast have exactly the same observation/prediction windows. 
-        Matching requires (at a minimum) that there is a prediction window start/end with an observed
-        SEP start time within the prediction window and that the last data time/trigger occur before the
-        observed SEP start time.
-        Observed all clear is False
-        Forecast all clear is False
-        """
+        
         self.dataframe = validate.fill_df(self.sphinx, self.model_names, self.all_energy_channels, \
             self.obs_thresholds, self.profname_dict)
         for keywords in self.dataframe:
@@ -1614,56 +1555,16 @@ class TestAllClear1(unittest.TestCase):
             
             temp = attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][0],\
                  self.energy_key, self.obs_thresholds)
-            # if keywords == 'Duration Match Status': # Leaving this commented out until Katie determines if the correct logic is being used to determine this match status
-            #     print(self.dataframe[keywords][0], temp, 'WHY IS THIS BUGGED')
-            self.assertEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
+            if pd.isnull(temp) and pd.isnull(self.dataframe[keywords][0]):
+                self.assertTrue(pd.isnull(self.dataframe[keywords][0]))
+            else:
+                self.assertEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
 
     def step_2(self):
-        print('Test for DoResume feature - this is false right now though so moving on after a quick assertFalse')
-        self.assertFalse(self.DoResume)
-    
-    def step_3(self):
         validate.calculate_intuitive_metrics(self.dataframe, self.model_names, self.all_energy_channels, \
             self.obs_thresholds, 'All')
-        print('Made it to step 3')
-        # for model in self.model_names:
-        #     for quantities in self.validation_quantity:
-        #         if quantities in self.quantities_tested:
-        #             metrics_filename = './output\\csv\\' + quantities + '_metrics' 
-        #             self.assertTrue(os.path.isfile(metrics_filename + '.csv'), msg = metrics_filename + '.csv does not exist, check the file is output correctly')
-        #             metrics_filename = './output\\pkl\\' + quantities + '_metrics' 
-        #             self.assertTrue(os.path.isfile(metrics_filename + '.pkl'), msg = metrics_filename + '.pkl does not exist, check the file is output correctly')
-        #         else:
-        #             filename =  './output\\csv\\' + quantities + '_metrics.csv'
-        #             self.assertFalse(os.path.isfile(metrics_filename), msg = metrics_filename + ' should not exist') 
-                
-        #         for energy_channels in self.all_energy_channels:
-        #             for thresholds in self.obs_thresholds[energy_channels]:
-        #                 threshold_shortened = thresholds.rsplit('.')[0]+ '_' + thresholds.rsplit('.')[1] + '.' + thresholds.rsplit('.')[2]
-
-        #                 # if quantities == 'awt':
-        #                 #     # pkl_filename = './output\\pkl\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + '.pkl'
-        #                 #     # csv_filename = './output\\csv\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + '.csv'
-        #                 #     pkl_filename = '.\\output\\pkl\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + "_Predicted SEP All Clear.pkl"
-        #                 #     csv_filename = '.\\output\\csv\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + "_Predicted SEP All Clear.csv"
-        #                 #     self.assertTrue(os.path.isfile(pkl_filename) , \
-        #                 #         msg = pkl_filename + ' does not exist, check the file is output correctly')
-        #                 #     self.assertTrue(os.path.isfile(csv_filename), \
-        #                 #         msg = csv_filename + ' does not exist, check the file is output correctly')
-                            
-        #                 # else:
-        #                 pkl_filename = './output\\pkl\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + '.pkl'
-        #                 csv_filename = './output\\csv\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + '.csv'
-        #                 if quantities in self.quantities_tested:
-        #                     self.assertTrue(os.path.isfile(pkl_filename), msg = pkl_filename + ' does not exist, check the file is output correctly')
-        #                     self.assertTrue(os.path.isfile(csv_filename), msg = csv_filename + ' does not exist, check the file is output correctly')
-        #                 else:
-        #                     self.assertFalse(os.path.isfile(pkl_filename), msg = pkl_filename + ' should not exist')
-        #                     self.assertFalse(os.path.isfile(csv_filename), msg = csv_filename + ' should not exist')
-
-
-    def step_4(self):
-        print('In Step 4')
+    
+    def step_3(self):
         test_dict = initialize_all_clear_dict()
         test_dict = fill_all_clear_dict_CN(test_dict, self)
 
@@ -1694,23 +1595,7 @@ class TestAllClear1(unittest.TestCase):
         for name in dir(self): # dir() result is implicitly sorted
             if name.startswith("step"):
                 yield name, getattr(self, name)
-        
-    # @make_docstring_printable
-    # def test_df_all_clear_1(this, self):
-    #     """
-    #     Tests that the dataframe is built correctly with the correct fields being filled in/added.
-    #     The observation and forecast have exactly the same observation/prediction windows. 
-    #     Matching requires (at a minimum) that there is a prediction window start/end with an observed
-    #     SEP start time within the prediction window and that the last data time/trigger occur before the
-    #     observed SEP start time.
-    #     Observed all clear is False
-    #     Forecast all clear is False
 
-    #     The tests in this block are:
-    #         Observed SEP All Clear is False
-    #         Predicted SEP All Clear is False
-
-    #     """
     @patch('sphinxval.utils.config.outpath', './tests/output')
 
     def test_all_clear_1(self):
@@ -1786,16 +1671,7 @@ class TestPeakIntensity0(unittest.TestCase):
         self.validation_type = ['All']
         
     def step_1(self):
-        """
-        Tests that the dataframe is built correctly with the correct fields being filled in/added.
-        The observation and forecast have exactly the same observation/prediction windows. 
-        Matching requires (at a minimum) that there is a prediction window start/end with an observed
-        SEP start time within the prediction window and that the last data time/trigger occur before the
-        observed SEP start time.
-
-        Observed all clear is False
-        Forecast all clear is False
-        """
+        
         self.dataframe = validate.fill_df(self.sphinx, self.model_names, self.all_energy_channels, \
             self.obs_thresholds, self.profname_dict)
         for keywords in self.dataframe:
@@ -1803,56 +1679,16 @@ class TestPeakIntensity0(unittest.TestCase):
             
             temp = attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][0],\
                  self.energy_key, self.obs_thresholds)
-            # if keywords == 'Duration Match Status': # Leaving this commented out until Katie determines if the correct logic is being used to determine this match status
-            #     print(self.dataframe[keywords][0], temp, 'WHY IS THIS BUGGED')
-            self.assertEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
+            if pd.isnull(temp) and pd.isnull(self.dataframe[keywords][0]):
+                self.assertTrue(pd.isnull(self.dataframe[keywords][0]))
+            else:
+                self.assertEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
 
     def step_2(self):
-        print('Test for DoResume feature - this is false right now though so moving on after a quick assertFalse')
-        self.assertFalse(self.DoResume)
-    
-    def step_3(self):
         validate.calculate_intuitive_metrics(self.dataframe, self.model_names, self.all_energy_channels, \
             self.obs_thresholds, 'All')
-        print('Made it to step 3')
-        # for model in self.model_names:
-        #     for quantities in self.validation_quantity:
-        #         if quantities in self.quantities_tested:
-        #             metrics_filename = './output\\csv\\' + quantities + '_metrics' 
-        #             self.assertTrue(os.path.isfile(metrics_filename + '.csv'), msg = metrics_filename + '.csv does not exist, check the file is output correctly')
-        #             metrics_filename = './output\\pkl\\' + quantities + '_metrics' 
-        #             self.assertTrue(os.path.isfile(metrics_filename + '.pkl'), msg = metrics_filename + '.pkl does not exist, check the file is output correctly')
-        #         else:
-        #             filename =  './output\\csv\\' + quantities + '_metrics.csv'
-        #             self.assertFalse(os.path.isfile(metrics_filename), msg = metrics_filename + ' should not exist') 
-                
-        #         for energy_channels in self.all_energy_channels:
-        #             for thresholds in self.obs_thresholds[energy_channels]:
-        #                 threshold_shortened = thresholds.rsplit('.')[0]+ '_' + thresholds.rsplit('.')[1] + '.' + thresholds.rsplit('.')[2]
-
-        #                 if quantities == 'awt':
-        #                     # pkl_filename = './output\\pkl\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + '.pkl'
-        #                     # csv_filename = './output\\csv\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + '.csv'
-        #                     pkl_filename = '.\\output\\pkl\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + "_Predicted SEP All Clear.pkl"
-        #                     csv_filename = '.\\output\\csv\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + "_Predicted SEP All Clear.csv"
-        #                     self.assertTrue(os.path.isfile(pkl_filename) , \
-        #                         msg = pkl_filename + ' does not exist, check the file is output correctly')
-        #                     self.assertTrue(os.path.isfile(csv_filename), \
-        #                         msg = csv_filename + ' does not exist, check the file is output correctly')
-                            
-        #                 else:
-        #                     pkl_filename = './output\\pkl\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + '.pkl'
-        #                     csv_filename = './output\\csv\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + '.csv'
-        #                     if quantities in self.quantities_tested:
-        #                         self.assertTrue(os.path.isfile(pkl_filename), msg = pkl_filename + ' does not exist, check the file is output correctly')
-        #                         self.assertTrue(os.path.isfile(csv_filename), msg = csv_filename + ' does not exist, check the file is output correctly')
-        #                     else:
-        #                         self.assertFalse(os.path.isfile(pkl_filename), msg = pkl_filename + ' should not exist')
-        #                         self.assertFalse(os.path.isfile(csv_filename), msg = csv_filename + ' should not exist')
-
-
-    def step_4(self):
-        print('In Step 4')
+    
+    def step_3(self):
         test_dict = initialize_flux_dict()
         test_dict = fill_peak_intensity_dict(test_dict, self)
 
@@ -1874,7 +1710,7 @@ class TestPeakIntensity0(unittest.TestCase):
                             self.assertEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
 
 
-    def step_5(self):
+    def step_4(self):
         print('In Step 5')
         test_dict = initialize_time_dict()
         test_dict = fill_peak_intensity_time_dict(test_dict, self)
@@ -1957,13 +1793,6 @@ class TestPeakIntensityMult(unittest.TestCase):
         self.validation_type = ['All']
         
     def step_1(self):
-        """
-        Tests that the dataframe is built correctly with the correct fields being filled in/added.
-        The observation and forecast have exactly the same observation/prediction windows. 
-        Matching requires (at a minimum) that there is a prediction window start/end with an observed
-        SEP start time within the prediction window and that the last data time/trigger occur before the
-        observed SEP start time.
-        """
         self.dataframe = validate.fill_df(self.sphinx, self.model_names, self.all_energy_channels, \
             self.obs_thresholds, self.profname_dict)
        
@@ -1972,63 +1801,25 @@ class TestPeakIntensityMult(unittest.TestCase):
             
             temp = attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][0],\
                  self.energy_key, self.obs_thresholds)
-            # if keywords == 'Duration Match Status': # Leaving this commented out until Katie determines if the correct logic is being used to determine this match status
-            
-            self.assertEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
+            if pd.isnull(temp) and pd.isnull(self.dataframe[keywords][0]):
+                self.assertTrue(pd.isnull(self.dataframe[keywords][0]))
+            else:
+                self.assertEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
 
             temp = attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][1],\
                  self.energy_key, self.obs_thresholds)
-            # if keywords == 'Duration Match Status': # Leaving this commented out until Katie determines if the correct logic is being used to determine this match status
-            
-            self.assertEqual(self.dataframe[keywords][1], temp, 'Error is in keyword ' + keywords)
+            if pd.isnull(temp) and pd.isnull(self.dataframe[keywords][1]):
+                self.assertTrue(pd.isnull(self.dataframe[keywords][1]))
+            else:
+                self.assertEqual(self.dataframe[keywords][1], temp, 'Error is in keyword ' + keywords)
+
 
 
     def step_2(self):
-        print('Test for DoResume feature - this is false right now though so moving on after a quick assertFalse')
-        self.assertFalse(self.DoResume)
-    
-    def step_3(self):
         validate.calculate_intuitive_metrics(self.dataframe, self.model_names, self.all_energy_channels, \
             self.obs_thresholds, 'All')
-        print('Made it to step 3')
-        # for model in self.model_names:
-        #     for quantities in self.validation_quantity:
-        #         if quantities in self.quantities_tested:
-        #             metrics_filename = './output\\csv\\' + quantities + '_metrics' 
-        #             self.assertTrue(os.path.isfile(metrics_filename + '.csv'), msg = metrics_filename + '.csv does not exist, check the file is output correctly')
-        #             metrics_filename = './output\\pkl\\' + quantities + '_metrics' 
-        #             self.assertTrue(os.path.isfile(metrics_filename + '.pkl'), msg = metrics_filename + '.pkl does not exist, check the file is output correctly')
-        #         else:
-        #             filename =  './output\\csv\\' + quantities + '_metrics.csv'
-        #             self.assertFalse(os.path.isfile(metrics_filename), msg = metrics_filename + ' should not exist') 
-                
-        #         for energy_channels in self.all_energy_channels:
-        #             for thresholds in self.obs_thresholds[energy_channels]:
-        #                 threshold_shortened = thresholds.rsplit('.')[0]+ '_' + thresholds.rsplit('.')[1] + '.' + thresholds.rsplit('.')[2]
-
-        #                 if quantities == 'awt':
-        #                     # pkl_filename = './output\\pkl\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + '.pkl'
-        #                     # csv_filename = './output\\csv\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + '.csv'
-        #                     pkl_filename = '.\\output\\pkl\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + "_Predicted SEP All Clear.pkl"
-        #                     csv_filename = '.\\output\\csv\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + "_Predicted SEP All Clear.csv"
-        #                     self.assertTrue(os.path.isfile(pkl_filename) , \
-        #                         msg = pkl_filename + ' does not exist, check the file is output correctly')
-        #                     self.assertTrue(os.path.isfile(csv_filename), \
-        #                         msg = csv_filename + ' does not exist, check the file is output correctly')
-                            
-        #                 else:
-        #                     pkl_filename = './output\\pkl\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + '.pkl'
-        #                     csv_filename = './output\\csv\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + '.csv'
-        #                     if quantities in self.quantities_tested:
-        #                         self.assertTrue(os.path.isfile(pkl_filename), msg = pkl_filename + ' does not exist, check the file is output correctly')
-        #                         self.assertTrue(os.path.isfile(csv_filename), msg = csv_filename + ' does not exist, check the file is output correctly')
-        #                     else:
-        #                         self.assertFalse(os.path.isfile(pkl_filename), msg = pkl_filename + ' should not exist')
-        #                         self.assertFalse(os.path.isfile(csv_filename), msg = csv_filename + ' should not exist')
-
-
-    def step_4(self):
-        print('In Step 4')
+    
+    def step_3(self):    
         test_dict = initialize_flux_dict()
         test_dict = fill_peak_intensity_mult_dict(test_dict, self)
         csv_filename = './tests/output\\csv\\peak_intensity_metrics.csv'
@@ -2045,7 +1836,6 @@ class TestPeakIntensityMult(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            # print(keyword, row[j], test_dict[keyword][0])
                             self.assertEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
 
 
@@ -2093,41 +1883,6 @@ class TestPeakIntensityMult(unittest.TestCase):
                 self.fail("{} failed ({}: {})".format(step, type(e), e))
         utility_delete_output()
 
-
-
-
-
-class TestPeakIntensityGarbage(unittest.TestCase):
-
-    def load_verbosity(self):
-        self.verbosity = utility_get_verbosity()
-    
-    
-    @patch('sphinxval.utils.config.outpath', './tests/output')
-
-    def test_peak_intensity_garbage(self): 
-        validate.prepare_outdirs()
-        with self.assertRaises(ValueError, msg = 'Giving purposeful garbage, should exit'):
-            self.energy_channel = {'min': 10, 'max': -1, 'units': 'MeV'}
-            self.energy_key = objh.energy_channel_to_key(self.energy_channel)
-            self.all_energy_channels = [self.energy_key] 
-            self.model_names = ['Test_model_0']
-            observation_json = './tests/files/observations/validation/all_clear/all_clear_false.json'
-            observation = utility_load_observation(observation_json, self.energy_channel)
-            observation_objects = {self.energy_key: [observation]}
-            self.verbosity = utility_get_verbosity()
-            forecast_json = './tests/files/forecasts/validation/onset_peak/pred_garbage.json'
-            forecast = utility_load_forecast(forecast_json, self.energy_channel)
-            forecast_objects = {self.energy_key: [forecast]}
-            self.sphinx, self.obs_thresholds, self.obs_sep_events = utility_match_sphinx(self.all_energy_channels,\
-                self.model_names, observation_objects, forecast_objects)
-            self.profname_dict = None
-            self.DoResume = False
-            
-            self.validation_quantity = ['all_clear', 'awt', 'duration', 'end_time', 'fluence', 'max_flux_in_pred_window', 'peak_intensity_max', 'peak_intensity_max_time', 'peak_intensity' \
-                'peak_intensity_time', 'probability', 'start_time', 'threshold_crossing', 'time_profile']
-            self.quantities_tested = ['all_clear', 'peak_intensity']
-            self.validation_type = ['All']
         
 
 
@@ -2164,73 +1919,24 @@ class TestPeakIntensityMax0(unittest.TestCase):
         self.validation_type = ['All']
         
     def step_1(self):
-        """
-        Tests that the dataframe is built correctly with the correct fields being filled in/added.
-        The observation and forecast have exactly the same observation/prediction windows. 
-        Matching requires (at a minimum) that there is a prediction window start/end with an observed
-        SEP start time within the prediction window and that the last data time/trigger occur before the
-        observed SEP start time.
-
-        Observed all clear is False
-        Forecast all clear is False
-        """
         self.dataframe = validate.fill_df(self.sphinx, self.model_names, self.all_energy_channels, \
             self.obs_thresholds, self.profname_dict)
         for keywords in self.dataframe:
-            # temp = self.sphinx['Test_model_0'][self.energy_key].prediction.short_name\
+        
             
             temp = attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][0],\
                  self.energy_key, self.obs_thresholds)
-            # if keywords == 'Duration Match Status': # Leaving this commented out until Katie determines if the correct logic is being used to determine this match status
-            #     print(self.dataframe[keywords][0], temp, 'WHY IS THIS BUGGED')
-            self.assertEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
+            if pd.isnull(temp) and pd.isnull(self.dataframe[keywords][0]):
+                self.assertTrue(pd.isnull(self.dataframe[keywords][0]))
+            else:
+                self.assertEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
+            
 
     def step_2(self):
-        print('Test for DoResume feature - this is false right now though so moving on after a quick assertFalse')
-        self.assertFalse(self.DoResume)
-    
-    def step_3(self):
         validate.calculate_intuitive_metrics(self.dataframe, self.model_names, self.all_energy_channels, \
             self.obs_thresholds, 'All')
-        print('Made it to step 3')
-        # for model in self.model_names:
-        #     for quantities in self.validation_quantity:
-        #         if quantities in self.quantities_tested:
-        #             metrics_filename = './output\\csv\\' + quantities + '_metrics' 
-        #             self.assertTrue(os.path.isfile(metrics_filename + '.csv'), msg = metrics_filename + '.csv does not exist, check the file is output correctly')
-        #             metrics_filename = './output\\pkl\\' + quantities + '_metrics' 
-        #             self.assertTrue(os.path.isfile(metrics_filename + '.pkl'), msg = metrics_filename + '.pkl does not exist, check the file is output correctly')
-        #         else:
-        #             filename =  './output\\csv\\' + quantities + '_metrics.csv'
-        #             self.assertFalse(os.path.isfile(metrics_filename), msg = metrics_filename + ' should not exist') 
-                
-        #         for energy_channels in self.all_energy_channels:
-        #             for thresholds in self.obs_thresholds[energy_channels]:
-        #                 threshold_shortened = thresholds.rsplit('.')[0]+ '_' + thresholds.rsplit('.')[1] + '.' + thresholds.rsplit('.')[2]
-
-        #                 if quantities == 'awt':
-        #                     # pkl_filename = './output\\pkl\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + '.pkl'
-        #                     # csv_filename = './output\\csv\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + '.csv'
-        #                     pkl_filename = '.\\output\\pkl\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + "_Predicted SEP All Clear.pkl"
-        #                     csv_filename = '.\\output\\csv\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + "_Predicted SEP All Clear.csv"
-        #                     self.assertTrue(os.path.isfile(pkl_filename) , \
-        #                         msg = pkl_filename + ' does not exist, check the file is output correctly')
-        #                     self.assertTrue(os.path.isfile(csv_filename), \
-        #                         msg = csv_filename + ' does not exist, check the file is output correctly')
-                            
-        #                 else:
-        #                     pkl_filename = './output\\pkl\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + '.pkl'
-        #                     csv_filename = './output\\csv\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + '.csv'
-        #                     if quantities in self.quantities_tested:
-        #                         self.assertTrue(os.path.isfile(pkl_filename), msg = pkl_filename + ' does not exist, check the file is output correctly')
-        #                         self.assertTrue(os.path.isfile(csv_filename), msg = csv_filename + ' does not exist, check the file is output correctly')
-        #                     else:
-        #                         self.assertFalse(os.path.isfile(pkl_filename), msg = pkl_filename + ' should not exist')
-        #                         self.assertFalse(os.path.isfile(csv_filename), msg = csv_filename + ' should not exist')
-
-
-    def step_4(self):
-        print('In Step 4')
+    
+    def step_3(self):
         test_dict = initialize_flux_dict()
         test_dict = fill_peak_intensity_max_dict(test_dict, self)
 
@@ -2262,23 +1968,7 @@ class TestPeakIntensityMax0(unittest.TestCase):
             if name.startswith("step"):
                 yield name, getattr(self, name)
         
-    # @make_docstring_printable
-    # def test_df_all_clear_1(this, self):
-    #     """
-    #     Tests that the dataframe is built correctly with the correct fields being filled in/added.
-    #     The observation and forecast have exactly the same observation/prediction windows. 
-    #     Matching requires (at a minimum) that there is a prediction window start/end with an observed
-    #     SEP start time within the prediction window and that the last data time/trigger occur before the
-    #     observed SEP start time.
-    #     Observed all clear is False
-    #     Forecast all clear is False
-
-    #     The tests in this block are:
-    #         Observed SEP All Clear is False
-    #         Predicted SEP All Clear is False
-
-    #     """
-
+   
     @patch('sphinxval.utils.config.outpath', './tests/output')
 
     def test_peak_intensity_max_0(self):
@@ -2346,63 +2036,23 @@ class TestPeakIntensityMaxMult(unittest.TestCase):
             
             temp = attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][0],\
                  self.energy_key, self.obs_thresholds)
-            # if keywords == 'Duration Match Status': # Leaving this commented out until Katie determines if the correct logic is being used to determine this match status
-            
-            self.assertEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
-
+            if pd.isnull(temp) and pd.isnull(self.dataframe[keywords][0]):
+                self.assertTrue(pd.isnull(self.dataframe[keywords][0]))
+            else:
+                self.assertEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
             temp = attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][1],\
                  self.energy_key, self.obs_thresholds)
-            # if keywords == 'Duration Match Status': # Leaving this commented out until Katie determines if the correct logic is being used to determine this match status
-            
-            self.assertEqual(self.dataframe[keywords][1], temp, 'Error is in keyword ' + keywords)
-
+            if pd.isnull(temp) and pd.isnull(self.dataframe[keywords][1]):
+                self.assertTrue(pd.isnull(self.dataframe[keywords][1]))
+            else:
+                self.assertEqual(self.dataframe[keywords][1], temp, 'Error is in keyword ' + keywords)
 
     def step_2(self):
-        print('Test for DoResume feature - this is false right now though so moving on after a quick assertFalse')
-        self.assertFalse(self.DoResume)
-    
-    def step_3(self):
         validate.calculate_intuitive_metrics(self.dataframe, self.model_names, self.all_energy_channels, \
             self.obs_thresholds, 'All')
-        print('Made it to step 3')
-        # for model in self.model_names:
-        #     for quantities in self.validation_quantity:
-        #         if quantities in self.quantities_tested:
-        #             metrics_filename = './output\\csv\\' + quantities + '_metrics' 
-        #             self.assertTrue(os.path.isfile(metrics_filename + '.csv'), msg = metrics_filename + '.csv does not exist, check the file is output correctly')
-        #             metrics_filename = './output\\pkl\\' + quantities + '_metrics' 
-        #             self.assertTrue(os.path.isfile(metrics_filename + '.pkl'), msg = metrics_filename + '.pkl does not exist, check the file is output correctly')
-        #         else:
-        #             filename =  './output\\csv\\' + quantities + '_metrics.csv'
-        #             self.assertFalse(os.path.isfile(metrics_filename), msg = metrics_filename + ' should not exist') 
-                
-        #         for energy_channels in self.all_energy_channels:
-        #             for thresholds in self.obs_thresholds[energy_channels]:
-        #                 threshold_shortened = thresholds.rsplit('.')[0]+ '_' + thresholds.rsplit('.')[1] + '.' + thresholds.rsplit('.')[2]
-
-        #                 if quantities == 'awt':
-        #                     # pkl_filename = './output\\pkl\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + '.pkl'
-        #                     # csv_filename = './output\\csv\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + '.csv'
-        #                     pkl_filename = '.\\output\\pkl\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + "_Predicted SEP All Clear.pkl"
-        #                     csv_filename = '.\\output\\csv\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + "_Predicted SEP All Clear.csv"
-        #                     self.assertTrue(os.path.isfile(pkl_filename) , \
-        #                         msg = pkl_filename + ' does not exist, check the file is output correctly')
-        #                     self.assertTrue(os.path.isfile(csv_filename), \
-        #                         msg = csv_filename + ' does not exist, check the file is output correctly')
-                            
-        #                 else:
-        #                     pkl_filename = './output\\pkl\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + '.pkl'
-        #                     csv_filename = './output\\csv\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + '.csv'
-        #                     if quantities in self.quantities_tested:
-        #                         self.assertTrue(os.path.isfile(pkl_filename), msg = pkl_filename + ' does not exist, check the file is output correctly')
-        #                         self.assertTrue(os.path.isfile(csv_filename), msg = csv_filename + ' does not exist, check the file is output correctly')
-        #                     else:
-        #                         self.assertFalse(os.path.isfile(pkl_filename), msg = pkl_filename + ' should not exist')
-        #                         self.assertFalse(os.path.isfile(csv_filename), msg = csv_filename + ' should not exist')
-
-
-    def step_4(self):
-        print('In Step 4')
+        
+    
+    def step_3(self):
         test_dict = initialize_flux_dict()
         test_dict = fill_peak_intensity_max_mult_dict(test_dict, self)
         csv_filename = './tests/output\\csv\\peak_intensity_max_metrics.csv'
@@ -2422,13 +2072,7 @@ class TestPeakIntensityMaxMult(unittest.TestCase):
                             # print(keyword, row[j], test_dict[keyword][0])
                             self.assertEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
 
-
-
-
-    
-
-    
-
+        
     def utility_print_docstring(self, function):
         if self.verbosity == 2:
             print('\n//----------------------------------------------------')
@@ -2438,23 +2082,7 @@ class TestPeakIntensityMaxMult(unittest.TestCase):
         for name in dir(self): # dir() result is implicitly sorted
             if name.startswith("step"):
                 yield name, getattr(self, name)
-        
-    # @make_docstring_printable
-    # def test_df_all_clear_1(this, self):
-    #     """
-    #     Tests that the dataframe is built correctly with the correct fields being filled in/added.
-    #     The observation and forecast have exactly the same observation/prediction windows. 
-    #     Matching requires (at a minimum) that there is a prediction window start/end with an observed
-    #     SEP start time within the prediction window and that the last data time/trigger occur before the
-    #     observed SEP start time.
-    #     Observed all clear is False
-    #     Forecast all clear is False
 
-    #     The tests in this block are:
-    #         Observed SEP All Clear is False
-    #         Predicted SEP All Clear is False
-
-    #     """
 
     @patch('sphinxval.utils.config.outpath', './tests/output')
 
@@ -2467,48 +2095,6 @@ class TestPeakIntensityMaxMult(unittest.TestCase):
                 self.fail("{} failed ({}: {})".format(step, type(e), e))
         utility_delete_output()
 
-
-
-
-
-# class TestPeakIntensityMaxGarbage(unittest.TestCase):
-
-#     def load_verbosity(self):
-#         self.verbosity = utility_get_verbosity()
-    
-    
-
-#     def test_peak_intensity_max_garbage(self): 
-#         validate.prepare_outdirs()
-#         with self.assertRaises(ValueError, msg = 'Giving purposeful garbage, should exit'):
-#             self.energy_channel = {'min': 10, 'max': -1, 'units': 'MeV'}
-#             self.energy_key = objh.energy_channel_to_key(self.energy_channel)
-#             self.all_energy_channels = [self.energy_key] 
-#             self.model_names = ['Test_model_0']
-#             observation_json = './tests/files/observations/validation/all_clear/all_clear_false.json'
-#             observation = utility_load_observation(observation_json, self.energy_channel)
-#             observation_objects = {self.energy_key: [observation]}
-#             self.verbosity = utility_get_verbosity()
-#             forecast_json = './tests/files/forecasts/validation/max_peak/pred_garbage.json'
-#             forecast = utility_load_forecast(forecast_json, self.energy_channel)
-#             forecast_objects = {self.energy_key: [forecast]}
-#             self.sphinx, self.obs_thresholds, self.obs_sep_events = utility_match_sphinx(self.all_energy_channels,\
-#                 self.model_names, observation_objects, forecast_objects)
-#             self.profname_dict = None
-#             self.DoResume = False
-            
-#             self.validation_quantity = ['all_clear', 'awt', 'duration', 'end_time', 'fluence', 'max_flux_in_pred_window', 'peak_intensity_max', 'peak_intensity_max_time', 'peak_intensity' \
-#                 'peak_intensity_time', 'probability', 'start_time', 'threshold_crossing', 'time_profile']
-#             self.quantities_tested = ['all_clear', 'peak_intensity_max']
-#             self.validation_type = ['All']
-        
-   
-
-  
-#     def utility_print_docstring(self, function):
-#         if self.verbosity == 2:
-#             print('\n//----------------------------------------------------')
-#             print(function.__doc__)
 
 
 class TestProbability0(unittest.TestCase):
@@ -2555,59 +2141,26 @@ class TestProbability0(unittest.TestCase):
             self.obs_thresholds, self.profname_dict)
         for keywords in self.dataframe:
             # temp = self.sphinx['Test_model_0'][self.energy_key].prediction.short_name\
-            
             temp = attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][0],\
                  self.energy_key, self.obs_thresholds)
-            # if keywords == 'Duration Match Status': # Leaving this commented out until Katie determines if the correct logic is being used to determine this match status
-            #     print(self.dataframe[keywords][0], temp, 'WHY IS THIS BUGGED')
-            self.assertEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
+            if pd.isnull(temp) and pd.isnull(self.dataframe[keywords][0]):
+                self.assertTrue(pd.isnull(self.dataframe[keywords][0]))
+            else:
+                self.assertEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
+
 
     def step_2(self):
-        print('Test for DoResume feature - this is false right now though so moving on after a quick assertFalse')
+        # print('Test for DoResume feature - this is false right now though so moving on after a quick assertFalse')
         self.assertFalse(self.DoResume)
     
     def step_3(self):
         validate.calculate_intuitive_metrics(self.dataframe, self.model_names, self.all_energy_channels, \
             self.obs_thresholds, 'All')
-        print('Made it to step 3')
-        # for model in self.model_names:
-        #     for quantities in self.validation_quantity:
-        #         if quantities in self.quantities_tested:
-        #             metrics_filename = './output\\csv\\' + quantities + '_metrics' 
-        #             self.assertTrue(os.path.isfile(metrics_filename + '.csv'), msg = metrics_filename + '.csv does not exist, check the file is output correctly')
-        #             metrics_filename = './output\\pkl\\' + quantities + '_metrics' 
-        #             self.assertTrue(os.path.isfile(metrics_filename + '.pkl'), msg = metrics_filename + '.pkl does not exist, check the file is output correctly')
-        #         else:
-        #             filename =  './output\\csv\\' + quantities + '_metrics.csv'
-        #             self.assertFalse(os.path.isfile(metrics_filename), msg = metrics_filename + ' should not exist') 
-                
-        #         for energy_channels in self.all_energy_channels:
-        #             for thresholds in self.obs_thresholds[energy_channels]:
-        #                 threshold_shortened = thresholds.rsplit('.')[0]+ '_' + thresholds.rsplit('.')[1] + '.' + thresholds.rsplit('.')[2]
-
-        #                 if quantities == 'awt':
-        #                     # pkl_filename = './output\\pkl\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + '.pkl'
-        #                     # csv_filename = './output\\csv\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + '.csv'
-        #                     pkl_filename = '.\\output\\pkl\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + "_Predicted SEP All Clear.pkl"
-        #                     csv_filename = '.\\output\\csv\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + "_Predicted SEP All Clear.csv"
-        #                     self.assertTrue(os.path.isfile(pkl_filename) , \
-        #                         msg = pkl_filename + ' does not exist, check the file is output correctly')
-        #                     self.assertTrue(os.path.isfile(csv_filename), \
-        #                         msg = csv_filename + ' does not exist, check the file is output correctly')
-                            
-        #                 else:
-        #                     pkl_filename = './output\\pkl\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + '.pkl'
-        #                     csv_filename = './output\\csv\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + '.csv'
-        #                     if quantities in self.quantities_tested:
-        #                         self.assertTrue(os.path.isfile(pkl_filename), msg = pkl_filename + ' does not exist, check the file is output correctly')
-        #                         self.assertTrue(os.path.isfile(csv_filename), msg = csv_filename + ' does not exist, check the file is output correctly')
-        #                     else:
-        #                         self.assertFalse(os.path.isfile(pkl_filename), msg = pkl_filename + ' should not exist')
-        #                         self.assertFalse(os.path.isfile(csv_filename), msg = csv_filename + ' should not exist')
-
+        
+       
 
     def step_4(self):
-        print('In Step 4')
+        # print('In Step 4')
         test_dict = initialize_probability_dict()
         test_dict = fill_probability_dict_highprob(test_dict, self)
         csv_filename = './tests/output\\csv\\probability_metrics.csv'
@@ -2641,22 +2194,7 @@ class TestProbability0(unittest.TestCase):
             if name.startswith("step"):
                 yield name, getattr(self, name)
         
-    # @make_docstring_printable
-    # def test_df_all_clear_1(this, self):
-    #     """
-    #     Tests that the dataframe is built correctly with the correct fields being filled in/added.
-    #     The observation and forecast have exactly the same observation/prediction windows. 
-    #     Matching requires (at a minimum) that there is a prediction window start/end with an observed
-    #     SEP start time within the prediction window and that the last data time/trigger occur before the
-    #     observed SEP start time.
-    #     Observed all clear is False
-    #     Forecast all clear is False
 
-    #     The tests in this block are:
-    #         Observed SEP All Clear is False
-    #         Predicted SEP All Clear is False
-
-    #     """
 
     @patch('sphinxval.utils.config.outpath', './tests/output')
 
@@ -2670,41 +2208,6 @@ class TestProbability0(unittest.TestCase):
         utility_delete_output()
 
 
-
-# class TestProbabilityGarbage(unittest.TestCase):
-
-#     def load_verbosity(self):
-#         self.verbosity = utility_get_verbosity()
-    
-    
-
-#     def test_garbage(self): 
-#         validate.prepare_outdirs()
-        
-
-#         with self.assertRaises(NameError, msg = 'Giving purposeful garbage, should exit'):
-#             self.energy_channel = {'min': 10, 'max': -1, 'units': 'MeV'}
-#             self.energy_key = objh.energy_channel_to_key(self.energy_channel)
-#             self.all_energy_channels = [self.energy_key] 
-#             self.model_names = ['Test_model_0']
-#             observation_json = './tests/files/observations/validation/all_clear/all_clear_false.json'
-#             observation = utility_load_observation(observation_json, self.energy_channel)
-#             observation_objects = {self.energy_key: [observation]}
-#             self.verbosity = utility_get_verbosity()
-#             forecast_json = './tests/files/forecasts/validation/probability/pred_probability_garbage.json'
-#             forecast = utility_load_forecast(forecast_json, self.energy_channel)
-#             forecast_objects = {self.energy_key: [forecast]}
-#             self.sphinx, self.obs_thresholds, self.obs_sep_events = utility_match_sphinx(self.all_energy_channels,\
-#                 self.model_names, observation_objects, forecast_objects)
-#             self.profname_dict = None
-#             self.DoResume = False
-            
-#             self.validation_quantity = ['all_clear', 'awt', 'duration', 'end_time', 'fluence', 'max_flux_in_pred_window', 'peak_intensity_max', 'peak_intensity_max_time', 'peak_intensity' \
-#                 'peak_intensity_time', 'probability', 'start_time', 'threshold_crossing', 'time_profile']
-#             self.quantities_tested = ['probability']
-#             self.validation_type = ['All']
-        
-        
 
 
 class TestProbabilityMult(unittest.TestCase):
@@ -2762,63 +2265,31 @@ class TestProbabilityMult(unittest.TestCase):
             
             temp = attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][0],\
                  self.energy_key, self.obs_thresholds)
-            # if keywords == 'Duration Match Status': # Leaving this commented out until Katie determines if the correct logic is being used to determine this match status
             
-            self.assertEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
+            
+            if pd.isnull(temp) and pd.isnull(self.dataframe[keywords][0]):
+                self.assertTrue(pd.isnull(self.dataframe[keywords][0]))
+            else:
+                self.assertEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
 
             temp = attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][1],\
                  self.energy_key, self.obs_thresholds)
-            # if keywords == 'Duration Match Status': # Leaving this commented out until Katie determines if the correct logic is being used to determine this match status
             
-            self.assertEqual(self.dataframe[keywords][1], temp, 'Error is in keyword ' + keywords)
+            
+            if pd.isnull(temp) and pd.isnull(self.dataframe[keywords][1]):
+                self.assertTrue(pd.isnull(self.dataframe[keywords][1]))
+            else:
+                self.assertEqual(self.dataframe[keywords][1], temp, 'Error is in keyword ' + keywords)
+
 
 
     def step_2(self):
-        print('Test for DoResume feature - this is false right now though so moving on after a quick assertFalse')
-        self.assertFalse(self.DoResume)
-    
-    def step_3(self):
         validate.calculate_intuitive_metrics(self.dataframe, self.model_names, self.all_energy_channels, \
             self.obs_thresholds, 'All')
-        print('Made it to step 3')
-        # for model in self.model_names:
-        #     for quantities in self.validation_quantity:
-        #         if quantities in self.quantities_tested:
-        #             metrics_filename = './output\\csv\\' + quantities + '_metrics' 
-        #             self.assertTrue(os.path.isfile(metrics_filename + '.csv'), msg = metrics_filename + '.csv does not exist, check the file is output correctly')
-        #             metrics_filename = './output\\pkl\\' + quantities + '_metrics' 
-        #             self.assertTrue(os.path.isfile(metrics_filename + '.pkl'), msg = metrics_filename + '.pkl does not exist, check the file is output correctly')
-        #         else:
-        #             filename =  './output\\csv\\' + quantities + '_metrics.csv'
-        #             self.assertFalse(os.path.isfile(metrics_filename), msg = metrics_filename + ' should not exist') 
-                
-        #         for energy_channels in self.all_energy_channels:
-        #             for thresholds in self.obs_thresholds[energy_channels]:
-        #                 threshold_shortened = thresholds.rsplit('.')[0]+ '_' + thresholds.rsplit('.')[1] + '.' + thresholds.rsplit('.')[2]
-
-        #                 if quantities == 'awt':
-        #                     # pkl_filename = './output\\pkl\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + '.pkl'
-        #                     # csv_filename = './output\\csv\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + '.csv'
-        #                     pkl_filename = '.\\output\\pkl\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + "_Predicted SEP All Clear.pkl"
-        #                     csv_filename = '.\\output\\csv\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + "_Predicted SEP All Clear.csv"
-        #                     self.assertTrue(os.path.isfile(pkl_filename) , \
-        #                         msg = pkl_filename + ' does not exist, check the file is output correctly')
-        #                     self.assertTrue(os.path.isfile(csv_filename), \
-        #                         msg = csv_filename + ' does not exist, check the file is output correctly')
-                            
-        #                 else:
-        #                     pkl_filename = './output\\pkl\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + '.pkl'
-        #                     csv_filename = './output\\csv\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + '.csv'
-        #                     if quantities in self.quantities_tested:
-        #                         self.assertTrue(os.path.isfile(pkl_filename), msg = pkl_filename + ' does not exist, check the file is output correctly')
-        #                         self.assertTrue(os.path.isfile(csv_filename), msg = csv_filename + ' does not exist, check the file is output correctly')
-        #                     else:
-        #                         self.assertFalse(os.path.isfile(pkl_filename), msg = pkl_filename + ' should not exist')
-        #                         self.assertFalse(os.path.isfile(csv_filename), msg = csv_filename + ' should not exist')
-
-
-    def step_4(self):
-        print('In Step 4')
+        # print('Made it to step 2')
+    
+    def step_3(self):
+        # print('In Step 4')
         test_dict = initialize_probability_dict()
         test_dict = fill_probability_dict_multprob(test_dict, self)
         csv_filename = './tests/output\\csv\\probability_metrics.csv'
@@ -2837,13 +2308,7 @@ class TestProbabilityMult(unittest.TestCase):
                             keyword = keyword_all_clear[j]
                             # print(keyword, row[j], test_dict[keyword][0])
                             self.assertEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
-
-
-
-
-    
-
-    
+ 
 
     def utility_print_docstring(self, function):
         if self.verbosity == 2:
@@ -2855,22 +2320,7 @@ class TestProbabilityMult(unittest.TestCase):
             if name.startswith("step"):
                 yield name, getattr(self, name)
         
-    # @make_docstring_printable
-    # def test_df_all_clear_1(this, self):
-    #     """
-    #     Tests that the dataframe is built correctly with the correct fields being filled in/added.
-    #     The observation and forecast have exactly the same observation/prediction windows. 
-    #     Matching requires (at a minimum) that there is a prediction window start/end with an observed
-    #     SEP start time within the prediction window and that the last data time/trigger occur before the
-    #     observed SEP start time.
-    #     Observed all clear is False
-    #     Forecast all clear is False
-
-    #     The tests in this block are:
-    #         Observed SEP All Clear is False
-    #         Predicted SEP All Clear is False
-
-    #     """
+   
     @patch('sphinxval.utils.config.outpath', './tests/output')
     
     def test_prob_1(self):
@@ -2937,27 +2387,26 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
             
             temp = attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][0],\
                  self.energy_key, self.obs_thresholds)
-            print(self.dataframe[keywords][0], temp, keywords)
+            
             if 'SEP Fluence Spectrum' in keywords and "Units" not in keywords:
                 try:
                     # print('This is a spectrum - or at least it should be', len(self.dataframe[keywords][0]))
                     for energies in range(len(self.dataframe[keywords][0])):
-                        print(self.dataframe[keywords][0][energies]['energy_min'], temp)
+                        
                         self.assertEqual(self.dataframe[keywords][0][energies]['energy_min'], temp[energies]['energy_min'], 'Error is in keyword ' + keywords + ' energy_min')
                         self.assertEqual(self.dataframe[keywords][0][energies]['energy_max'], temp[energies]['energy_max'], 'Error is in keyword ' + keywords + ' energy_max')
                         self.assertEqual(self.dataframe[keywords][0][energies]['fluence'], temp[energies]['fluence'], 'Error is in keyword ' + keywords + ' fluence')
                 except:
-                    print(self.dataframe[keywords][0])
+                    
                     self.assertTrue(pd.isna(self.dataframe[keywords][0]))
             elif pd.isna(temp) and pd.isna(self.dataframe[keywords][0]):
                 self.assertTrue(pd.isna(self.dataframe[keywords][0]))
             else:
-            # if keywords == 'Duration Match Status': # Leaving this commented out until Katie determines if the correct logic is being used to determine this match status
                 self.assertEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
 
             temp = attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][1],\
                  self.energy_key, self.obs_thresholds)
-            print(self.dataframe[keywords][1], temp, keywords, len(self.sphinx['Test_model_0'][self.all_energy_channels[0]]))
+            
             if 'SEP Fluence Spectrum' in keywords and "Units" not in keywords:
                 try:
                     # print('This is a spectrum - or at least it should be', len(self.dataframe[keywords][0]))
@@ -2966,64 +2415,34 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
                         self.assertEqual(self.dataframe[keywords][1][energies]['energy_max'], temp[energies]['energy_max'], 'Error is in keyword ' + keywords + ' energy_max')
                         self.assertEqual(self.dataframe[keywords][1][energies]['fluence'], temp[energies]['fluence'], 'Error is in keyword ' + keywords + ' fluence')
                 except:
-                    print(self.dataframe[keywords][1])
+                    
                     self.assertTrue(pd.isna(self.dataframe[keywords][1]))
             elif pd.isna(temp) and pd.isna(self.dataframe[keywords][1]):
                 self.assertTrue(pd.isna(self.dataframe[keywords][1]))
-            else:
-            # if keywords == 'Duration Match Status': # Leaving this commented out until Katie determines if the correct logic is being used to determine this match status
-                
+            else:        
                 self.assertEqual(self.dataframe[keywords][1], temp, 'Error is in keyword ' + keywords)
         for type in self.validation_type:
-            print('the type is', type)
+            
             validate.calculate_intuitive_metrics(self.dataframe, self.model_names, self.all_energy_channels, \
                 self.obs_thresholds, type)
 
     def step_2(self):
-        print('Test for DoResume feature - this is false right now though so moving on after a quick assertFalse')
+        # print('Test for DoResume feature - this is false right now though so moving on after a quick assertFalse')
         self.assertFalse(self.DoResume)
     
     def step_3(self):
+        """
+        step 3 writes the dataframe to a file and then checks that those files exist
+        """
+        validate.write_df(self.dataframe, "SPHINX_dataframe")
         
-        print('Made it to step 3')
-        # for model in self.model_names:
-        #     for quantities in self.validation_quantity:
-        #         if quantities in self.quantities_tested:
-        #             metrics_filename = './output\\csv\\' + quantities + '_metrics' 
-        #             self.assertTrue(os.path.isfile(metrics_filename + '.csv'), msg = metrics_filename + '.csv does not exist, check the file is output correctly')
-        #             metrics_filename = './output\\pkl\\' + quantities + '_metrics' 
-        #             self.assertTrue(os.path.isfile(metrics_filename + '.pkl'), msg = metrics_filename + '.pkl does not exist, check the file is output correctly')
-        #         else:
-        #             filename =  './output\\csv\\' + quantities + '_metrics.csv'
-        #             self.assertFalse(os.path.isfile(metrics_filename), msg = metrics_filename + ' should not exist') 
-                
-        #         for energy_channels in self.all_energy_channels:
-        #             for thresholds in self.obs_thresholds[energy_channels]:
-        #                 threshold_shortened = thresholds.rsplit('.')[0]+ '_' + thresholds.rsplit('.')[1] + '.' + thresholds.rsplit('.')[2]
+        self.assertTrue(os.path.isfile('.\\tests\\output\\csv\\SPHINX_dataframe.csv'), msg = 'SPHINX_dataframe.csv does not exist, check the file is output correctly')
+        self.assertTrue(os.path.isfile('.\\tests\\output\\pkl\\SPHINX_dataframe.pkl'), msg = 'SPHINX_dataframe.pkl does not exist, check the file is output correctly')
 
-        #                 if quantities == 'awt':
-        #                     # pkl_filename = './output\\pkl\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + '.pkl'
-        #                     # csv_filename = './output\\csv\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + '.csv'
-        #                     pkl_filename = '.\\output\\pkl\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + "_Predicted SEP All Clear.pkl"
-        #                     csv_filename = '.\\output\\csv\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + "_Predicted SEP All Clear.csv"
-        #                     self.assertTrue(os.path.isfile(pkl_filename) , \
-        #                         msg = pkl_filename + ' does not exist, check the file is output correctly')
-        #                     self.assertTrue(os.path.isfile(csv_filename), \
-        #                         msg = csv_filename + ' does not exist, check the file is output correctly')
-                            
-        #                 else:
-        #                     pkl_filename = './output\\pkl\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + '.pkl'
-        #                     csv_filename = './output\\csv\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + '.csv'
-        #                     if quantities in self.quantities_tested:
-        #                         self.assertTrue(os.path.isfile(pkl_filename), msg = pkl_filename + ' does not exist, check the file is output correctly')
-        #                         self.assertTrue(os.path.isfile(csv_filename), msg = csv_filename + ' does not exist, check the file is output correctly')
-        #                     else:
-        #                         self.assertFalse(os.path.isfile(pkl_filename), msg = pkl_filename + ' should not exist')
-        #                         self.assertFalse(os.path.isfile(csv_filename), msg = csv_filename + ' should not exist')
-
+        
 
     def step_4_prob(self):
-        print('In Step 4')
+        
         test_dict = initialize_probability_dict()
         test_dict = fill_probability_dict_all(test_dict, self)
         csv_filename = './tests/output\\csv\\probability_metrics.csv'
@@ -3045,7 +2464,7 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
 
 
     def step_5_peak_int_max(self):
-        print('In Step 5')
+        
         test_dict = initialize_flux_dict()
         test_dict = fill_peak_intensity_max_metrics_dict_all(test_dict, self)
         csv_filename = './tests/output\\csv\\peak_intensity_max_metrics.csv'
@@ -3066,7 +2485,7 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
                             self.assertEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
 
     def step_6_time_prof(self):
-        print('In Step 6')
+       
         test_dict = initialize_flux_dict()
         test_dict = fill_time_profile_dict_all(test_dict, self)
         csv_filename = './tests/output\\csv\\time_profile_metrics.csv'
@@ -3087,7 +2506,7 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
                             self.assertEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
 
     def step_7_all_clear(self):
-        print('In Step 7')
+       
         test_dict = initialize_all_clear_dict()
         test_dict = fill_all_clear_dict_all(test_dict, self)
         csv_filename = './tests/output\\csv\\all_clear_metrics.csv'
@@ -3109,7 +2528,7 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
 
     
     def step_8_awt(self):
-        print('In Step 8')
+        
         test_dict = initialize_awt_dict()
         test_dict = fill_awt_dict_all(test_dict, self)
         csv_filename = './tests/output\\csv\\awt_metrics.csv'
@@ -3130,7 +2549,7 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
                             self.assertEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
 
     def step_9_duration(self):
-        # print('In Step 8')
+        
         test_dict = initialize_time_dict()
         test_dict = fill_duration_metrics_dict_all(test_dict, self)
         csv_filename = './tests/output\\csv\\duration_metrics.csv'
@@ -3151,7 +2570,7 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
                             self.assertEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
     
     def step_10_end_time(self):
-        print('In Step 10')
+        
         test_dict = initialize_time_dict()
         test_dict = fill_end_time_metrics_dict_all(test_dict, self)
         csv_filename = './tests/output\\csv\\end_time_metrics.csv'
@@ -3172,7 +2591,7 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
                             self.assertEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
 
     def step_11_last_data_to_issue_time(self):
-        print('In Step 11')
+        
         test_dict = initialize_time_dict()
         test_dict = fill_last_data_to_issue_time_metrics_dict_all(test_dict, self)
         csv_filename = './tests/output\\csv\\last_data_to_issue_time_metrics.csv'
@@ -3193,7 +2612,7 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
                             self.assertEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
 
     def step_12_max_flux_pred_win(self):
-        print('In Step 12')
+        
         test_dict = initialize_flux_dict()
         test_dict = fill_max_flux_in_pred_win_metrics_dict_all(test_dict, self)
         csv_filename = './tests/output\\csv\\max_flux_in_pred_win_metrics.csv'
@@ -3214,7 +2633,7 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
                             self.assertEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)    
 
     def step_13_peak_int_max_time(self):
-        print('In Step 13')
+        
         test_dict = initialize_time_dict()
         test_dict = fill_peak_intensity_max_time_metrics_dict_all(test_dict, self)
         csv_filename = './tests/output\\csv\\peak_intensity_max_time_metrics.csv'
@@ -3235,7 +2654,7 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
                             self.assertEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)    
     
     def step_14_peak_int(self):
-        print('In Step 14')
+        
         test_dict = initialize_flux_dict()
         test_dict = fill_peak_intensity_metrics_dict_all(test_dict, self)
         csv_filename = './tests/output\\csv\\peak_intensity_metrics.csv'
@@ -3256,7 +2675,7 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
                             self.assertEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)    
 
     def step_15_peak_int_time(self):
-        print('In Step 15')
+        
         test_dict = initialize_time_dict()
         test_dict = fill_peak_intensity_time_dict_all(test_dict, self)
         csv_filename = './tests/output\\csv\\peak_intensity_time_metrics.csv'
@@ -3277,7 +2696,7 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
                             self.assertEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)    
 
     def step_16_start_time(self):
-        print('In Step 16')
+        
         test_dict = initialize_time_dict()
         test_dict = fill_start_time_dict_all(test_dict, self)
         csv_filename = './tests/output\\csv\\start_time_metrics.csv'
@@ -3298,7 +2717,7 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
                             self.assertEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)    
     
     def step_17_thresh_crossing_time(self):
-        print('In Step 17')
+        
         test_dict = initialize_time_dict()
         test_dict = fill_threshold_crossing_time_dict_all(test_dict, self)
         csv_filename = './tests/output\\csv\\threshold_crossing_metrics.csv'
@@ -3319,7 +2738,7 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
                             self.assertEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)    
     
     def step_18_fluence(self):
-        print('In Step 18')
+        
         test_dict = initialize_flux_dict()
         test_dict = fill_fluence_dict_all(test_dict, self)
         csv_filename = './tests/output\\csv\\fluence_metrics.csv'
@@ -3349,22 +2768,7 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
             if name.startswith("step"):
                 yield name, getattr(self, name)
         
-    # @make_docstring_printable
-    # def test_df_all_clear_1(this, self):
-    #     """
-    #     Tests that the dataframe is built correctly with the correct fields being filled in/added.
-    #     The observation and forecast have exactly the same observation/prediction windows. 
-    #     Matching requires (at a minimum) that there is a prediction window start/end with an observed
-    #     SEP start time within the prediction window and that the last data time/trigger occur before the
-    #     observed SEP start time.
-    #     Observed all clear is False
-    #     Forecast all clear is False
 
-    #     The tests in this block are:
-    #         Observed SEP All Clear is False
-    #         Predicted SEP All Clear is False
-
-    #     """
     @patch('sphinxval.utils.config.outpath', './tests/output')
     
     def test_all(self):
@@ -3374,6 +2778,6 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
                 step()
             except Exception as e:
                 self.fail("{} failed ({}: {})".format(step, type(e), e))
-        # utility_delete_output()
+        utility_delete_output()
 
 

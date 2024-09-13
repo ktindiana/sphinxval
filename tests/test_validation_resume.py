@@ -628,8 +628,6 @@ class Test_Resume(unittest.TestCase):
             elif pd.isna(temp) and pd.isna(self.dataframe[keywords][0]):
                 self.assertTrue(pd.isna(self.dataframe[keywords][0]))
             else:
-            # if keywords == 'Duration Match Status': # Leaving this commented out until Katie determines if the correct logic is being used to determine this match status
-                
                 self.assertEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
 
            
@@ -675,6 +673,8 @@ class Test_Resume(unittest.TestCase):
         validate.write_df(self.df, "SPHINX_dataframe")
         logger.debug("Completed writing SPHINX_dataframe to file.")
         self.assertEqual(len(self.df), len(r_df)+len(self.dataframe), msg = 'The dataframe from the resume feature is not equal to the "old" dataframe and the new dataframe')
+    
+    
     def step_3(self):
         """
         step 3 uses the step 2 dataframe to follow the rest of the normal validation workflow.
@@ -705,17 +705,6 @@ class Test_Resume(unittest.TestCase):
                     for thresholds in self.obs_thresholds[energy_channels]:
                         threshold_shortened = thresholds.rsplit('.')[0]+ '_' + thresholds.rsplit('.')[1] + '.' + thresholds.rsplit('.')[2]
 
-                        # if quantities == 'awt':
-                        #     # pkl_filename = './output\\pkl\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + '.pkl'
-                        #     # csv_filename = './output\\csv\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + '.csv'
-                        #     pkl_filename = '.\\tests\\output\\pkl\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + "_Predicted SEP All Clear.pkl"
-                        #     csv_filename = '.\\tests\\output\\csv\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + "_Predicted SEP All Clear.csv"
-                        #     self.assertTrue(os.path.isfile(pkl_filename) , \
-                        #         msg = pkl_filename + ' does not exist, check the file is output correctly')
-                        #     self.assertTrue(os.path.isfile(csv_filename), \
-                        #         msg = csv_filename + ' does not exist, check the file is output correctly')
-                            
-                        # else:
                         pkl_filename = '.\\tests\\output\\pkl\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + '.pkl'
                         csv_filename = '.\\tests\\output\\csv\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + '.csv'
                     
