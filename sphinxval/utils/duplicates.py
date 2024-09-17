@@ -330,9 +330,9 @@ def remove_forecast_duplicates(all_energy_channels, model_objs):
         df, dup_indices = identify_forecast_duplicates(df)
         fcast_df.update({energy_key: df})
 
-        for i in range(len(dup_indices)-1,-1,-1):
-            logger.warning(f"DUPLICATE INPUT FORECAST: Removing duplicated forecast for energy channel {energy_key},  {model_objs[energy_key][dup_indices[i]].source}")
-            model_objs[energy_key].pop(dup_indices[i])
+        for i in sorted(dup_indices, reverse=True):
+            logger.warning(f"DUPLICATE INPUT FORECAST: Removing duplicated forecast for energy channel {energy_key},  {model_objs[energy_key][i].source}")
+            model_objs[energy_key].pop(i)
         
     return model_objs, fcast_df
 
@@ -362,9 +362,9 @@ def remove_resume_duplicates(r_df, fcast_df, model_objs):
         df_dup = df[df['Forecast Source'].isin(r_df['Forecast Source'])]
         dup_indices = df_dup['Prediction Index'].to_list()
         
-        for i in range(len(dup_indices)-1,-1,-1):
-            logger.warning(f"DUPLICATE RESUME FORECAST: Removing duplicated forecast already present in the resume SPHINX_dataframe for energy channel {energy_key},  {model_objs[energy_key][dup_indices[i]].source}")
-            model_objs[energy_key].pop(dup_indices[i])
+        for i in sorted(dup_indices, reverse=True):
+            logger.warning(f"DUPLICATE RESUME FORECAST: Removing duplicated forecast already present in the resume SPHINX_dataframe for energy channel {energy_key}, {model_objs[energy_key][i].source}")
+            model_objs[energy_key].pop(i)
 
 
     return model_objs
