@@ -73,6 +73,19 @@ def utility_get_unique_dicts(dict_list):
             unique_list.append(dict_list[i])
     return unique_list
     
+def utility_convert_dict_to_key_energy(d):
+    """
+    Converts dict to key (energy channel).
+    """
+    string = 'min.' + '{:.1f}'.format(d['min']) + '.max.' + '{:.1f}'.format(d['max']) + '.units.' + str(d['units'])
+    return string
+
+def utility_convert_dict_to_key_flux(d):
+    """
+    Converts dict to key (flux threshold).
+    """
+    string = 'threshold.' + '{:.1f}'.format(d['threshold']) + '.units.' + str(d['threshold_units'])
+    return string
 
 def make_docstring_printable(function):
     """
@@ -83,6 +96,15 @@ def make_docstring_printable(function):
     def wrapper(*args, **kwargs):
         return function(function, *args, **kwargs)
     return wrapper
+
+def tag(*tags):
+    """
+    Decorator to add tags to a test class or method.
+    """
+    def decorator(obj):
+        setattr(obj, 'tags', set(tags))
+        return obj
+    return decorator
 
 class LoadMatch(unittest.TestCase):
     """
@@ -1883,7 +1905,6 @@ class TestReviseEruptionMatches(LoadMatch):
                           './tests/files/forecasts/match/revise_eruption_matches/revise_eruption_matches_3_2.json']
         matched_sphinx, initial_matched_sphinx = self.utility_test_revise_eruption_matches(this, forecast_jsons)
         self.assertEqual(matched_sphinx, initial_matched_sphinx)
-        
 
 class TestMatchAllForecasts(LoadMatch):
     """
@@ -1896,8 +1917,7 @@ class TestMatchAllForecasts(LoadMatch):
         self.load_energy(energy_channel)
         self.load_observation(observation_json)
         
-    def utility_test_match_all_forecasts(self, function, forecast_jsons):
-        model_names = ['unit_test']
+    def utility_test_match_all_forecasts(self, function, forecast_jsons, model_names=['unit_test']):
         forecast_objects = {}
         for energy_key in self.all_energy_channels:
             forecast_objects[energy_key] = []
@@ -1963,3 +1983,83 @@ class TestMatchAllForecasts(LoadMatch):
         matched_sphinx, all_obs_thresholds, observed_sep_events = self.utility_test_match_all_forecasts(this, forecast_jsons)
         sphinx = matched_sphinx['unit_test'][self.energy_key][0]
         self.assertEqual(sphinx.all_clear_match_status, 'No Matching Threshold')
+
+    '''
+    @tag('skip_setup')
+    @make_docstring_printable
+    def test_match_all_forecasts_3(this, self):
+        """
+        """
+        energy_channel = {'min': 10, 'max': -1, 'units': 'MeV'}
+        observation_json = './tests/files/observations/match/match_all_forecasts/match_all_forecasts_3.json'
+        self.load_verbosity()
+        self.load_energy(energy_channel)
+        self.load_observation(observation_json)
+        
+
+        forecast_jsons = ['./tests/files/forecasts/match/match_all_forecasts/match_all_forecasts_3.json']
+        matched_sphinx, all_obs_thresholds, observed_sep_events = self.utility_test_match_all_forecasts(this, forecast_jsons, model_names=['SAWS-ASPECS flare']) 
+        sphinx = matched_sphinx['SAWS-ASPECS flare'][self.energy_key][0]
+        self.assertEqual(sphinx.all_clear_match_status, 'Eruption Out of Range')
+
+        self.setUp()
+    '''
+
+    @tag('skip_setup')
+    @make_docstring_printable    
+    def test_match_all_forecasts_4_1(this, self):
+        """
+        The purpose of this test is to determine the behavior of a forecast/observation pair where the forecast contains a field that is supposed to be associated with a flux threshold, but does not list a flux threshold.
+        In this situation, the flux threshold should be defined using a flux threshold extracted from the observation, at the appropriate energy channel.
+        This test only handles the case where there is a single flux threshold associated with the energy channel in question.
+        """
+        # LOAD THE OBSERVATION JSON
+        energy_channel = {'min': 100, 'max': -1, 'units': 'MeV'}
+        observation_json = './tests/files/observations/match/match_all_forecasts/match_all_forecasts_4.json'
+        self.load_verbosity()
+        self.load_energy(energy_channel)
+        self.load_observation(observation_json)
+        
+        forecast_jsons = ['./tests/files/forecasts/match/match_all_forecasts/match_all_forecasts_4_fake.json']
+        matched_sphinx, all_obs_thresholds, observed_sep_events = self.utility_test_match_all_forecasts(this, forecast_jsons, model_names=['SEPSTER (Parker Spiral)'])
+        sphinx = matched_sphinx['SEPSTER (Parker Spiral)']
+        energy_channel_key = utility_convert_dict_to_key_energy(energy_channel)
+        self.assertEqual(utility_convert_dict_to_key_flux(sphinx[energy_channel_key][0].thresholds[0]), all_obs_thresholds[energy_channel_key][0])
+
+    @tag('skip_setup')
+    @make_docstring_printable    
+    def test_match_all_forecasts_4_2(this, self):
+        """
+        The purpose of this test is to determine the behavior of a forecast/observation pair where the forecast does not contain a field with a flux threshold.
+        In this situation, the flux threshold should be defined using a flux threshold extracted from the observation, at the appropriate energy channel.
+        This test only handles the case where there is a single flux threshold associated with the energy channel in question.
+        """
+        # LOAD THE OBSERVATION JSON
+        energy_channel = {'min': 100, 'max': -1, 'units': 'MeV'}
+        observation_json = './tests/files/observations/match/match_all_forecasts/match_all_forecasts_4.json'
+        self.load_verbosity()
+        self.load_energy(energy_channel)
+        self.load_observation(observation_json) 
+        forecast_jsons = ['./tests/files/forecasts/match/match_all_forecasts/match_all_forecasts_4_cut.json']
+        matched_sphinx, all_obs_thresholds, observed_sep_events = self.utility_test_match_all_forecasts(this, forecast_jsons, model_names=['SEPSTER (Parker Spiral)'])
+        sphinx = matched_sphinx['SEPSTER (Parker Spiral)']
+        energy_channel_key = utility_convert_dict_to_key_energy(energy_channel)
+        self.assertEqual(utility_convert_dict_to_key_flux(sphinx[energy_channel_key][0].thresholds[0]), all_obs_thresholds[energy_channel_key][0])
+
+
+
+
+
+    @tag('skip_setup')
+    @make_docstring_printable
+    def test_match_all_forecasts_5(this, self):
+        """
+        The purpose of this test is to determine the behavior of a forecast/observation pair where the forecast does not contain a field with a flux threshold.
+        In this situation, the flux threshold should be defined using a flux threshold extracted from the observation, at the appropriate energy channel.
+        This test handles the case where there are multiple flux thresholds associated with the energy channel in question.
+        """
+        
+
+
+
+

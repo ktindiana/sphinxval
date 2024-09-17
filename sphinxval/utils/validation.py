@@ -146,12 +146,15 @@ def initialize_dict():
             "Last Data Time to Issue Time": [],
             
             #MATCHING INFORMATION
+            "All Thresholds in Prediction": [],
             "Last Eruption Time": [], #Last time for flare/CME
             "Last Trigger Time": [],
             "Last Input Time": [],
             "Threshold Crossed in Prediction Window": [],
+            "All Threshold Crossing Times": [],
             "Eruption before Threshold Crossed": [],
             "Time Difference between Eruption and Threshold Crossing": [],
+            "Eruption in Range": [],
             "Triggers before Threshold Crossing": [],
             "Inputs before Threshold Crossing": [],
             "Triggers before Peak Intensity": [],
@@ -446,21 +449,27 @@ def fill_dict_row(sphinx, dict, energy_key, thresh_key, profname_dict):
     #MATCHING INFORMATION - cast all matching info to strings to avoid problems
     #with read/write. Kept mainly for human reference and traceability. Not used
     #in the validation process.
+    dict["All Thresholds in Prediction"].append(str(sphinx.prediction.all_thresholds))
     dict["Last Eruption Time"].append(str(sphinx.last_eruption_time))
     dict["Last Trigger Time"].append(str(sphinx.last_trigger_time))
     dict["Last Input Time"].append(str(sphinx.last_input_time))
     
     try:
         dict["Threshold Crossed in Prediction Window"].append(str(sphinx.threshold_crossed_in_pred_win[thresh_key]))
+        tc = [str(x) for x in sphinx.all_threshold_crossing_times[thresh_key]]
+        dict["All Threshold Crossing Times"].append(str(tc))
     except:
         dict["Threshold Crossed in Prediction Window"].append(None)
+        dict["All Threshold Crossing Times"].append(None)
         
     try:
         dict["Eruption before Threshold Crossed"].append(str(sphinx.eruptions_before_threshold_crossing[thresh_key]))
         dict["Time Difference between Eruption and Threshold Crossing"].append(str(sphinx.time_difference_eruptions_threshold_crossing[thresh_key]))
+        dict["Eruption in Range"].append(str(sphinx.is_eruption_in_range[thresh_key]))
     except:
         dict["Eruption before Threshold Crossed"].append(None)
         dict["Time Difference between Eruption and Threshold Crossing"].append(None)
+        dict["Eruption in Range"].append(None)
     
 
     
@@ -604,7 +613,7 @@ def fill_df(matched_sphinx, model_names, all_energy_channels,
     
     df = pd.DataFrame(dict)
     #Sort by prediction window start so in time order for AWT, etc
-    df = df.sort_values(by=["Model","Energy Channel Key","Threshold Key","Prediction Window Start"],ascending=[True, True, True, True])
+    df = df.sort_values(by=["Model","Energy Channel Key","Threshold Key","Prediction Window Start", "Forecast Issue Time"],ascending=[True, True, True, True, True])
     
     #Check for duplicated forecasts and remove
     df = remove_duplicates(df)
