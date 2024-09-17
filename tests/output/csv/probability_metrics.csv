@@ -1,2 +1,0 @@
-,Model,Energy Channel,Threshold,Prediction Energy Channel,Prediction Threshold,ROC Curve Plot,Brier Score,Brier Skill Score,Spearman Correlation Coefficient,Area Under ROC Curve
-0,Test_model_0,min.10.0.max.-1.0.units.MeV,threshold.1.0.units.1 / (cm2 s sr),min.10.0.max.-1.0.units.MeV,threshold.1.0.units.1 / (cm2 s sr),./tests/output/plots/ROC_curve_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf,0.005199999999999997,0.9888910014975785,0.9999999999999999,1.0
