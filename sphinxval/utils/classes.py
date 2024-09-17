@@ -477,6 +477,9 @@ class Forecast():
         
         self.label = 'forecast'
         self.energy_channel = energy_channel #dict
+        #all thresholds applied in forecasted quantities for this
+        #energy channel. Will be a list if present.
+        self.all_thresholds = None
         self.short_name = None
         self.issue_time = pd.NaT
         self.valid = None #indicates whether prediction window starts
@@ -691,8 +694,12 @@ class Forecast():
         all_clear, threshold, threshold_units, probability_threshold = \
                 vjson.dict_to_all_clear(dataD)
         if all_clear is not None:
-            self.all_clear = All_Clear(all_clear, threshold, threshold_units,
-                probability_threshold)
+            if threshold is None or threshold_units is None:
+                logger.warning("CORRUPT FORECAST: All clear value predicted "
+                    "but no threshold specified. Excluding " + self.source)
+            else:
+                self.all_clear = All_Clear(all_clear, threshold,
+                    threshold_units, probability_threshold)
 
         #Load Point Intensity
         intensity, units, uncertainty, uncertainty_low, uncertainty_high,\
@@ -722,9 +729,11 @@ class Forecast():
                 start_time, end_time, threshold, threshold_units,=\
                     vjson.dict_to_event_length(event)
                 if not pd.isnull(start_time):
-                    self.event_lengths.append(Event_Length(start_time,
-                        end_time, threshold, threshold_units))
-        
+                    if threshold is None or threshold_units is None:
+                        logger.warning("CORRUPT FORECAST: Event Lengths predicted but no threshold specified. Excluding " + self.source)
+                    else:
+                        self.event_lengths.append(Event_Length(start_time,
+                            end_time, threshold, threshold_units))        
 
         #Load Fluence
         if 'fluences' in dataD:
@@ -740,9 +749,12 @@ class Forecast():
                 if 'event_lengths' not in dataD:
                     threshold = self.all_clear.threshold
                     threshold_units = self.all_clear.threshold_units
-                
-                self.fluences.append(Fluence("id", fluence, units,
-                    threshold, threshold_units, uncertainty_low, uncertainty_high))
+                if fluence is not None:
+                    if threshold is None or threshold_units is None:
+                        logger.warning("CORRUPT FORECAST: Fluence predicted but no threshold specified. Excluding " + self.source)
+                    else:
+                        self.fluences.append(Fluence("id", fluence, units,
+                            threshold, threshold_units, uncertainty_low, uncertainty_high))
 
 
         #Load Fluence Spectra
@@ -752,9 +764,12 @@ class Forecast():
                 threshold_units, fluence_units, fluence_spectrum =\
                     vjson.dict_to_fluence_spectrum(spectrum)
                 if fluence_spectrum is not None:
-                    self.fluence_spectra.append(Fluence_Spectrum(start_time,
-                        end_time, threshold_start, threshold_end,
-                        threshold_units, fluence_units, fluence_spectrum))
+                    if threshold is None or threshold_units is None:
+                        logger.warning("CORRUPT FORECAST: Fluence Spectrum predicted but no threshold specified. Excluding " + self.source)
+                    else:
+                        self.fluence_spectra.append(Fluence_Spectrum(start_time,
+                            end_time, threshold_start, threshold_end,
+                            threshold_units, fluence_units, fluence_spectrum))
 
 
         #Load Threshold Crossings
@@ -763,8 +778,11 @@ class Forecast():
                 crossing_time, uncertainty, threshold, \
                 threshold_units = vjson.dict_to_threshold_crossing(cross)
                 if not pd.isnull(crossing_time):
-                    self.threshold_crossings.append(Threshold_Crossing(
-                    crossing_time, uncertainty, threshold, threshold_units))
+                    if threshold is None or threshold_units is None:
+                        logger.warning("CORRUPT FORECAST: Threshold Crossing predicted but no threshold specified. Excluding " + self.source)
+                    else:
+                        self.threshold_crossings.append(Threshold_Crossing(
+                            crossing_time, uncertainty, threshold, threshold_units))
 
 
         #Load Probabilities
@@ -773,8 +791,11 @@ class Forecast():
                 probability_value, uncertainty, threshold,\
                 threshold_units = vjson.dict_to_probability(prob)
                 if not pd.isnull(probability_value):
-                    self.probabilities.append(Probability(probability_value,
-                        uncertainty, threshold, threshold_units))
+                    if threshold is None or threshold_units is None:
+                        logger.warning("CORRUPT FORECAST: Probability predicted but no threshold specified. Excluding " + self.source)
+                    else:
+                        self.probabilities.append(Probability(probability_value,
+                            uncertainty, threshold, threshold_units))
                     
         return is_good
 
@@ -845,6 +866,8 @@ class Forecast():
                     dict = {'threshold':thresh, 'threshold_units': units}
                     if dict not in all_thresholds:
                         all_thresholds.append(dict)
+    
+        self.all_thresholds = all_thresholds
 
         return all_thresholds
 
@@ -935,7 +958,11 @@ class Forecast():
                         last_flare_data_time = last_data_time
                     else:
                         last_flare_data_time = max(last_flare_data_time, last_data_time)
-
+                
+                #In the case where only flare last_data_time is
+                #provided, use that for the eruption information
+                if last_flare_time is None and last_flare_data_time is not None:
+                    last_flare_time = last_flare_data_time
 
         #Find the latest particle intensity data used by the model
         last_pi_time = pd.NaT
@@ -1367,6 +1394,10 @@ class SPHINX:
         self.thresholds = [] #all of the thresholds in the observations
         self.threshold_crossed_in_pred_win = {} #filenames of the
             #observations that satisfy the criteria (self.source)
+        self.all_threshold_crossing_times = {} #threshold crossing times
+            #that occur in the prediction window, regardless of whether
+            #SPHINX determines that the forecast should be associated
+            #with these times. Primary for interpretation of match results.
         self.last_eruption_time = pd.NaT
         self.last_trigger_time = pd.NaT
         self.last_input_time = pd.NaT
@@ -1473,6 +1504,7 @@ class SPHINX:
         key = objh.threshold_to_key(threshold)
         
         self.threshold_crossed_in_pred_win.update({key:[]})
+        self.all_threshold_crossing_times.update({key:[]})
         
         #Criteria related to observed threshold crossing times
         self.eruptions_before_threshold_crossing.update({key:[]})
@@ -2224,7 +2256,7 @@ class SPHINX:
         #Check if a forecast exists for probability
         if not self.prediction.probabilities:
             return pred_prob, match_status
-
+        
         #Check each forecast for probability
         for prob_obj in self.prediction.probabilities:
             pred_thresh = {'threshold': prob_obj.threshold,

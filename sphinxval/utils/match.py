@@ -437,14 +437,14 @@ def observed_time_in_pred_win_thresh(fcast, obs_values, obs_key,
 
     #Return if no prediction
     if pd.isnull(fcast.prediction_window_start):
-        return [None]*len(obs_values[energy_key]['dataframes'][0])
+        return [None]*len(obs_values[energy_key]['dataframes'][0]), [pd.NaT]*len(obs_values[energy_key]['dataframes'][0])
        
     #Extract desired threshold
     obs_thresholds = obs_values[energy_key]['thresholds']
     try:
         ix = obs_thresholds.index(threshold)
     except:
-        return [None]*len(obs_values[energy_key]['dataframes'][0])
+        return [None]*len(obs_values[energy_key]['dataframes'][0]), [pd.NaT]*len(obs_values[energy_key]['dataframes'][0])
     
     #Extract pandas dataframe for correct energy and threshold
     obs = obs_values[energy_key]['dataframes'][ix] #all obs for threshold
@@ -454,7 +454,7 @@ def observed_time_in_pred_win_thresh(fcast, obs_values, obs_key,
     contains_obs_time = (obs[obs_key] >= pd.Timestamp(pred_win_st)) \
         & (obs[obs_key] < pd.Timestamp(pred_win_end))
  
-    return list(contains_obs_time)
+    return list(contains_obs_time), list(obs[obs_key])
 
 
 def is_time_before(time, obs_values, obs_key, energy_key):
@@ -826,12 +826,13 @@ def threshold_cross_criteria(sphinx, fcast, obs_values, observation_objs,
     """
     thresh_key = objh.threshold_to_key(thresh)
     
-    contains_thresh_cross = observed_time_in_pred_win_thresh(fcast,
+    contains_thresh_cross, crossing_times = observed_time_in_pred_win_thresh(fcast,
         obs_values, 'threshold_crossing_time', energy_key, thresh)
 
     if sphinx.overlapping_indices:
         for ix in sphinx.overlapping_indices:
             sphinx.threshold_crossed_in_pred_win[thresh_key].append(contains_thresh_cross[ix])
+            sphinx.all_threshold_crossing_times[thresh_key].append(crossing_times[ix])
             #logging
             logger.debug("Threshold crossed in prediction window?:  " +
                 str(sphinx.threshold_crossed_in_pred_win[thresh_key][-1]))
@@ -2152,14 +2153,16 @@ def setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_o
         :all_energy_channels: (array of dict) array containing energy
             channel dictionaries of all energy channels present in the
             observations
-        :model_names: (array of strings) model short names used to
-            organize the forecast and used as keys
         :obs_objs: (dict) dictionary sorted by energy channel
             containing all Observation class objects created from
             the observation jsons
+        :obs_values: (pandas DataFrame) Dataframe containing all observed
+            values
         :model_objs: (dict) dictionary sorted by energy channel
             containing all Forecast class objects created from
             the forecast jsons
+        :model_names: (array of strings) model short names used to
+            organize the forecast and used as keys
             
     Output:
         
@@ -2179,17 +2182,20 @@ def setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_o
     #organized by model, energy channel, threshold
     matched_sphinx = {}
     observed_sep_events = {} #list of unique observed SEP events
+    observed_thresholds = {}
     for model in model_names:
         matched_sphinx.update({model:{'uses_eruptions':False}})
         observed_sep_events.update({model:{}})
         for energy_key in all_energy_channels:
             matched_sphinx[model].update({energy_key:[]})
             observed_sep_events[model].update({energy_key:{}})
+            observed_thresholds.update({energy_key:[]})
             #Save all unique observed SEP events organized by energy channel
             #and threshold
             for obs_thresh in obs_values[energy_key]['thresholds']:
                 obs_thresh_key = objh.threshold_to_key(obs_thresh)
                 observed_sep_events[model][energy_key].update({obs_thresh_key:[]})
+                observed_thresholds[energy_key].append(obs_thresh)
 
     #Launch into matching of observations and forecasts
     
@@ -2223,7 +2229,7 @@ def setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_o
             #Get Trigger and Input information
             sphinx.last_eruption_time, sphinx.last_trigger_time =\
                 fcast.last_trigger_time()
-
+            
             sphinx.last_input_time = fcast.last_input_time()
 
             logger.debug("\n")
@@ -2292,7 +2298,20 @@ def setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_o
             if sphinx.mismatch:
                 if cfg.mm_pred_threshold not in all_fcast_thresholds:
                     all_fcast_thresholds.append(cfg.mm_pred_threshold)
-            
+
+            #In the case that no thresholds were present in the forecast, add
+            #observed thresholds.
+            #This can occur if a forecast includes only peak_intensity,
+            #peak_intensity_max, and/or sep_profile. All other fields should have a
+            #threshold associated with them
+            if len(all_fcast_thresholds) == 0:
+                all_fcast_thresholds = observed_thresholds[energy_key]
+                logger.warning("SUBSTITUTED THRESHOLDS: No thresholds were present within "
+                    "the prediction: " + fcast.source + " for energy channel " + energy_key +
+                    ". Continued analysis using thresholds applied to the prepared observations.")
+
+            observed_peak_flux = None
+            observed_peak_flux_max = None            
             
             for f_thresh in all_fcast_thresholds:
                 logger.debug("Checking Threshold: " + str(f_thresh))
