@@ -8,6 +8,7 @@ from . import object_handler as objh
 from . import config as cfg
 import datetime
 import pandas as pd
+import numpy as np
 import logging
 
 __author__ = "Katie Whitman"
@@ -476,15 +477,18 @@ class Forecast():
         
         self.label = 'forecast'
         self.energy_channel = energy_channel #dict
+        #all thresholds applied in forecasted quantities for this
+        #energy channel. Will be a list if present.
+        self.all_thresholds = None
         self.short_name = None
-        self.issue_time = None
+        self.issue_time = pd.NaT
         self.valid = None #indicates whether prediction window starts
                           #at the same time or after triggers/inputs
         #General info
         self.species = None
         self.location = None
-        self.prediction_window_start = None
-        self.prediction_window_end = None
+        self.prediction_window_start = pd.NaT
+        self.prediction_window_end = pd.NaT
         
         
         #Triggers
@@ -503,10 +507,10 @@ class Forecast():
         self.source = None #source from which forcasts ingested
                         #JSON filename or perhaps database in future
         self.path = None #Path to JSON file
-        self.all_clear = All_Clear(None, None, None, None) #All_Clear object
-        self.point_intensity = Flux_Intensity('point_intensity', None, None, None, None, None, None)
-        self.peak_intensity = Flux_Intensity('peak_intensity', None, None, None, None, None, None) #Flux_Intensity object
-        self.peak_intensity_max = Flux_Intensity('peak_intensity_max', None, None, None, None, None, None) #Flux_Intensity object
+        self.all_clear = All_Clear(None, np.nan, None, np.nan) #All_Clear object
+        self.point_intensity = Flux_Intensity('point_intensity', np.nan, None, np.nan, np.nan, np.nan, pd.NaT)
+        self.peak_intensity = Flux_Intensity('peak_intensity', np.nan, None, np.nan, np.nan, np.nan, pd.NaT) #Flux_Intensity object
+        self.peak_intensity_max = Flux_Intensity('peak_intensity_max', np.nan, None, np.nan, np.nan, np.nan, pd.NaT) #Flux_Intensity object
         self.event_lengths = []
         self.fluences = []
         self.fluence_spectra = []
@@ -689,14 +693,18 @@ class Forecast():
         #Load All Clear
         all_clear, threshold, threshold_units, probability_threshold = \
                 vjson.dict_to_all_clear(dataD)
-        if all_clear != None:
-            self.all_clear = All_Clear(all_clear, threshold, threshold_units,
-                probability_threshold)
+        if all_clear is not None:
+            if threshold is None or threshold_units is None:
+                logger.warning("CORRUPT FORECAST: All clear value predicted "
+                    "but no threshold specified. Excluding " + self.source)
+            else:
+                self.all_clear = All_Clear(all_clear, threshold,
+                    threshold_units, probability_threshold)
 
         #Load Point Intensity
         intensity, units, uncertainty, uncertainty_low, uncertainty_high,\
             time = vjson.dict_to_flux_intensity('point_intensity', dataD)
-        if intensity != None:
+        if not pd.isnull(intensity):
             self.point_intensity = Flux_Intensity('point_intensity', intensity, units,
                 uncertainty, uncertainty_low, uncertainty_high, time)
 
@@ -704,14 +712,14 @@ class Forecast():
         #Load (Onset) Peak Intensity
         intensity, units, uncertainty, uncertainty_low, uncertainty_high,\
             time = vjson.dict_to_flux_intensity('peak_intensity', dataD)
-        if intensity != None:
+        if not pd.isnull(intensity):
             self.peak_intensity = Flux_Intensity('peak_intensity', intensity, units,
                 uncertainty, uncertainty_low, uncertainty_high, time)
             
         #Load Max Intensity
         intensity, units, uncertainty, uncertainty_low, uncertainty_high,\
             time = vjson.dict_to_flux_intensity('peak_intensity_max', dataD)
-        if intensity != None:
+        if not pd.isnull(intensity):
             self.peak_intensity_max = Flux_Intensity('peak_intensity_max', intensity, units,
                 uncertainty, uncertainty_low, uncertainty_high, time)
         
@@ -720,10 +728,12 @@ class Forecast():
             for event in dataD['event_lengths']:
                 start_time, end_time, threshold, threshold_units,=\
                     vjson.dict_to_event_length(event)
-                if start_time != None:
-                    self.event_lengths.append(Event_Length(start_time,
-                        end_time, threshold, threshold_units))
-        
+                if not pd.isnull(start_time):
+                    if threshold is None or threshold_units is None:
+                        logger.warning("CORRUPT FORECAST: Event Lengths predicted but no threshold specified. Excluding " + self.source)
+                    else:
+                        self.event_lengths.append(Event_Length(start_time,
+                            end_time, threshold, threshold_units))        
 
         #Load Fluence
         if 'fluences' in dataD:
@@ -739,9 +749,12 @@ class Forecast():
                 if 'event_lengths' not in dataD:
                     threshold = self.all_clear.threshold
                     threshold_units = self.all_clear.threshold_units
-                
-                self.fluences.append(Fluence("id", fluence, units,
-                    threshold, threshold_units, uncertainty_low, uncertainty_high))
+                if fluence is not None:
+                    if threshold is None or threshold_units is None:
+                        logger.warning("CORRUPT FORECAST: Fluence predicted but no threshold specified. Excluding " + self.source)
+                    else:
+                        self.fluences.append(Fluence("id", fluence, units,
+                            threshold, threshold_units, uncertainty_low, uncertainty_high))
 
 
         #Load Fluence Spectra
@@ -750,10 +763,13 @@ class Forecast():
                 start_time, end_time, threshold_start, threshold_end,\
                 threshold_units, fluence_units, fluence_spectrum =\
                     vjson.dict_to_fluence_spectrum(spectrum)
-                if fluence_spectrum != None:
-                    self.fluence_spectra.append(Fluence_Spectrum(start_time,
-                        end_time, threshold_start, threshold_end,
-                        threshold_units, fluence_units, fluence_spectrum))
+                if fluence_spectrum is not None:
+                    if threshold is None or threshold_units is None:
+                        logger.warning("CORRUPT FORECAST: Fluence Spectrum predicted but no threshold specified. Excluding " + self.source)
+                    else:
+                        self.fluence_spectra.append(Fluence_Spectrum(start_time,
+                            end_time, threshold_start, threshold_end,
+                            threshold_units, fluence_units, fluence_spectrum))
 
 
         #Load Threshold Crossings
@@ -761,9 +777,12 @@ class Forecast():
             for cross in dataD['threshold_crossings']:
                 crossing_time, uncertainty, threshold, \
                 threshold_units = vjson.dict_to_threshold_crossing(cross)
-                if crossing_time != None:
-                    self.threshold_crossings.append(Threshold_Crossing(
-                    crossing_time, uncertainty, threshold, threshold_units))
+                if not pd.isnull(crossing_time):
+                    if threshold is None or threshold_units is None:
+                        logger.warning("CORRUPT FORECAST: Threshold Crossing predicted but no threshold specified. Excluding " + self.source)
+                    else:
+                        self.threshold_crossings.append(Threshold_Crossing(
+                            crossing_time, uncertainty, threshold, threshold_units))
 
 
         #Load Probabilities
@@ -771,9 +790,12 @@ class Forecast():
             for prob in dataD['probabilities']:
                 probability_value, uncertainty, threshold,\
                 threshold_units = vjson.dict_to_probability(prob)
-                if probability_value != None:
-                    self.probabilities.append(Probability(probability_value,
-                        uncertainty, threshold, threshold_units))
+                if not pd.isnull(probability_value):
+                    if threshold is None or threshold_units is None:
+                        logger.warning("CORRUPT FORECAST: Probability predicted but no threshold specified. Excluding " + self.source)
+                    else:
+                        self.probabilities.append(Probability(probability_value,
+                            uncertainty, threshold, threshold_units))
                     
         return is_good
 
@@ -800,50 +822,52 @@ class Forecast():
         """
         all_thresholds = []
         
-        if self.all_clear != None:
+        if self.all_clear is not None:
             thresh = self.all_clear.threshold
             units = self.all_clear.threshold_units
-            if thresh != None and units != None:
+            if not pd.isnull(thresh) and units is not None:
                 dict = {'threshold':thresh, 'threshold_units': units}
                 if dict not in all_thresholds:
                     all_thresholds.append(dict)
         
-        if self.event_lengths != []:
+        if self.event_lengths:
             for entry in self.event_lengths:
                 thresh = entry.threshold
                 units = entry.threshold_units
-                if thresh != None and units != None:
+                if not pd.isnull(thresh) and units is not None:
                     dict = {'threshold':thresh, 'threshold_units': units}
                     if dict not in all_thresholds:
                         all_thresholds.append(dict)
         
-        if self.fluence_spectra != []:
+        if self.fluence_spectra:
             for entry in self.fluence_spectra:
                 thresh = entry.threshold_start
                 units = entry.threshold_units
-                if thresh != None and units != None:
+                if not pd.isnull(thresh) and units is not None:
                     dict = {'threshold':thresh, 'threshold_units': units}
                     if dict not in all_thresholds:
                         all_thresholds.append(dict)
        
-        if self.threshold_crossings != []:
+        if self.threshold_crossings:
             for entry in self.threshold_crossings:
                 thresh = entry.threshold
                 units = entry.threshold_units
-                if thresh != None and units != None:
+                if not pd.isnull(thresh) and units is not None:
                     dict = {'threshold':thresh, 'threshold_units': units}
                     if dict not in all_thresholds:
                         all_thresholds.append(dict)
 
 
-        if self.probabilities != []:
+        if self.probabilities:
             for entry in self.probabilities:
                 thresh = entry.threshold
                 units = entry.threshold_units
-                if thresh != None and units != None:
+                if not pd.isnull(thresh) and units is not None:
                     dict = {'threshold':thresh, 'threshold_units': units}
                     if dict not in all_thresholds:
                         all_thresholds.append(dict)
+    
+        self.all_thresholds = all_thresholds
 
         return all_thresholds
 
@@ -863,49 +887,48 @@ class Forecast():
             that time.
             
         """
-        last_time = None
-        last_eruption_time = None #flares and CMEs
+        last_time = pd.NaT
+        last_eruption_time = pd.NaT #flares and CMEs
         
         #Find the time of the latest CME in the trigger list
-        last_cme_time = None
-        if self.cmes != []:
+        last_cme_time = pd.NaT
+        if self.cmes:
             for cme in self.cmes:
                 #start time and liftoff time could be essentially
                 #the same time and both are indicators of when
                 #the CME first erupted. Take the earliest of the
                 #two times for matching.
-                check_time = None
+                check_time = pd.NaT
                 start_time = cme.start_time
                 liftoff_time = cme.liftoff_time
                 
-                if start_time == None and liftoff_time == None:
+                if pd.isnull(start_time) and pd.isnull(liftoff_time):
                     continue
                 
-                if isinstance(start_time,datetime.date):
+                if not pd.isnull(start_time):
                     check_time = start_time
                     
-                if isinstance(liftoff_time,datetime.date):
+                if not pd.isnull(liftoff_time):
                     check_time = liftoff_time
                 
-                if isinstance(start_time,datetime.date) and\
-                    isinstance(liftoff_time,datetime.date):
+                if not pd.isnull(start_time) and not pd.isnull(liftoff_time):
                     check_time = min(start_time,liftoff_time)
                 
-                if last_cme_time == None:
+                if pd.isnull(last_cme_time):
                     last_cme_time = check_time
-                elif isinstance(check_time,datetime.date):
+                elif not pd.isnull(check_time):
                     last_cme_time = max(last_cme_time,check_time)
      
 
         #Find the time of the latest flare in the trigger list
-        last_flare_time = None
-        last_flare_data_time = None
-        if self.flares != []:
+        last_flare_time = pd.NaT
+        last_flare_data_time = pd.NaT
+        if self.flares:
             for flare in self.flares:
                 #The flare peak time is the most relevant for matching
                 #to SEP events as the CME (if any) is often launched
                 #around the time of the peak.
-                check_time = None
+                check_time = pd.NaT
                 start_time = flare.start_time
                 peak_time = flare.peak_time
                 end_time = flare.end_time
@@ -915,35 +938,39 @@ class Forecast():
                 #Give preference to the peak as it is more useful
                 #for timing wrt to an SEP onset and most likely closest
                 #to CME release time
-                if isinstance(peak_time,datetime.date):
+                if not pd.isnull(peak_time):
                     check_time = peak_time
-                elif isinstance(start_time,datetime.date):
+                elif not pd.isnull(start_time):
                     check_time = start_time
-                elif isinstance(end_time,datetime.date):
+                elif not pd.isnull(end_time):
                     check_time = end_time
 
                 #Get the time for the very last flare
-                if last_flare_time == None:
+                if pd.isnull(last_flare_time):
                     last_flare_time = check_time
-                elif insinstance(check_time, datetime.date):
+                elif not pd.isnull(check_time):
                     last_flare_time = max(last_flare_time,check_time)
 
                 #In the case that last_data_time is provided, find the
                 #last one for comparison with issue time.
-                if isinstance(last_data_time,datetime.date):
-                    if last_flare_data_time == None:
+                if not pd.isnull(last_data_time):
+                    if pd.isnull(last_flare_data_time):
                         last_flare_data_time = last_data_time
                     else:
                         last_flare_data_time = max(last_flare_data_time, last_data_time)
-
+                
+                #In the case where only flare last_data_time is
+                #provided, use that for the eruption information
+                if last_flare_time is None and last_flare_data_time is not None:
+                    last_flare_time = last_flare_data_time
 
         #Find the latest particle intensity data used by the model
-        last_pi_time = None
-        if self.particle_intensities != []:
+        last_pi_time = pd.NaT
+        if self.particle_intensities:
             for pi in self.particle_intensities:
                 check_time = pi.last_data_time
-                if isinstance(check_time,datetime.date):
-                    if last_pi_time == None:
+                if not pd.isnull(check_time):
+                    if pd.isnull(last_pi_time):
                         last_pi_time = check_time
                     else:
                         last_pi_time = max(last_pi_time,check_time)
@@ -951,12 +978,12 @@ class Forecast():
 
         #Take the latest of all the eruptions times to determine
         #association with SEP events
-        if isinstance(last_cme_time,datetime.date):
+        if not pd.isnull(last_cme_time):
             last_time = last_cme_time
             last_eruption_time = last_cme_time
             
-        if isinstance(last_flare_time,datetime.date):
-            if last_eruption_time == None:
+        if not pd.isnull(last_flare_time):
+            if pd.isnull(last_eruption_time):
                 last_eruption_time = last_flare_time
             else:
                 last_eruption_time = max(last_eruption_time,last_flare_time)
@@ -964,14 +991,14 @@ class Forecast():
         #Take the latest of the last_data_times for comparison with issue time
         #The last_time and last_eruption_time may differ in a historical analysis
         #The two times should be approximately the same in real time forecasting
-        if isinstance(last_flare_data_time, datetime.date):
-            if last_time == None:
+        if not pd.isnull(last_flare_data_time):
+            if pd.isnull(last_time):
                 last_time = last_flare_data_time
             else:
                 last_time = max(last_time, last_flare_data_time)
 
-        if isinstance(last_pi_time,datetime.date):
-            if last_time == None:
+        if not pd.isnull(last_pi_time):
+            if pd.isnull(last_time):
                 last_time = last_pi_time
             else:
                 last_time = max(last_time,last_pi_time)
@@ -988,41 +1015,39 @@ class Forecast():
             is only valid for time periods after the last input.
 
         """
-        last_time = None
+        last_time = pd.NaT
         
         #Find time of last magnetogram used as input
-        last_magneto_time = None
-        if self.magnetograms != []:
+        last_magneto_time = pd.NaT
+        if self.magnetograms:
             for magneto in self.magnetograms:
-                if magneto.products == []: continue
-                if magneto.products == None: continue
+                if not magneto.products: continue
                 for prod in magneto.products:
                     last_data_time = prod['last_data_time']
-                    if isinstance(last_data_time,datetime.date):
-                        if last_magneto_time == None:
+                    if not pd.isnull(last_data_time):
+                        if pd.isnull(last_magneto_time):
                             last_magneto_time = last_data_time
                         else:
                             last_magneto_time = max(last_magneto_time,last_data_time)
                     
         #Find time of last coronagraph used as input
-        last_corona_time = None
-        if self.coronagraphs != []:
+        last_corona_time = pd.NaT
+        if self.coronagraphs:
             for corona in self.coronagraphs:
-                if corona.products == []: continue
-                if corona.products == None: continue
+                if not corona.products: continue
                 for prod in corona.products:
                     last_data_time = prod['last_data_time']
-                    if isinstance(last_data_time,datetime.date):
-                        if last_corona_time == None:
+                    if not pd.isnull(last_data_time):
+                        if pd.isnull(last_corona_time):
                             last_corona_time = last_data_time
                         else:
                             last_corona_time = max(last_corona_time,last_data_time)
 
-        if isinstance(last_magneto_time,datetime.date):
+        if not pd.isnull(last_magneto_time):
             last_time = last_magneto_time
             
-        if isinstance(last_corona_time,datetime.date):
-            if last_time == None:
+        if not pd.isnull(last_corona_time):
+            if pd.isnull(last_time):
                 last_time = last_corona_time
             else:
                 last_time = max(last_time,last_corona_time)
@@ -1042,17 +1067,17 @@ class Forecast():
         last_trigger_time, last_eruption_time = self.last_trigger_time()
         last_input_time = self.last_input_time()
         
-        last_time = None
-        if last_trigger_time != None:
+        last_time = pd.NaT
+        if not pd.isnull(last_trigger_time):
             last_time = last_trigger_time
             
-        if last_input_time != None:
-            if last_time == None:
+        if not pd.isnull(last_input_time):
+            if pd.isnull(last_time):
                 last_time = last_input_time
             else:
                 last_time = max(last_time, last_input_time)
                 
-        if last_time == None:
+        if pd.isnull(last_time):
             return pd.NaT
             
         diff = (self.issue_time - last_time).total_seconds()/(60.) #minutes
@@ -1080,24 +1105,24 @@ class Forecast():
         last_input_time = self.last_input_time()
         last_eruption_time, last_trigger_time = self.last_trigger_time()
 
-        if self.issue_time == None:
+        if pd.isnull(self.issue_time):
             self.valid = None
             if verbose:
                 logger.warning("Issue time not available.")
             return self.valid
             
-        if last_trigger_time == None and last_input_time == None:
+        if pd.isnull(last_trigger_time) and pd.isnull(last_input_time):
             self.valid = False
             if verbose:
                 logger.warning("Trigger and input timing data not available.")
             return self.valid
 
         self.valid = True
-        if last_trigger_time != None:
+        if not pd.isnull(last_trigger_time):
             if self.issue_time < last_trigger_time:
                 self.valid = False
 
-        if last_input_time != None:
+        if not pd.isnull(last_input_time):
             if self.issue_time < last_input_time:
                 self.valid = False
 
@@ -1109,66 +1134,6 @@ class Forecast():
 
         return self.valid
 
-    #NOT USED
-    def print_forecast_values(self):
-        print()
-        print("--- " + self.source + " -----")
-        print(self.energy_channel)
-        print(self.short_name)
-        print(self.issue_time)
-        print(self.location)
-        print(self.species)
-        print(self.prediction_window_start)
-        print(self.prediction_window_end)
-        print(self.sep_profile)
-        
-        if self.cmes != []:
-            for cme in self.cmes:
-                print(vars(cme))
-        if self.cme_simulations != []:
-            for sim in self.cme_simulations:
-                print(vars(sim))
-        if self.flares != []:
-            for flare in self.flares:
-                print(vars(flare))
-        if self.particle_intensities != []:
-            for pi in self.particle_intensities:
-                print(vars(pi))
-     
-        if self.magnetic_connectivity != []:
-            for mag in self.magnetic_connectivity:
-                print(vars(mag))
-        if self.magnetograms != []:
-            for magneto in self.magnetograms:
-                print(vars(magneto))
-        if self.coronagraphs != []:
-            for corona in self.coronagraphs:
-                print(vars(corona))
-     
-        print(vars(self.all_clear))
-        print(vars(self.point_intensity))
-        print(vars(self.peak_intensity))
-        print(vars(self.peak_intensity_max))
-        if self.event_lengths != []:
-            for ev in self.event_lengths:
-                print(vars(ev))
-        if self.fluences != []:
-            for fl in self.fluences:
-                print(vars(fl))
-        if self.fluence_spectra != []:
-            for fls in self.fluence_spectra:
-                print(vars(fls))
-        if self.threshold_crossings != []:
-            for tc in self.threshold_crossings:
-                print(vars(tc))
-        if self.probabilities != []:
-            for prob in self.probabilities:
-                print(vars(prob))
-
-
-
-
-
 
 
 ##-----OBSERVATION CLASS------
@@ -1178,20 +1143,20 @@ class Observation():
         self.label = 'observation'
         self.energy_channel = energy_channel #dict
         self.short_name = None
-        self.issue_time = None
+        self.issue_time = pd.NaT
 
         
         #General info
         self.species = None
         self.location = None
-        self.observation_window_start = None
-        self.observation_window_end = None
+        self.observation_window_start = pd.NaT
+        self.observation_window_end = pd.NaT
         
         
         #Observed Values
-        self.all_clear = All_Clear(None, None, None, None) #All_Clear object
-        self.peak_intensity = Flux_Intensity('peak_intensity', None, None, None, None, None, None) #Flux_Intensity object
-        self.peak_intensity_max = Flux_Intensity('peak_intensity_max', None, None, None, None, None, None)#Flux_Intensity object
+        self.all_clear = All_Clear(None, np.nan, None, np.nan) #All_Clear object
+        self.peak_intensity = Flux_Intensity('peak_intensity', np.nan, None, np.nan, np.nan, np.nan, pd.NaT) #Flux_Intensity object
+        self.peak_intensity_max = Flux_Intensity('peak_intensity_max', np.nan, None, np.nan, np.nan, np.nan, pd.NaT)#Flux_Intensity object
         self.event_lengths = []
         self.fluences = []
         self.fluence_spectra = []
@@ -1245,7 +1210,7 @@ class Observation():
             
 
         #Supporting information
-        if dataD != {}:
+        if dataD:
             if 'species' in dataD:
                 self.species = dataD['species']
             
@@ -1357,37 +1322,37 @@ class Observation():
         """
         all_thresholds = []
         
-        if self.all_clear != None:
+        if self.all_clear is not None:
             thresh = self.all_clear.threshold
             units = self.all_clear.threshold_units
-            if thresh != None and units != None:
+            if not pd.isnull(thresh) and units is not None:
                 dict = {'threshold':thresh, 'threshold_units': units}
                 if dict not in all_thresholds:
                     all_thresholds.append(dict)
         
-        if self.event_lengths != []:
+        if self.event_lengths:
             for entry in self.event_lengths:
                 thresh = entry.threshold
                 units = entry.threshold_units
-                if thresh != None and units != None:
+                if not pd.isnull(thresh) and units is not None:
                     dict = {'threshold':thresh, 'threshold_units': units}
                     if dict not in all_thresholds:
                         all_thresholds.append(dict)
         
-        if self.fluence_spectra != []:
+        if self.fluence_spectra:
             for entry in self.fluence_spectra:
                 thresh = entry.threshold_start
                 units = entry.threshold_units
-                if thresh != None and units != None:
+                if not pd.isnull(thresh) and units is not None:
                     dict = {'threshold':thresh, 'threshold_units': units}
                     if dict not in all_thresholds:
                         all_thresholds.append(dict)
        
-        if self.threshold_crossings != []:
+        if self.threshold_crossings:
             for entry in self.threshold_crossings:
                 thresh = entry.threshold
                 units = entry.threshold_units
-                if thresh != None and units != None:
+                if not pd.isnull(thresh) and units is not None:
                     dict = {'threshold':thresh, 'threshold_units': units}
                     if dict not in all_thresholds:
                         all_thresholds.append(dict)
@@ -1395,38 +1360,7 @@ class Observation():
         return all_thresholds
 
 
-    #NOT USED
-    def print_observed_values(self):
-        print()
-        print("--- " + self.source + " -----")
-        print(self.energy_channel)
-        print(self.short_name)
-        print(self.issue_time)
-        print(self.location)
-        print(self.species)
-        print(self.observation_window_start)
-        print(self.observation_window_end)
-        print(self.sep_profile)
-        print(vars(self.all_clear))
-        print(vars(self.peak_intensity))
-        print(vars(self.peak_intensity_max))
-        if self.event_lengths != []:
-            for ev in selfevent_lengths:
-                print(vars(ev))
-        if self.fluences != []:
-            for fl in self.fluences:
-                print(vars(fl))
-        if self.fluence_spectra != []:
-            for fls in self.fluence_spectra:
-                print(vars(fls))
-        if self.threshold_crossings != []:
-            for tc in self.threshold_crossings:
-                print(vars(tc))
-        if self.probabilities != []:
-            for prob in self.probabilities:
-                print(vars(prob))
-
-
+ 
 
 
 
@@ -1460,9 +1394,13 @@ class SPHINX:
         self.thresholds = [] #all of the thresholds in the observations
         self.threshold_crossed_in_pred_win = {} #filenames of the
             #observations that satisfy the criteria (self.source)
-        self.last_eruption_time = None
-        self.last_trigger_time = None
-        self.last_input_time = None
+        self.all_threshold_crossing_times = {} #threshold crossing times
+            #that occur in the prediction window, regardless of whether
+            #SPHINX determines that the forecast should be associated
+            #with these times. Primary for interpretation of match results.
+        self.last_eruption_time = pd.NaT
+        self.last_trigger_time = pd.NaT
+        self.last_input_time = pd.NaT
         
         #Indicate whether a forecast was originally matched to an SEP event
         #and then unmatched in match.py/revise_eruption_matches()
@@ -1508,26 +1446,26 @@ class SPHINX:
         #for that specific quantity.
         #These criteria are specified in match.py/match_all_forecasts()
         #Point Intensity
-        self.observed_point_intensity = Flux_Intensity('point_intensity', None, None, None, None, None, None) #Derived quantity
+        self.observed_point_intensity = Flux_Intensity('point_intensity', np.nan, None, np.nan, np.nan, np.nan, pd.NaT) #Derived quantity
         self.observed_match_peak_intensity_source = None
 
         #Peak Intensity
         self.observed_match_peak_intensity_source = None
         self.peak_intensity_match_status = ""
-        self.observed_peak_intensity = Flux_Intensity('peak_intensity', None, None, None, None, None, None) #Peak Intensity Obj
+        self.observed_peak_intensity = Flux_Intensity('peak_intensity', np.nan, None, np.nan, np.nan, np.nan, pd.NaT) #Peak Intensity Obj
 
         #Peak Intensity Max
         self.observed_match_peak_intensity_max_source = None
         self.peak_intensity_max_match_status = ""
-        self.observed_peak_intensity_max = Flux_Intensity('peak_intensity_max', None, None, None, None, None, None) #Peak Intensity Max Obj
+        self.observed_peak_intensity_max = Flux_Intensity('peak_intensity_max', np.nan, None, np.nan, np.nan, np.nan, pd.NaT) #Peak Intensity Max Obj
 
         #Max Flux in Prediction Window
-        self.observed_max_flux_in_prediction_window = Flux_Intensity('max_flux_in_prediction_window', None, None, None, None, None, None) #Derived quantity
+        self.observed_max_flux_in_prediction_window = Flux_Intensity('max_flux_in_prediction_window', np.nan, None, np.nan, np.nan, np.nan, pd.NaT) #Derived quantity
  
         #Only one All Clear status allowed per energy channel
         self.observed_match_all_clear_source = None
         self.all_clear_match_status = ""
-        self.observed_all_clear = All_Clear(None, None, None, None)  #All Clear Object
+        self.observed_all_clear = All_Clear(None, np.nan, None, np.nan)  #All Clear Object
 
         #Uses thresholds from self.thresholds as keys
         self.observed_match_sep_source = {}
@@ -1566,6 +1504,7 @@ class SPHINX:
         key = objh.threshold_to_key(threshold)
         
         self.threshold_crossed_in_pred_win.update({key:[]})
+        self.all_threshold_crossing_times.update({key:[]})
         
         #Criteria related to observed threshold crossing times
         self.eruptions_before_threshold_crossing.update({key:[]})
@@ -1587,44 +1526,23 @@ class SPHINX:
         #Observed values
         self.observed_match_sep_source.update({key:None})
         self.sep_match_status.update({key:""})
-        self.observed_threshold_crossing.update({key:Threshold_Crossing(None, None, None, None)})
-        self.observed_event_length.update({key: Event_Length(None, None, None, None)})
-        self.observed_start_time.update({key:None})
-        self.observed_fluence_spectrum.update({key:Fluence_Spectrum(None, None, None, None, None, None, None)})
+        self.observed_threshold_crossing.update({key:Threshold_Crossing(pd.NaT, np.nan, np.nan, None)})
+        self.observed_event_length.update({key: Event_Length(pd.NaT, pd.NaT, np.nan, None)})
+        self.observed_start_time.update({key:pd.NaT})
+        self.observed_fluence_spectrum.update({key:Fluence_Spectrum(pd.NaT, pd.NaT, np.nan, np.nan, None, None, None)})
 
         self.end_time_match_status.update({key:""})
-        self.observed_end_time.update({key:None})
-        self.observed_duration.update({key: None})
-        self.observed_fluence.update({key:Fluence("id",None, None, None, None, None, None)})
+        self.observed_end_time.update({key:pd.NaT})
+        self.observed_duration.update({key: np.nan})
+        self.observed_fluence.update({key:Fluence("id",np.nan, None, np.nan, None, np.nan, np.nan)})
  
  
         self.time_profile_match_status.update({key:""})
         self.observed_time_profile.update({key:None})
         
         self.observed_probability_source.update({key: None})
-        self.observed_probability.update({key:Probability(None, None, None, None)})
+        self.observed_probability.update({key:Probability(np.nan, np.nan, np.nan, None)})
         
-        return
-
-
-    #NOT USED
-    def match_criteria():
-        """ Print matching criteria to match up observations to
-            each predicted quantity.
-            This subroutine is not complete.
-            
-        """
-        print("\n")
-        print("====== Matching Criteria =======")
-        print("\n")
-        print("------ Criteria to match with an observed SEP event ----------")
-        print("- Prediction window overlaps with observation")
-        print("- Last eruption within 48 hrs - 15 mins before threshold "
-            "crossing")
-        print("- The prediction window overlaps with an SEP event in any " "threshold - only a comparison when there is an SEP event")
-        print("- The last trigger/input time if before the observed peak "
-            "intensity")
-
         return
 
 
@@ -2225,10 +2143,10 @@ class SPHINX:
         #These criteria are specified in match.py/match_all_forecasts()
         self.peak_intensity_match_status = "Unmatched"
         self.observed_match_peak_intensity_source = None
-        self.observed_peak_intensity = Flux_Intensity('peak_intensity', None, None, None, None, None, None)
+        self.observed_peak_intensity = Flux_Intensity('peak_intensity',  np.nan, None, np.nan, np.nan, np.nan, pd.NaT)
         self.peak_intensity_max_match_status = "Unmatched"
         self.observed_match_peak_intensity_max_source = None
-        self.observed_peak_intensity_max = Flux_Intensity('peak_intensity_max', None, None, None, None, None, None)
+        self.observed_peak_intensity_max = Flux_Intensity('peak_intensity_max',  np.nan, None, np.nan, np.nan, np.nan, pd.NaT)
         
         #Only one All Clear status allowed per energy channel
         self.all_clear_match_status = "Unmatched"
@@ -2239,13 +2157,13 @@ class SPHINX:
         self.end_time_match_status[thresh_key] = "Unmatched"
         self.time_profile_match_status[thresh_key] = "Unmatched"
         self.observed_probability[thresh_key].probability_value = 0.0
-        self.observed_threshold_crossing[thresh_key] = Threshold_Crossing(None, None, None, None)
-        self.observed_event_length[thresh_key] = Event_Length(None, None, None, None)
-        self.observed_start_time[thresh_key] = None
-        self.observed_end_time[thresh_key] = None
-        self.observed_duration[thresh_key] = None
-        self.observed_fluence[thresh_key] = Fluence("id",None, None, None, None, None, None)
-        self.observed_fluence_spectrum[thresh_key] = Fluence_Spectrum(None, None, None, None, None, None, None)
+        self.observed_threshold_crossing[thresh_key] = Threshold_Crossing(pd.NaT, np.nan, np.nan, None)
+        self.observed_event_length[thresh_key] = Event_Length(pd.NaT, pd.NaT, np.nan, None)
+        self.observed_start_time[thresh_key] = pd.NaT
+        self.observed_end_time[thresh_key] = pd.NaT
+        self.observed_duration[thresh_key] = np.nan
+        self.observed_fluence[thresh_key] = Fluence("id",np.nan, None, np.nan, None, np.nan, np.nan)
+        self.observed_fluence_spectrum[thresh_key] = Fluence_Spectrum(None, np.nan, None, np.nan, None, np.nan, np.nan)
         
         return
 
@@ -2275,8 +2193,7 @@ class SPHINX:
         predicted = self.prediction.all_clear.all_clear_boolean
         match_status = self.all_clear_match_status
         
-        if predicted == None:
-            match_status = "No Prediction Provided"
+        if predicted is None:
             return predicted, match_status
 
         pred_threshold = {'threshold': self.prediction.all_clear.threshold,
@@ -2329,7 +2246,7 @@ class SPHINX:
             doesn't make prediction.
             
         """
-        pred_prob = None
+        pred_prob = np.nan
         match_status = None
         try:
             match_status = self.sep_match_status[thresh_key]
@@ -2337,9 +2254,9 @@ class SPHINX:
             pass
         
         #Check if a forecast exists for probability
-        if self.prediction.probabilities == []:
+        if not self.prediction.probabilities:
             return pred_prob, match_status
-
+        
         #Check each forecast for probability
         for prob_obj in self.prediction.probabilities:
             pred_thresh = {'threshold': prob_obj.threshold,
@@ -2371,7 +2288,7 @@ class SPHINX:
             
         """
         
-        predicted = None
+        predicted = pd.NaT
         match_status = None
         try:
             match_status = self.sep_match_status[thresh_key]
@@ -2379,7 +2296,7 @@ class SPHINX:
             pass
         
         #Check if a forecast exists for probability
-        if self.prediction.threshold_crossings == []:
+        if not self.prediction.threshold_crossings:
             return predicted, match_status
 
         #Check each forecast for probability
@@ -2409,7 +2326,7 @@ class SPHINX:
             doesn't make prediction.
             
         """
-        predicted = None
+        predicted = pd.NaT
         match_status = None
         try:
             match_status = self.sep_match_status[thresh_key]
@@ -2417,7 +2334,7 @@ class SPHINX:
             pass
         
         #Check if a forecast exists for event_lengths
-        if self.prediction.event_lengths == []:
+        if not self.prediction.event_lengths:
             return predicted, match_status
 
         #Check each forecast for event_lengths
@@ -2426,7 +2343,7 @@ class SPHINX:
                 'threshold_units': obj.threshold_units}
             tk = objh.threshold_to_key(pred_thresh)
             #Check that predicted threshold was applied in the observations
-            if obj.threshold == None:
+            if pd.isnull(obj.threshold):
                 continue
 
             #Check that predicted threshold was applied in the observations
@@ -2449,7 +2366,7 @@ class SPHINX:
             doesn't make prediction.
             
         """
-        predicted = None
+        predicted = np.nan
         match_status = None
         try:
             match_status = self.sep_match_status[thresh_key]
@@ -2457,7 +2374,7 @@ class SPHINX:
             pass
         
         #Check if a forecast exists for probability
-        if self.prediction.event_lengths == []:
+        if not self.prediction.event_lengths:
             return predicted, match_status
 
         #Check each forecast for probability
@@ -2466,7 +2383,7 @@ class SPHINX:
                 'threshold_units': obj.threshold_units}
             tk = objh.threshold_to_key(pred_thresh)
             #Check that predicted threshold was applied in the observations
-            if obj.threshold == None:
+            if pd.isnull(obj.threshold):
                 continue
 
             #Check that predicted threshold was applied in the observations
@@ -2489,7 +2406,7 @@ class SPHINX:
             doesn't make prediction.
             
         """
-        predicted = None
+        predicted = pd.NaT
         match_status = None
         try:
             match_status = self.end_time_match_status[thresh_key]
@@ -2497,7 +2414,7 @@ class SPHINX:
             pass
         
         #Check if a forecast exists for probability
-        if self.prediction.event_lengths == []:
+        if not self.prediction.event_lengths:
             return predicted, match_status
 
         #Check each forecast for probability
@@ -2506,7 +2423,7 @@ class SPHINX:
                 'threshold_units': obj.threshold_units}
 
             #Check that predicted threshold was applied in the observations
-            if obj.threshold == None:
+            if pd.isnull(obj.threshold):
                 continue
 
             tk = objh.threshold_to_key(pred_thresh)
@@ -2553,7 +2470,7 @@ class SPHINX:
             doesn't make prediction.
             
         """
-        predicted = None
+        predicted = np.nan
         pred_units = None
         match_status = None
         try:
@@ -2562,7 +2479,7 @@ class SPHINX:
             pass
 
         #Check if a forecast exists for probability
-        if self.prediction.fluences == []:
+        if not self.prediction.fluences:
             return predicted, pred_units, match_status
 
         for obj in self.prediction.fluences:
@@ -2570,7 +2487,7 @@ class SPHINX:
                 'threshold_units': obj.threshold_units}
             
             #Check that predicted threshold was applied in the observations
-            if obj.threshold == None:
+            if pd.isnull(obj.threshold):
                 continue
 
             tk = objh.threshold_to_key(pred_thresh)
@@ -2587,16 +2504,16 @@ class SPHINX:
 
             pred_units = obj.units
             obs_units = self.observed_fluence[tk].units
-            if obs_units != None and pred_units != None:
+            if obs_units is not None and pred_units is not None:
                 if obs_units != pred_units:
                     #Find a conversion factor from the prediction units
                     #to the observation units
                     conv = vunits.calc_conversion_factor(obs_units, pred_units)
-                    if conv != None:
+                    if conv is not None:
                         predicted = predicted * conv
                         pred_units = obs_units
                     else:
-                        predicted = None
+                        predicted = np.nan
                         match_status = "Mismatched Units"
 
         return predicted, pred_units, match_status
@@ -2619,7 +2536,7 @@ class SPHINX:
             pass
 
         #Check if a forecast exists for probability
-        if self.prediction.fluence_spectra == []:
+        if not self.prediction.fluence_spectra:
             return predicted, pred_units, match_status
 
         #Check each forecast for probability
@@ -2628,7 +2545,7 @@ class SPHINX:
                 'threshold_units': obj.threshold_units}
 
             #Check that predicted threshold was applied in the observations
-            if obj.threshold_start == None:
+            if pd.isnull(obj.threshold_start):
                 continue
 
             tk = objh.threshold_to_key(pred_thresh)
@@ -2647,7 +2564,7 @@ class SPHINX:
             obs_units = self.observed_fluence_spectrum[tk].fluence_units
             pred_units = obj.fluence_units
             
-            if obs_units != None and pred_units != None:
+            if obs_units is not None and pred_units is not None:
                 if obs_units != pred_units:
                     match_status = "Mismatched Units"
 
@@ -2665,12 +2582,12 @@ class SPHINX:
 
         #Check units
         obs_units = self.observed_point_intensity.units
-        if obs_units != None and pred_units != None:
+        if obs_units is not None and pred_units is not None:
             if obs_units != pred_units:
                 #Find a conversion factor from the prediction units
                 #to the observation units
                 conv = vunits.calc_conversion_factor(obs_units, pred_units)
-                if conv != None:
+                if conv is not None:
                     predicted = predicted * conv
                     pred_units = obs_units
 
@@ -2690,12 +2607,12 @@ class SPHINX:
 
         #Check units
         obs_units = self.observed_peak_intensity.units
-        if obs_units != None and pred_units != None:
+        if obs_units is not None and pred_units is not None:
             if obs_units != pred_units:
                 #Find a conversion factor from the prediction units
                 #to the observation units
                 conv = vunits.calc_conversion_factor(obs_units, pred_units)
-                if conv != None:
+                if conv is not None:
                     predicted = predicted * conv
                     pred_units = obs_units
 
@@ -2716,12 +2633,12 @@ class SPHINX:
 
         #Observed units
         obs_units = self.observed_peak_intensity_max.units
-        if obs_units != None and pred_units != None:
+        if obs_units is not None and pred_units is not None:
             if obs_units != pred_units:
                 #Find a conversion factor from the prediction units
                 #to the observation units
                 conv = vunits.calc_conversion_factor(obs_units, pred_units)
-                if conv != None:
+                if conv is not None:
                     predicted = predicted * conv
                     pred_units = obs_units
 
