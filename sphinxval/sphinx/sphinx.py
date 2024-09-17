@@ -5,6 +5,7 @@ from ..utils import validation as valid
 from ..utils import match
 from ..utils import resume
 from ..utils import report
+from ..utils import duplicates
 import datetime
 import pickle
 import logging
@@ -72,7 +73,11 @@ def validate(data_list, model_list, top=None, Resume=None):
     #obs_objs and model_objs organized by energy channel
     all_energy_channels, obs_objs, model_objs =\
         vjson.load_objects_from_json(data_list, model_list)
-    logger.info("Loaded all JSON files into Objects.")
+    logger.info("Loaded all JSON files into Observation and Forecast Objects.")
+
+    #Check for duplicates in the set of forecasts and remove any
+    logger.info("Checking for and removing duplicate forecasts from the input Model List.")
+    model_objs, fcast_df = duplicates.remove_forecast_duplicates(all_energy_channels, model_objs)
 
     #Dictionary containing the location of all the .txt files
     #in the subdirectories below top.
@@ -80,11 +85,11 @@ def validate(data_list, model_list, top=None, Resume=None):
     profname_dict = None
     if top != None:
         profname_dict = vjson.generate_profile_dict(top)
-        logger.info("Generated dictionary of all txt files in " + top)
+        logger.info("Generated dictionary of all txt files in " + top + " to store the locations of time profiles.")
 
     #Identify the unique models represented in the forecasts
     model_names = objh.build_model_list(model_objs)
-    logger.info("Built model list.")
+    logger.info("Identified unique model names.")
     
     #### RESUME ####
     #If resuming, read in the dataframe specified by the user.
@@ -95,6 +100,8 @@ def validate(data_list, model_list, top=None, Resume=None):
         logger.info("RESUME: Reading in previous dataframe: "
             + Resume)
         r_df = resume.read_in_df(Resume)
+        
+        model_objs = duplicates.remove_resume_duplicates(r_df, fcast_df, model_objs)
     ################
     
     
