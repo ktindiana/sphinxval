@@ -4,6 +4,7 @@ import sys
 import datetime
 from astropy import units as u
 import logging
+import pandas as pd
 
 __author__ = "Katie Whitman"
 __maintainer__ = "Katie Whitman"
@@ -189,25 +190,25 @@ def identify_all_thresholds(all_obj):
     for obj in all_obj:
         thresh = obj.all_clear.threshold
         units = obj.all_clear.threshold_units
-        if thresh != None and units != None:
+        if not pd.isnull(thresh) and units is not None:
             dict = {'threshold':thresh, 'threshold_units': units}
             if dict not in all_thresholds:
                 all_thresholds.append(dict)
         
-        if obj.event_lengths != []:
+        if obj.event_lengths:
             for entry in obj.event_lengths:
                 thresh = entry.threshold
                 units = entry.threshold_units
-                if thresh != None and units != None:
+                if not pd.isnull(thresh) and units is not None:
                     dict = {'threshold':thresh, 'threshold_units': units}
                     if dict not in all_thresholds:
                         all_thresholds.append(dict)
         
-        if obj.fluence_spectra != []:
+        if obj.fluence_spectra:
             for entry in obj.fluence_spectra:
                 thresh = entry.threshold_start
                 units = entry.threshold_units
-                if thresh != None and units != None:
+                if not pd.isnull(thresh) and units is not None:
                     dict = {'threshold':thresh, 'threshold_units': units}
                     if dict not in all_thresholds:
                         all_thresholds.append(dict)
@@ -216,7 +217,7 @@ def identify_all_thresholds(all_obj):
             for entry in obj.threshold_crossings:
                 thresh = entry.threshold
                 units = entry.threshold_units
-                if thresh != None and units != None:
+                if not pd.isnull(thresh) and units is not None:
                     dict = {'threshold':thresh, 'threshold_units': units}
                     if dict not in all_thresholds:
                         all_thresholds.append(dict)
@@ -253,12 +254,12 @@ def get_threshold_crossing_time(obj, threshold):
         
     """
 
-    if obj.threshold_crossings == []:
-        return None
+    if not obj.threshold_crossings:
+        return pd.NaT
     
-    threshold_crossing_time = None
+    threshold_crossing_time = pd.NaT
     for i in range(len(obj.threshold_crossings)):
-        if obj.threshold_crossings[i].threshold == None:
+        if pd.isnull(obj.threshold_crossings[i].threshold):
             continue
         
         if obj.threshold_crossings[i].threshold == \
