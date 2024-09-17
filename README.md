@@ -5,7 +5,7 @@ This SPHINX code is not associated with sphinx-doc, the automated documentation 
 
 SPHINX is developed via community challenges through the SHINE, ISWAT, ESWW, and SEPVAL conferences and in support of the SEP Scoreboards.
 
-Reminder to Windows users: change your system PYTHONPATH environment variable such that your `.../sphinxval/` directory is included.
+Reminder to Windows users: change your system PYTHONPATH environment variable such that your `../sphinxval/` directory is included.
 
 ## Run SPHINX
 The exectuables for SPHINX are in the bin directory. 
@@ -18,7 +18,7 @@ The exectuables for SPHINX are in the bin directory.
 
 Forecast files, observations files, and lists of these files can be stored anywhere on the user computer (or accessible drive) as long as full paths are provided to SPHINX.
 
-On a Mac, the run command is:
+The run command is
 
 `python3 bin/sphinx.py --ModelList model/forecasts.list --DataList lists/observations.list`
 
@@ -34,3 +34,13 @@ Results and supporting output files are written to the directories:
 `output/plots` - validation plots
 
 `reports` md and html files containing a report or summary of the metrics results (easier to read than the individual csv files). Recommend viewing html files in a browser other than Safari.
+
+## Run SPHINX Unit Tests (for developers)
+To run the full suite of SPHINX unit tests, execute `python3 -m unittest` from the base directory.
+
+To run the full suite of SPHINX unit tests with verbose output, execute `python3 -m unittest --verbose` from the base directory.
+
+To run the full suite of SPHINX unit tests with concise output (without extraneous print statements), execute `python3 -m unittest -b` from the base directory.
+
+To run a specific SPHINX unit test (for example, the `TestMatchAllForecasts.test_match_all_forecasts_1` test), execute `python3 -m unittest tests.test_match.TestMatchAllForecasts.test_match_all_forecasts_1` from the base directory.
+

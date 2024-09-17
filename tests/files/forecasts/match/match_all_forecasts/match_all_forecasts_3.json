@@ -1,0 +1,125 @@
+{
+  "sep_forecast_submission": {
+    "forecasts": [
+      {
+        "prediction_window": {
+          "end_time": "2024-05-12T20:55:00Z",
+          "start_time": "2024-05-10T15:25:00Z"
+        },
+        "species": "proton",
+        "location": "earth",
+        "energy_channel": {
+          "min": 300,
+          "max": -1,
+          "units": "MeV"
+        },
+        "all_clear": {
+          "all_clear_boolean": true,
+          "threshold": 0.3,
+          "probability_threshold": 0.25,
+          "threshold_units": "pfu"
+        },
+        "probabilities": [
+          {
+            "probability_value": 0.002,
+            "threshold": 0.3,
+            "threshold_units": "pfu"
+          }
+        ]
+      },
+      {
+        "prediction_window": {
+          "end_time": "2024-05-12T20:55:00Z",
+          "start_time": "2024-05-10T15:25:00Z"
+        },
+        "species": "proton",
+        "location": "earth",
+        "energy_channel": {
+          "min": 10,
+          "max": -1,
+          "units": "MeV"
+        },
+        "all_clear": {
+          "all_clear_boolean": false,
+          "threshold": 10,
+          "probability_threshold": 0.25,
+          "threshold_units": "pfu"
+        },
+        "probabilities": [
+          {
+            "probability_value": 0.008,
+            "threshold": 10,
+            "threshold_units": "pfu"
+          }
+        ]
+      },
+      {
+        "prediction_window": {
+          "end_time": "2024-05-12T20:55:00Z",
+          "start_time": "2024-05-10T15:25:00Z"
+        },
+        "species": "proton",
+        "location": "earth",
+        "energy_channel": {
+          "min": 100,
+          "max": -1,
+          "units": "MeV"
+        },
+        "all_clear": {
+          "all_clear_boolean": true,
+          "threshold": 1,
+          "probability_threshold": 0.25,
+          "threshold_units": "pfu"
+        },
+        "probabilities": [
+          {
+            "probability_value": 0.003,
+            "threshold": 1,
+            "threshold_units": "pfu"
+          }
+        ]
+      },
+      {
+        "prediction_window": {
+          "end_time": "2024-05-12T20:55:00Z",
+          "start_time": "2024-05-10T15:25:00Z"
+        },
+        "species": "proton",
+        "location": "earth",
+        "energy_channel": {
+          "min": 30,
+          "max": -1,
+          "units": "MeV"
+        },
+        "all_clear": {
+          "all_clear_boolean": true,
+          "threshold": 3,
+          "probability_threshold": 0.25,
+          "threshold_units": "pfu"
+        },
+        "probabilities": [
+          {
+            "probability_value": 0.005,
+            "threshold": 3,
+            "threshold_units": "pfu"
+          }
+        ]
+      }
+    ],
+    "triggers": [
+      {
+        "flare": {
+          "intensity": 0.000095,
+          "location": "W63",
+          "last_data_time": "2024-04-30T23:23:00Z"
+        }
+      }
+    ],
+    "mode": "nowcast",
+    "model": {
+      "short_name": "SAWS-ASPECS flare",
+      "spase_id": "spase://CCMC/SimulationModel/SAWS-ASPECS/v1.2"
+    },
+    "issue_time": "2024-05-01T00:15:06Z"
+  }
+}

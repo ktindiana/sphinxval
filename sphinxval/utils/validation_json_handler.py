@@ -10,6 +10,8 @@ from . import units_handler as vunits #validation units
 import os
 import sys
 import logging
+import pandas as pd
+import numpy as np
 
 __author__ = "Katie Whitman"
 __maintainer__ = "Katie Whitman"
@@ -61,8 +63,10 @@ def make_ccmc_zulu_time(dt):
         :zuludate: (string) in the format YYYY-MM-DDTHH:MM:SSZ
     
     """
-    if dt == None:
+    if dt is None:
         return None
+    if dt is pd.NaT:
+        return pd.NaT
     if dt == 0:
         return 0
 
@@ -88,8 +92,10 @@ def zulu_to_time(zt):
     #Time e.g. 2014-01-08T05:05:00Z or 2012-07-12T22:25Z
     if zt == '':
         return ''
-    if zt == None:
+    if zt is None:
         return None
+    if zt is pd.NaT:
+        return pd.NaT
     if zt == 0:
         return 0
         
@@ -217,7 +223,7 @@ def forecast_object_from_json(fcast_json, energy_channel):
     if not is_good_fcast:
         logger.warning("Note there was an issue with the forecast block.")
     #If forecast not loaded because no forecast for the requested energy channel, return
-    if fcast.prediction_window_start == None:
+    if pd.isnull(fcast.prediction_window_start):
         return fcast, is_good_fcast
     
     is_good_trig = fcast.add_triggers_from_dict(fcast_json)
@@ -298,7 +304,7 @@ def load_objects_from_json(data_list, model_list):
             logger.debug("Created OBSERVATION object from json " + obj.source   + ", " + str(channel))
             logger.debug("Observation window start: " + str(obj.observation_window_start))
             #skip if energy block wasn't present in json
-            if obj.observation_window_start != None:
+            if not pd.isnull(obj.observation_window_start):
                 obs_objs[key].append(obj)
                 logger.debug("Adding " + obj.source + " to dictionary under "
                     "key " + key)
@@ -306,7 +312,7 @@ def load_objects_from_json(data_list, model_list):
             if cfg.do_mismatch:
                 if key == cfg.mm_obs_ek:
                     obj = observation_object_from_json(json, channel)
-                    if obj.observation_window_start != None:
+                    if not pd.isnull(obj.observation_window_start):
                         obs_objs[cfg.mm_energy_key].append(obj)
                         logger.debug("Adding " + obj.source + " to dictionary under key " + cfg.mm_energy_key)
             
@@ -321,7 +327,7 @@ def load_objects_from_json(data_list, model_list):
             #a mismatched energy channel. Check that first before determine
             #outcome of object.
             #If the object is good, include here
-            if obj.prediction_window_start != None:
+            if not pd.isnull(obj.prediction_window_start):
                 model_objs[key].append(obj)
                 logger.debug("Created FORECAST object from json " + str(obj.source)  + ", " + key)
                 logger.debug("Prediction window start: " + str(obj.prediction_window_start))
@@ -342,7 +348,7 @@ def load_objects_from_json(data_list, model_list):
                             logger.warning("Note issue with creating FORECAST object from json " + str(obj.source)  + ", mismatch channel" + str(pred_channel))
 
                         #skip if energy block wasn't present in json
-                        if obj.prediction_window_start != None:
+                        if not pd.isnull(obj.prediction_window_start):
                             model_objs[cfg.mm_energy_key].append(obj)
                             logger.debug("Adding " + obj.source + " to dictionary under key " + key)
 
@@ -387,7 +393,7 @@ def check_forecast_json(full_json, energy_channel):
     """
     is_good = True
     dataD = {}
-    if full_json == {} or full_json == None:
+    if not full_json:
         logger.warning("EMPTY forecast json for  "
             + full_json['filename'] +
             ". Initializing all to None.")
@@ -405,7 +411,7 @@ def check_forecast_json(full_json, energy_channel):
             is_good = True #forecasts are present
             jsonD = full_json['sep_forecast_submission']['forecasts']
             dataD = extract_block(jsonD, energy_channel)
-            if dataD == None:
+            if dataD is None:
                 logger.debug("Requested energy "
                     "channel " + str(energy_channel) +
                     "not found in forecast json"
@@ -444,7 +450,7 @@ def check_observation_json(full_json, energy_channel):
     """
     is_good = True
     dataD = {}
-    if full_json == {} or full_json == None:
+    if not full_json:
         logger.debug("Empty observation json "
                 + full_json['filename'] +
                 ". Initializing all to None.")
@@ -464,7 +470,7 @@ def check_observation_json(full_json, energy_channel):
             is_good = True #forecasts are present
             jsonD = full_json['sep_observation_submission']['observations']
             dataD = extract_block(jsonD, energy_channel)
-            if dataD == None:
+            if dataD is None:
                 logger.debug("Requested energy "
                     "channel " + str(energy_channel) +
                     "not found in observation json "
@@ -503,13 +509,13 @@ def dict_to_cme(cmeD):
         :catalog_id: (string) id of CME catalog
         
     """
-    start_time = None
-    liftoff_time = None
-    lat = None
-    lon = None
-    pa = None
-    half_width = None
-    speed = None
+    start_time = pd.NaT
+    liftoff_time = pd.NaT
+    lat = np.nan
+    lon = np.nan
+    pa = np.nan
+    half_width = np.nan
+    speed = np.nan
     coordinates = None
     catalog = None
     catalog_id = None
@@ -578,7 +584,7 @@ def dict_to_cme_sim(cme_simD):
         
     """
     model = None
-    sim_completion_time = None
+    sim_completion_time = pd.NaT
     
     if 'model' in cme_simD:
         model = cme_simD['model']
@@ -612,15 +618,15 @@ def dict_to_flare(flareD):
         :noaa_region: (string) identifier of NOAA active region
         
     """
-    last_data_time = None
-    start_time = None
-    peak_time = None
-    end_time = None
+    last_data_time = pd.NaT
+    start_time = pd.NaT
+    peak_time = pd.NaT
+    end_time = pd.NaT
     location = None
-    lat = None
-    lon = None
-    intensity = None
-    integrated_intensity = None
+    lat = np.nan
+    lon = np.nan
+    intensity = np.nan
+    integrated_intensity = np.nan
     noaa_region = None
     is_good = True
     
@@ -704,7 +710,7 @@ def dict_to_particle_intensity(partD):
     """
     observatory = None
     instrument = None
-    last_data_time = None
+    last_data_time = pd.NaT
     ongoing_events = None
     
     if 'observatory' in partD:
@@ -763,8 +769,8 @@ def dict_to_mag_connectivity(magconD):
         
     """
     method = None
-    lat = None
-    lon = None
+    lat = np.nan
+    lon = np.nan
     connection_angle = None
     solar_wind = None
     
@@ -911,9 +917,9 @@ def dict_to_all_clear(dataD):
             
     """
     all_clear = None
-    threshold = None
+    threshold = np.nan
     threshold_units = None
-    probability_threshold = None
+    probability_threshold = np.nan
     
     if 'all_clear' in dataD:
         if 'all_clear_boolean' in dataD['all_clear']:
@@ -959,12 +965,12 @@ def dict_to_flux_intensity(key, dataD):
             :time: (datetime)
             
     """
-    intensity = None
+    intensity = np.nan
     units = None
-    uncertainty = None
-    uncertainty_low = None
-    uncertainty_high = None
-    time = None
+    uncertainty = np.nan
+    uncertainty_low = np.nan
+    uncertainty_high = np.nan
+    time = pd.NaT
     
     if key in dataD:
         if 'intensity' in dataD[key]:
@@ -1018,9 +1024,9 @@ def dict_to_event_length(event):
             :units: (astropy) units
             
     """
-    start_time = None
-    end_time = None
-    threshold = None
+    start_time = pd.NaT
+    end_time = pd.NaT
+    threshold = np.nan
     threshold_units = None
     units = None
     
@@ -1066,12 +1072,12 @@ def dict_to_fluence(event, fl_dict):
             :uncertainty_high: (float)
             
     """
-    fluence = None
+    fluence = np.nan
     units = None
-    threshold = None
+    threshold = np.nan
     threshold_units = None
-    uncertainty_low = None
-    uncertainty_high = None
+    uncertainty_low = np.nan
+    uncertainty_high = np.nan
 
     if 'fluence' in fl_dict:
         fluence = fl_dict['fluence']
@@ -1124,10 +1130,10 @@ def dict_to_fluence_spectrum(spectrum):
             :fluence_spectrum: (array of dict)
             
     """
-    start_time = None
-    end_time = None
-    threshold_start = None
-    threshold_end = None
+    start_time = pd.NaT
+    end_time = pd.NaT
+    threshold_start = np.nan
+    threshold_end = np.nan
     threshold_units = None
     fluence_units = None
     fluence_spectrum = None
@@ -1196,9 +1202,9 @@ def dict_to_threshold_crossing(cross):
         :threshold_units: (astropy) units
             
     """
-    crossing_time = None
-    uncertainty = None
-    threshold = None
+    crossing_time = pd.NaT
+    uncertainty = np.nan
+    threshold = np.nan
     threshold_units = None
     
     
@@ -1240,9 +1246,9 @@ def dict_to_probability(prob_dict):
         :threshold_units: (astropy) units
             
     """
-    probability_value = None
-    uncertainty = None
-    threshold = None
+    probability_value = np.nan
+    uncertainty = np.nan
+    threshold = np.nan
     threshold_units = None
     
     if 'probability_value' in prob_dict:
