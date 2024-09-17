@@ -1,3 +1,0 @@
-,Model,Energy Channel,Threshold,Prediction Energy Channel,Prediction Threshold,Mean Error (pred - obs),Median Error (pred - obs),Mean Absolute Error (|pred - obs|),Median Absolute Error (|pred - obs|)
-0,Test_model_resume_old,min.10.0.max.-1.0.units.MeV,threshold.1.0.units.1 / (cm2 s sr),min.10.0.max.-1.0.units.MeV,threshold.1.0.units.1 / (cm2 s sr),250.06666666666666,250.06666666666666,250.06666666666666,250.06666666666666
-1,Test_model_0,min.10.0.max.-1.0.units.MeV,threshold.1.0.units.1 / (cm2 s sr),min.10.0.max.-1.0.units.MeV,threshold.1.0.units.1 / (cm2 s sr),15.0,15.0,15.0,15.0
