@@ -32,7 +32,7 @@ import logging.config
 import pathlib
 import json
 import pickle
-import datetime
+from datetime import datetime
 
 from unittest.mock import patch
 from mock import mock_open
@@ -390,6 +390,17 @@ def attributes_of_sphinx_obj(keyword, sphinx_obj, energy_channel_key, threshold_
         attribute = str(getattr(sphinx_obj, 'prediction_window_sep_overlap', None)[threshold_key[energy_channel_key][0]])
     elif keyword == 'Ongoing SEP Event':
         attribute = str(getattr(sphinx_obj, 'observed_ongoing_events', None)[threshold_key[energy_channel_key][0]])
+    elif keyword == 'All Thresholds in Prediction':
+        attribute = str(getattr(sphinx_obj.prediction, 'all_thresholds', None))
+    elif keyword == 'All Threshold Crossing Times':
+        attribute = getattr(sphinx_obj, 'all_threshold_crossing_times', None)[threshold_key[energy_channel_key][0]]
+        if len(attribute) == 1:
+            if pd.isnull(attribute[0]): return str(attribute[0])
+            else:
+
+                attribute = str([str(datetime.strptime(str(attribute[0]), '%Y-%m-%d %H:%M:%S') )])
+    elif keyword == 'Eruption in Range':
+        attribute = str(getattr(sphinx_obj, 'is_eruption_in_range', None)[threshold_key[energy_channel_key][0]])
     else:
         attribute = 'Keyword not in sphinx object  ERROR'
     if attribute == {}:
@@ -415,13 +426,13 @@ def mock_df_populate(dict):
     dict["Prediction Threshold Key"].append("threshold.1.0.units.1 / (cm2 s sr)")
     dict["Forecast Source"].append("/home/m_sphinx/data/forecasts/enlil2.9e/2022/SEPMOD.20220402_000000.20220402_174512.20220402_172002/json/SEPMOD.2022-04-02T000000Z.2022-04-02T174804Z.json")
     dict["Forecast Path"].append("/home/m_sphinx/data/forecasts/enlil2.9e/2022/SEPMOD.20220402_000000.20220402_174512.20220402_172002/json/")
-    dict["Forecast Issue Time"].append(datetime.datetime(year = 2022, month = 4, day = 2, hour =  17, minute = 48, second =4))
-    dict["Prediction Window Start"].append(datetime.datetime(year = 2022, month = 4, day = 2, hour= 0, minute = 0))
-    dict["Prediction Window End"].append(datetime.datetime(year =2022, month=4, day=9, hour= 0, minute=1))
+    dict["Forecast Issue Time"].append(datetime(year = 2022, month = 4, day = 2, hour =  17, minute = 48, second =4))
+    dict["Prediction Window Start"].append(datetime(year = 2022, month = 4, day = 2, hour= 0, minute = 0))
+    dict["Prediction Window End"].append(datetime(year =2022, month=4, day=9, hour= 0, minute=1))
             
             #OBSERVATIONS
     dict["Number of CMEs"].append("1")
-    dict["CME Start Time"].append(datetime.datetime(year = 2022, month = 4, day = 2, hour = 13, minute =38)) #Timestamp of 1st coronagraph image CME is visible in
+    dict["CME Start Time"].append(datetime(year = 2022, month = 4, day = 2, hour = 13, minute =38)) #Timestamp of 1st coronagraph image CME is visible in
     dict["CME Liftoff Time"].append(""), #Timestamp of coronagraph image with 1st indication of CME liftoff (used by CACTUS)
     dict["CME Latitude"].append(-15.0)
     dict["CME Longitude"].append(54.0)
@@ -444,9 +455,9 @@ def mock_df_populate(dict):
                                           #separated filenames ".\tests\files\observations\validation\resume\GOES-16_integral.2022-04-05T034500Z.10MeV.txt"
     dict["Observed SEP All Clear"].append("False")
     dict["Observed SEP Probability"].append(1.0)
-    dict["Observed SEP Threshold Crossing Time"].append(datetime.datetime(year = 2022, month = 4, day = 2,  hour = 14, minute = 40))
-    dict["Observed SEP Start Time"].append(datetime.datetime(year = 2022, month = 4, day = 2,  hour = 14, minute = 40))
-    dict["Observed SEP End Time"].append(datetime.datetime(year = 2022, month = 4, day = 3,  hour = 0, minute = 10))
+    dict["Observed SEP Threshold Crossing Time"].append(datetime(year = 2022, month = 4, day = 2,  hour = 14, minute = 40))
+    dict["Observed SEP Start Time"].append(datetime(year = 2022, month = 4, day = 2,  hour = 14, minute = 40))
+    dict["Observed SEP End Time"].append(datetime(year = 2022, month = 4, day = 3,  hour = 0, minute = 10))
     dict["Observed SEP Duration"].append(9.5)
     dict["Observed SEP Fluence"].append(7608871.653746902)
     dict["Observed SEP Fluence Units"].append("1 / cm2")
@@ -454,17 +465,17 @@ def mock_df_populate(dict):
     dict["Observed SEP Fluence Spectrum Units"].append("1 / cm2")
     dict["Observed SEP Peak Intensity (Onset Peak)"].append(32.18270492553711)
     dict["Observed SEP Peak Intensity (Onset Peak) Units"].append("1 / cm2")
-    dict["Observed SEP Peak Intensity (Onset Peak) Time"].append(datetime.datetime(year = 2022, month = 4, day = 2, hour = 16, minute = 0))
+    dict["Observed SEP Peak Intensity (Onset Peak) Time"].append(datetime(year = 2022, month = 4, day = 2, hour = 16, minute = 0))
     dict["Observed SEP Peak Intensity Max (Max Flux)"].append(32.18270492553711)
     dict["Observed SEP Peak Intensity Max (Max Flux) Units"].append("1 / cm2")
-    dict["Observed SEP Peak Intensity Max (Max Flux) Time"].append(datetime.datetime(year = 2022, month = 4, day = 2, hour = 16, minute = 0))
+    dict["Observed SEP Peak Intensity Max (Max Flux) Time"].append(datetime(year = 2022, month = 4, day = 2, hour = 16, minute = 0))
 
     dict["Observed Point Intensity"].append(None)
     dict["Observed Point Intensity Units"].append(None)
     dict["Observed Point Intensity Time"].append(None)
     dict["Observed Max Flux in Prediction Window"].append(32.18270492553711)
     dict["Observed Max Flux in Prediction Window Units"].append("1 / cm2")
-    dict["Observed Max Flux in Prediction Window Time"].append(datetime.datetime(year = 2022, month = 4, day = 2, hour = 16, minute = 0))
+    dict["Observed Max Flux in Prediction Window Time"].append(datetime(year = 2022, month = 4, day = 2, hour = 16, minute = 0))
             
             #PREDICTIONS
     dict["Predicted SEP All Clear"].append("False")
@@ -487,11 +498,11 @@ def mock_df_populate(dict):
     dict["Fluence Spectrum Match Status"].append("SEP Event")
     dict["Predicted SEP Peak Intensity (Onset Peak)"].append(58.82)
     dict["Predicted SEP Peak Intensity (Onset Peak) Units"].append("1 / cm2")
-    dict["Predicted SEP Peak Intensity (Onset Peak) Time"].append(datetime.datetime(year = 2022, month = 4, day = 2, hour = 20, minute =30))
+    dict["Predicted SEP Peak Intensity (Onset Peak) Time"].append(datetime(year = 2022, month = 4, day = 2, hour = 20, minute =30))
     dict["Peak Intensity Match Status"].append("SEP Event")
     dict["Predicted SEP Peak Intensity Max (Max Flux)"].append(58.82)
     dict["Predicted SEP Peak Intensity Max (Max Flux) Units"].append("1 / cm2")
-    dict["Predicted SEP Peak Intensity Max (Max Flux) Time"].append(datetime.datetime(year = 2022, month = 4, day = 2, hour = 20, minute =30))
+    dict["Predicted SEP Peak Intensity Max (Max Flux) Time"].append(datetime(year = 2022, month = 4, day = 2, hour = 20, minute =30))
     dict["Peak Intensity Max Match Status"].append("SEP Event")
             
     dict["Predicted Point Intensity"].append(None)
@@ -526,7 +537,9 @@ def mock_df_populate(dict):
     dict["Time Difference between Inputs and SEP End"].append([None, None])
     dict["Prediction Window Overlap with Observed SEP Event"].append([True, False])
     dict["Ongoing SEP Event"].append([False, None])
-
+    dict["All Thresholds in Prediction"].append([config_tests.mm_pred_threshold])
+    dict["All Threshold Crossing Times"].append([np.datetime64('NaT')])
+    dict["Eruption in Range"].append([True])
 
     return dict
 
@@ -581,7 +594,7 @@ class Test_Resume(unittest.TestCase):
         
         self.validation_type = ["All", "First", "Last", "Max", "Mean"]
 
-        self.dataframe = validate.fill_df(self.sphinx, self.model_names, self.all_energy_channels, \
+        self.dataframe = validate.fill_sphinx_df(self.sphinx, self.model_names, self.all_energy_channels, \
             self.obs_thresholds, self.profname_dict)
        
         for keywords in self.dataframe:
@@ -619,11 +632,13 @@ class Test_Resume(unittest.TestCase):
         is equal to the length of the fake df and the step 1 df
         """
         self.Resume = '.\\tests\\files\\fake_resume_dataframe.pkl'
-        mock_dict = validate.initialize_dict()
+        mock_dict = validate.initialize_sphinx_dict()
         data = mock_df_populate(mock_dict)
+        
         df = pd.DataFrame(data = data)
-            # if 'ValueError' occurs here, make sure the dictionary that is initialized validation.py has the same
-            # length/information as what get put in there form mock_df_populate
+            # if 'ValueError' occurs here, make sure the dictionary that is initialized in validation.py has the same
+            # length/information as what get put in there form mock_df_populate. New columns to the dataframe will
+            # cause the ValueError
         logger.debug('mock df data')
         logger.debug(df)
         read_data = pickle.dumps(df)

@@ -22,6 +22,7 @@ import logging
 import logging.config
 import pathlib
 import json
+from datetime import datetime
 
 from unittest.mock import patch
 import shutil # using this to delete the contents of the output folder each run - since the unittest is based on the existence/creation of certain files each loop
@@ -43,7 +44,7 @@ General outline as I start the validation.py workflow unittest
         r_df
     There are three core elements to intuitive_validation:
         Fill the SPHINX dataframe using the obs/pred matching pairs
-            fill_df(matched_sphinx, model_names, all_energy_channels,
+            fill_sphinx_df(matched_sphinx, model_names, all_energy_channels,
             all_observed_thresholds, profname_dict, DoResume)
         Checking if we are resuming a SPHINX validation via DoResume
             if DoResume:
@@ -55,7 +56,7 @@ General outline as I start the validation.py workflow unittest
     My thinking is that each class I build will go through each of the core
     elements of intuitive_validation but supply different matched_sphinx objects
     of different kinds of forecast types. Each test in the class will then be
-    testing the various output of fill_df and the dictionary for each of the
+    testing the various output of fill_sphinx_df and the dictionary for each of the
     validation sections that class goes through. 
 """
 
@@ -506,8 +507,7 @@ def attributes_of_sphinx_obj(keyword, sphinx_obj, energy_channel_key, threshold_
     elif keyword == 'Predicted SEP Duration':
         attribute = getattr(sphinx_obj, 'return_predicted_duration')(threshold_key[energy_channel_key][0])[0]
     elif keyword == 'Duration Match Status':
-        # attribute = getattr(sphinx_obj, 'return_predicted_duration')(threshold_key[energy_channel_key][0])[1]
-        attribute = getattr(sphinx_obj, 'return_predicted_end_time', None)(threshold_key[energy_channel_key][0])[1] # doing this for now 
+        attribute = getattr(sphinx_obj, 'return_predicted_end_time', None)(threshold_key[energy_channel_key][0])[1]
     elif keyword == "Predicted SEP Fluence":
         attribute = getattr(sphinx_obj, 'return_predicted_fluence', None)(threshold_key[energy_channel_key][0])[0]
     elif keyword == "Predicted SEP Fluence Units":
@@ -545,7 +545,6 @@ def attributes_of_sphinx_obj(keyword, sphinx_obj, energy_channel_key, threshold_
     elif keyword == 'Predicted Time Profile':
         try:
             attribute = getattr(sphinx_obj.prediction, 'path', None)
-            print(attribute, 'THIS WORKING CORRECTLY?')
             attribute += getattr(sphinx_obj.prediction, 'sep_profile', None)
         except:
             attribute = None
@@ -601,12 +600,17 @@ def attributes_of_sphinx_obj(keyword, sphinx_obj, energy_channel_key, threshold_
         attribute = str(getattr(sphinx_obj, 'prediction_window_sep_overlap', None)[threshold_key[energy_channel_key][0]])
     elif keyword == 'Ongoing SEP Event':
         attribute = str(getattr(sphinx_obj, 'observed_ongoing_events', None)[threshold_key[energy_channel_key][0]])
+    elif keyword == 'All Thresholds in Prediction':
+        attribute = str(getattr(sphinx_obj.prediction, 'all_thresholds', None))
+    elif keyword == 'All Threshold Crossing Times':
+        attribute = getattr(sphinx_obj, 'all_threshold_crossing_times', None)[threshold_key[energy_channel_key][0]]
+        if len(attribute) == 1:
+            if pd.isnull(attribute[0]): return str(attribute[0])
+            else:
 
-
-
-
-
-
+                attribute = str([str(datetime.strptime(str(attribute[0]), '%Y-%m-%d %H:%M:%S') )])
+    elif keyword == 'Eruption in Range':
+        attribute = str(getattr(sphinx_obj, 'is_eruption_in_range', None)[threshold_key[energy_channel_key][0]])
 
     else:
         attribute = 'Keyword not in sphinx object  ERROR'
@@ -1406,7 +1410,7 @@ class TestAllClear0(unittest.TestCase):
         
     def step_1(self):
        
-        self.dataframe = validate.fill_df(self.sphinx, self.model_names, self.all_energy_channels, \
+        self.dataframe = validate.fill_sphinx_df(self.sphinx, self.model_names, self.all_energy_channels, \
             self.obs_thresholds, self.profname_dict)
         for keywords in self.dataframe:
             # temp = self.sphinx['Test_model_0'][self.energy_key].prediction.short_name\
@@ -1528,7 +1532,7 @@ class TestAllClear1(unittest.TestCase):
         
     def step_1(self):
         
-        self.dataframe = validate.fill_df(self.sphinx, self.model_names, self.all_energy_channels, \
+        self.dataframe = validate.fill_sphinx_df(self.sphinx, self.model_names, self.all_energy_channels, \
             self.obs_thresholds, self.profname_dict)
         for keywords in self.dataframe:
             # temp = self.sphinx['Test_model_0'][self.energy_key].prediction.short_name\
@@ -1537,6 +1541,8 @@ class TestAllClear1(unittest.TestCase):
                  self.energy_key, self.obs_thresholds)
             if pd.isnull(temp) and pd.isnull(self.dataframe[keywords][0]):
                 self.assertTrue(pd.isnull(self.dataframe[keywords][0]))
+            elif keywords == 'All Threshold Crossing Times':
+                self.assertEqual(self.dataframe[keywords][0], str([temp]))
             else:
                 self.assertEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
 
@@ -1652,7 +1658,7 @@ class TestPeakIntensity0(unittest.TestCase):
         
     def step_1(self):
         
-        self.dataframe = validate.fill_df(self.sphinx, self.model_names, self.all_energy_channels, \
+        self.dataframe = validate.fill_sphinx_df(self.sphinx, self.model_names, self.all_energy_channels, \
             self.obs_thresholds, self.profname_dict)
         for keywords in self.dataframe:
             # temp = self.sphinx['Test_model_0'][self.energy_key].prediction.short_name\
@@ -1661,6 +1667,7 @@ class TestPeakIntensity0(unittest.TestCase):
                  self.energy_key, self.obs_thresholds)
             if pd.isnull(temp) and pd.isnull(self.dataframe[keywords][0]):
                 self.assertTrue(pd.isnull(self.dataframe[keywords][0]))
+            
             else:
                 self.assertEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
 
@@ -1773,7 +1780,7 @@ class TestPeakIntensityMult(unittest.TestCase):
         self.validation_type = ['All']
         
     def step_1(self):
-        self.dataframe = validate.fill_df(self.sphinx, self.model_names, self.all_energy_channels, \
+        self.dataframe = validate.fill_sphinx_df(self.sphinx, self.model_names, self.all_energy_channels, \
             self.obs_thresholds, self.profname_dict)
        
         for keywords in self.dataframe:
@@ -1781,14 +1788,30 @@ class TestPeakIntensityMult(unittest.TestCase):
             
             temp = attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][0],\
                  self.energy_key, self.obs_thresholds)
-            if pd.isnull(temp) and pd.isnull(self.dataframe[keywords][0]):
+            
+            if keywords == 'All Threshold Crossing Times': 
+                
+                temp[0] = str(datetime.strptime(str(temp[0]), '%Y-%m-%d %H:%M:%S') )
+                temp[1] = 'NaT'
+                # print(self.dataframe[keywords][0], temp)
+                self.assertEqual(self.dataframe[keywords][0], str(temp))
+            elif pd.isnull(temp) and pd.isnull(self.dataframe[keywords][0]):
                 self.assertTrue(pd.isnull(self.dataframe[keywords][0]))
             else:
                 self.assertEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
 
             temp = attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][1],\
                  self.energy_key, self.obs_thresholds)
-            if pd.isnull(temp) and pd.isnull(self.dataframe[keywords][1]):
+            
+            
+            # specific fix for this keyword since this can have the value of "['Timestamp(YYYY-MM-DD)', 'NaT']" which it incredibly
+            # hard to deal with since its a string of a an array of strings... 
+            if keywords == 'All Threshold Crossing Times': 
+                temp[0] = str(datetime.strptime(str(temp[0]), '%Y-%m-%d %H:%M:%S') )
+                temp[1] = 'NaT'
+                # print(self.dataframe[keywords][1], temp)
+                self.assertEqual(self.dataframe[keywords][1], str(temp))
+            elif pd.isnull(temp) and pd.isnull(self.dataframe[keywords][1]):
                 self.assertTrue(pd.isnull(self.dataframe[keywords][1]))
             else:
                 self.assertEqual(self.dataframe[keywords][1], temp, 'Error is in keyword ' + keywords)
@@ -1835,22 +1858,6 @@ class TestPeakIntensityMult(unittest.TestCase):
             if name.startswith("step"):
                 yield name, getattr(self, name)
         
-    # @make_docstring_printable
-    # def test_df_all_clear_1(this, self):
-    #     """
-    #     Tests that the dataframe is built correctly with the correct fields being filled in/added.
-    #     The observation and forecast have exactly the same observation/prediction windows. 
-    #     Matching requires (at a minimum) that there is a prediction window start/end with an observed
-    #     SEP start time within the prediction window and that the last data time/trigger occur before the
-    #     observed SEP start time.
-    #     Observed all clear is False
-    #     Forecast all clear is False
-
-    #     The tests in this block are:
-    #         Observed SEP All Clear is False
-    #         Predicted SEP All Clear is False
-
-    #     """
 
     @patch('sphinxval.utils.config.outpath', './tests/output')
 
@@ -1899,7 +1906,7 @@ class TestPeakIntensityMax0(unittest.TestCase):
         self.validation_type = ['All']
         
     def step_1(self):
-        self.dataframe = validate.fill_df(self.sphinx, self.model_names, self.all_energy_channels, \
+        self.dataframe = validate.fill_sphinx_df(self.sphinx, self.model_names, self.all_energy_channels, \
             self.obs_thresholds, self.profname_dict)
         for keywords in self.dataframe:
         
@@ -2008,7 +2015,7 @@ class TestPeakIntensityMaxMult(unittest.TestCase):
         Observed all clear is False
         Forecast all clear is False
         """
-        self.dataframe = validate.fill_df(self.sphinx, self.model_names, self.all_energy_channels, \
+        self.dataframe = validate.fill_sphinx_df(self.sphinx, self.model_names, self.all_energy_channels, \
             self.obs_thresholds, self.profname_dict)
        
         for keywords in self.dataframe:
@@ -2016,13 +2023,29 @@ class TestPeakIntensityMaxMult(unittest.TestCase):
             
             temp = attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][0],\
                  self.energy_key, self.obs_thresholds)
-            if pd.isnull(temp) and pd.isnull(self.dataframe[keywords][0]):
+            if keywords == 'All Threshold Crossing Times': 
+                
+                temp[0] = str(datetime.strptime(str(temp[0]), '%Y-%m-%d %H:%M:%S') )
+                temp[1] = 'NaT'
+                # print(self.dataframe[keywords][0], temp)
+                self.assertEqual(self.dataframe[keywords][0], str(temp))
+            elif pd.isnull(temp) and pd.isnull(self.dataframe[keywords][0]):
                 self.assertTrue(pd.isnull(self.dataframe[keywords][0]))
             else:
                 self.assertEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
+
             temp = attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][1],\
                  self.energy_key, self.obs_thresholds)
-            if pd.isnull(temp) and pd.isnull(self.dataframe[keywords][1]):
+            
+            
+            # specific fix for this keyword since this can have the value of "['Timestamp(YYYY-MM-DD)', 'NaT']" which it incredibly
+            # hard to deal with since its a string of a an array of strings... 
+            if keywords == 'All Threshold Crossing Times': 
+                temp[0] = str(datetime.strptime(str(temp[0]), '%Y-%m-%d %H:%M:%S') )
+                temp[1] = 'NaT'
+                # print(self.dataframe[keywords][1], temp)
+                self.assertEqual(self.dataframe[keywords][1], str(temp))
+            elif pd.isnull(temp) and pd.isnull(self.dataframe[keywords][1]):
                 self.assertTrue(pd.isnull(self.dataframe[keywords][1]))
             else:
                 self.assertEqual(self.dataframe[keywords][1], temp, 'Error is in keyword ' + keywords)
@@ -2117,7 +2140,7 @@ class TestProbability0(unittest.TestCase):
         Observed all clear is False
         Forecast all clear is False
         """
-        self.dataframe = validate.fill_df(self.sphinx, self.model_names, self.all_energy_channels, \
+        self.dataframe = validate.fill_sphinx_df(self.sphinx, self.model_names, self.all_energy_channels, \
             self.obs_thresholds, self.profname_dict)
         for keywords in self.dataframe:
             # temp = self.sphinx['Test_model_0'][self.energy_key].prediction.short_name\
@@ -2237,7 +2260,7 @@ class TestProbabilityMult(unittest.TestCase):
         Observed all clear is False
         Forecast all clear is False
         """
-        self.dataframe = validate.fill_df(self.sphinx, self.model_names, self.all_energy_channels, \
+        self.dataframe = validate.fill_sphinx_df(self.sphinx, self.model_names, self.all_energy_channels, \
             self.obs_thresholds, self.profname_dict)
        
         for keywords in self.dataframe:
@@ -2246,8 +2269,15 @@ class TestProbabilityMult(unittest.TestCase):
             temp = attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][0],\
                  self.energy_key, self.obs_thresholds)
             
-            
-            if pd.isnull(temp) and pd.isnull(self.dataframe[keywords][0]):
+            # specific fix for this keyword since this can have the value of "['NaT']" which is not pd.NaT which means 
+            # if does not get caught by the isnull(). Probably a temp fix on my end
+            if keywords == 'All Threshold Crossing Times': 
+                
+                temp[0] = str(datetime.strptime(str(temp[0]), '%Y-%m-%d %H:%M:%S') )
+                temp[1] = 'NaT'
+                # print(self.dataframe[keywords][0], temp)
+                self.assertEqual(self.dataframe[keywords][0], str(temp))
+            elif pd.isnull(temp) and pd.isnull(self.dataframe[keywords][0]):
                 self.assertTrue(pd.isnull(self.dataframe[keywords][0]))
             else:
                 self.assertEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
@@ -2256,7 +2286,14 @@ class TestProbabilityMult(unittest.TestCase):
                  self.energy_key, self.obs_thresholds)
             
             
-            if pd.isnull(temp) and pd.isnull(self.dataframe[keywords][1]):
+            # specific fix for this keyword since this can have the value of "['Timestamp(YYYY-MM-DD)', 'NaT']" which it incredibly
+            # hard to deal with since its a string of a an array of strings... 
+            if keywords == 'All Threshold Crossing Times': 
+                temp[0] = str(datetime.strptime(str(temp[0]), '%Y-%m-%d %H:%M:%S') )
+                temp[1] = 'NaT'
+                # print(self.dataframe[keywords][1], temp)
+                self.assertEqual(self.dataframe[keywords][1], str(temp))
+            elif pd.isnull(temp) and pd.isnull(self.dataframe[keywords][1]):
                 self.assertTrue(pd.isnull(self.dataframe[keywords][1]))
             else:
                 self.assertEqual(self.dataframe[keywords][1], temp, 'Error is in keyword ' + keywords)
@@ -2358,7 +2395,7 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
         # self.quantities_tested = ['probability']
         self.validation_type = ["All", "First", "Last", "Max", "Mean"]
 
-        self.dataframe = validate.fill_df(self.sphinx, self.model_names, self.all_energy_channels, \
+        self.dataframe = validate.fill_sphinx_df(self.sphinx, self.model_names, self.all_energy_channels, \
             self.obs_thresholds, self.profname_dict)
        
         for keywords in self.dataframe:
@@ -2399,6 +2436,9 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
                     self.assertTrue(pd.isna(self.dataframe[keywords][1]))
             elif pd.isna(temp) and pd.isna(self.dataframe[keywords][1]):
                 self.assertTrue(pd.isna(self.dataframe[keywords][1]))
+            elif keywords == 'All Threshold Crossing Times':
+                print(self.dataframe[keywords][1])
+                self.assertEqual(self.dataframe[keywords][1], str(['NaT']))
             else:        
                 self.assertEqual(self.dataframe[keywords][1], temp, 'Error is in keyword ' + keywords)
         for type in self.validation_type:
