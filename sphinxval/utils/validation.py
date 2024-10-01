@@ -3905,4 +3905,6 @@ def intuitive_validation(matched_sphinx, model_names, all_energy_channels,
                 all_observed_thresholds, type)
  
     logger.info("intuitive_validation: Validation process complete.")
-    
+
+    return df   
+ 
