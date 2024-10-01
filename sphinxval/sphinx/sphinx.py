@@ -58,7 +58,7 @@ def validate(data_list, model_list, top=None, Resume=None):
                 
         OUTPUT:
         
-            None
+            :sphinx_df: (pandas dataframe) SPHINX dataframe.
             
     """
     setup_logging()
@@ -118,9 +118,11 @@ def validate(data_list, model_list, top=None, Resume=None):
 
 
     #Perform intuitive validation
-    valid.intuitive_validation(matched_sphinx, model_names,
+    sphinx_df = valid.intuitive_validation(matched_sphinx, model_names,
         all_energy_channels, all_observed_thresholds, observed_sep_events, profname_dict, r_df=r_df)
     logger.info("Completed validation.")
+    
+    return sphinx_df
 
 
     
