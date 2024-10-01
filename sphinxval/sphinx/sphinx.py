@@ -58,7 +58,7 @@ def validate(data_list, model_list, top=None, Resume=None):
                 
         OUTPUT:
         
-            None
+            :sphinx_df: (pandas dataframe) SPHINX dataframe.
             
     """
     setup_logging()

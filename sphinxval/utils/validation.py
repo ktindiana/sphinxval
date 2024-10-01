@@ -3610,7 +3610,7 @@ def intuitive_validation(matched_sphinx, model_names, all_energy_channels,
     
     Output:
     
-    
+        :df: (pandas dataframe) SPHINX dataframe. 
     
     """
     logger.info("Beginning validation process.")
