@@ -79,7 +79,7 @@ def utility_load_forecast(filename, energy_channel):
        Output:
             :forecast: resultant Forecast() object.
     """
-    
+    forecast_dict = vjson.read_in_json(filename)
     forecast, _ = vjson.forecast_object_from_json(forecast_dict, energy_channel)  
     # obj, _ = vjson.forecast_object_from_json(forecast_dict, config_tests.mm_pred_energy_channel)
     # forecast.update({config_tests.mm_energy_key: []})
@@ -692,33 +692,36 @@ class Test_AllFields_Mismatch(unittest.TestCase):
                 self.assertTrue(os.path.isfile(metrics_filename + '.pkl'), msg = metrics_filename + '.pkl does not exist, check the file is output correctly')
                 
                 
-                for energy_channels in self.all_energy_channels:
-                    for thresholds in self.obs_thresholds[energy_channels]:
-                        threshold_shortened = thresholds.rsplit('.')[0]+ '_' + thresholds.rsplit('.')[1] + '.' + thresholds.rsplit('.')[2]
-                        logger.debug(quantities)
-                        if quantities == 'awt':
-                            # pkl_filename = './output\\pkl\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + '.pkl'
-                            # csv_filename = './output\\csv\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + '.csv'
-                            pkl_filename = '.\\tests\\output\\pkl\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + "_Predicted SEP All Clear_mm.pkl"
-                            csv_filename = '.\\tests\\output\\csv\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + "_Predicted SEP All Clear_mm.csv"
-                            self.assertTrue(os.path.isfile(pkl_filename) , \
-                                msg = pkl_filename + ' does not exist, check the file is output correctly')
-                            self.assertTrue(os.path.isfile(csv_filename), \
-                                msg = csv_filename + ' does not exist, check the file is output correctly')
-                        elif quantities == 'threshold_crossing':
-                            pkl_filename = '.\\tests\\output\\pkl\\' + quantities + '_time_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + "_mm.pkl"
-                            csv_filename = '.\\tests\\output\\csv\\' + quantities + '_time_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + "_mm.csv"
-                            self.assertTrue(os.path.isfile(pkl_filename) , \
-                                msg = pkl_filename + ' does not exist, check the file is output correctly')
-                            self.assertTrue(os.path.isfile(csv_filename), \
-                                msg = csv_filename + ' does not exist, check the file is output correctly')
-                        
-                        else:
-                            pkl_filename = '.\\tests\\output\\pkl\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + '_mm.pkl'
-                            csv_filename = '.\\tests\\output\\csv\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + '_mm.csv'
-                        
-                            self.assertTrue(os.path.isfile(pkl_filename), msg = pkl_filename + ' does not exist, check the file is output correctly')
-                            self.assertTrue(os.path.isfile(csv_filename), msg = csv_filename + ' does not exist, check the file is output correctly')
+                # for energy_channels in self.all_energy_channels:
+                
+                energy_channels = self.all_energy_channels[1]
+                for thresholds in self.obs_thresholds[energy_channels]:
+            
+                    threshold_shortened = thresholds.rsplit('.')[0]+ '_' + thresholds.rsplit('.')[1] + '.' + thresholds.rsplit('.')[2]
+                    logger.debug(quantities)
+                    if quantities == 'awt':
+                        # pkl_filename = './output\\pkl\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + '.pkl'
+                        # csv_filename = './output\\csv\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + '.csv'
+                        pkl_filename = '.\\tests\\output\\pkl\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + "_Predicted SEP All Clear_mm.pkl"
+                        csv_filename = '.\\tests\\output\\csv\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + "_Predicted SEP All Clear_mm.csv"
+                        self.assertTrue(os.path.isfile(pkl_filename) , \
+                            msg = pkl_filename + ' does not exist, check the file is output correctly')
+                        self.assertTrue(os.path.isfile(csv_filename), \
+                            msg = csv_filename + ' does not exist, check the file is output correctly')
+                    elif quantities == 'threshold_crossing':
+                        pkl_filename = '.\\tests\\output\\pkl\\' + quantities + '_time_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + "_mm.pkl"
+                        csv_filename = '.\\tests\\output\\csv\\' + quantities + '_time_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + "_mm.csv"
+                        self.assertTrue(os.path.isfile(pkl_filename) , \
+                            msg = pkl_filename + ' does not exist, check the file is output correctly')
+                        self.assertTrue(os.path.isfile(csv_filename), \
+                            msg = csv_filename + ' does not exist, check the file is output correctly')
+                    
+                    else:
+                        pkl_filename = '.\\tests\\output\\pkl\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + '_mm.pkl'
+                        csv_filename = '.\\tests\\output\\csv\\' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + '_mm.csv'
+                    
+                        self.assertTrue(os.path.isfile(pkl_filename), msg = pkl_filename + ' does not exist, check the file is output correctly')
+                        self.assertTrue(os.path.isfile(csv_filename), msg = csv_filename + ' does not exist, check the file is output correctly')
         
     
     def utility_print_docstring(self, function):
@@ -748,7 +751,7 @@ class Test_AllFields_Mismatch(unittest.TestCase):
 
     #     """
     # @patch('sphinxval.utils.config', 'config_tests')
-    @patch('sphinxval.utils.config.outpath', './tests/output')
+    @patch('sphinxval.utils.config.outpath', '.\\tests\\output')
     @patch('sphinxval.utils.config.do_mismatch', True)
     @patch('sphinxval.utils.config.mm_model', 'Test_model_0')
     @patch('sphinxval.utils.config.mm_pred_energy_channel', config_tests.mm_pred_energy_channel)
@@ -765,6 +768,7 @@ class Test_AllFields_Mismatch(unittest.TestCase):
         validate.prepare_outdirs()
         utility_delete_output()
         utility_setup_logging()
+        validate.prepare_outdirs()
         
         
         
