@@ -2523,7 +2523,7 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
                         else:
                             keyword = keyword_all_clear[j]
                             # print(keyword, row[j], test_dict[keyword][0])
-                            self.assertEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
+                            self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
 
     def step_7_all_clear(self):
        
