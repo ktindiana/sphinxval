@@ -32,6 +32,9 @@ __email__ = "kathryn.whitman@nasa.gov"
 
 #Create logger
 logger = logging.getLogger(__name__)
+mpl_logger = logging.getLogger("matplotlib")
+mpl_logger.setLevel(logging.WARNING)
+
 
 ######### DATAFRAMES CONTAINING OBSERVATIONS AND PREDICTIONS ######
 
@@ -537,10 +540,12 @@ def prepare_outdirs():
 def write_df(df, name, verbose=True):
     """Writes a pandas dataframe to the standard location in multiple formats
     """
-    dataformats = (('pkl' , getattr(df, 'to_pickle'), {}),
-                   ('csv',  getattr(df, 'to_csv'), {}))
+    dataformats = (('csv',  getattr(df, 'to_csv'), {}),
+        ('pkl' , getattr(df, 'to_pickle'), {})
+           )
     for ext, write_func, kwargs in dataformats:
         filepath = os.path.join(config.outpath, ext, name + '.' + ext)
+        logger.debug('next file ' + str(filepath))
         write_func(filepath, **kwargs)
         if verbose:
             logger.debug('Wrote ' + filepath)
@@ -3322,6 +3327,8 @@ def awt_metrics(df, dict, model, energy_key, thresh_key, validation_type):
                 fnm = fnm + "_mm"
             if validation_type != "" and validation_type != "All":
                 fnm = fnm + "_" + validation_type
+            # print('fnm', fnm)
+            # input()
             write_df(sel_df, fnm)
 
 
