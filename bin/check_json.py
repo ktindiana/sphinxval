@@ -83,13 +83,16 @@ def print_json(json_fname, json_pretty):
     print(f"=== {json_fname} ===")
     print(json_pretty)
     print()
-    
-def check_jsons(kind, json_list):
+
+def object_from_json(kind, json_obj, channel):
+    # Unfortunate if statement to handle different return types
     if kind == 'observation':
-        object_from_json = vjson.observation_object_from_json        
+        obj = vjson.observation_object_from_json(json_obj, channel)
     elif kind == 'forecast':
-        object_from_json = vjson.forecast_object_from_json        
-        
+        obj, is_good = vjson.forecast_object_from_json(json_obj, channel)
+    return obj
+            
+def check_jsons(kind, json_list):
     for json_fname in json_list:
         # Check if the file exists
         if not os.path.isfile(json_fname):
@@ -122,7 +125,7 @@ def check_jsons(kind, json_list):
         errored = False
         for channel in all_energy_channels:
             try:
-                sphinx_obj = object_from_json(json_obj, channel)
+                sphinx_obj = object_from_json(kind, json_obj, channel)
             except Exception as e:
                 print_json_fname("ERROR", json_fname, f"Failed to load object (channel {channel}):", e)
                 print(traceback.format_exc())
