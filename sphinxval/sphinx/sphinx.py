@@ -77,7 +77,7 @@ def validate(data_list, model_list, top=None, Resume=None):
 
     #Check for duplicates in the set of forecasts and remove any
     logger.info("Checking for and removing duplicate forecasts from the input Model List.")
-    model_objs, fcast_df = duplicates.remove_forecast_duplicates(all_energy_channels, model_objs)
+    model_objs = duplicates.remove_forecast_duplicates(all_energy_channels, model_objs)
 
     #Dictionary containing the location of all the .txt files
     #in the subdirectories below top.
@@ -101,7 +101,7 @@ def validate(data_list, model_list, top=None, Resume=None):
             + Resume)
         r_df = resume.read_in_df(Resume)
         
-        model_objs = duplicates.remove_resume_duplicates(r_df, fcast_df, model_objs)
+        model_objs = duplicates.remove_resume_duplicates(r_df, model_objs)
     ################
     
     
