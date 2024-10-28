@@ -759,7 +759,7 @@ def embed_pdf_files_in_html(html_content, output_html_path):
 
  
 # FINAL RESULT
-def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
+def report(output_dir, relative_path_plots, sphinx_dataframe=None): ### ADD OPTIONAL ARGUMENT HERE
     global output_dir__
     global relative_path_plots__
 
@@ -781,7 +781,10 @@ def report(output_dir, relative_path_plots): ### ADD OPTIONAL ARGUMENT HERE
         os.mkdir(config.reportpath)
  
     # obtain sphinx dataframe
-    sphinx_dataframe = pd.read_pickle(os.path.join(output_dir__, 'SPHINX_dataframe.pkl'))
+    if sphinx_dataframe is None: 
+        sphinx_dataframe_location = os.path.join(output_dir__, 'SPHINX_dataframe.pkl')
+        logger.info('    No SPHINX dataframe supplied to reporting module. Using SPHINX dataframe saved at location ' + sphinx_dataframe_location)
+        sphinx_dataframe = pd.read_pickle(os.path.join(output_dir__, 'SPHINX_dataframe.pkl'))
 
     # grab all models
     models = list(set(sphinx_dataframe['Model']))

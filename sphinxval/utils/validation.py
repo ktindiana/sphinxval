@@ -1397,16 +1397,7 @@ def all_clear_intuitive_metrics(df, dict, model, energy_key, thresh_key,
             'Observed SEP All Clear', 'Predicted SEP All Clear',
             'All Clear Match Status']]
     sub = sub.loc[(sub['All Clear Match Status'] != 'Ongoing SEP Event')]
- 
-    #Find predicted None values
-    noneval = pd.isna(sub['Predicted SEP All Clear'])
-    #Extract only indices for Nones
-    #True indicates that all clear was a None value
-    noneval = noneval.loc[noneval == True]
-    noneval = noneval.index.to_list()
-    if len(noneval) > 0:
-        for ix in noneval:
-            sub = sub.drop(index=ix)
+    sub = sub.dropna(subset='All Clear Match Status')
       
     if sub.empty:
         return
@@ -1495,28 +1486,10 @@ def probability_intuitive_metrics(df, dict, model, energy_key, thresh_key,
             'Predicted SEP All Clear',
             'Predicted SEP Probability', 'Probability Match Status']]
     sub = sub.loc[(sub['Probability Match Status'] != 'Ongoing SEP Event')]
-
-    #Find predicted None values
-    noneval = pd.isna(sub['Predicted SEP Probability'])
-    #Extract only indices for Nones
-    #True indicates that peak intensity was a None value
-    noneval = noneval.loc[noneval == True]
-    noneval = noneval.index.to_list()
-    if len(noneval) > 0:
-        for ix in noneval:
-            sub = sub.drop(index=ix)
+    sub = sub.dropna(subset='Predicted SEP Probability')
 
     if not sub.empty:
-        #Find predicted None values
-        noneval = pd.isna(sub['Observed SEP Probability'])
-        #Extract only indices for Nones
-        #True indicates that peak intensity was a None value
-        noneval = noneval.loc[noneval == True]
-        noneval = noneval.index.to_list()
-        if len(noneval) > 0:
-            for ix in noneval:
-                sub = sub.drop(index=ix)
-
+        sub = sub.dropna(subset='Observed SEP Probability')
 
     if sub.empty:
         return
@@ -1802,27 +1775,10 @@ def peak_intensity_intuitive_metrics(df, dict, model, energy_key, thresh_key,
             'Predicted SEP Peak Intensity (Onset Peak) Units',
             'Peak Intensity Match Status']]
     sub = sub.loc[(sub['Peak Intensity Match Status'] == 'SEP Event')]
-
-    #Find predicted None values
-    noneval = pd.isna(sub['Predicted SEP Peak Intensity (Onset Peak)'])
-    #Extract only indices for Nones
-    #True indicates that peak intensity was a None value
-    noneval = noneval.loc[noneval == True]
-    noneval = noneval.index.to_list()
-    if len(noneval) > 0:
-        for ix in noneval:
-            sub = sub.drop(index=ix)
+    sub = sub.dropna(subset='Predicted SEP Peak Intensity (Onset Peak)')
       
     if not sub.empty:
-        #Find observed None values
-        noneval = pd.isna(sub['Observed SEP Peak Intensity (Onset Peak)'])
-        #Extract only indices for Nones
-        #True indicates that peak intensity was a None value
-        noneval = noneval.loc[noneval == True]
-        noneval = noneval.index.to_list()
-        if len(noneval) > 0:
-            for ix in noneval:
-                sub = sub.drop(index=ix)
+        sub = sub.dropna(subset='Observed SEP Peak Intensity (Onset Peak)')
 
     if sub.empty:
         return
@@ -1926,26 +1882,10 @@ def peak_intensity_max_intuitive_metrics(df, dict, model, energy_key,
             'Predicted SEP Peak Intensity Max (Max Flux) Units',
             'Peak Intensity Max Match Status']]
     sub = sub.loc[(sub['Peak Intensity Max Match Status'] == 'SEP Event')]
-    #Find predicted None values
-    noneval = pd.isna(sub['Predicted SEP Peak Intensity Max (Max Flux)'])
-    #Extract only indices for Nones
-    #True indicates that peak intensity was a None value
-    noneval = noneval.loc[noneval == True]
-    noneval = noneval.index.to_list()
-    if len(noneval) > 0:
-        for ix in noneval:
-            sub = sub.drop(index=ix)
-    if not sub.empty:
-        #Find predicted None values
-        noneval = pd.isna(sub['Observed SEP Peak Intensity Max (Max Flux)'])
-        #Extract only indices for Nones
-        #True indicates that peak intensity was a None value
-        noneval = noneval.loc[noneval == True]
-        noneval = noneval.index.to_list()
-        if len(noneval) > 0:
-            for ix in noneval:
-                sub = sub.drop(index=ix)
+    sub = sub.dropna(subset='Predicted SEP Peak Intensity Max (Max Flux)')
 
+    if not sub.empty:
+        sub = sub.dropna(subset='Observed SEP Peak Intensity Max (Max Flux)')
         sub, doType = extract_flux_forecast_type(sub, thresh_key, peak_key, time_key, validation_type)
 
 
@@ -1968,26 +1908,10 @@ def peak_intensity_max_intuitive_metrics(df, dict, model, energy_key,
             'Predicted SEP Peak Intensity (Onset Peak) Units',
             'Peak Intensity Match Status']]
         sub = sub.loc[(sub['Peak Intensity Match Status'] == 'SEP Event')]
+        sub = sub.dropna(subset='Predicted SEP Peak Intensity (Onset Peak)')
 
-        #Find predicted None values
-        noneval = pd.isna(sub['Predicted SEP Peak Intensity (Onset Peak)'])
-        #Extract only indices for Nones
-        #True indicates that peak intensity was a None value
-        noneval = noneval.loc[noneval == True]
-        noneval = noneval.index.to_list()
-        if len(noneval) > 0:
-            for ix in noneval:
-                sub = sub.drop(index=ix)
-
-        #Find predicted None values
-        noneval = pd.isna(sub['Observed SEP Peak Intensity Max (Max Flux)'])
-        #Extract only indices for Nones
-        #True indicates that peak intensity was a None value
-        noneval = noneval.loc[noneval == True]
-        noneval = noneval.index.to_list()
-        if len(noneval) > 0:
-            for ix in noneval:
-                sub = sub.drop(index=ix)
+        if not sub.empty:
+            sub = sub.dropna(subset='Observed SEP Peak Intensity Max (Max Flux)')
 
         if sub.empty:
             return
@@ -1996,8 +1920,7 @@ def peak_intensity_max_intuitive_metrics(df, dict, model, energy_key,
         if sub.empty:
             return
         
-        logger.debug("Model " + model +
-                " did not explicitly "
+        logger.debug("Model " + model + " did not explicitly "
                 "include a peak_intensity_max field. Comparing "
                 "peak_intensity to observed max flux.")
 
@@ -2106,26 +2029,11 @@ def max_flux_in_pred_win_metrics(df, dict, model, energy_key,
             'Predicted SEP Peak Intensity Max (Max Flux)',
             'Predicted SEP Peak Intensity Max (Max Flux) Units']]
 
-    #drop rows containing None
-    noneval = pd.isna(sub['Predicted SEP Peak Intensity Max (Max Flux)'])
-    #Extract only indices for Nones
-    #True indicates that peak intensity was a None value
-    noneval = noneval.loc[noneval == True]
-    noneval = noneval.index.to_list()
-    if len(noneval) > 0:
-        for ix in noneval:
-            sub = sub.drop(index=ix)
+    sub = sub.dropna(subset='Predicted SEP Peak Intensity Max (Max Flux)')
 
     if not sub.empty:
-        #Find predicted None values
-        noneval = pd.isna(sub['Observed Max Flux in Prediction Window'])
-        #Extract only indices for Nones
-        #True indicates that peak intensity was a None value
-        noneval = noneval.loc[noneval == True]
-        noneval = noneval.index.to_list()
-        if len(noneval) > 0:
-            for ix in noneval:
-                sub = sub.drop(index=ix)
+        sub = sub.dropna(subset='Observed Max Flux in Prediction Window')
+
       
     #Models may fill only the Peak Intensity field. It can be ambiguous whether
     #the prediction is intended as onset peak or max flux. If no max flux field
@@ -2145,25 +2053,9 @@ def max_flux_in_pred_win_metrics(df, dict, model, energy_key,
             'Predicted SEP Peak Intensity (Onset Peak)',
             'Predicted SEP Peak Intensity (Onset Peak) Units']]
 
-        #Find predicted None values
-        noneval = pd.isna(sub['Predicted SEP Peak Intensity (Onset Peak)'])
-        #Extract only indices for Nones
-        #True indicates that peak intensity was a None value
-        noneval = noneval.loc[noneval == True]
-        noneval = noneval.index.to_list()
-        if len(noneval) > 0:
-            for ix in noneval:
-                sub = sub.drop(index=ix)
-
-        #Find predicted None values
-        noneval = pd.isna(sub['Observed Max Flux in Prediction Window'])
-        #Extract only indices for Nones
-        #True indicates that peak intensity was a None value
-        noneval = noneval.loc[noneval == True]
-        noneval = noneval.index.to_list()
-        if len(noneval) > 0:
-            for ix in noneval:
-                sub = sub.drop(index=ix)
+        sub = sub.dropna(subset='Predicted SEP Peak Intensity (Onset Peak)')
+        if not sub.empty:
+            sub = sub.dropna(subset='Observed Max Flux in Prediction Window')
 
         if sub.empty:
             return
@@ -2265,26 +2157,10 @@ def fluence_intuitive_metrics(df, dict, model, energy_key,
             'Predicted SEP Fluence Units',
             'Fluence Match Status']]
     sub = sub.loc[(sub['Fluence Match Status'] == 'SEP Event')]  
-    #Find predicted None values
-    noneval = pd.isna(sub['Predicted SEP Fluence'])
-    #Extract only indices for Nones
-    #True indicates that peak intensity was a None value
-    noneval = noneval.loc[noneval == True]
-    noneval = noneval.index.to_list()
-    if len(noneval) > 0:
-        for ix in noneval:
-            sub = sub.drop(index=ix)
+    sub = sub.dropna(subset='Predicted SEP Fluence')
 
     if not sub.empty:
-        #Find observed None values
-        noneval = pd.isna(sub['Observed SEP Fluence'])
-        #Extract only indices for Nones
-        #True indicates that peak intensity was a None value
-        noneval = noneval.loc[noneval == True]
-        noneval = noneval.index.to_list()
-        if len(noneval) > 0:
-            for ix in noneval:
-                sub = sub.drop(index=ix)
+        sub = sub.dropna(subset='Observed SEP Fluence')
 
     if sub.empty:
         return
@@ -2379,28 +2255,10 @@ def threshold_crossing_intuitive_metrics(df, dict, model, energy_key,
             'Predicted SEP Threshold Crossing Time',
             'Threshold Crossing Time Match Status']]
     sub = sub.loc[(sub['Threshold Crossing Time Match Status'] == 'SEP Event')]
-
-    #Find predicted None values
-    noneval = pd.isna(sub['Predicted SEP Threshold Crossing Time'])
-    #Extract only indices for Nones
-    #True indicates that peak intensity was a None value
-    noneval = noneval.loc[noneval == True]
-    noneval = noneval.index.to_list()
-    if len(noneval) > 0:
-        for ix in noneval:
-            sub = sub.drop(index=ix)
+    sub = sub.dropna(subset='Predicted SEP Threshold Crossing Time')
 
     if not sub.empty:
-        #Find observed None values
-        noneval = pd.isna(sub['Observed SEP Threshold Crossing Time'])
-        #Extract only indices for Nones
-        #True indicates that peak intensity was a None value
-        noneval = noneval.loc[noneval == True]
-        noneval = noneval.index.to_list()
-        if len(noneval) > 0:
-            for ix in noneval:
-                sub = sub.drop(index=ix)
-
+        sub = sub.dropna(subset='Observed SEP Threshold Crossing Time')
 
     if sub.empty:
         return
@@ -2463,27 +2321,10 @@ def start_time_intuitive_metrics(df, dict, model, energy_key, thresh_key,
             'Predicted SEP Start Time',
             'Start Time Match Status']]
     sub = sub.loc[(sub['Start Time Match Status'] == 'SEP Event')]
-
-    #Find predicted None values
-    noneval = pd.isna(sub['Predicted SEP Start Time'])
-    #Extract only indices for Nones
-    #True indicates that peak intensity was a None value
-    noneval = noneval.loc[noneval == True]
-    noneval = noneval.index.to_list()
-    if len(noneval) > 0:
-        for ix in noneval:
-            sub = sub.drop(index=ix)
+    sub = sub.dropna(subset='Predicted SEP Start Time')
 
     if not sub.empty:
-        #Find predicted None values
-        noneval = pd.isna(sub['Observed SEP Start Time'])
-        #Extract only indices for Nones
-        #True indicates that peak intensity was a None value
-        noneval = noneval.loc[noneval == True]
-        noneval = noneval.index.to_list()
-        if len(noneval) > 0:
-            for ix in noneval:
-                sub = sub.drop(index=ix)
+        sub = sub.dropna(subset='Observed SEP Start Time')
 
     if sub.empty:
         return
@@ -2546,27 +2387,10 @@ def end_time_intuitive_metrics(df, dict, model, energy_key,
             'Predicted SEP End Time',
             'End Time Match Status']]
     sub = sub.loc[(sub['End Time Match Status'] == 'SEP Event')]
-
-    #Find predicted None values
-    noneval = pd.isna(sub['Predicted SEP End Time'])
-    #Extract only indices for Nones
-    #True indicates that peak intensity was a None value
-    noneval = noneval.loc[noneval == True]
-    noneval = noneval.index.to_list()
-    if len(noneval) > 0:
-        for ix in noneval:
-            sub = sub.drop(index=ix)
+    sub = sub.dropna(subset='Predicted SEP End Time')
 
     if not sub.empty:
-        #Find observed None values
-        noneval = pd.isna(sub['Observed SEP End Time'])
-        #Extract only indices for Nones
-        #True indicates that peak intensity was a None value
-        noneval = noneval.loc[noneval == True]
-        noneval = noneval.index.to_list()
-        if len(noneval) > 0:
-            for ix in noneval:
-                sub = sub.drop(index=ix)
+        sub = sub.dropna(subset='Observed SEP End Time')
 
     if sub.empty:
         return
@@ -2631,28 +2455,10 @@ def duration_intuitive_metrics(df, dict, model, energy_key, thresh_key,
             'Duration Match Status',
             'Predicted SEP End Time']]
     sub = sub.loc[(sub['Duration Match Status'] == 'SEP Event')]
-
-    #Find predicted None values
-    noneval = pd.isna(sub['Predicted SEP Duration'])
-    #Extract only indices for Nones
-    #True indicates that peak intensity was a None value
-    noneval = noneval.loc[noneval == True]
-    noneval = noneval.index.to_list()
-    if len(noneval) > 0:
-        for ix in noneval:
-            sub = sub.drop(index=ix)
+    sub = sub.dropna(subset='Predicted SEP Duration')
 
     if not sub.empty:
-        #Find observed None values
-        noneval = pd.isna(sub['Observed SEP Duration'])
-        #Extract only indices for Nones
-        #True indicates that peak intensity was a None value
-        noneval = noneval.loc[noneval == True]
-        noneval = noneval.index.to_list()
-        if len(noneval) > 0:
-            for ix in noneval:
-                sub = sub.drop(index=ix)
-
+        sub = sub.dropna(subset='Observed SEP Duration')
 
     if sub.empty:
         return
@@ -2717,28 +2523,10 @@ def peak_intensity_time_intuitive_metrics(df, dict, model, energy_key,
             'Peak Intensity Match Status',
             'Predicted SEP Peak Intensity (Onset Peak)']]
     sub = sub.loc[(sub['Peak Intensity Match Status'] == 'SEP Event')]
-
-
-    #Find predicted None values
-    noneval = pd.isna(sub['Predicted SEP Peak Intensity (Onset Peak) Time'])
-    #Extract only indices for Nones
-    #True indicates that peak intensity was a None value
-    noneval = noneval.loc[noneval == True]
-    noneval = noneval.index.to_list()
-    if len(noneval) > 0:
-        for ix in noneval:
-            sub = sub.drop(index=ix)
+    sub = sub.dropna(subset='Predicted SEP Peak Intensity (Onset Peak) Time')
 
     if not sub.empty:
-        #Find observed None values
-        noneval = pd.isna(sub['Observed SEP Peak Intensity (Onset Peak) Time'])
-        #Extract only indices for Nones
-        #True indicates that peak intensity was a None value
-        noneval = noneval.loc[noneval == True]
-        noneval = noneval.index.to_list()
-        if len(noneval) > 0:
-            for ix in noneval:
-                sub = sub.drop(index=ix)
+        sub = sub.dropna(subset='Observed SEP Peak Intensity (Onset Peak) Time')
 
     if sub.empty:
         return
@@ -2825,26 +2613,10 @@ def peak_intensity_max_time_intuitive_metrics(df, dict, model, energy_key,
             'Peak Intensity Max Match Status',
             'Predicted SEP Peak Intensity Max (Max Flux)']]
     sub = sub.loc[(sub['Peak Intensity Max Match Status'] == 'SEP Event')]
-    #Find predicted None values
-    noneval = pd.isna(sub['Predicted SEP Peak Intensity Max (Max Flux) Time'])
-    #Extract only indices for Nones
-    #True indicates that peak intensity was a None value
-    noneval = noneval.loc[noneval == True]
-    noneval = noneval.index.to_list()
-    if len(noneval) > 0:
-        for ix in noneval:
-            sub = sub.drop(index=ix)
+    sub = sub.dropna(subset='Predicted SEP Peak Intensity Max (Max Flux) Time')
 
     if not sub.empty:
-        #Find predicted None values
-        noneval = pd.isna(sub['Observed SEP Peak Intensity Max (Max Flux) Time'])
-        #Extract only indices for Nones
-        #True indicates that peak intensity was a None value
-        noneval = noneval.loc[noneval == True]
-        noneval = noneval.index.to_list()
-        if len(noneval) > 0:
-            for ix in noneval:
-                sub = sub.drop(index=ix)
+        sub = sub.dropna(subset='Observed SEP Peak Intensity Max (Max Flux) Time')
 
     if sub.empty:
         return
@@ -2917,28 +2689,10 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
             'Predicted Time Profile',
             'Time Profile Match Status']]
     sub = sub.loc[(sub['Time Profile Match Status'] == 'SEP Event')]
-
-    #Find predicted None values
-    noneval = pd.isna(sub['Predicted Time Profile'])
-    #Extract only indices for Nones
-    #True indicates that peak intensity was a None value
-    noneval = noneval.loc[noneval == True]
-    noneval = noneval.index.to_list()
-    if len(noneval) > 0:
-        for ix in noneval:
-            sub = sub.drop(index=ix)
+    sub = sub.dropna(subset='Predicted Time Profile')
 
     if not sub.empty:
-        #Find predicted None values
-        noneval = pd.isna(sub['Observed Time Profile'])
-        #Extract only indices for Nones
-        #True indicates that peak intensity was a None value
-        noneval = noneval.loc[noneval == True]
-        noneval = noneval.index.to_list()
-        if len(noneval) > 0:
-            for ix in noneval:
-                sub = sub.drop(index=ix)
-
+        sub = sub.dropna(subset='Observed Time Profile')
 
     if sub.empty:
         return
@@ -3620,16 +3374,7 @@ def last_data_to_issue_intuitive_metrics(df, dict, model, energy_key, thresh_key
             'Observed SEP Threshold Crossing Time',
             'Last Data Time to Issue Time']]
 
-    #Find predicted None values
-    noneval = pd.isna(sub['Last Data Time to Issue Time'])
-    #Extract only indices for Nones
-    #True indicates that peak intensity was a None value
-    noneval = noneval.loc[noneval == True]
-    noneval = noneval.index.to_list()
-    if len(noneval) > 0:
-        for ix in noneval:
-            sub = sub.drop(index=ix)
-
+    sub = sub.dropna(subset='Last Data Time to Issue Time')
 
     if sub.empty:
         return
@@ -3872,7 +3617,7 @@ def intuitive_validation(matched_sphinx, model_names, all_energy_channels,
     
     Output:
     
-    
+        :df: (pandas dataframe) SPHINX dataframe. 
     
     """
     logger.info("Beginning validation process.")
@@ -3912,4 +3657,6 @@ def intuitive_validation(matched_sphinx, model_names, all_energy_channels,
                 all_observed_thresholds, type)
  
     logger.info("intuitive_validation: Validation process complete.")
-    
+
+    return df   
+ 

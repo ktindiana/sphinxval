@@ -321,32 +321,27 @@ def remove_forecast_duplicates(all_energy_channels, model_objs):
     
     """
     
-    fcast_df = {}
-
     for energy_key in all_energy_channels:
         df = fill_forecast_df(model_objs[energy_key])
 
         #Check for duplicated forecasts and remove
         df, dup_indices = identify_forecast_duplicates(df)
-        fcast_df.update({energy_key: df})
 
         for i in sorted(dup_indices, reverse=True):
             logger.warning(f"DUPLICATE INPUT FORECAST: Removing duplicated forecast for energy channel {energy_key},  {model_objs[energy_key][i].source}")
             model_objs[energy_key].pop(i)
         
-    return model_objs, fcast_df
+    return model_objs
 
 
 
-def remove_resume_duplicates(r_df, fcast_df, model_objs):
+def remove_resume_duplicates(r_df, model_objs):
     """ Compare exact filenames in the resume dataframe with filenames
         in the dataframe of Forecast objects from model_objs
     
         INPUTS:
         
             :r_df: (pandas DataFrame) SPHINX_dataframe read back in from a previous run
-            :fcast_df: (dict of DataFrames) df sorted by energy channel containing the unique
-                forecasts read in to sphinx. Created in remove_forecast_duplicates().
             :model_objs: (dict of Forecast objects) unique forecast objects sorted by energy channel
             
         OUTPUTS:
@@ -357,7 +352,7 @@ def remove_resume_duplicates(r_df, fcast_df, model_objs):
     """
     
     for energy_key in model_objs.keys():
-        df = fcast_df[energy_key]
+        df = fill_forecast_df(model_objs[energy_key])
 
         df_dup = df[df['Forecast Source'].isin(r_df['Forecast Source'])]
         dup_indices = df_dup['Prediction Index'].to_list()

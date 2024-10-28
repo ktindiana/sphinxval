@@ -21,5 +21,5 @@ parser.add_argument("--RelativePathPlots", type=bool, default=True, \
 
 args = parser.parse_args()
 
-sphinxval.sphinx.validate(args.DataList, args.ModelList, top=args.TopDirectory, Resume=args.Resume)
-sphinxval.sphinx.report.report(None, args.RelativePathPlots)
+sphinx_df = sphinxval.sphinx.validate(args.DataList, args.ModelList, top=args.TopDirectory, Resume=args.Resume)
+sphinxval.sphinx.report.report(None, args.RelativePathPlots, sphinx_dataframe=sphinx_df)

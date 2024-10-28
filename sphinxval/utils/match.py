@@ -613,14 +613,14 @@ def time_diff_thresh(time, obs_values, obs_key, energy_key, threshold):
     
     """
     if pd.isnull(time):
-        return [None]*len(obs_values[energy_key]['dataframes'][0])
+        return [np.nan]*len(obs_values[energy_key]['dataframes'][0])
 
     #Extract desired threshold
     obs_thresholds = obs_values[energy_key]['thresholds']
     try:
         ix = obs_thresholds.index(threshold)
     except:
-        return [None]*len(obs_values[energy_key]['dataframes'][0])
+        return [np.nan]*len(obs_values[energy_key]['dataframes'][0])
 
     #Check if time is before
     obs = obs_values[energy_key]['dataframes'][ix]
