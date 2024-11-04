@@ -9,6 +9,7 @@ from sphinxval.utils import plotting_tools as plt_tools
 from sphinxval.utils import match
 from sphinxval.utils import validation_json_handler as vjson
 from sphinxval.utils import classes as cl
+from . import utils_test
 
 
 from astropy import units
@@ -135,12 +136,6 @@ def initialize_awt_dict():
             "Mean AWT for Predicted SEP All Clear to Observed SEP Start Time": [],
             "Median AWT for Predicted SEP All Clear to Observed SEP Start Time": [],
 
-#            #Probability Forecasts - cannot without an explicit threshold
-#            "Mean AWT for Probability to Observed Threshold Crossing Time": [],
-#            "Median AWT for Probability to Observed Threshold Crossing Time": [],
-#            "Mean AWT for Probability to Observed Start Time": [],
-#            "Median AWT for Probability to Observed Start Time": [],
-
             #Threshold Crossing Time Forecasts
             "Mean AWT for Predicted SEP Threshold Crossing Time to Observed SEP Threshold Crossing Time": [],
             "Median AWT for Predicted SEP Threshold Crossing Time to Observed SEP Threshold Crossing Time": [],
@@ -152,13 +147,6 @@ def initialize_awt_dict():
             "Median AWT for Predicted SEP Start Time to Observed SEP Threshold Crossing Time": [],
             "Mean AWT for Predicted SEP Start Time to Observed SEP Start Time": [],
             "Median AWT for Predicted SEP Start Time to Observed SEP Start Time": [],
- 
-#             #Point Intensity Forecasts
-#            "Mean AWT for Predicted Point Intensity to Observed SEP Threshold Crossing Time": [],
-#            "Median AWT for Predicted Point Intensity to Observed SEP Threshold Crossing Time": [],
-#            "Mean AWT for Predicted Point Intensity to Observed SEP Start Time": [],
-#            "Median AWT for Predicted Point Intensity to Observed SEP Start Time": [],
- 
  
             #Peak Intensity Forecasts
             "Mean AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Threshold Crossing Time": [],
@@ -234,8 +222,6 @@ def initialize_all_clear_dict():
             "Number SEP Events Missed": [],
             "Predicted SEP Events": [], #date string
             "Missed SEP Events": [] #date string
-#            "Mean Percentage Error": [],
-#            "Mean Absolute Percentage Error": []
             }
             
     return dict
@@ -258,364 +244,6 @@ def initialize_probability_dict():
             }
             
     return dict
-
-
-def utility_setup_logging():
-    # Create the tests/logs/ directory if it does not yet exist
-    with patch('sphinxval.utils.config.logpath', './tests/logs'):
-        if not os.path.exists(config.logpath):
-            os.mkdir(config.logpath)
-
-        config_file = pathlib.Path('tests/log_config_tests.json')
-        with open(config_file) as f_in:
-            config_ = json.load(f_in)
-        logging.config.dictConfig(config_)
-
-
-
-def utility_load_forecast(filename, energy_channel):
-    """
-    Utility function for unit testing. Loads forecast object directly from JSON.
-       Input:
-            :filename: (string) forecast JSON file.
-            :energy_channel: (dict) 
-       Output:
-            :forecast: resultant Forecast() object.
-    """
-    forecast_dict = vjson.read_in_json(filename)
-    forecast, _ = vjson.forecast_object_from_json(forecast_dict, energy_channel)
-    forecast.source = filename
-    return forecast
-
-def utility_load_observation(filename, energy_channel):
-    """
-    Utility function for unit testing. Loads observation object directly from JSON.
-       Input:
-            :filename: (string) observation JSON file.
-            :energy_channel: (dict) 
-       Output:
-            :observation: resultant Observation() object.
-    """
-    observation_dict = vjson.read_in_json(filename)
-    observation = vjson.observation_object_from_json(observation_dict, energy_channel)
-    observation.source = filename   
-    return observation
-
-
-def utility_match_sphinx(all_energy_channels, model_names, obs_objs, model_objs):
-
-    utility_setup_logging()
-
-    matched_sphinx, all_observed_thresholds, observed_sep_events =\
-        match.match_all_forecasts(all_energy_channels, model_names,
-            obs_objs, model_objs)
-
-    return matched_sphinx, all_observed_thresholds, observed_sep_events
-    
-def utility_get_verbosity():
-    """
-    Sets verbosity for unit test suite.
-    """
-    if ('-v' in sys.argv) or ('--verbose' in sys.argv):
-        verbosity = 2
-    elif ('--quiet' in sys.argv):
-        verbosity = 0
-    else:
-        verbosity = 1
-    return verbosity
-
-def utility_delete_output():
-    """
-    Function to call at the start of each unittest to delete the contents 
-    of the output folder 
-    """
-    shutil.rmtree('./tests/output')
-
-    validate.prepare_outdirs()
-
-def make_docstring_printable(function):
-    """
-    Decorator method @make_docstring_printable.
-    Allows function to call itself to access docstring information.
-    Used for verbose unit test outputs.
-    """
-    def wrapper(*args, **kwargs):
-        return function(function, *args, **kwargs)
-    return wrapper
-
-def attributes_of_sphinx_obj(keyword, sphinx_obj, energy_channel_key, threshold_key):
-    """
-    Function that takes the keyword from the SPHINX dataframe and matches the keyword
-    to the matched sphinx object to compare/assertEqual to - ensures that the 
-    dataframe is being correctly built
-    """
-    if keyword == "Model": 
-        attribute = getattr(sphinx_obj.prediction, 'short_name', None)
-    elif keyword == "Energy Channel Key":
-        attribute = energy_channel_key
-    elif keyword == 'Threshold Key':
-        attribute = threshold_key[energy_channel_key][0]
-    elif keyword == 'Mismatch Allowed':
-        attribute = getattr(sphinx_obj, 'mismatch', None)
-    elif keyword == 'Prediction Energy Channel Key':
-        if getattr(sphinx_obj, 'mismatch', None) == True:
-            attribute = config.mm_pred_ek
-        else:
-            attribute = energy_channel_key
-    elif keyword == 'Prediction Threshold Key':
-        if getattr(sphinx_obj, 'mismatch', None) == True:
-            attribute = config.mm_pred_tk
-        else:
-            attribute = threshold_key[energy_channel_key][0]
-    elif keyword == 'Forecast Source':
-        attribute = getattr(sphinx_obj.prediction, 'source', None)
-    elif keyword == 'Forecast Path':
-        attribute = getattr(sphinx_obj.prediction, 'path', None)
-    elif keyword == 'Forecast Issue Time':
-        attribute = getattr(sphinx_obj.prediction, 'issue_time', None)
-    elif keyword == 'Prediction Window Start':
-        attribute = getattr(sphinx_obj.prediction, 'prediction_window_start', None)        
-    elif keyword == 'Prediction Window End':
-        attribute = getattr(sphinx_obj.prediction, 'prediction_window_end', None)        
-    elif keyword == 'Number of CMEs' or "CME" in keyword:
-        num_cmes = len(getattr(sphinx_obj.prediction, 'cmes', None))
-        if num_cmes != 0:
-            if keyword == 'CME Start Time':
-                attribute = getattr(sphinx_obj.prediction.cmes[-1], 'start_time', None)
-            elif keyword == 'CME Liftoff Time':
-                attribute = getattr(sphinx_obj.prediction.cmes[-1], 'liftoff_time', None)
-            elif keyword == 'CME Latitude':
-                attribute = getattr(sphinx_obj.prediction.cmes[-1], 'lat', None)
-            elif keyword == 'CME Longitude':
-                attribute = getattr(sphinx_obj.prediction.cmes[-1], 'lon', None)
-            elif keyword == 'CME Speed':
-                attribute = getattr(sphinx_obj.prediction.cmes[-1], 'speed', None)
-            elif keyword == 'CME Half Width':
-                attribute = getattr(sphinx_obj.prediction.cmes[-1], 'half_width', None)
-            elif keyword == 'CME PA':
-                attribute = getattr(sphinx_obj.prediction.cmes[-1], 'pa', None)
-            elif keyword == 'CME Catalog':
-                attribute = getattr(sphinx_obj.prediction.cmes[-1], 'catalog', None)
-        elif num_cmes == 0 and keyword != 'Number of CMEs':
-            attribute = None
-        if keyword == "Number of CMEs":
-            attribute = num_cmes   
-    elif keyword == 'Number of Flares' or "Flare" in keyword:
-        num_flares = len(getattr(sphinx_obj.prediction, 'flares', None))
-        if num_flares != 0:
-            if keyword == 'Flare Start Time':
-                attribute = getattr(sphinx_obj.prediction.flares[-1], 'start_time', None)
-            elif keyword == 'Flare Peak Time':
-                attribute = getattr(sphinx_obj.prediction.flares[-1], 'peak_time', None)
-            elif keyword == 'Flare Latitude':
-                attribute = getattr(sphinx_obj.prediction.flares[-1], 'lat', None)
-            elif keyword == 'Flare Longitude':
-                attribute = getattr(sphinx_obj.prediction.flares[-1], 'lon', None)
-            elif keyword == 'Flare End Time':
-                attribute = getattr(sphinx_obj.prediction.flares[-1], 'end_time', None)
-            elif keyword == 'Flare Last Data Time':
-                attribute = getattr(sphinx_obj.prediction.flares[-1], 'last_data_time', None)
-            elif keyword == 'Flare Intensity':
-                attribute = getattr(sphinx_obj.prediction.flares[-1], 'intensity', None)
-            elif keyword == 'Flare Integrated Intensity':
-                attribute = getattr(sphinx_obj.prediction.flares[-1], 'integrated_intensity', None)
-            elif keyword == 'Flare NOAA AR':
-                attribute = getattr(sphinx_obj.prediction.flares[-1], 'noaa_region', None)
-        elif num_flares == 0 and keyword != 'Number of Flares':
-            attribute = None
-        if keyword == "Number of Flares":
-            attribute = num_flares
-    elif keyword == 'Observatory' or keyword == 'Observed Time Profile':
-        attribute = []
-        for i in range(len(sphinx_obj.prediction_observation_windows_overlap)):
-            if i == 0:
-                if keyword == 'Observatory':
-                    attribute = getattr(sphinx_obj.prediction_observation_windows_overlap[i], "short_name", None)
-                else:
-                    attribute = getattr(sphinx_obj, "observed_sep_profiles", None)[i]
-            else:
-                attribute += ','
-                if keyword == 'Observatory':
-                    attribute += getattr(sphinx_obj.prediction_observation_windows_overlap[i], "short_name", None)
-                else:
-                    attribute += getattr(sphinx_obj, "observed_sep_profiles", None)[i]
-    elif keyword == "Observed SEP All Clear":
-        attribute = getattr(sphinx_obj.observed_all_clear, 'all_clear_boolean', None)
-    elif keyword == "Observed SEP Probability":
-        attribute = getattr(sphinx_obj.observed_probability[threshold_key[energy_channel_key][0]], 'probability_value', None)
-    elif keyword == 'Observed SEP Threshold Crossing Time':
-        attribute = getattr(sphinx_obj.observed_threshold_crossing[threshold_key[energy_channel_key][0]], 'crossing_time', None)        
-    elif keyword == 'Observed SEP Start Time':
-        attribute = getattr(sphinx_obj, 'observed_start_time', None)[threshold_key[energy_channel_key][0]]
-    elif keyword == 'Observed SEP End Time':
-        attribute = getattr(sphinx_obj, 'observed_end_time', None)[threshold_key[energy_channel_key][0]]
-    elif keyword == 'Observed SEP Duration':
-        attribute = getattr(sphinx_obj, 'observed_duration', None)[threshold_key[energy_channel_key][0]]
-    elif keyword == 'Observed SEP Fluence':
-        attribute = getattr(sphinx_obj.observed_fluence[threshold_key[energy_channel_key][0]], 'fluence', None)
-    elif keyword == 'Observed SEP Fluence Units':
-        attribute = getattr(sphinx_obj.observed_fluence[threshold_key[energy_channel_key][0]], 'units', None)
-    elif keyword == 'Observed SEP Fluence Spectrum':
-        attribute = getattr(sphinx_obj.observed_fluence_spectrum[threshold_key[energy_channel_key][0]], 'fluence_spectrum', None)
-        # print('OBSERVED FLUENCE HERE', attribute, sphinx_obj.observed_fluence_spectrum[threshold_key[energy_channel_key][0]].fluence_spectrum)
-    elif keyword == 'Observed SEP Fluence Spectrum Units':
-        attribute = getattr(sphinx_obj.observed_fluence_spectrum[threshold_key[energy_channel_key][0]], 'fluence_units', None)
-    elif keyword == "Observed SEP Peak Intensity (Onset Peak)":
-        attribute = getattr(sphinx_obj.observed_peak_intensity, 'intensity', None)
-    elif keyword == "Observed SEP Peak Intensity (Onset Peak) Units":
-        attribute = getattr(sphinx_obj.observed_peak_intensity, 'units', None)
-    elif keyword == "Observed SEP Peak Intensity (Onset Peak) Time":
-        attribute = getattr(sphinx_obj.observed_peak_intensity, 'time', None)
-    elif keyword == "Observed SEP Peak Intensity Max (Max Flux)":
-        attribute = getattr(sphinx_obj.observed_peak_intensity_max, 'intensity', None)
-    elif keyword == "Observed SEP Peak Intensity Max (Max Flux) Units":
-        attribute = getattr(sphinx_obj.observed_peak_intensity_max, 'units', None)
-    elif keyword == "Observed SEP Peak Intensity Max (Max Flux) Time":
-        attribute = getattr(sphinx_obj.observed_peak_intensity_max, 'time', None)
-    elif keyword == "Observed Point Intensity":
-        attribute = getattr(sphinx_obj.observed_point_intensity, 'intensity', None)
-    elif keyword == "Observed Point Intensity Units":
-        attribute = getattr(sphinx_obj.observed_point_intensity, 'units', None)
-    elif keyword == "Observed Point Intensity Time":
-        attribute = getattr(sphinx_obj.observed_point_intensity, 'time', None)
-    elif keyword == "Observed Max Flux in Prediction Window":
-        attribute = getattr(sphinx_obj.observed_max_flux_in_prediction_window, 'intensity', None)
-    elif keyword == "Observed Max Flux in Prediction Window Units":
-        attribute = getattr(sphinx_obj.observed_max_flux_in_prediction_window, 'units', None)
-    elif keyword == "Observed Max Flux in Prediction Window Time":
-        attribute = getattr(sphinx_obj.observed_max_flux_in_prediction_window, 'time', None)
-    elif keyword == "Predicted SEP All Clear":
-        attribute = getattr(sphinx_obj, 'return_predicted_all_clear', None)()[0]
-    elif keyword == "All Clear Match Status":
-        attribute = getattr(sphinx_obj, 'return_predicted_all_clear', None)()[1]
-    elif keyword == 'Predicted SEP Probability':
-        attribute = getattr(sphinx_obj, 'return_predicted_probability', None)(threshold_key[energy_channel_key][0])[0]
-    elif keyword == 'Probability Match Status':
-        attribute = getattr(sphinx_obj, 'return_predicted_probability', None)(threshold_key[energy_channel_key][0])[1]
-    elif keyword == "Predicted SEP Threshold Crossing Time":
-        attribute = getattr(sphinx_obj, 'return_predicted_threshold_crossing_time', None)(threshold_key[energy_channel_key][0])[0]
-    elif keyword == "Threshold Crossing Time Match Status":
-        attribute = getattr(sphinx_obj, 'return_predicted_threshold_crossing_time', None)(threshold_key[energy_channel_key][0])[1]
-    elif keyword == "Predicted SEP Start Time":
-        attribute = getattr(sphinx_obj, 'return_predicted_start_time', None)(threshold_key[energy_channel_key][0])[0]
-    elif keyword == "Start Time Match Status":
-        attribute = getattr(sphinx_obj, 'return_predicted_start_time', None)(threshold_key[energy_channel_key][0])[1]
-    elif keyword == "Predicted SEP End Time":
-        attribute = getattr(sphinx_obj, 'return_predicted_end_time', None)(threshold_key[energy_channel_key][0])[0]
-    elif keyword == "End Time Match Status":
-        attribute = getattr(sphinx_obj, 'return_predicted_end_time', None)(threshold_key[energy_channel_key][0])[1]
-    elif keyword == 'Predicted SEP Duration':
-        attribute = getattr(sphinx_obj, 'return_predicted_duration')(threshold_key[energy_channel_key][0])[0]
-    elif keyword == 'Duration Match Status':
-        attribute = getattr(sphinx_obj, 'return_predicted_end_time', None)(threshold_key[energy_channel_key][0])[1]
-    elif keyword == "Predicted SEP Fluence":
-        attribute = getattr(sphinx_obj, 'return_predicted_fluence', None)(threshold_key[energy_channel_key][0])[0]
-    elif keyword == "Predicted SEP Fluence Units":
-        attribute = getattr(sphinx_obj, 'return_predicted_fluence', None)(threshold_key[energy_channel_key][0])[1]
-    elif keyword == "Fluence Match Status":
-        attribute = getattr(sphinx_obj, 'return_predicted_fluence', None)(threshold_key[energy_channel_key][0])[2]
-    elif keyword == "Predicted SEP Fluence Spectrum":
-        attribute = getattr(sphinx_obj, 'return_predicted_fluence_spectrum', None)(threshold_key[energy_channel_key][0])[0]
-    elif keyword == "Predicted SEP Fluence Spectrum Units":
-        attribute = getattr(sphinx_obj, 'return_predicted_fluence_spectrum', None)(threshold_key[energy_channel_key][0])[1]
-    elif keyword == "Fluence Spectrum Match Status":
-        attribute = getattr(sphinx_obj, 'return_predicted_fluence_spectrum', None)(threshold_key[energy_channel_key][0])[2]
-    elif keyword == "Predicted SEP Peak Intensity (Onset Peak)":
-        attribute = getattr(sphinx_obj, 'return_predicted_peak_intensity', None)()[0]
-    elif keyword == "Predicted SEP Peak Intensity (Onset Peak) Units":
-        attribute = getattr(sphinx_obj, 'return_predicted_peak_intensity', None)()[1]
-    elif keyword == "Predicted SEP Peak Intensity (Onset Peak) Time":
-        attribute = getattr(sphinx_obj, 'return_predicted_peak_intensity', None)()[2]
-    elif keyword == "Peak Intensity Match Status":
-        attribute = getattr(sphinx_obj, 'return_predicted_peak_intensity', None)()[3]
-    elif keyword == "Predicted SEP Peak Intensity Max (Max Flux)":
-        attribute = getattr(sphinx_obj, 'return_predicted_peak_intensity_max', None)()[0]
-    elif keyword == "Predicted SEP Peak Intensity Max (Max Flux) Units":
-        attribute = getattr(sphinx_obj, 'return_predicted_peak_intensity_max', None)()[1]
-    elif keyword == "Predicted SEP Peak Intensity Max (Max Flux) Time":
-        attribute = getattr(sphinx_obj, 'return_predicted_peak_intensity_max', None)()[2]
-    elif keyword == "Peak Intensity Max Match Status":
-        attribute = getattr(sphinx_obj, 'return_predicted_peak_intensity_max', None)()[3]
-    elif keyword == "Predicted Point Intensity":
-        attribute = getattr(sphinx_obj, 'return_predicted_point_intensity', None)()[0]
-    elif keyword == "Predicted Point Intensity Units":
-        attribute = getattr(sphinx_obj, 'return_predicted_point_intensity', None)()[1]
-    elif keyword == "Predicted Point Intensity Time":
-        attribute = getattr(sphinx_obj, 'return_predicted_point_intensity', None)()[2]
-    elif keyword == 'Predicted Time Profile':
-        try:
-            attribute = getattr(sphinx_obj.prediction, 'path', None)
-            attribute += getattr(sphinx_obj.prediction, 'sep_profile', None)
-        except:
-            attribute = None
-        # print(attribute)
-    elif keyword == 'Time Profile Match Status':
-        attribute = getattr(sphinx_obj, 'return_predicted_end_time', None)(threshold_key[energy_channel_key][0])[1]
-    elif keyword == 'Last Data Time to Issue Time':
-        
-        attribute = getattr(sphinx_obj.prediction, 'last_data_time_to_issue_time' , None)()
-        
-        # sys.exit()
-    elif keyword == 'Last Eruption Time': 
-        attribute = str(getattr(sphinx_obj, 'last_eruption_time' , None))
-    elif keyword == 'Last Trigger Time': 
-        attribute = str(getattr(sphinx_obj, 'last_trigger_time' , None))
-    elif keyword == 'Last Input Time': 
-        attribute = str(getattr(sphinx_obj, 'last_input_time' , None))
-    elif keyword == 'Threshold Crossed in Prediction Window': 
-        attribute = str(getattr(sphinx_obj, 'threshold_crossed_in_pred_win', None)[threshold_key[energy_channel_key][0]])
-    elif keyword == 'Eruption before Threshold Crossed':
-        attribute = str(getattr(sphinx_obj, 'eruptions_before_threshold_crossing', None)[threshold_key[energy_channel_key][0]])
-    elif keyword == 'Time Difference between Eruption and Threshold Crossing':
-        attribute = str(getattr(sphinx_obj, 'time_difference_eruptions_threshold_crossing', None)[threshold_key[energy_channel_key][0]])
-    elif keyword == 'Triggers before Threshold Crossing':
-        attribute = str(getattr(sphinx_obj, 'triggers_before_threshold_crossing', None)[threshold_key[energy_channel_key][0]])
-    elif keyword == 'Inputs before Threshold Crossing':
-        attribute = str(getattr(sphinx_obj, 'inputs_before_threshold_crossing', None)[threshold_key[energy_channel_key][0]])
-    elif keyword == 'Triggers before Peak Intensity':
-        attribute = str(getattr(sphinx_obj, 'triggers_before_peak_intensity', None))
-    elif keyword == 'Time Difference between Triggers and Peak Intensity':
-        attribute = str(getattr(sphinx_obj, 'time_difference_triggers_peak_intensity', None))
-    elif keyword == 'Inputs before Peak Intensity':
-        attribute = str(getattr(sphinx_obj, 'inputs_before_peak_intensity', None))
-    elif keyword == 'Time Difference between Inputs and Peak Intensity':
-        attribute = str(getattr(sphinx_obj, 'time_difference_inputs_peak_intensity', None))
-    elif keyword == 'Triggers before Peak Intensity Max':
-        attribute = str(getattr(sphinx_obj, 'triggers_before_peak_intensity_max', None))
-    elif keyword == 'Time Difference between Triggers and Peak Intensity Max':
-        attribute = str(getattr(sphinx_obj, 'time_difference_triggers_peak_intensity_max', None))
-    elif keyword == 'Inputs before Peak Intensity Max':
-        attribute = str(getattr(sphinx_obj, 'inputs_before_peak_intensity_max', None))
-    elif keyword == 'Time Difference between Inputs and Peak Intensity Max':
-        attribute = str(getattr(sphinx_obj, 'time_difference_inputs_peak_intensity_max', None))
-    elif keyword == 'Triggers before SEP End':
-        attribute = str(getattr(sphinx_obj, 'triggers_before_sep_end', None)[threshold_key[energy_channel_key][0]])
-    elif keyword == 'Inputs before SEP End':
-        attribute = str(getattr(sphinx_obj, 'inputs_before_sep_end', None)[threshold_key[energy_channel_key][0]])
-    elif keyword == 'Time Difference between Triggers and SEP End':
-        attribute = str(getattr(sphinx_obj, 'time_difference_triggers_sep_end', None)[threshold_key[energy_channel_key][0]])
-    elif keyword == 'Time Difference between Inputs and SEP End':
-        attribute = str(getattr(sphinx_obj, 'time_difference_inputs_sep_end', None)[threshold_key[energy_channel_key][0]])
-    elif keyword == 'Prediction Window Overlap with Observed SEP Event':
-        attribute = str(getattr(sphinx_obj, 'prediction_window_sep_overlap', None)[threshold_key[energy_channel_key][0]])
-    elif keyword == 'Ongoing SEP Event':
-        attribute = str(getattr(sphinx_obj, 'observed_ongoing_events', None)[threshold_key[energy_channel_key][0]])
-    elif keyword == 'All Thresholds in Prediction':
-        attribute = str(getattr(sphinx_obj.prediction, 'all_thresholds', None))
-    elif keyword == 'All Threshold Crossing Times':
-        attribute = getattr(sphinx_obj, 'all_threshold_crossing_times', None)[threshold_key[energy_channel_key][0]]
-        if len(attribute) == 1:
-            if pd.isnull(attribute[0]): return str(attribute[0])
-            else:
-
-                attribute = str([str(datetime.strptime(str(attribute[0]), '%Y-%m-%d %H:%M:%S') )])
-    elif keyword == 'Eruption in Range':
-        attribute = str(getattr(sphinx_obj, 'is_eruption_in_range', None)[threshold_key[energy_channel_key][0]])
-
-    else:
-        attribute = 'Keyword not in sphinx object  ERROR'
-   
-    return attribute
 
 
 def fill_all_clear_dict_hit(dict, self):
@@ -733,12 +361,6 @@ def fill_awt_dict(dict, self):
     dict["Mean AWT for Predicted SEP All Clear to Observed SEP Start Time"].append('1.0')
     dict["Median AWT for Predicted SEP All Clear to Observed SEP Start Time"].append('1.0')
 
-#            #Probability Forecasts - cannot without an explicit threshold
-#            "Mean AWT for Probability to Observed Threshold Crossing Time": [],
-#            "Median AWT for Probability to Observed Threshold Crossing Time": [],
-#            "Mean AWT for Probability to Observed Start Time": [],
-#            "Median AWT for Probability to Observed Start Time": [],
-
             #Threshold Crossing Time Forecasts
     dict["Mean AWT for Predicted SEP Threshold Crossing Time to Observed SEP Threshold Crossing Time"].append('')
     dict["Median AWT for Predicted SEP Threshold Crossing Time to Observed SEP Threshold Crossing Time"].append('')
@@ -750,13 +372,6 @@ def fill_awt_dict(dict, self):
     dict["Median AWT for Predicted SEP Start Time to Observed SEP Threshold Crossing Time"].append('')
     dict["Mean AWT for Predicted SEP Start Time to Observed SEP Start Time"].append('')
     dict["Median AWT for Predicted SEP Start Time to Observed SEP Start Time"].append('')
- 
-#             #Point Intensity Forecasts
-#            "Mean AWT for Predicted Point Intensity to Observed SEP Threshold Crossing Time": [],
-#            "Median AWT for Predicted Point Intensity to Observed SEP Threshold Crossing Time": [],
-#            "Mean AWT for Predicted Point Intensity to Observed SEP Start Time": [],
-#            "Median AWT for Predicted Point Intensity to Observed SEP Start Time": [],
- 
  
             #Peak Intensity Forecasts
     dict["Mean AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Threshold Crossing Time"].append('')
@@ -862,11 +477,6 @@ def fill_peak_intensity_max_dict(dict, self):
     dict.update({"Time Profile Selection Plot": ['']})
 
     return dict
-    # if timeprofplot != None:
-    #     if "Time Profile Selection Plot" not in dict.keys():
-    #         dict.update({"Time Profile Selection Plot": [timeprofplot]})
-    #     else:
-    #         dict["Time Profile Selection Plot"].append(timeprofplot)
 
 
 def fill_peak_intensity_max_mult_dict(dict, self):
@@ -938,11 +548,6 @@ def fill_peak_intensity_dict(dict, self):
     dict.update({"Time Profile Selection Plot": ['']})
 
     return dict
-    # if timeprofplot != None:
-    #     if "Time Profile Selection Plot" not in dict.keys():
-    #         dict.update({"Time Profile Selection Plot": [timeprofplot]})
-    #     else:
-    #         dict["Time Profile Selection Plot"].append(timeprofplot)
 
 
 def fill_peak_intensity_mult_dict(dict, self):
@@ -1076,52 +681,52 @@ def fill_time_profile_dict_all(dict, self):
     return dict
 
 def fill_all_clear_dict_all(dict, self):
-        """ Fill the all clear metrics dictionary with the 'known' outputs.
-        """
-        dict["Model"].append('Test_model_0')
-        dict["Energy Channel"].append(self.energy_key)
-        dict["Threshold"].append(self.obs_thresholds[self.energy_key][0])
-        dict["Prediction Energy Channel"].append(self.energy_key)
-        dict["Prediction Threshold"].append(self.obs_thresholds[self.energy_key][0])
-        dict["All Clear 'True Positives' (Hits)"].append('2') #Hits
-        dict["All Clear 'False Positives' (False Alarms)"].append('0') #False Alarms
-        dict["All Clear 'True Negatives' (Correct Negatives)"].append('1')  #Correct negatives
-        dict["All Clear 'False Negatives' (Misses)"].append('0') #Misses
-        dict["N (Total Number of Forecasts)"].append('3')
-        dict["Percent Correct"].append('1.0')
-        dict["Bias"].append('1.0')
-        dict["Hit Rate"].append('1.0')
-        dict["False Alarm Rate"].append('0.0')
-        dict['False Negative Rate'].append('0.0')
-        dict["Frequency of Misses"].append('0.0')
-        dict["Frequency of Hits"].append('1.0')
-        dict["Probability of Correct Negatives"].append('1.0')
-        dict["Frequency of Correct Negatives"].append('1.0')
-        dict["False Alarm Ratio"].append('0.0')
-        dict["Detection Failure Ratio"].append('0.0')
-        dict["Threat Score"].append('1.0') #Critical Success Index
-        dict["Odds Ratio"].append('inf')
-        dict["Gilbert Skill Score"].append('1.0') #Equitable Threat Score
-        dict["True Skill Statistic"].append('1.0') #Hanssen and Kuipers
-                #discriminant (true skill statistic, Peirce's skill score)
-        dict["Heidke Skill Score"].append('1.0')
-        dict["Odds Ratio Skill Score"].append('1.0')
-        dict["Symmetric Extreme Dependency Score"].append('1.0')
-        dict["F1 Score"].append('1.0'),
-        dict["F2 Score"].append('1.0'),
-        dict["Fhalf Score"].append('1.0'),
-        dict['Prevalence'].append('0.6666666666666666'),
-        dict['Matthew Correlation Coefficient'].append('1.0'),
-        dict['Informedness'].append('1.0'),
-        dict['Markedness'].append('1.0'),
-        dict['Prevalence Threshold'].append('0.0'),
-        dict['Balanced Accuracy'].append('1.0'),
-        dict['Fowlkes-Mallows Index'].append('1.0'),
-        dict["Number SEP Events Correctly Predicted"].append('1')
-        dict["Number SEP Events Missed"].append('0')
-        dict["Predicted SEP Events"].append('2000-01-01 01:00:00')
-        dict["Missed SEP Events"].append('None')
-        return dict
+    """ Fill the all clear metrics dictionary with the 'known' outputs.
+    """
+    dict["Model"].append('Test_model_0')
+    dict["Energy Channel"].append(self.energy_key)
+    dict["Threshold"].append(self.obs_thresholds[self.energy_key][0])
+    dict["Prediction Energy Channel"].append(self.energy_key)
+    dict["Prediction Threshold"].append(self.obs_thresholds[self.energy_key][0])
+    dict["All Clear 'True Positives' (Hits)"].append('2') #Hits
+    dict["All Clear 'False Positives' (False Alarms)"].append('0') #False Alarms
+    dict["All Clear 'True Negatives' (Correct Negatives)"].append('1')  #Correct negatives
+    dict["All Clear 'False Negatives' (Misses)"].append('0') #Misses
+    dict["N (Total Number of Forecasts)"].append('3')
+    dict["Percent Correct"].append('1.0')
+    dict["Bias"].append('1.0')
+    dict["Hit Rate"].append('1.0')
+    dict["False Alarm Rate"].append('0.0')
+    dict['False Negative Rate'].append('0.0')
+    dict["Frequency of Misses"].append('0.0')
+    dict["Frequency of Hits"].append('1.0')
+    dict["Probability of Correct Negatives"].append('1.0')
+    dict["Frequency of Correct Negatives"].append('1.0')
+    dict["False Alarm Ratio"].append('0.0')
+    dict["Detection Failure Ratio"].append('0.0')
+    dict["Threat Score"].append('1.0') #Critical Success Index
+    dict["Odds Ratio"].append('inf')
+    dict["Gilbert Skill Score"].append('1.0') #Equitable Threat Score
+    dict["True Skill Statistic"].append('1.0') #Hanssen and Kuipers
+            #discriminant (true skill statistic, Peirce's skill score)
+    dict["Heidke Skill Score"].append('1.0')
+    dict["Odds Ratio Skill Score"].append('1.0')
+    dict["Symmetric Extreme Dependency Score"].append('1.0')
+    dict["F1 Score"].append('1.0'),
+    dict["F2 Score"].append('1.0'),
+    dict["Fhalf Score"].append('1.0'),
+    dict['Prevalence'].append('0.6666666666666666'),
+    dict['Matthew Correlation Coefficient'].append('1.0'),
+    dict['Informedness'].append('1.0'),
+    dict['Markedness'].append('1.0'),
+    dict['Prevalence Threshold'].append('0.0'),
+    dict['Balanced Accuracy'].append('1.0'),
+    dict['Fowlkes-Mallows Index'].append('1.0'),
+    dict["Number SEP Events Correctly Predicted"].append('1')
+    dict["Number SEP Events Missed"].append('0')
+    dict["Predicted SEP Events"].append('2000-01-01 01:00:00')
+    dict["Missed SEP Events"].append('None')
+    return dict
 
 def fill_awt_dict_all(dict, self):
     """ Metrics for Adanced Warning Time to SEP start, SEP peak, SEP end.
@@ -1140,12 +745,6 @@ def fill_awt_dict_all(dict, self):
     dict["Mean AWT for Predicted SEP All Clear to Observed SEP Start Time"].append('1.0')
     dict["Median AWT for Predicted SEP All Clear to Observed SEP Start Time"].append('1.0')
 
-#            #Probability Forecasts - cannot without an explicit threshold
-#            "Mean AWT for Probability to Observed Threshold Crossing Time": [],
-#            "Median AWT for Probability to Observed Threshold Crossing Time": [],
-#            "Mean AWT for Probability to Observed Start Time": [],
-#            "Median AWT for Probability to Observed Start Time": [],
-
             #Threshold Crossing Time Forecasts
     dict["Mean AWT for Predicted SEP Threshold Crossing Time to Observed SEP Threshold Crossing Time"].append('1.0')
     dict["Median AWT for Predicted SEP Threshold Crossing Time to Observed SEP Threshold Crossing Time"].append('1.0')
@@ -1157,14 +756,7 @@ def fill_awt_dict_all(dict, self):
     dict["Median AWT for Predicted SEP Start Time to Observed SEP Threshold Crossing Time"].append('1.0')
     dict["Mean AWT for Predicted SEP Start Time to Observed SEP Start Time"].append('1.0')
     dict["Median AWT for Predicted SEP Start Time to Observed SEP Start Time"].append('1.0')
- 
-#             #Point Intensity Forecasts
-#            "Mean AWT for Predicted Point Intensity to Observed SEP Threshold Crossing Time": [],
-#            "Median AWT for Predicted Point Intensity to Observed SEP Threshold Crossing Time": [],
-#            "Mean AWT for Predicted Point Intensity to Observed SEP Start Time": [],
-#            "Median AWT for Predicted Point Intensity to Observed SEP Start Time": [],
- 
- 
+  
             #Peak Intensity Forecasts
     dict["Mean AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Threshold Crossing Time"].append('1.0')
     dict["Median AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Threshold Crossing Time"].append('1.0')
@@ -1382,7 +974,7 @@ class TestAllClear0(unittest.TestCase):
     
 
     def load_verbosity(self):
-        self.verbosity = utility_get_verbosity()
+        self.verbosity = utils_test.utility_get_verbosity()
     
     
     def step_0(self): 
@@ -1392,13 +984,13 @@ class TestAllClear0(unittest.TestCase):
         self.all_energy_channels = [self.energy_key] 
         self.model_names = ['Test_model_0']
         observation_json = './tests/files/observations/validation/all_clear/all_clear_false.json'
-        observation = utility_load_observation(observation_json, self.energy_channel)
+        observation = utils_test.utility_load_observation(observation_json, self.energy_channel)
         observation_objects = {self.energy_key: [observation]}
-        self.verbosity = utility_get_verbosity()
+        self.verbosity = utils_test.utility_get_verbosity()
         forecast_json = './tests/files/forecasts/validation/all_clear/pred_all_clear_false.json'
-        forecast = utility_load_forecast(forecast_json, self.energy_channel)
+        forecast = utils_test.utility_load_forecast(forecast_json, self.energy_channel)
         forecast_objects = {self.energy_key: [forecast]}
-        self.sphinx, self.obs_thresholds, self.obs_sep_events = utility_match_sphinx(self.all_energy_channels,\
+        self.sphinx, self.obs_thresholds, self.obs_sep_events = utils_test.utility_match_sphinx(self.all_energy_channels,\
              self.model_names, observation_objects, forecast_objects)
         self.profname_dict = None
         self.DoResume = False
@@ -1412,10 +1004,8 @@ class TestAllClear0(unittest.TestCase):
        
         self.dataframe = validate.fill_sphinx_df(self.sphinx, self.model_names, self.all_energy_channels, \
             self.obs_thresholds, self.profname_dict)
-        for keywords in self.dataframe:
-            # temp = self.sphinx['Test_model_0'][self.energy_key].prediction.short_name\
-            
-            temp = attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][0],\
+        for keywords in self.dataframe:            
+            temp = utils_test.attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][0],\
                  self.energy_key, self.obs_thresholds)
             if pd.isnull(temp) and pd.isnull(self.dataframe[keywords][0]):
                 self.assertTrue(pd.isnull(self.dataframe[keywords][0]))
@@ -1431,7 +1021,8 @@ class TestAllClear0(unittest.TestCase):
         test_dict = initialize_all_clear_dict()
         test_dict = fill_all_clear_dict_hit(test_dict, self)
         
-        csv_filename = './tests/output\\csv\\all_clear_metrics.csv'
+        
+        csv_filename = os.path.join(config.outpath, 'csv', 'all_clear_metrics.csv')
         keyword_all_clear = []
         with open(csv_filename, mode = 'r') as csvfile:
             reading = csv.reader(csvfile, delimiter = ',')
@@ -1445,18 +1036,17 @@ class TestAllClear0(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            # print(keyword, row[j], test_dict[keyword][0])
                             self.assertEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
 
 
 
 
     def step_5(self):
-        print('In Step 5')
+        
         test_dict = initialize_awt_dict()
         test_dict = fill_awt_dict(test_dict, self)
-
-        csv_filename = './tests/output\\csv\\awt_metrics.csv'
+        csv_filename = os.path.join(config.outpath, 'csv', 'awt_metrics.csv')
+        
         keyword_all_clear = []
         with open(csv_filename, mode = 'r') as csvfile:
             reading = csv.reader(csvfile, delimiter = ',')
@@ -1470,7 +1060,6 @@ class TestAllClear0(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            # print(keyword, row[j], test_dict[keyword][0])
                             self.assertEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
 
   
@@ -1488,13 +1077,12 @@ class TestAllClear0(unittest.TestCase):
 
     def test_all_clear_0(self):
         validate.prepare_outdirs()
-        print("TestAllClear0")
         for name, step in self._steps():
             try:
                 step()
             except Exception as e:
                 self.fail("{} failed ({}: {})".format(step, type(e), e))
-        utility_delete_output()
+        utils_test.utility_delete_output()
 
 
 class TestAllClear1(unittest.TestCase):
@@ -1514,13 +1102,13 @@ class TestAllClear1(unittest.TestCase):
         self.all_energy_channels = [self.energy_key] 
         self.model_names = ['Test_model_0']
         observation_json = './tests/files/observations/validation/all_clear/all_clear_true.json'
-        observation = utility_load_observation(observation_json, self.energy_channel)
+        observation = utils_test.utility_load_observation(observation_json, self.energy_channel)
         observation_objects = {self.energy_key: [observation]}
-        self.verbosity = utility_get_verbosity()
+        self.verbosity = utils_test.utility_get_verbosity()
         forecast_json = './tests/files/forecasts/validation/all_clear/pred_all_clear_true.json'
-        forecast = utility_load_forecast(forecast_json, self.energy_channel)
+        forecast = utils_test.utility_load_forecast(forecast_json, self.energy_channel)
         forecast_objects = {self.energy_key: [forecast]}
-        self.sphinx, self.obs_thresholds, self.obs_sep_events = utility_match_sphinx(self.all_energy_channels,\
+        self.sphinx, self.obs_thresholds, self.obs_sep_events = utils_test.utility_match_sphinx(self.all_energy_channels,\
              self.model_names, observation_objects, forecast_objects)
         self.profname_dict = None
         self.DoResume = False
@@ -1537,7 +1125,7 @@ class TestAllClear1(unittest.TestCase):
         for keywords in self.dataframe:
             # temp = self.sphinx['Test_model_0'][self.energy_key].prediction.short_name\
             
-            temp = attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][0],\
+            temp = utils_test.attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][0],\
                  self.energy_key, self.obs_thresholds)
             if pd.isnull(temp) and pd.isnull(self.dataframe[keywords][0]):
                 self.assertTrue(pd.isnull(self.dataframe[keywords][0]))
@@ -1554,7 +1142,7 @@ class TestAllClear1(unittest.TestCase):
         test_dict = initialize_all_clear_dict()
         test_dict = fill_all_clear_dict_CN(test_dict, self)
 
-        csv_filename = './tests/output\\csv\\all_clear_metrics.csv'
+        csv_filename = os.path.join(config.outpath, 'csv', 'all_clear_metrics.csv')
         keyword_all_clear = []
         with open(csv_filename, mode = 'r') as csvfile:
             reading = csv.reader(csvfile, delimiter = ',')
@@ -1568,7 +1156,6 @@ class TestAllClear1(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            # print(keyword, row[j], test_dict[keyword][0])
                             self.assertEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
 
 
@@ -1586,26 +1173,24 @@ class TestAllClear1(unittest.TestCase):
 
     def test_all_clear_1(self):
         validate.prepare_outdirs()
-        print("TestAllClear1")
         for name, step in self._steps():
             try:
                 step()
             except Exception as e:
                 self.fail("{} failed ({}: {})".format(step, type(e), e))
-        utility_delete_output()
+        utils_test.utility_delete_output()
 
 
 class TestAllClearGarbage(unittest.TestCase):
 
     def load_verbosity(self):
-        self.verbosity = utility_get_verbosity()
+        self.verbosity = utils_test.utility_get_verbosity()
     
     
     @patch('sphinxval.utils.config.outpath', './tests/output')
 
     def test_garbage(self): 
         validate.prepare_outdirs()
-        print("TestAllClearGarbo")
 
         with self.assertRaises(NameError, msg = 'Giving purposeful garbage, should exit'):
             self.energy_channel = {'min': 10, 'max': -1, 'units': 'MeV'}
@@ -1613,13 +1198,13 @@ class TestAllClearGarbage(unittest.TestCase):
             self.all_energy_channels = [self.energy_key] 
             self.model_names = ['Test_model_0']
             observation_json = './tests/files/observations/validation/all_clear/all_clear_false.json'
-            observation = utility_load_observation(observation_json, self.energy_channel)
+            observation = utils_test.utility_load_observation(observation_json, self.energy_channel)
             observation_objects = {self.energy_key: [observation]}
-            self.verbosity = utility_get_verbosity()
+            self.verbosity = utils_test.utility_get_verbosity()
             forecast_json = './tests/files/forecasts/validation/all_clear/pred_all_clear_garbage.json'
-            forecast = utility_load_forecast(forecast_json, self.energy_channel)
+            forecast = utils_test.utility_load_forecast(forecast_json, self.energy_channel)
             forecast_objects = {self.energy_key: [forecast]}
-            self.sphinx, self.obs_thresholds, self.obs_sep_events = utility_match_sphinx(self.all_energy_channels,\
+            self.sphinx, self.obs_thresholds, self.obs_sep_events = utils_test.utility_match_sphinx(self.all_energy_channels,\
                 self.model_names, observation_objects, forecast_objects)
 
 
@@ -1629,7 +1214,7 @@ class TestAllClearGarbage(unittest.TestCase):
 class TestPeakIntensity0(unittest.TestCase):
 
     def load_verbosity(self):
-        self.verbosity = utility_get_verbosity()
+        self.verbosity = utils_test.utility_get_verbosity()
     
     
 
@@ -1640,13 +1225,13 @@ class TestPeakIntensity0(unittest.TestCase):
         self.all_energy_channels = [self.energy_key] 
         self.model_names = ['Test_model_0']
         observation_json = './tests/files/observations/validation/all_clear/all_clear_false.json'
-        observation = utility_load_observation(observation_json, self.energy_channel)
+        observation = utils_test.utility_load_observation(observation_json, self.energy_channel)
         observation_objects = {self.energy_key: [observation]}
-        self.verbosity = utility_get_verbosity()
+        self.verbosity = utils_test.utility_get_verbosity()
         forecast_json = './tests/files/forecasts/validation/onset_peak/pred_all_clear_false.json'
-        forecast = utility_load_forecast(forecast_json, self.energy_channel)
+        forecast = utils_test.utility_load_forecast(forecast_json, self.energy_channel)
         forecast_objects = {self.energy_key: [forecast]}
-        self.sphinx, self.obs_thresholds, self.obs_sep_events = utility_match_sphinx(self.all_energy_channels,\
+        self.sphinx, self.obs_thresholds, self.obs_sep_events = utils_test.utility_match_sphinx(self.all_energy_channels,\
              self.model_names, observation_objects, forecast_objects)
         self.profname_dict = None
         self.DoResume = False
@@ -1663,7 +1248,7 @@ class TestPeakIntensity0(unittest.TestCase):
         for keywords in self.dataframe:
             # temp = self.sphinx['Test_model_0'][self.energy_key].prediction.short_name\
             
-            temp = attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][0],\
+            temp = utils_test.attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][0],\
                  self.energy_key, self.obs_thresholds)
             if pd.isnull(temp) and pd.isnull(self.dataframe[keywords][0]):
                 self.assertTrue(pd.isnull(self.dataframe[keywords][0]))
@@ -1679,7 +1264,7 @@ class TestPeakIntensity0(unittest.TestCase):
         test_dict = initialize_flux_dict()
         test_dict = fill_peak_intensity_dict(test_dict, self)
 
-        csv_filename = './tests/output\\csv\\peak_intensity_metrics.csv'
+        csv_filename = os.path.join(config.outpath, 'csv', 'peak_intensity_metrics.csv')
         keyword_all_clear = []
         with open(csv_filename, mode = 'r') as csvfile:
             reading = csv.reader(csvfile, delimiter = ',')
@@ -1693,16 +1278,13 @@ class TestPeakIntensity0(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            # print(keyword, row[j], test_dict[keyword][0], "Breaked")
                             self.assertEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
 
 
     def step_4(self):
-        print('In Step 5')
         test_dict = initialize_time_dict()
         test_dict = fill_peak_intensity_time_dict(test_dict, self)
-
-        csv_filename = './tests/output\\csv\\peak_intensity_time_metrics.csv'
+        csv_filename = os.path.join(config.outpath, 'csv', 'peak_intensity_time_metrics.csv')
         keyword_peak_intensity_time = []
         with open(csv_filename, mode = 'r') as csvfile:
             reading = csv.reader(csvfile, delimiter = ',')
@@ -1715,9 +1297,7 @@ class TestPeakIntensity0(unittest.TestCase):
                         if keyword_peak_intensity_time[j] == '':
                             pass
                         else:
-                            keyword = keyword_peak_intensity_time[j]
-                            # print(keyword, row[j], test_dict[keyword][0], "Breaked")
-                           
+                            keyword = keyword_peak_intensity_time[j]                           
                             self.assertEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
   
     def utility_print_docstring(self, function):
@@ -1739,13 +1319,13 @@ class TestPeakIntensity0(unittest.TestCase):
                 step()
             except Exception as e:
                 self.fail("{} failed ({}: {})".format(step, type(e), e))
-        utility_delete_output()
+        utils_test.utility_delete_output()
 
 
 class TestPeakIntensityMult(unittest.TestCase):
 
     def load_verbosity(self):
-        self.verbosity = utility_get_verbosity()
+        self.verbosity = utils_test.utility_get_verbosity()
     
     
 
@@ -1761,16 +1341,16 @@ class TestPeakIntensityMult(unittest.TestCase):
         observation_json = ['./tests/files/observations/validation/all_clear/all_clear_false.json', './tests/files/observations/validation/all_clear/all_clear_true.json']
         observation_objects = {self.energy_key: []}
         for jsons in observation_json:
-            observation = utility_load_observation(jsons, self.energy_channel)
+            observation = utils_test.utility_load_observation(jsons, self.energy_channel)
             observation_objects[self.energy_key].append(observation)
         
-        self.verbosity = utility_get_verbosity()
+        self.verbosity = utils_test.utility_get_verbosity()
         forecast_json = ['./tests/files/forecasts/validation/onset_peak/pred_all_clear_false.json', './tests/files/forecasts/validation/onset_peak/pred_all_clear_true.json']
         forecast_objects = {self.energy_key: []}
         for jsons in forecast_json:
-            forecast = utility_load_forecast(jsons, self.energy_channel)
+            forecast = utils_test.utility_load_forecast(jsons, self.energy_channel)
             forecast_objects[self.energy_key].append(forecast)
-        self.sphinx, self.obs_thresholds, self.obs_sep_events = utility_match_sphinx(self.all_energy_channels, self.model_names, observation_objects, forecast_objects)
+        self.sphinx, self.obs_thresholds, self.obs_sep_events = utils_test.utility_match_sphinx(self.all_energy_channels, self.model_names, observation_objects, forecast_objects)
         self.profname_dict = None
         self.DoResume = False
         
@@ -1784,23 +1364,21 @@ class TestPeakIntensityMult(unittest.TestCase):
             self.obs_thresholds, self.profname_dict)
        
         for keywords in self.dataframe:
-            # temp = self.sphinx['Test_model_0'][self.energy_key].prediction.short_name\
             
-            temp = attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][0],\
+            temp = utils_test.attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][0],\
                  self.energy_key, self.obs_thresholds)
             
             if keywords == 'All Threshold Crossing Times': 
                 
                 temp[0] = str(datetime.strptime(str(temp[0]), '%Y-%m-%d %H:%M:%S') )
                 temp[1] = 'NaT'
-                # print(self.dataframe[keywords][0], temp)
                 self.assertEqual(self.dataframe[keywords][0], str(temp))
             elif pd.isnull(temp) and pd.isnull(self.dataframe[keywords][0]):
                 self.assertTrue(pd.isnull(self.dataframe[keywords][0]))
             else:
                 self.assertEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
 
-            temp = attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][1],\
+            temp = utils_test.attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][1],\
                  self.energy_key, self.obs_thresholds)
             
             
@@ -1809,7 +1387,6 @@ class TestPeakIntensityMult(unittest.TestCase):
             if keywords == 'All Threshold Crossing Times': 
                 temp[0] = str(datetime.strptime(str(temp[0]), '%Y-%m-%d %H:%M:%S') )
                 temp[1] = 'NaT'
-                # print(self.dataframe[keywords][1], temp)
                 self.assertEqual(self.dataframe[keywords][1], str(temp))
             elif pd.isnull(temp) and pd.isnull(self.dataframe[keywords][1]):
                 self.assertTrue(pd.isnull(self.dataframe[keywords][1]))
@@ -1825,7 +1402,7 @@ class TestPeakIntensityMult(unittest.TestCase):
     def step_3(self):    
         test_dict = initialize_flux_dict()
         test_dict = fill_peak_intensity_mult_dict(test_dict, self)
-        csv_filename = './tests/output\\csv\\peak_intensity_metrics.csv'
+        csv_filename = os.path.join(config.outpath, 'csv', 'peak_intensity_metrics.csv')
         keyword_all_clear = []
         with open(csv_filename, mode = 'r') as csvfile:
             reading = csv.reader(csvfile, delimiter = ',')
@@ -1868,7 +1445,7 @@ class TestPeakIntensityMult(unittest.TestCase):
                 step()
             except Exception as e:
                 self.fail("{} failed ({}: {})".format(step, type(e), e))
-        utility_delete_output()
+        utils_test.utility_delete_output()
 
         
 
@@ -1889,13 +1466,13 @@ class TestPeakIntensityMax0(unittest.TestCase):
         self.all_energy_channels = [self.energy_key] 
         self.model_names = ['Test_model_0']
         observation_json = './tests/files/observations/validation/all_clear/all_clear_false.json'
-        observation = utility_load_observation(observation_json, self.energy_channel)
+        observation = utils_test.utility_load_observation(observation_json, self.energy_channel)
         observation_objects = {self.energy_key: [observation]}
-        self.verbosity = utility_get_verbosity()
+        self.verbosity = utils_test.utility_get_verbosity()
         forecast_json = './tests/files/forecasts/validation/max_peak/pred_all_clear_false.json'
-        forecast = utility_load_forecast(forecast_json, self.energy_channel)
+        forecast = utils_test.utility_load_forecast(forecast_json, self.energy_channel)
         forecast_objects = {self.energy_key: [forecast]}
-        self.sphinx, self.obs_thresholds, self.obs_sep_events = utility_match_sphinx(self.all_energy_channels,\
+        self.sphinx, self.obs_thresholds, self.obs_sep_events = utils_test.utility_match_sphinx(self.all_energy_channels,\
              self.model_names, observation_objects, forecast_objects)
         self.profname_dict = None
         self.DoResume = False
@@ -1911,7 +1488,7 @@ class TestPeakIntensityMax0(unittest.TestCase):
         for keywords in self.dataframe:
         
             
-            temp = attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][0],\
+            temp = utils_test.attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][0],\
                  self.energy_key, self.obs_thresholds)
             if pd.isnull(temp) and pd.isnull(self.dataframe[keywords][0]):
                 self.assertTrue(pd.isnull(self.dataframe[keywords][0]))
@@ -1926,8 +1503,7 @@ class TestPeakIntensityMax0(unittest.TestCase):
     def step_3(self):
         test_dict = initialize_flux_dict()
         test_dict = fill_peak_intensity_max_dict(test_dict, self)
-
-        csv_filename = './tests/output\\csv\\peak_intensity_max_metrics.csv'
+        csv_filename = os.path.join(config.outpath, 'csv', 'peak_intensity_max_metrics.csv')
         keyword_all_clear = []
         with open(csv_filename, mode = 'r') as csvfile:
             reading = csv.reader(csvfile, delimiter = ',')
@@ -1941,7 +1517,6 @@ class TestPeakIntensityMax0(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            # print(keyword, row[j], test_dict[keyword][0], "Breaked")
                             self.assertEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
 
   
@@ -1965,13 +1540,13 @@ class TestPeakIntensityMax0(unittest.TestCase):
                 step()
             except Exception as e:
                 self.fail("{} failed ({}: {})".format(step, type(e), e))
-        utility_delete_output()
+        utils_test.utility_delete_output()
 
 
 class TestPeakIntensityMaxMult(unittest.TestCase):
 
     def load_verbosity(self):
-        self.verbosity = utility_get_verbosity()
+        self.verbosity = utils_test.utility_get_verbosity()
     
     
 
@@ -1987,16 +1562,16 @@ class TestPeakIntensityMaxMult(unittest.TestCase):
         observation_json = ['./tests/files/observations/validation/all_clear/all_clear_false.json', './tests/files/observations/validation/all_clear/all_clear_true.json']
         observation_objects = {self.energy_key: []}
         for jsons in observation_json:
-            observation = utility_load_observation(jsons, self.energy_channel)
+            observation = utils_test.utility_load_observation(jsons, self.energy_channel)
             observation_objects[self.energy_key].append(observation)
         
-        self.verbosity = utility_get_verbosity()
+        self.verbosity = utils_test.utility_get_verbosity()
         forecast_json = ['./tests/files/forecasts/validation/max_peak/pred_all_clear_false.json', './tests/files/forecasts/validation/max_peak/pred_all_clear_true.json']
         forecast_objects = {self.energy_key: []}
         for jsons in forecast_json:
-            forecast = utility_load_forecast(jsons, self.energy_channel)
+            forecast = utils_test.utility_load_forecast(jsons, self.energy_channel)
             forecast_objects[self.energy_key].append(forecast)
-        self.sphinx, self.obs_thresholds, self.obs_sep_events = utility_match_sphinx(self.all_energy_channels, self.model_names, observation_objects, forecast_objects)
+        self.sphinx, self.obs_thresholds, self.obs_sep_events = utils_test.utility_match_sphinx(self.all_energy_channels, self.model_names, observation_objects, forecast_objects)
         self.profname_dict = None
         self.DoResume = False
         
@@ -2019,22 +1594,20 @@ class TestPeakIntensityMaxMult(unittest.TestCase):
             self.obs_thresholds, self.profname_dict)
        
         for keywords in self.dataframe:
-            # temp = self.sphinx['Test_model_0'][self.energy_key].prediction.short_name\
-            
-            temp = attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][0],\
+            temp = utils_test.attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][0],\
                  self.energy_key, self.obs_thresholds)
             if keywords == 'All Threshold Crossing Times': 
                 
                 temp[0] = str(datetime.strptime(str(temp[0]), '%Y-%m-%d %H:%M:%S') )
                 temp[1] = 'NaT'
-                # print(self.dataframe[keywords][0], temp)
+
                 self.assertEqual(self.dataframe[keywords][0], str(temp))
             elif pd.isnull(temp) and pd.isnull(self.dataframe[keywords][0]):
                 self.assertTrue(pd.isnull(self.dataframe[keywords][0]))
             else:
                 self.assertEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
 
-            temp = attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][1],\
+            temp = utils_test.attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][1],\
                  self.energy_key, self.obs_thresholds)
             
             
@@ -2043,7 +1616,6 @@ class TestPeakIntensityMaxMult(unittest.TestCase):
             if keywords == 'All Threshold Crossing Times': 
                 temp[0] = str(datetime.strptime(str(temp[0]), '%Y-%m-%d %H:%M:%S') )
                 temp[1] = 'NaT'
-                # print(self.dataframe[keywords][1], temp)
                 self.assertEqual(self.dataframe[keywords][1], str(temp))
             elif pd.isnull(temp) and pd.isnull(self.dataframe[keywords][1]):
                 self.assertTrue(pd.isnull(self.dataframe[keywords][1]))
@@ -2058,7 +1630,8 @@ class TestPeakIntensityMaxMult(unittest.TestCase):
     def step_3(self):
         test_dict = initialize_flux_dict()
         test_dict = fill_peak_intensity_max_mult_dict(test_dict, self)
-        csv_filename = './tests/output\\csv\\peak_intensity_max_metrics.csv'
+        csv_filename = os.path.join(config.outpath, 'csv', 'peak_intensity_max_metrics.csv')
+        
         keyword_all_clear = []
         with open(csv_filename, mode = 'r') as csvfile:
             reading = csv.reader(csvfile, delimiter = ',')
@@ -2072,7 +1645,6 @@ class TestPeakIntensityMaxMult(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            # print(keyword, row[j], test_dict[keyword][0])
                             self.assertEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
 
         
@@ -2096,14 +1668,14 @@ class TestPeakIntensityMaxMult(unittest.TestCase):
                 step()
             except Exception as e:
                 self.fail("{} failed ({}: {})".format(step, type(e), e))
-        utility_delete_output()
+        utils_test.utility_delete_output()
 
 
 
 class TestProbability0(unittest.TestCase):
 
     def load_verbosity(self):
-        self.verbosity = utility_get_verbosity()
+        self.verbosity = utils_test.utility_get_verbosity()
     
     
 
@@ -2114,13 +1686,13 @@ class TestProbability0(unittest.TestCase):
         self.all_energy_channels = [self.energy_key] 
         self.model_names = ['Test_model_0']
         observation_json = './tests/files/observations/validation/all_clear/all_clear_false.json'
-        observation = utility_load_observation(observation_json, self.energy_channel)
+        observation = utils_test.utility_load_observation(observation_json, self.energy_channel)
         observation_objects = {self.energy_key: [observation]}
-        self.verbosity = utility_get_verbosity()
+        self.verbosity = utils_test.utility_get_verbosity()
         forecast_json = './tests/files/forecasts/validation/probability/pred_probability_all_clear_false.json'
-        forecast = utility_load_forecast(forecast_json, self.energy_channel)
+        forecast = utils_test.utility_load_forecast(forecast_json, self.energy_channel)
         forecast_objects = {self.energy_key: [forecast]}
-        self.sphinx, self.obs_thresholds, self.obs_sep_events = utility_match_sphinx(self.all_energy_channels,\
+        self.sphinx, self.obs_thresholds, self.obs_sep_events = utils_test.utility_match_sphinx(self.all_energy_channels,\
              self.model_names, observation_objects, forecast_objects)
         self.profname_dict = None
         self.DoResume = False
@@ -2144,7 +1716,7 @@ class TestProbability0(unittest.TestCase):
             self.obs_thresholds, self.profname_dict)
         for keywords in self.dataframe:
             # temp = self.sphinx['Test_model_0'][self.energy_key].prediction.short_name\
-            temp = attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][0],\
+            temp = utils_test.attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][0],\
                  self.energy_key, self.obs_thresholds)
             if pd.isnull(temp) and pd.isnull(self.dataframe[keywords][0]):
                 self.assertTrue(pd.isnull(self.dataframe[keywords][0]))
@@ -2153,7 +1725,6 @@ class TestProbability0(unittest.TestCase):
 
 
     def step_2(self):
-        # print('Test for DoResume feature - this is false right now though so moving on after a quick assertFalse')
         self.assertFalse(self.DoResume)
     
     def step_3(self):
@@ -2163,10 +1734,9 @@ class TestProbability0(unittest.TestCase):
        
 
     def step_4(self):
-        # print('In Step 4')
         test_dict = initialize_probability_dict()
         test_dict = fill_probability_dict_highprob(test_dict, self)
-        csv_filename = './tests/output\\csv\\probability_metrics.csv'
+        csv_filename = os.path.join(config.outpath, 'csv', 'probability_metrics.csv')
         keyword_all_clear = []
         with open(csv_filename, mode = 'r') as csvfile:
             reading = csv.reader(csvfile, delimiter = ',')
@@ -2180,7 +1750,6 @@ class TestProbability0(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            # print(keyword, row[j], test_dict[keyword][0])
                             self.assertEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
 
 
@@ -2208,7 +1777,7 @@ class TestProbability0(unittest.TestCase):
                 step()
             except Exception as e:
                 self.fail("{} failed ({}: {})".format(step, type(e), e))
-        utility_delete_output()
+        utils_test.utility_delete_output()
 
 
 
@@ -2216,7 +1785,7 @@ class TestProbability0(unittest.TestCase):
 class TestProbabilityMult(unittest.TestCase):
 
     def load_verbosity(self):
-        self.verbosity = utility_get_verbosity()
+        self.verbosity = utils_test.utility_get_verbosity()
     
     
 
@@ -2232,16 +1801,16 @@ class TestProbabilityMult(unittest.TestCase):
         observation_json = ['./tests/files/observations/validation/all_clear/all_clear_false.json', './tests/files/observations/validation/all_clear/all_clear_true.json']
         observation_objects = {self.energy_key: []}
         for jsons in observation_json:
-            observation = utility_load_observation(jsons, self.energy_channel)
+            observation = utils_test.utility_load_observation(jsons, self.energy_channel)
             observation_objects[self.energy_key].append(observation)
         
-        self.verbosity = utility_get_verbosity()
+        self.verbosity = utils_test.utility_get_verbosity()
         forecast_json = ['./tests/files/forecasts/validation/probability/pred_probability_all_clear_false.json', './tests/files/forecasts/validation/probability/pred_probability_all_clear_true.json']
         forecast_objects = {self.energy_key: []}
         for jsons in forecast_json:
-            forecast = utility_load_forecast(jsons, self.energy_channel)
+            forecast = utils_test.utility_load_forecast(jsons, self.energy_channel)
             forecast_objects[self.energy_key].append(forecast)
-        self.sphinx, self.obs_thresholds, self.obs_sep_events = utility_match_sphinx(self.all_energy_channels, self.model_names, observation_objects, forecast_objects)
+        self.sphinx, self.obs_thresholds, self.obs_sep_events = utils_test.utility_match_sphinx(self.all_energy_channels, self.model_names, observation_objects, forecast_objects)
         self.profname_dict = None
         self.DoResume = False
         
@@ -2266,7 +1835,7 @@ class TestProbabilityMult(unittest.TestCase):
         for keywords in self.dataframe:
             # temp = self.sphinx['Test_model_0'][self.energy_key].prediction.short_name\
             
-            temp = attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][0],\
+            temp = utils_test.attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][0],\
                  self.energy_key, self.obs_thresholds)
             
             # specific fix for this keyword since this can have the value of "['NaT']" which is not pd.NaT which means 
@@ -2275,14 +1844,13 @@ class TestProbabilityMult(unittest.TestCase):
                 
                 temp[0] = str(datetime.strptime(str(temp[0]), '%Y-%m-%d %H:%M:%S') )
                 temp[1] = 'NaT'
-                # print(self.dataframe[keywords][0], temp)
                 self.assertEqual(self.dataframe[keywords][0], str(temp))
             elif pd.isnull(temp) and pd.isnull(self.dataframe[keywords][0]):
                 self.assertTrue(pd.isnull(self.dataframe[keywords][0]))
             else:
                 self.assertEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
 
-            temp = attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][1],\
+            temp = utils_test.attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][1],\
                  self.energy_key, self.obs_thresholds)
             
             
@@ -2291,7 +1859,6 @@ class TestProbabilityMult(unittest.TestCase):
             if keywords == 'All Threshold Crossing Times': 
                 temp[0] = str(datetime.strptime(str(temp[0]), '%Y-%m-%d %H:%M:%S') )
                 temp[1] = 'NaT'
-                # print(self.dataframe[keywords][1], temp)
                 self.assertEqual(self.dataframe[keywords][1], str(temp))
             elif pd.isnull(temp) and pd.isnull(self.dataframe[keywords][1]):
                 self.assertTrue(pd.isnull(self.dataframe[keywords][1]))
@@ -2303,13 +1870,11 @@ class TestProbabilityMult(unittest.TestCase):
     def step_2(self):
         validate.calculate_intuitive_metrics(self.dataframe, self.model_names, self.all_energy_channels, \
             self.obs_thresholds, 'All')
-        # print('Made it to step 2')
     
     def step_3(self):
-        # print('In Step 4')
         test_dict = initialize_probability_dict()
         test_dict = fill_probability_dict_multprob(test_dict, self)
-        csv_filename = './tests/output\\csv\\probability_metrics.csv'
+        csv_filename = os.path.join(config.outpath, 'csv', 'probability_metrics.csv')
         keyword_all_clear = []
         with open(csv_filename, mode = 'r') as csvfile:
             reading = csv.reader(csvfile, delimiter = ',')
@@ -2323,7 +1888,6 @@ class TestProbabilityMult(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            # print(keyword, row[j], test_dict[keyword][0])
                             self.assertEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
  
 
@@ -2347,13 +1911,13 @@ class TestProbabilityMult(unittest.TestCase):
                 step()
             except Exception as e:
                 self.fail("{} failed ({}: {})".format(step, type(e), e))
-        utility_delete_output()
+        utils_test.utility_delete_output()
 
 
 class Test_AllFields_MultipleForecasts(unittest.TestCase):
 
     def load_verbosity(self):
-        self.verbosity = utility_get_verbosity()
+        self.verbosity = utils_test.utility_get_verbosity()
     
     
     def step_1(self):
@@ -2377,37 +1941,33 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
         observation_json = ['./tests/files/observations/validation/all/all_clear_false.json', './tests/files/observations/validation/all/all_clear_true.json']
         observation_objects = {self.energy_key: []}
         for jsons in observation_json:
-            observation = utility_load_observation(jsons, self.energy_channel)
+            observation = utils_test.utility_load_observation(jsons, self.energy_channel)
             observation_objects[self.energy_key].append(observation)
         
-        self.verbosity = utility_get_verbosity()
+        self.verbosity = utils_test.utility_get_verbosity()
         forecast_json = ['./tests/files/forecasts/validation/all/pred_timeprof_all_clear_false.json', './tests/files/forecasts/validation/all/pred_timeprof_all_clear_true.json', './tests/files/forecasts/validation/all/flare_pred_timeprof_all_clear_false.json']
         forecast_objects = {self.energy_key: []}
         for jsons in forecast_json:
-            forecast = utility_load_forecast(jsons, self.energy_channel)
+            forecast = utils_test.utility_load_forecast(jsons, self.energy_channel)
             forecast_objects[self.energy_key].append(forecast)
-        self.sphinx, self.obs_thresholds, self.obs_sep_events = utility_match_sphinx(self.all_energy_channels, self.model_names, observation_objects, forecast_objects)
+        self.sphinx, self.obs_thresholds, self.obs_sep_events = utils_test.utility_match_sphinx(self.all_energy_channels, self.model_names, observation_objects, forecast_objects)
         self.profname_dict = None
         self.DoResume = False
         
         self.validation_quantity = ['all_clear', 'awt', 'duration', 'end_time', 'fluence', 'max_flux_in_pred_window', 'peak_intensity_max', 'peak_intensity_max_time', 'peak_intensity' \
             'peak_intensity_time', 'probability', 'start_time', 'threshold_crossing', 'time_profile']
-        # self.quantities_tested = ['probability']
         self.validation_type = ["All", "First", "Last", "Max", "Mean"]
 
         self.dataframe = validate.fill_sphinx_df(self.sphinx, self.model_names, self.all_energy_channels, \
             self.obs_thresholds, self.profname_dict)
        
         for keywords in self.dataframe:
-            # print('Current Keyword',  keywords)
-            # temp = self.sphinx['Test_model_0'][self.energy_key].prediction.short_name\
             
-            temp = attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][0],\
+            temp = utils_test.attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][0],\
                  self.energy_key, self.obs_thresholds)
             
             if 'SEP Fluence Spectrum' in keywords and "Units" not in keywords:
                 try:
-                    # print('This is a spectrum - or at least it should be', len(self.dataframe[keywords][0]))
                     for energies in range(len(self.dataframe[keywords][0])):
                         
                         self.assertEqual(self.dataframe[keywords][0][energies]['energy_min'], temp[energies]['energy_min'], 'Error is in keyword ' + keywords + ' energy_min')
@@ -2421,12 +1981,11 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
             else:
                 self.assertEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
 
-            temp = attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][1],\
+            temp = utils_test.attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][1],\
                  self.energy_key, self.obs_thresholds)
             
             if 'SEP Fluence Spectrum' in keywords and "Units" not in keywords:
                 try:
-                    # print('This is a spectrum - or at least it should be', len(self.dataframe[keywords][0]))
                     for energies in range(len(self.dataframe[keywords][1])):
                         self.assertEqual(self.dataframe[keywords][1][energies]['energy_min'], temp[energies]['energy_min'], 'Error is in keyword ' + keywords + ' energy_min')
                         self.assertEqual(self.dataframe[keywords][1][energies]['energy_max'], temp[energies]['energy_max'], 'Error is in keyword ' + keywords + ' energy_max')
@@ -2437,7 +1996,6 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
             elif pd.isna(temp) and pd.isna(self.dataframe[keywords][1]):
                 self.assertTrue(pd.isna(self.dataframe[keywords][1]))
             elif keywords == 'All Threshold Crossing Times':
-                print(self.dataframe[keywords][1])
                 self.assertEqual(self.dataframe[keywords][1], str(['NaT']))
             else:        
                 self.assertEqual(self.dataframe[keywords][1], temp, 'Error is in keyword ' + keywords)
@@ -2447,7 +2005,6 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
                 self.obs_thresholds, type)
 
     def step_2(self):
-        # print('Test for DoResume feature - this is false right now though so moving on after a quick assertFalse')
         self.assertFalse(self.DoResume)
     
     def step_3(self):
@@ -2456,8 +2013,8 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
         """
         validate.write_df(self.dataframe, "SPHINX_dataframe")
         
-        self.assertTrue(os.path.isfile('.\\tests\\output\\csv\\SPHINX_dataframe.csv'), msg = 'SPHINX_dataframe.csv does not exist, check the file is output correctly')
-        self.assertTrue(os.path.isfile('.\\tests\\output\\pkl\\SPHINX_dataframe.pkl'), msg = 'SPHINX_dataframe.pkl does not exist, check the file is output correctly')
+        self.assertTrue(os.path.isfile('./tests/output/csv/SPHINX_dataframe.csv'), msg = 'SPHINX_dataframe.csv does not exist, check the file is output correctly')
+        self.assertTrue(os.path.isfile('./tests/output/pkl/SPHINX_dataframe.pkl'), msg = 'SPHINX_dataframe.pkl does not exist, check the file is output correctly')
 
         
 
@@ -2465,7 +2022,7 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
         
         test_dict = initialize_probability_dict()
         test_dict = fill_probability_dict_all(test_dict, self)
-        csv_filename = './tests/output\\csv\\probability_metrics.csv'
+        csv_filename = os.path.join(config.outpath, 'csv', 'probability_metrics.csv')
         keyword_all_clear = []
         with open(csv_filename, mode = 'r') as csvfile:
             reading = csv.reader(csvfile, delimiter = ',')
@@ -2479,7 +2036,6 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            # print(keyword, row[j], test_dict[keyword][0])
                             self.assertEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
 
 
@@ -2487,7 +2043,7 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
         
         test_dict = initialize_flux_dict()
         test_dict = fill_peak_intensity_max_metrics_dict_all(test_dict, self)
-        csv_filename = './tests/output\\csv\\peak_intensity_max_metrics.csv'
+        csv_filename = os.path.join(config.outpath, 'csv', 'peak_intensity_max_metrics.csv')
         keyword_all_clear = []
         with open(csv_filename, mode = 'r') as csvfile:
             reading = csv.reader(csvfile, delimiter = ',')
@@ -2501,14 +2057,13 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            # print(keyword, row[j], test_dict[keyword][0])
                             self.assertEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
 
     def step_6_time_prof(self):
        
         test_dict = initialize_flux_dict()
         test_dict = fill_time_profile_dict_all(test_dict, self)
-        csv_filename = './tests/output\\csv\\time_profile_metrics.csv'
+        csv_filename = os.path.join(config.outpath, 'csv', 'time_profile_metrics.csv')
         keyword_all_clear = []
         with open(csv_filename, mode = 'r') as csvfile:
             reading = csv.reader(csvfile, delimiter = ',')
@@ -2522,14 +2077,13 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            # print(keyword, row[j], test_dict[keyword][0])
                             self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
 
     def step_7_all_clear(self):
        
         test_dict = initialize_all_clear_dict()
         test_dict = fill_all_clear_dict_all(test_dict, self)
-        csv_filename = './tests/output\\csv\\all_clear_metrics.csv'
+        csv_filename = os.path.join(config.outpath, 'csv', 'all_clear_metrics.csv')
         keyword_all_clear = []
         with open(csv_filename, mode = 'r') as csvfile:
             reading = csv.reader(csvfile, delimiter = ',')
@@ -2543,7 +2097,6 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            # print(keyword, row[j], test_dict[keyword][0])
                             self.assertEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
 
     
@@ -2551,7 +2104,7 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
         
         test_dict = initialize_awt_dict()
         test_dict = fill_awt_dict_all(test_dict, self)
-        csv_filename = './tests/output\\csv\\awt_metrics.csv'
+        csv_filename = os.path.join(config.outpath, 'csv', 'awt_metrics.csv')
         keyword_all_clear = []
         with open(csv_filename, mode = 'r') as csvfile:
             reading = csv.reader(csvfile, delimiter = ',')
@@ -2565,14 +2118,13 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            # print(keyword, row[j], test_dict[keyword][0])
                             self.assertEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
 
     def step_9_duration(self):
         
         test_dict = initialize_time_dict()
         test_dict = fill_duration_metrics_dict_all(test_dict, self)
-        csv_filename = './tests/output\\csv\\duration_metrics.csv'
+        csv_filename = os.path.join(config.outpath, 'csv', 'duration_metrics.csv')
         keyword_all_clear = []
         with open(csv_filename, mode = 'r') as csvfile:
             reading = csv.reader(csvfile, delimiter = ',')
@@ -2586,14 +2138,13 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            # print(keyword, row[j], test_dict[keyword][0])
                             self.assertEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
     
     def step_10_end_time(self):
         
         test_dict = initialize_time_dict()
         test_dict = fill_end_time_metrics_dict_all(test_dict, self)
-        csv_filename = './tests/output\\csv\\end_time_metrics.csv'
+        csv_filename = os.path.join(config.outpath, 'csv', 'end_time_metrics.csv')
         keyword_all_clear = []
         with open(csv_filename, mode = 'r') as csvfile:
             reading = csv.reader(csvfile, delimiter = ',')
@@ -2607,14 +2158,13 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            # print(keyword, row[j], test_dict[keyword][0])
                             self.assertEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
 
     def step_11_last_data_to_issue_time(self):
         
         test_dict = initialize_time_dict()
         test_dict = fill_last_data_to_issue_time_metrics_dict_all(test_dict, self)
-        csv_filename = './tests/output\\csv\\last_data_to_issue_time_metrics.csv'
+        csv_filename = os.path.join(config.outpath, 'csv', 'last_data_to_issue_time_metrics.csv')
         keyword_all_clear = []
         with open(csv_filename, mode = 'r') as csvfile:
             reading = csv.reader(csvfile, delimiter = ',')
@@ -2628,14 +2178,13 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            # print(keyword, row[j], test_dict[keyword][0])
                             self.assertEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
 
     def step_12_max_flux_pred_win(self):
         
         test_dict = initialize_flux_dict()
         test_dict = fill_max_flux_in_pred_win_metrics_dict_all(test_dict, self)
-        csv_filename = './tests/output\\csv\\max_flux_in_pred_win_metrics.csv'
+        csv_filename = os.path.join(config.outpath, 'csv', 'max_flux_in_pred_win_metrics.csv')
         keyword_all_clear = []
         with open(csv_filename, mode = 'r') as csvfile:
             reading = csv.reader(csvfile, delimiter = ',')
@@ -2649,14 +2198,13 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            # print(keyword, row[j], test_dict[keyword][0])
                             self.assertEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)    
 
     def step_13_peak_int_max_time(self):
         
         test_dict = initialize_time_dict()
         test_dict = fill_peak_intensity_max_time_metrics_dict_all(test_dict, self)
-        csv_filename = './tests/output\\csv\\peak_intensity_max_time_metrics.csv'
+        csv_filename = os.path.join(config.outpath, 'csv', 'peak_intensity_max_time_metrics.csv')
         keyword_all_clear = []
         with open(csv_filename, mode = 'r') as csvfile:
             reading = csv.reader(csvfile, delimiter = ',')
@@ -2670,14 +2218,13 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            # print(keyword, row[j], test_dict[keyword][0])
                             self.assertEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)    
     
     def step_14_peak_int(self):
         
         test_dict = initialize_flux_dict()
         test_dict = fill_peak_intensity_metrics_dict_all(test_dict, self)
-        csv_filename = './tests/output\\csv\\peak_intensity_metrics.csv'
+        csv_filename = os.path.join(config.outpath, 'csv', 'peak_intensity_metrics.csv')
         keyword_all_clear = []
         with open(csv_filename, mode = 'r') as csvfile:
             reading = csv.reader(csvfile, delimiter = ',')
@@ -2691,14 +2238,13 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            # print(keyword, row[j], test_dict[keyword][0])
                             self.assertEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)    
 
     def step_15_peak_int_time(self):
         
         test_dict = initialize_time_dict()
         test_dict = fill_peak_intensity_time_dict_all(test_dict, self)
-        csv_filename = './tests/output\\csv\\peak_intensity_time_metrics.csv'
+        csv_filename = os.path.join(config.outpath, 'csv', 'peak_intensity_time_metrics.csv')
         keyword_all_clear = []
         with open(csv_filename, mode = 'r') as csvfile:
             reading = csv.reader(csvfile, delimiter = ',')
@@ -2712,14 +2258,13 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            # print(keyword, row[j], test_dict[keyword][0])
                             self.assertEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)    
 
     def step_16_start_time(self):
         
         test_dict = initialize_time_dict()
         test_dict = fill_start_time_dict_all(test_dict, self)
-        csv_filename = './tests/output\\csv\\start_time_metrics.csv'
+        csv_filename = os.path.join(config.outpath, 'csv', 'start_time_metrics.csv')
         keyword_all_clear = []
         with open(csv_filename, mode = 'r') as csvfile:
             reading = csv.reader(csvfile, delimiter = ',')
@@ -2733,14 +2278,13 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            # print(keyword, row[j], test_dict[keyword][0])
                             self.assertEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)    
     
     def step_17_thresh_crossing_time(self):
         
         test_dict = initialize_time_dict()
         test_dict = fill_threshold_crossing_time_dict_all(test_dict, self)
-        csv_filename = './tests/output\\csv\\threshold_crossing_metrics.csv'
+        csv_filename = os.path.join(config.outpath, 'csv', 'threshold_crossing_metrics.csv')
         keyword_all_clear = []
         with open(csv_filename, mode = 'r') as csvfile:
             reading = csv.reader(csvfile, delimiter = ',')
@@ -2754,14 +2298,13 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            # print(keyword, row[j], test_dict[keyword][0])
                             self.assertEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)    
     
     def step_18_fluence(self):
         
         test_dict = initialize_flux_dict()
         test_dict = fill_fluence_dict_all(test_dict, self)
-        csv_filename = './tests/output\\csv\\fluence_metrics.csv'
+        csv_filename = os.path.join(config.outpath, 'csv', 'fluence_metrics.csv')
         keyword_all_clear = []
         with open(csv_filename, mode = 'r') as csvfile:
             reading = csv.reader(csvfile, delimiter = ',')
@@ -2775,7 +2318,6 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            # print(keyword, row[j], test_dict[keyword][0])
                             self.assertEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)    
 
     def utility_print_docstring(self, function):
@@ -2798,6 +2340,6 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
                 step()
             except Exception as e:
                 self.fail("{} failed ({}: {})".format(step, type(e), e))
-        utility_delete_output()
+        utils_test.utility_delete_output()
 
 
