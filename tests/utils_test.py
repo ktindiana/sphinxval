@@ -250,9 +250,19 @@ def attributes_of_sphinx_obj(keyword, sphinx_obj, energy_channel_key, threshold_
     Function that takes the keyword from the SPHINX dataframe and matches the keyword
     to the matched sphinx object to compare/assertEqual to - ensures that the 
     dataframe is being correctly built
+
+    Some of these had similar structure/location within the matched SPHINX object so they
+    are collapsed into dictionaries of Keyword to name of the object in the matched SPHINX
+    object. These dictionaries are titled based on the depth into the matched sphinx object
+    (i.e. depth_prediction means that those keywords are in the sphinx_obj.prediction 
+    object). Additional information about how to extract the proper data from the sphinx
+    object is also in the dictionary title, like if the data is a string, or if the
+    threshold is needed to extract the data. 
+    Anything that wasn't easy to extract into the dictionaries are at the end in 
+    the form of an if/elif/else structure.
     """
 
-
+    logger.debug(str(keyword))
     depth_prediction = {
         'Model': 'short_name',
         'Forecast Source' : 'source',
@@ -261,12 +271,21 @@ def attributes_of_sphinx_obj(keyword, sphinx_obj, energy_channel_key, threshold_
         'Prediction Window Start': 'prediction_window_start',
         'Prediction Window End': 'prediction_window_end'
     }
+    if keyword in depth_prediction:
+        return getattr(sphinx_obj.prediction, depth_prediction[keyword], None)
+
     depth_prediction_string = {
         'All Thresholds in Prediction': 'all_thresholds'
     }
+    if keyword in depth_prediction_string:
+        return str(getattr(sphinx_obj.prediction, depth_prediction_string[keyword], None))
+
     depth_top = {
         'Mismatch Allowed': 'mismatch'
     }
+    if keyword in depth_top:
+        return getattr(sphinx_obj, depth_top[keyword], None)
+
     depth_cmes = {
         'Number of CMEs': 'cmes',
         'CME Start Time': 'start_time',
@@ -278,6 +297,12 @@ def attributes_of_sphinx_obj(keyword, sphinx_obj, energy_channel_key, threshold_
         'CME PA': 'pa',
         'CME Catalog': 'catalog'
     }
+    if keyword in depth_cmes:
+        if keyword == 'Number of CMEs':
+            return len(getattr(sphinx_obj.prediction, depth_cmes[keyword], None))
+        else:
+            return getattr(sphinx_obj.prediction.cmes[-1], depth_cmes[keyword], None)
+
     depth_flare = {
         'Number of Flares': 'flares',
         'Flare Start Time': 'start_time',
@@ -290,6 +315,13 @@ def attributes_of_sphinx_obj(keyword, sphinx_obj, energy_channel_key, threshold_
         'Flare Integrated Intensity': 'integrated_intensity',
         'Flare NOAA AR': 'noaa_region'
     }
+    if keyword in depth_flare:
+        if keyword == 'Number of Flares':
+            return len(getattr(sphinx_obj.prediction, depth_flare[keyword], None))
+        else:
+            logger.debug(depth_flare[keyword])
+            return getattr(sphinx_obj.prediction.flares, depth_flare[keyword], None)
+
     depth_top_string = {
         'Last Eruption Time': 'last_eruption_time',
         'Last Trigger Time': 'last_trigger_time',
@@ -302,12 +334,17 @@ def attributes_of_sphinx_obj(keyword, sphinx_obj, energy_channel_key, threshold_
         'Triggers before Peak Intensity Max': 'triggers_before_peak_intensity_max', 
         'Inputs before Peak Intensity Max': 'inputs_before_peak_intensity_max', 
         'Time Difference between Inputs and Peak Intensity Max': 'time_difference_inputs_peak_intensity_max'
-        
     }
+    if keyword in depth_top_string:
+        return str(getattr(sphinx_obj, depth_top_string[keyword], None))
+
     depth_top_threshold = {
         'Observed SEP Start Time': 'observed_start_time',
         'Observed SEP End Time': 'observed_end_time'
     }
+    if keyword in depth_top_threshold:
+        return getattr(sphinx_obj, depth_top_threshold[keyword], None)[threshold_key[energy_channel_key][0]]
+
     depth_top_prediction_threshold = {
         'Predicted SEP Probability': 'return_predicted_probability',
         'Probability Match Status': 'return_predicted_probability',
@@ -321,6 +358,12 @@ def attributes_of_sphinx_obj(keyword, sphinx_obj, energy_channel_key, threshold_
         'Duration Match Status': 'return_predicted_end_time',
         'Time Profile Match Status': 'return_predicted_end_time'
     }
+    if keyword in depth_top_prediction_threshold:
+        if 'Match Status' in keyword:
+            return getattr(sphinx_obj, depth_top_prediction_threshold[keyword], None)(threshold_key[energy_channel_key][0])[1]
+        else:
+            return getattr(sphinx_obj, depth_top_prediction_threshold[keyword], None)(threshold_key[energy_channel_key][0])[0]
+
     depth_top_threshold_strings ={
         'Threshold Crossed in Prediction Window': 'threshold_crossed_in_pred_win',
         'Eruption before Threshold Crossed': 'eruptions_before_threshold_crossing',
@@ -335,37 +378,13 @@ def attributes_of_sphinx_obj(keyword, sphinx_obj, energy_channel_key, threshold_
         'Ongoing SEP Event': 'observed_ongoing_events',
         'Eruption in Range': 'is_eruption_in_range'
     }
-    logger.debug(str(keyword))
-    if keyword in depth_prediction:
-        return getattr(sphinx_obj.prediction, depth_prediction[keyword], None)
-    elif keyword in depth_prediction_string:
-        return str(getattr(sphinx_obj.prediction, depth_prediction_string[keyword], None))
-    elif keyword in depth_top:
-        
-        return getattr(sphinx_obj, depth_top[keyword], None)
-    elif keyword in depth_cmes:
-        if keyword == 'Number of CMEs':
-            return len(getattr(sphinx_obj.prediction, depth_cmes[keyword], None))
-        else:
-            return getattr(sphinx_obj.prediction.cmes[-1], depth_cmes[keyword], None)
-    elif keyword in depth_flare:
-        if keyword == 'Number of Flares':
-            return len(getattr(sphinx_obj.prediction, depth_flare[keyword], None))
-        else:
-            logger.debug(depth_flare[keyword])
-            return getattr(sphinx_obj.prediction.flares, depth_flare[keyword], None)
-    elif keyword in depth_top_string:
-        return str(getattr(sphinx_obj, depth_top_string[keyword], None))
-    elif keyword in depth_top_threshold:
-        return getattr(sphinx_obj, depth_top_threshold[keyword], None)[threshold_key[energy_channel_key][0]]
-    elif keyword in depth_top_prediction_threshold:
-        if 'Match Status' in keyword:
-            return getattr(sphinx_obj, depth_top_prediction_threshold[keyword], None)(threshold_key[energy_channel_key][0])[1]
-        else:
-            return getattr(sphinx_obj, depth_top_prediction_threshold[keyword], None)(threshold_key[energy_channel_key][0])[0]
-    elif keyword in depth_top_threshold_strings:
+    if keyword in depth_top_threshold_strings:
         return str(getattr(sphinx_obj, depth_top_threshold_strings[keyword], None)[threshold_key[energy_channel_key][0]])
-    elif keyword == "Energy Channel Key":
+    
+
+        
+    
+    if keyword == "Energy Channel Key":
        return energy_channel_key
     elif keyword == 'Threshold Key':
         return threshold_key[energy_channel_key][0]
@@ -438,34 +457,30 @@ def attributes_of_sphinx_obj(keyword, sphinx_obj, energy_channel_key, threshold_
         return getattr(sphinx_obj, 'return_predicted_all_clear', None)()[0]
     elif keyword == "All Clear Match Status":
         return getattr(sphinx_obj, 'return_predicted_all_clear', None)()[1]
-    elif keyword == "Predicted SEP Fluence":
-        return getattr(sphinx_obj, 'return_predicted_fluence', None)(threshold_key[energy_channel_key][0])[0]
-    elif keyword == "Predicted SEP Fluence Units":
-        return getattr(sphinx_obj, 'return_predicted_fluence', None)(threshold_key[energy_channel_key][0])[1]
-    elif keyword == "Fluence Match Status":
-        return getattr(sphinx_obj, 'return_predicted_fluence', None)(threshold_key[energy_channel_key][0])[2]
-    elif keyword == "Predicted SEP Fluence Spectrum":
-        return getattr(sphinx_obj, 'return_predicted_fluence_spectrum', None)(threshold_key[energy_channel_key][0])[0]
-    elif keyword == "Predicted SEP Fluence Spectrum Units":
-        return getattr(sphinx_obj, 'return_predicted_fluence_spectrum', None)(threshold_key[energy_channel_key][0])[1]
-    elif keyword == "Fluence Spectrum Match Status":
-        return getattr(sphinx_obj, 'return_predicted_fluence_spectrum', None)(threshold_key[energy_channel_key][0])[2]
-    elif keyword == "Predicted SEP Peak Intensity (Onset Peak)":
-        return getattr(sphinx_obj, 'return_predicted_peak_intensity', None)()[0]
-    elif keyword == "Predicted SEP Peak Intensity (Onset Peak) Units":
-        return getattr(sphinx_obj, 'return_predicted_peak_intensity', None)()[1]
-    elif keyword == "Predicted SEP Peak Intensity (Onset Peak) Time":
-        return getattr(sphinx_obj, 'return_predicted_peak_intensity', None)()[2]
-    elif keyword == "Peak Intensity Match Status":
-        return getattr(sphinx_obj, 'return_predicted_peak_intensity', None)()[3]
-    elif keyword == "Predicted SEP Peak Intensity Max (Max Flux)":
-        return getattr(sphinx_obj, 'return_predicted_peak_intensity_max', None)()[0]
-    elif keyword == "Predicted SEP Peak Intensity Max (Max Flux) Units":
-        return getattr(sphinx_obj, 'return_predicted_peak_intensity_max', None)()[1]
-    elif keyword == "Predicted SEP Peak Intensity Max (Max Flux) Time":
-        return getattr(sphinx_obj, 'return_predicted_peak_intensity_max', None)()[2]
-    elif keyword == "Peak Intensity Max Match Status":
-        return getattr(sphinx_obj, 'return_predicted_peak_intensity_max', None)()[3]
+    elif 'Fluence' in keyword:
+        if 'Spectrum' in keyword:
+            temp = 'return_predicted_fluence_spectrum'
+        else:
+            temp = 'return_predicted_fluence'
+        if 'Units' in keyword:
+            return getattr(sphinx_obj, temp, None)(threshold_key[energy_channel_key][0])[1]
+        elif 'Match Status' in keyword:
+            return getattr(sphinx_obj, temp, None)(threshold_key[energy_channel_key][0])[2]
+        else:
+            return getattr(sphinx_obj, temp, None)(threshold_key[energy_channel_key][0])[0]
+    elif 'Peak Intensity' in keyword:
+        if 'Onset Peak' in keyword:
+            temp = 'return_predicted_peak_intensity'
+        else:
+            temp = 'return_predicted_peak_intensity_max'
+        if 'Units' in keyword:
+            return getattr(sphinx_obj, temp, None)()[1]
+        elif 'Time' in keyword:
+            return getattr(sphinx_obj, temp, None)()[2]
+        elif 'Match Status' in keyword:
+            return getattr(sphinx_obj, temp, None)()[3]    
+        else:
+            return getattr(sphinx_obj, temp, None)()[0]
     elif keyword == "Predicted Point Intensity":
         return getattr(sphinx_obj, 'return_predicted_point_intensity', None)()[0]
     elif keyword == "Predicted Point Intensity Units":

@@ -1625,6 +1625,7 @@ class TestPeakIntensityMaxMult(unittest.TestCase):
     def step_2(self):
         validate.calculate_intuitive_metrics(self.dataframe, self.model_names, self.all_energy_channels, \
             self.obs_thresholds, 'All')
+        validate.write_df(self.dataframe, "SPHINX_dataframe")
         
     
     def step_3(self):
