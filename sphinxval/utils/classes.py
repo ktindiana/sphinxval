@@ -193,6 +193,21 @@ class Particle_Intensity:
     
         return
 
+class HumanEvaluation:
+    def __init__(self, human_evaluation_id, last_data_time):
+        """
+        Inputs:
+            :human_evaluation_id: (string) unique identifier for human evaluation entry
+            :last_data_time: (datetime)
+
+        Output: A HumanEvaluation object
+        """
+        self.label = 'human_evaluation'
+        self.id = human_evaluation_id
+        self.last_data_time = last_data_time
+
+        return
+
 
 ##INPUTS
 class Magnetic_Connectivity:
@@ -277,10 +292,7 @@ class Coronagraph:
         self.products = products
     
         return
-
-
-
-
+        
 #------ FORCAST OR OBSERVATION VALUES -----
 ##Classes for all the types of values in the Observation and Forecasts
 class All_Clear:
@@ -501,6 +513,7 @@ class Forecast():
         self.magnetic_connectivity = []
         self.magnetograms = []
         self.coronagraphs = []
+        self.human_evaluations = []
         
         
         #Forecasts
@@ -591,6 +604,13 @@ class Forecast():
                 pi = Particle_Intensity("id", observatory, instrument,
                     last_data_time, ongoing_events)
                 self.particle_intensities.append(pi)
+                continue
+
+            if 'human_evaluation' in trig:
+                last_data_time = vjson.dict_to_human_evaluation(trig['human_evaluation'])
+                human_evaluation = HumanEvaluation("id", last_data_time)
+                self.human_evaluations.append(human_evaluation)
+                continue
  
         return is_good
  
@@ -629,6 +649,7 @@ class Forecast():
                 corona = Coronagraph("id", observatory, instrument,
                         products)
                 self.coronagraphs.append(corona)
+                continue
 
         return is_good
 
@@ -645,7 +666,7 @@ class Forecast():
         
         self.short_name = full_json['sep_forecast_submission']['model']['short_name']
         issue_time = full_json['sep_forecast_submission']['issue_time']
-        if isinstance(issue_time,str):
+        if isinstance(issue_time, str):
             issue_time = vjson.zulu_to_time(issue_time)
         self.issue_time = issue_time
         
@@ -975,6 +996,15 @@ class Forecast():
                     else:
                         last_pi_time = max(last_pi_time,check_time)
 
+        last_human_time = pd.NaT
+        if self.human_evaluations:
+            for human_evaluation in self.human_evaluations:
+                check_time = human_evaluation.last_data_time
+                if not pd.isnull(check_time):
+                    if pd.isnull(last_human_time):
+                        last_human_time = check_time
+                    else:
+                        last_human_time = max(last_human_time, check_time)
 
         #Take the latest of all the eruptions times to determine
         #association with SEP events
@@ -1002,7 +1032,13 @@ class Forecast():
                 last_time = last_pi_time
             else:
                 last_time = max(last_time,last_pi_time)
-                
+        
+        if not pd.isnull(last_human_time):
+            if pd.isnull(last_time):
+                last_time = last_human_time
+            else:
+                last_time = max(last_time, last_human_time)               
+
         return last_eruption_time, last_time
 
 
