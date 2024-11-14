@@ -1168,6 +1168,10 @@ class Forecast():
                   "trigger (" + str(last_trigger_time) + ") or input time ("
                   + str(last_input_time) + ").")
 
+        if self.prediction_window_start > self.prediction_window_end:
+            self.valid = False
+            logger.warning("Invalid forecast. Prediction window start time (" + self.prediction_window_start.strftime('%Y-%m-%dT%H:%M:%SZ') + ") is AFTER prediction window end time (" + self.prediction_window_end.strftime('%Y-%m-%dT%H:%M:%SZ') + ").")
+
         return self.valid
 
 
