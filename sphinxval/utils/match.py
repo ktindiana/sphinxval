@@ -2234,7 +2234,7 @@ def setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_o
 
             name = fcast.short_name
             if 'UMASEP' in name and cfg.shortname_grouping:
-                name = vjson.umasep_shortname_grouper(name)
+                name = objh.umasep_shortname_grouper(name)
 
 
             logger.debug("\n")
