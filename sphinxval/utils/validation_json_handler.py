@@ -321,9 +321,9 @@ def load_objects_from_json(data_list, model_list):
         short_name = json["sep_forecast_submission"]["model"]["short_name"]
 
         #put UMASEP shortname 'fix' here
-        logger.info('Getting to the shortname group function ' + str(short_name) + ' ' + str(cfg.shortname_grouping))
+        
         if 'UMASEP' in short_name:
-            if cfg.shortname_grouping == True:
+            if cfg.shortname_grouping:
                 short_name = objh.umasep_shortname_grouper(short_name)
         logger.info('out of rename function ' + str(short_name))
         for channel in all_energy_channels:
