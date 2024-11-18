@@ -58,6 +58,11 @@ mm_model = "UNSPELL" #Model short name contains this string
 mm_pred_energy_channel = {"min": 5, "max": -1, "units": e_units}
 mm_pred_threshold = {"threshold": 5, "threshold_units": t_units}
 
+######UMASEP SHORTNAME#####
+# Set to true if you want to group UMASEP's submodules to share
+# the same shortname (example: 'UMASEP-10 WCP' -> 'UMASEP-10')
+shortname_grouping = True
+
 ######SET OBSERVATION INFO#######
 #mm_obs_energy_channel = {"min": 25, "max": 40.9, "units": e_units}
 #mm_obs_threshold = {"threshold": 0.1, "threshold_units": t_units}

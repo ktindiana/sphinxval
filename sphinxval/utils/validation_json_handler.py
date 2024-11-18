@@ -114,6 +114,25 @@ def zulu_to_time(zt):
         dt = datetime.datetime.strptime(stdt, '%Y-%m-%d %H:%M:%S')
     return dt
 
+def umasep_shortname_grouper(shortname):
+    """ UMASEP has different shortnames for which submodules are used 
+    this function shortens them to just whichever energy the prediction is for
+    """
+    if '100' in shortname:
+        logger.info('This loop should be hit ' + str(shortname))
+        shortname = 'UMASEP-100'
+        logger.info('post rename ' + str(shortname))
+    elif '500' in shortname:
+        shortname = 'UMASEP-500'
+    elif '30' in shortname:
+        shortname = 'UMASEP-30'
+    elif '10' in shortname and not '100' in shortname:
+        logger.info('This loop should also be hit 3 times ' + str(shortname))
+        shortname = 'UMASEP-10'
+        logger.info('post rename ' + str(shortname))
+    elif '50' in shortname and not '500' in shortname:
+        shortname = 'UMASEP-50'
+    return shortname
 
 
 def write_json(template, filename):
@@ -320,6 +339,13 @@ def load_objects_from_json(data_list, model_list):
     #Load json objects
     for json in model_jsons:
         short_name = json["sep_forecast_submission"]["model"]["short_name"]
+
+        #put UMASEP shortname 'fix' here
+        logger.info('Getting to the shortname group function ' + str(short_name) + ' ' + str(cfg.shortname_grouping))
+        if 'UMASEP' in short_name:
+            if cfg.shortname_grouping == True:
+                short_name = umasep_shortname_grouper(short_name)
+        logger.info('out of rename function ' + str(short_name))
         for channel in all_energy_channels:
             key = objh.energy_channel_to_key(channel)
             obj, is_good = forecast_object_from_json(json, channel)

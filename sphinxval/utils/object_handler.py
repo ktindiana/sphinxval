@@ -38,6 +38,8 @@ def build_model_list(all_model):
         models = all_model[key] #array
         for fcast in models:
             name = fcast.short_name
+            if 'UMASEP' in name:
+                name = umasep_shortname_grouper(name)
             if name == "" or name == None: continue
             if name not in model_names:
                 model_names.append(name)
@@ -270,3 +272,24 @@ def get_threshold_crossing_time(obj, threshold):
                 obj.threshold_crossings[i].crossing_time
     
     return threshold_crossing_time
+
+
+def umasep_shortname_grouper(shortname):
+    """ UMASEP has different shortnames for which submodules are used 
+    this function shortens them to just whichever energy the prediction is for
+    """
+    if '100' in shortname:
+        logger.info('This loop should be hit ' + str(shortname))
+        shortname = 'UMASEP-100'
+        logger.info('post rename ' + str(shortname))
+    elif '500' in shortname:
+        shortname = 'UMASEP-500'
+    elif '30' in shortname:
+        shortname = 'UMASEP-30'
+    elif '10' in shortname and not '100' in shortname:
+        logger.info('This loop should also be hit 3 times ' + str(shortname))
+        shortname = 'UMASEP-10'
+        logger.info('post rename ' + str(shortname))
+    elif '50' in shortname and not '500' in shortname:
+        shortname = 'UMASEP-50'
+    return shortname

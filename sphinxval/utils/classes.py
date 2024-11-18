@@ -644,6 +644,8 @@ class Forecast():
         if not is_good: return is_good
         
         self.short_name = full_json['sep_forecast_submission']['model']['short_name']
+        if cfg.shortname_grouping and 'UMASEP' in self.short_name:
+            self.short_name = vjson.umasep_shortname_grouper(self.short_name)
         issue_time = full_json['sep_forecast_submission']['issue_time']
         if isinstance(issue_time,str):
             issue_time = vjson.zulu_to_time(issue_time)

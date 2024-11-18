@@ -19,6 +19,8 @@ validation_reports/*
 htmlcov/*
 logs/*
 
+venv/*
+
 bin/sepval_post_analysis.py
 sphinxval/utils/sepval_post_analysis.py
 

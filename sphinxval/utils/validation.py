@@ -1375,8 +1375,11 @@ def all_clear_intuitive_metrics(df, dict, model, energy_key, thresh_key,
         event.
         
     """
+    logger.info('All Clear Intuitive Metrics Function - definitely should be in here ' + str(model))
     val_type = ["", "All"]
+    logger.info(validation_type)
     if validation_type not in val_type:
+        logger.info('should hit this for first/last/mean/max')
         return
     
     #Select rows to calculate metrics
