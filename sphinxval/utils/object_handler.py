@@ -18,7 +18,7 @@ __email__ = "kathryn.whitman@nasa.gov"
 #Create logger
 logger = logging.getLogger(__name__)
 
-def build_model_list(all_model):
+def build_model_list(all_model, shortname_grouping_boolean):
     """ Identify all of the models represented in the list from the entry in
         ['sep_forecast_submission']['model']['short_name']
         
@@ -38,7 +38,7 @@ def build_model_list(all_model):
         models = all_model[key] #array
         for fcast in models:
             name = fcast.short_name
-            if 'UMASEP' in name:
+            if 'UMASEP' in name and shortname_grouping_boolean:
                 name = umasep_shortname_grouper(name)
             if name == "" or name == None: continue
             if name not in model_names:

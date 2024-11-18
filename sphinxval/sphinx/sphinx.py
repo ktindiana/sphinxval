@@ -88,7 +88,7 @@ def validate(data_list, model_list, top=None, Resume=None):
         logger.info("Generated dictionary of all txt files in " + top + " to store the locations of time profiles.")
 
     #Identify the unique models represented in the forecasts
-    model_names = objh.build_model_list(model_objs)
+    model_names = objh.build_model_list(model_objs, cfg.shortname_grouping)
     logger.info("Identified unique model names.")
     
     #### RESUME ####

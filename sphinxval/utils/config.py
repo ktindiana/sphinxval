@@ -61,7 +61,7 @@ mm_pred_threshold = {"threshold": 5, "threshold_units": t_units}
 ######UMASEP SHORTNAME#####
 # Set to true if you want to group UMASEP's submodules to share
 # the same shortname (example: 'UMASEP-10 WCP' -> 'UMASEP-10')
-shortname_grouping = True
+shortname_grouping = False
 
 ######SET OBSERVATION INFO#######
 #mm_obs_energy_channel = {"min": 25, "max": 40.9, "units": e_units}
