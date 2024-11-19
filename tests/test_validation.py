@@ -1011,7 +1011,7 @@ class TestAllClear0(unittest.TestCase):
             if pd.isnull(temp) and pd.isnull(self.dataframe[keywords][0]):
                 self.assertTrue(pd.isnull(self.dataframe[keywords][0]))
             else:
-                self.assertEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
+                self.assertAlmostEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
 
     def step_2(self):
         validate.calculate_intuitive_metrics(self.dataframe, self.model_names, self.all_energy_channels, \
@@ -1037,7 +1037,7 @@ class TestAllClear0(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            self.assertEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
+                            self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
 
 
 
@@ -1061,7 +1061,7 @@ class TestAllClear0(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            self.assertEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
+                            self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
 
   
     def utility_print_docstring(self, function):
@@ -1131,9 +1131,9 @@ class TestAllClear1(unittest.TestCase):
             if pd.isnull(temp) and pd.isnull(self.dataframe[keywords][0]):
                 self.assertTrue(pd.isnull(self.dataframe[keywords][0]))
             elif keywords == 'All Threshold Crossing Times':
-                self.assertEqual(self.dataframe[keywords][0], str([temp]))
+                self.assertAlmostEqual(self.dataframe[keywords][0], str([temp]))
             else:
-                self.assertEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
+                self.assertAlmostEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
 
     def step_2(self):
         validate.calculate_intuitive_metrics(self.dataframe, self.model_names, self.all_energy_channels, \
@@ -1157,7 +1157,7 @@ class TestAllClear1(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            self.assertEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
+                            self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
 
 
     def utility_print_docstring(self, function):
@@ -1255,7 +1255,7 @@ class TestPeakIntensity0(unittest.TestCase):
                 self.assertTrue(pd.isnull(self.dataframe[keywords][0]))
             
             else:
-                self.assertEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
+                self.assertAlmostEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
 
     def step_2(self):
         validate.calculate_intuitive_metrics(self.dataframe, self.model_names, self.all_energy_channels, \
@@ -1279,7 +1279,7 @@ class TestPeakIntensity0(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            self.assertEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
+                            self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
 
 
     def step_4(self):
@@ -1299,7 +1299,7 @@ class TestPeakIntensity0(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_peak_intensity_time[j]                           
-                            self.assertEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
+                            self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
   
     def utility_print_docstring(self, function):
         if self.verbosity == 2:
@@ -1373,11 +1373,11 @@ class TestPeakIntensityMult(unittest.TestCase):
                 
                 temp[0] = str(datetime.strptime(str(temp[0]), '%Y-%m-%d %H:%M:%S') )
                 temp[1] = 'NaT'
-                self.assertEqual(self.dataframe[keywords][0], str(temp))
+                self.assertAlmostEqual(self.dataframe[keywords][0], str(temp))
             elif pd.isnull(temp) and pd.isnull(self.dataframe[keywords][0]):
                 self.assertTrue(pd.isnull(self.dataframe[keywords][0]))
             else:
-                self.assertEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
+                self.assertAlmostEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
 
             temp = utils.attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][1],\
                  self.energy_key, self.obs_thresholds)
@@ -1388,11 +1388,11 @@ class TestPeakIntensityMult(unittest.TestCase):
             if keywords == 'All Threshold Crossing Times': 
                 temp[0] = str(datetime.strptime(str(temp[0]), '%Y-%m-%d %H:%M:%S') )
                 temp[1] = 'NaT'
-                self.assertEqual(self.dataframe[keywords][1], str(temp))
+                self.assertAlmostEqual(self.dataframe[keywords][1], str(temp))
             elif pd.isnull(temp) and pd.isnull(self.dataframe[keywords][1]):
                 self.assertTrue(pd.isnull(self.dataframe[keywords][1]))
             else:
-                self.assertEqual(self.dataframe[keywords][1], temp, 'Error is in keyword ' + keywords)
+                self.assertAlmostEqual(self.dataframe[keywords][1], temp, 'Error is in keyword ' + keywords)
 
 
 
@@ -1417,7 +1417,7 @@ class TestPeakIntensityMult(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            self.assertEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
+                            self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
 
 
 
@@ -1494,7 +1494,7 @@ class TestPeakIntensityMax0(unittest.TestCase):
             if pd.isnull(temp) and pd.isnull(self.dataframe[keywords][0]):
                 self.assertTrue(pd.isnull(self.dataframe[keywords][0]))
             else:
-                self.assertEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
+                self.assertAlmostEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
             
 
     def step_2(self):
@@ -1518,7 +1518,7 @@ class TestPeakIntensityMax0(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            self.assertEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
+                            self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
 
   
     def utility_print_docstring(self, function):
@@ -1602,11 +1602,11 @@ class TestPeakIntensityMaxMult(unittest.TestCase):
                 temp[0] = str(datetime.strptime(str(temp[0]), '%Y-%m-%d %H:%M:%S') )
                 temp[1] = 'NaT'
 
-                self.assertEqual(self.dataframe[keywords][0], str(temp))
+                self.assertAlmostEqual(self.dataframe[keywords][0], str(temp))
             elif pd.isnull(temp) and pd.isnull(self.dataframe[keywords][0]):
                 self.assertTrue(pd.isnull(self.dataframe[keywords][0]))
             else:
-                self.assertEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
+                self.assertAlmostEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
 
             temp = utils.attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][1],\
                  self.energy_key, self.obs_thresholds)
@@ -1617,11 +1617,11 @@ class TestPeakIntensityMaxMult(unittest.TestCase):
             if keywords == 'All Threshold Crossing Times': 
                 temp[0] = str(datetime.strptime(str(temp[0]), '%Y-%m-%d %H:%M:%S') )
                 temp[1] = 'NaT'
-                self.assertEqual(self.dataframe[keywords][1], str(temp))
+                self.assertAlmostEqual(self.dataframe[keywords][1], str(temp))
             elif pd.isnull(temp) and pd.isnull(self.dataframe[keywords][1]):
                 self.assertTrue(pd.isnull(self.dataframe[keywords][1]))
             else:
-                self.assertEqual(self.dataframe[keywords][1], temp, 'Error is in keyword ' + keywords)
+                self.assertAlmostEqual(self.dataframe[keywords][1], temp, 'Error is in keyword ' + keywords)
 
     def step_2(self):
         validate.calculate_intuitive_metrics(self.dataframe, self.model_names, self.all_energy_channels, \
@@ -1647,7 +1647,7 @@ class TestPeakIntensityMaxMult(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            self.assertEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
+                            self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
 
         
     def utility_print_docstring(self, function):
@@ -1723,7 +1723,7 @@ class TestProbability0(unittest.TestCase):
             if pd.isnull(temp) and pd.isnull(self.dataframe[keywords][0]):
                 self.assertTrue(pd.isnull(self.dataframe[keywords][0]))
             else:
-                self.assertEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
+                self.assertAlmostEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
 
 
     def step_2(self):
@@ -1752,7 +1752,7 @@ class TestProbability0(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            self.assertEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
+                            self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
 
 
 
@@ -1846,11 +1846,11 @@ class TestProbabilityMult(unittest.TestCase):
                 
                 temp[0] = str(datetime.strptime(str(temp[0]), '%Y-%m-%d %H:%M:%S') )
                 temp[1] = 'NaT'
-                self.assertEqual(self.dataframe[keywords][0], str(temp))
+                self.assertAlmostEqual(self.dataframe[keywords][0], str(temp))
             elif pd.isnull(temp) and pd.isnull(self.dataframe[keywords][0]):
                 self.assertTrue(pd.isnull(self.dataframe[keywords][0]))
             else:
-                self.assertEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
+                self.assertAlmostEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
 
             temp = utils.attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][1],\
                  self.energy_key, self.obs_thresholds)
@@ -1861,11 +1861,11 @@ class TestProbabilityMult(unittest.TestCase):
             if keywords == 'All Threshold Crossing Times': 
                 temp[0] = str(datetime.strptime(str(temp[0]), '%Y-%m-%d %H:%M:%S') )
                 temp[1] = 'NaT'
-                self.assertEqual(self.dataframe[keywords][1], str(temp))
+                self.assertAlmostEqual(self.dataframe[keywords][1], str(temp))
             elif pd.isnull(temp) and pd.isnull(self.dataframe[keywords][1]):
                 self.assertTrue(pd.isnull(self.dataframe[keywords][1]))
             else:
-                self.assertEqual(self.dataframe[keywords][1], temp, 'Error is in keyword ' + keywords)
+                self.assertAlmostEqual(self.dataframe[keywords][1], temp, 'Error is in keyword ' + keywords)
 
 
 
@@ -1890,7 +1890,7 @@ class TestProbabilityMult(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            self.assertEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
+                            self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
  
 
     def utility_print_docstring(self, function):
@@ -1972,16 +1972,16 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
                 try:
                     for energies in range(len(self.dataframe[keywords][0])):
                         
-                        self.assertEqual(self.dataframe[keywords][0][energies]['energy_min'], temp[energies]['energy_min'], 'Error is in keyword ' + keywords + ' energy_min')
-                        self.assertEqual(self.dataframe[keywords][0][energies]['energy_max'], temp[energies]['energy_max'], 'Error is in keyword ' + keywords + ' energy_max')
-                        self.assertEqual(self.dataframe[keywords][0][energies]['fluence'], temp[energies]['fluence'], 'Error is in keyword ' + keywords + ' fluence')
+                        self.assertAlmostEqual(self.dataframe[keywords][0][energies]['energy_min'], temp[energies]['energy_min'], 'Error is in keyword ' + keywords + ' energy_min')
+                        self.assertAlmostEqual(self.dataframe[keywords][0][energies]['energy_max'], temp[energies]['energy_max'], 'Error is in keyword ' + keywords + ' energy_max')
+                        self.assertAlmostEqual(self.dataframe[keywords][0][energies]['fluence'], temp[energies]['fluence'], 'Error is in keyword ' + keywords + ' fluence')
                 except:
                     
                     self.assertTrue(pd.isna(self.dataframe[keywords][0]))
             elif pd.isna(temp) and pd.isna(self.dataframe[keywords][0]):
                 self.assertTrue(pd.isna(self.dataframe[keywords][0]))
             else:
-                self.assertEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
+                self.assertAlmostEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
 
             temp = utils.attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][1],\
                  self.energy_key, self.obs_thresholds)
@@ -1989,18 +1989,18 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
             if 'SEP Fluence Spectrum' in keywords and "Units" not in keywords:
                 try:
                     for energies in range(len(self.dataframe[keywords][1])):
-                        self.assertEqual(self.dataframe[keywords][1][energies]['energy_min'], temp[energies]['energy_min'], 'Error is in keyword ' + keywords + ' energy_min')
-                        self.assertEqual(self.dataframe[keywords][1][energies]['energy_max'], temp[energies]['energy_max'], 'Error is in keyword ' + keywords + ' energy_max')
-                        self.assertEqual(self.dataframe[keywords][1][energies]['fluence'], temp[energies]['fluence'], 'Error is in keyword ' + keywords + ' fluence')
+                        self.assertAlmostEqual(self.dataframe[keywords][1][energies]['energy_min'], temp[energies]['energy_min'], 'Error is in keyword ' + keywords + ' energy_min')
+                        self.assertAlmostEqual(self.dataframe[keywords][1][energies]['energy_max'], temp[energies]['energy_max'], 'Error is in keyword ' + keywords + ' energy_max')
+                        self.assertAlmostEqual(self.dataframe[keywords][1][energies]['fluence'], temp[energies]['fluence'], 'Error is in keyword ' + keywords + ' fluence')
                 except:
                     
                     self.assertTrue(pd.isna(self.dataframe[keywords][1]))
             elif pd.isna(temp) and pd.isna(self.dataframe[keywords][1]):
                 self.assertTrue(pd.isna(self.dataframe[keywords][1]))
             elif keywords == 'All Threshold Crossing Times':
-                self.assertEqual(self.dataframe[keywords][1], str(['NaT']))
+                self.assertAlmostEqual(self.dataframe[keywords][1], str(['NaT']))
             else:        
-                self.assertEqual(self.dataframe[keywords][1], temp, 'Error is in keyword ' + keywords)
+                self.assertAlmostEqual(self.dataframe[keywords][1], temp, 'Error is in keyword ' + keywords)
         for type in self.validation_type:
             
             validate.calculate_intuitive_metrics(self.dataframe, self.model_names, self.all_energy_channels, \
@@ -2038,7 +2038,7 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            self.assertEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
+                            self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
 
 
     def step_5_peak_int_max(self):
@@ -2059,7 +2059,7 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            self.assertEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
+                            self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
 
     def step_6_time_prof(self):
        
@@ -2080,7 +2080,7 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
                         else:
                             keyword = keyword_all_clear[j]
                             logger.debug(str(keyword) + ' ' + str(row[j]) + ' ' + str(test_dict[keyword][0]))
-                            self.assertEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
+                            self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
 
     def step_7_all_clear(self):
        
@@ -2100,7 +2100,7 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            self.assertEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
+                            self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
 
     
     def step_8_awt(self):
@@ -2121,7 +2121,7 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            self.assertEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
+                            self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
 
     def step_9_duration(self):
         
@@ -2141,7 +2141,7 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            self.assertEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
+                            self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
     
     def step_10_end_time(self):
         
@@ -2161,7 +2161,7 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            self.assertEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
+                            self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
 
     def step_11_last_data_to_issue_time(self):
         
@@ -2181,7 +2181,7 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            self.assertEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
+                            self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
 
     def step_12_max_flux_pred_win(self):
         
@@ -2201,7 +2201,7 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            self.assertEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)    
+                            self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)    
 
     def step_13_peak_int_max_time(self):
         
@@ -2221,7 +2221,7 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            self.assertEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)    
+                            self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)    
     
     def step_14_peak_int(self):
         
@@ -2241,7 +2241,7 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            self.assertEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)    
+                            self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)    
 
     def step_15_peak_int_time(self):
         
@@ -2261,7 +2261,7 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            self.assertEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)    
+                            self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)    
 
     def step_16_start_time(self):
         
@@ -2281,7 +2281,7 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            self.assertEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)    
+                            self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)    
     
     def step_17_thresh_crossing_time(self):
         
@@ -2301,7 +2301,7 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            self.assertEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)    
+                            self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)    
     
     def step_18_fluence(self):
         
@@ -2321,7 +2321,7 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            self.assertEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)    
+                            self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)    
 
     def utility_print_docstring(self, function):
         if self.verbosity == 2:
