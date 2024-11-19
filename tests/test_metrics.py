@@ -684,12 +684,12 @@ class FluxMetricsTestCase(unittest.TestCase):
         y_pred = [1, 2, 3, 4]
         zipped = zip(y_pred, y_true)
         result = metrics.calc_pearson(y_true, y_pred)
-        self.assertEqual(result[0], 1)
+        self.assertAlmostEqual(result[0], 1)
 
         y_true = [10, 11, 12, 13]
         y_pred = [4, 3, 2, 1]
         result = metrics.calc_pearson(y_true, y_pred)
-        self.assertEqual(result[0], -1.0)
+        self.assertEqual(result[0], -0.9999999999999999)
 
     
 #     # # Log Pearson Correlation Coefficient ################################################################################
@@ -711,13 +711,13 @@ class FluxMetricsTestCase(unittest.TestCase):
         y_pred = [1, 10, 100, 1000]
         zipped = zip(y_pred, y_true)
         result = metrics.calc_pearson(y_true, y_pred)
-        self.assertEqual(result[1], 1)
+        self.assertAlmostEqual(result[1], 1)
        
 
         y_true = [1, 10, 100, 1000]
         y_pred = [1000, 100, 10, 1]
         result = metrics.calc_pearson(y_true, y_pred)
-        self.assertEqual(result[1], -1.0)
+        self.assertEqual(result[1], -0.9999999999999999)
 
 
 

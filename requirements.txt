@@ -12,4 +12,5 @@ markdown==3.5
 PyPDF2==3.0.1
 gitpython==3.1.43
 beautifulsoup4==4.12.3
-
+coverage==7.6.2
+mock==5.1.0

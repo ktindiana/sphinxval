@@ -1,0 +1,35 @@
+{
+"version": 1,
+"disable_existing_loggers": false,
+"formatters": {
+    "more_info": {
+        "format": "%(asctime)s - [%(levelname)s] %(name)s.%(funcName)s,%(lineno)d: %(message)s",
+        "datefmt": "%Y-%m-%d %H:%M:%S"
+        },
+    "end_user": {
+        "format": "%(asctime)s - [%(levelname)s] %(module)s.%(funcName)s: %(message)s",
+        "datefmt": "%Y-%m-%d %H:%M:%S"
+        }
+    },
+"handlers" : {
+    "user_file": {
+        "level": "INFO",
+        "class": "logging.FileHandler",
+        "filename": "tests/logs/sphinx_run.log",
+        "formatter": "end_user",
+        "mode": "w"
+        },
+    "debug_file": {
+        "level": "DEBUG",
+        "class": "logging.FileHandler",
+        "filename": "tests/logs/sphinx_debug.log",
+        "formatter": "more_info",
+        "mode": "w"
+        }
+   },
+"root": {
+    "handlers" : ["debug_file"],
+    "level": "DEBUG",
+    "propagate": false
+    }
+}
