@@ -308,7 +308,7 @@ def pred_and_obs_overlap(fcast, obs):
     pred_win_end = fcast.prediction_window_end
     logger.debug("Prediction window: " + str(pred_win_st) + " to "
         + str(pred_win_end))
-        
+    
     pred_interval = pd.Interval(pd.Timestamp(pred_win_st),
         pd.Timestamp(pred_win_end))
     

@@ -750,6 +750,25 @@ def dict_to_particle_intensity(partD):
 
     return observatory, instrument, last_data_time, ongoing_events
 
+def dict_to_human_evaluation(human_evaluation_dict): 
+    """ Extract values from an individual human evaluation entry.
+        human_evaluation_dict like:
+        forecast_json['sep_forecast_submission']['triggers'][0]['human_evaluation'][0]
+        
+    Input:
+        :human_evaluation_dict: (dictionary) single particle intensity entry
+        
+    Output:
+        :last_data_time: (datetime)
+        
+    """
+    last_data_time = pd.NaT
+    if 'last_data_time' in human_evaluation_dict:
+        last_data_time = human_evaluation_dict['last_data_time']
+        if isinstance(last_data_time, str):
+            last_data_time = zulu_to_time(last_data_time) 
+    return last_data_time
+
 
 ####INPUTS
 def dict_to_mag_connectivity(magconD):
