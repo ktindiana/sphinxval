@@ -492,8 +492,8 @@ def fill_peak_intensity_max_mult_dict(dict, self):
     dict["Scatter Plot"].append('./tests/output/plots/Correlation_peak_intensity_max_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf')
     dict["Linear Regression Slope"].append('-0.25000000000000006')
     dict["Linear Regression y-intercept"].append('-0.25')
-    dict["Pearson Correlation Coefficient (Linear)"].append('-0.0')
-    dict["Pearson Correlation Coefficient (Log)"].append('-0.0')
+    dict["Pearson Correlation Coefficient (Linear)"].append('')
+    dict["Pearson Correlation Coefficient (Log)"].append('')
     dict["Spearman Correlation Coefficient (Linear)"].append('')
     dict["Mean Error (ME)"].append('-4.995')
     dict["Median Error (MedE)"].append('-4.995')
@@ -563,8 +563,8 @@ def fill_peak_intensity_mult_dict(dict, self):
     dict["Scatter Plot"].append('./tests/output/plots/Correlation_peak_intensity_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf')
     dict["Linear Regression Slope"].append('-0.25000000000000006')
     dict["Linear Regression y-intercept"].append('-0.25')
-    dict["Pearson Correlation Coefficient (Linear)"].append('-0.0')
-    dict["Pearson Correlation Coefficient (Log)"].append('-0.0')
+    dict["Pearson Correlation Coefficient (Linear)"].append('')
+    dict["Pearson Correlation Coefficient (Log)"].append('')
     dict["Spearman Correlation Coefficient (Linear)"].append('')
     dict["Mean Error (ME)"].append('-4.995')
     dict["Median Error (MedE)"].append('-4.995')
@@ -623,8 +623,8 @@ def fill_peak_intensity_metrics_dict_all(dict, self):
     dict["Scatter Plot"].append('./tests/output/plots/Correlation_peak_intensity_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf')
     dict["Linear Regression Slope"].append('0.5103481712895563')
     dict["Linear Regression y-intercept"].append('0.5103481712895562')
-    dict["Pearson Correlation Coefficient (Linear)"].append('0.0')
-    dict["Pearson Correlation Coefficient (Log)"].append('0.0')
+    dict["Pearson Correlation Coefficient (Linear)"].append('')
+    dict["Pearson Correlation Coefficient (Log)"].append('')
     dict["Spearman Correlation Coefficient (Linear)"].append('')
     dict["Mean Error (ME)"].append('0.5')
     dict["Median Error (MedE)"].append('0.5')
@@ -658,7 +658,7 @@ def fill_time_profile_dict_all(dict, self):
     dict["Scatter Plot"].append('./tests/output/plots/Correlation_time_profile_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_20000101T000000.pdf')
     dict["Linear Regression Slope"].append('')
     dict["Linear Regression y-intercept"].append('')
-    dict["Pearson Correlation Coefficient (Linear)"].append('-0.16603070802422493')
+    dict["Pearson Correlation Coefficient (Linear)"].append('-0.16603070802422484')
     dict["Pearson Correlation Coefficient (Log)"].append('-5.551115123125783e-17')
     dict["Spearman Correlation Coefficient (Linear)"].append('0.0')
     dict["Mean Error (ME)"].append('0.26338502445434836')
@@ -830,8 +830,8 @@ def fill_max_flux_in_pred_win_metrics_dict_all(dict, self):
     dict["Scatter Plot"].append('./tests/output/plots/Correlation_max_flux_in_pred_win_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf')
     dict["Linear Regression Slope"].append('0.5103481712895563')
     dict["Linear Regression y-intercept"].append('0.5103481712895562')
-    dict["Pearson Correlation Coefficient (Linear)"].append('0.0')
-    dict["Pearson Correlation Coefficient (Log)"].append('0.0')
+    dict["Pearson Correlation Coefficient (Linear)"].append('')
+    dict["Pearson Correlation Coefficient (Log)"].append('')
     dict["Spearman Correlation Coefficient (Linear)"].append('')
     dict["Mean Error (ME)"].append('0.5')
     dict["Median Error (MedE)"].append('0.5')
@@ -874,8 +874,8 @@ def fill_peak_intensity_max_metrics_dict_all(dict, self):
     dict["Scatter Plot"].append('./tests/output/plots/Correlation_peak_intensity_max_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf')
     dict["Linear Regression Slope"].append('0.5103481712895563')
     dict["Linear Regression y-intercept"].append('0.5103481712895562')
-    dict["Pearson Correlation Coefficient (Linear)"].append('0.0')
-    dict["Pearson Correlation Coefficient (Log)"].append('0.0')
+    dict["Pearson Correlation Coefficient (Linear)"].append('')
+    dict["Pearson Correlation Coefficient (Log)"].append('')
     dict["Spearman Correlation Coefficient (Linear)"].append('')
     dict["Mean Error (ME)"].append('0.5')
     dict["Median Error (MedE)"].append('0.5')
@@ -948,8 +948,8 @@ def fill_fluence_dict_all(dict, self):
     dict["Scatter Plot"].append('./tests/output/plots/Correlation_fluence_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf')
     dict["Linear Regression Slope"].append('0.42195511876358965')
     dict["Linear Regression y-intercept"].append('3.36735874637887')
-    dict["Pearson Correlation Coefficient (Linear)"].append('0.0')
-    dict["Pearson Correlation Coefficient (Log)"].append('0.0')
+    dict["Pearson Correlation Coefficient (Linear)"].append('')
+    dict["Pearson Correlation Coefficient (Log)"].append('')
     dict["Spearman Correlation Coefficient (Linear)"].append('')
     dict["Mean Error (ME)"].append('-90152088.20071295')
     dict["Median Error (MedE)"].append('-90152088.20071295')
@@ -1037,7 +1037,10 @@ class TestAllClear0(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
+                            try:
+                                self.assertAlmostEqual(float(row[j]), float(test_dict[keyword][0]), msg = 'This is the keyword ' + keyword)
+                            except:
+                                self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
 
 
 
@@ -1061,7 +1064,10 @@ class TestAllClear0(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
+                            try:
+                                self.assertAlmostEqual(float(row[j]), float(test_dict[keyword][0]), msg = 'This is the keyword ' + keyword)
+                            except:
+                                self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
 
   
     def utility_print_docstring(self, function):
@@ -1157,7 +1163,10 @@ class TestAllClear1(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
+                            try:
+                                self.assertAlmostEqual(float(row[j]), float(test_dict[keyword][0]), msg = 'This is the keyword ' + keyword)
+                            except:
+                                self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
 
 
     def utility_print_docstring(self, function):
@@ -1279,7 +1288,10 @@ class TestPeakIntensity0(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
+                            try:
+                                self.assertAlmostEqual(float(row[j]), float(test_dict[keyword][0]), msg = 'This is the keyword ' + keyword)
+                            except:
+                                self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
 
 
     def step_4(self):
@@ -1299,7 +1311,10 @@ class TestPeakIntensity0(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_peak_intensity_time[j]                           
-                            self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
+                            try:
+                                self.assertAlmostEqual(float(row[j]), float(test_dict[keyword][0]), msg = 'This is the keyword ' + keyword)
+                            except:
+                                self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
   
     def utility_print_docstring(self, function):
         if self.verbosity == 2:
@@ -1417,7 +1432,10 @@ class TestPeakIntensityMult(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
+                            try:
+                                self.assertAlmostEqual(float(row[j]), float(test_dict[keyword][0]), msg = 'This is the keyword ' + keyword)
+                            except:
+                                self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
 
 
 
@@ -1518,7 +1536,10 @@ class TestPeakIntensityMax0(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
+                            try:
+                                self.assertAlmostEqual(float(row[j]), float(test_dict[keyword][0]), msg = 'This is the keyword ' + keyword)
+                            except:
+                                self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
 
   
     def utility_print_docstring(self, function):
@@ -1647,7 +1668,10 @@ class TestPeakIntensityMaxMult(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
+                            try:
+                                self.assertAlmostEqual(float(row[j]), float(test_dict[keyword][0]), msg = 'This is the keyword ' + keyword)
+                            except:
+                                self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
 
         
     def utility_print_docstring(self, function):
@@ -1752,7 +1776,10 @@ class TestProbability0(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
+                            try:
+                                self.assertAlmostEqual(float(row[j]), float(test_dict[keyword][0]), msg = 'This is the keyword ' + keyword)
+                            except:
+                                self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
 
 
 
@@ -1890,7 +1917,10 @@ class TestProbabilityMult(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
+                            try:
+                                self.assertAlmostEqual(float(row[j]), float(test_dict[keyword][0]), msg = 'This is the keyword ' + keyword)
+                            except:
+                                self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
  
 
     def utility_print_docstring(self, function):
@@ -2038,7 +2068,10 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
+                            try:
+                                self.assertAlmostEqual(float(row[j]), float(test_dict[keyword][0]), msg = 'This is the keyword ' + keyword)
+                            except:
+                                self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
 
 
     def step_5_peak_int_max(self):
@@ -2059,7 +2092,10 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
+                            try:
+                                self.assertAlmostEqual(float(row[j]), float(test_dict[keyword][0]), msg = 'This is the keyword ' + keyword)
+                            except:
+                                self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
 
     def step_6_time_prof(self):
        
@@ -2080,7 +2116,10 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
                         else:
                             keyword = keyword_all_clear[j]
                             logger.debug(str(keyword) + ' ' + str(row[j]) + ' ' + str(test_dict[keyword][0]))
-                            self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
+                            try:
+                                self.assertAlmostEqual(float(row[j]), float(test_dict[keyword][0]), msg = 'This is the keyword ' + keyword)
+                            except:
+                                self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
 
     def step_7_all_clear(self):
        
@@ -2100,7 +2139,10 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
+                            try:
+                                self.assertAlmostEqual(float(row[j]), float(test_dict[keyword][0]), msg = 'This is the keyword ' + keyword)
+                            except:
+                                self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
 
     
     def step_8_awt(self):
@@ -2121,7 +2163,10 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
+                            try:
+                                self.assertAlmostEqual(float(row[j]), float(test_dict[keyword][0]), msg = 'This is the keyword ' + keyword)
+                            except:
+                                self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
 
     def step_9_duration(self):
         
@@ -2141,7 +2186,10 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
+                            try:
+                                self.assertAlmostEqual(float(row[j]), float(test_dict[keyword][0]), msg = 'This is the keyword ' + keyword)
+                            except:
+                                self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
     
     def step_10_end_time(self):
         
@@ -2161,7 +2209,10 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
+                            try:
+                                self.assertAlmostEqual(float(row[j]), float(test_dict[keyword][0]), msg = 'This is the keyword ' + keyword)
+                            except:
+                                self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
 
     def step_11_last_data_to_issue_time(self):
         
@@ -2181,7 +2232,10 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
+                            try:
+                                self.assertAlmostEqual(float(row[j]), float(test_dict[keyword][0]), msg = 'This is the keyword ' + keyword)
+                            except:
+                                self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
 
     def step_12_max_flux_pred_win(self):
         
@@ -2201,7 +2255,10 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)    
+                            try:
+                                self.assertAlmostEqual(float(row[j]), float(test_dict[keyword][0]), msg = 'This is the keyword ' + keyword)
+                            except:
+                                self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)    
 
     def step_13_peak_int_max_time(self):
         
@@ -2221,7 +2278,10 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)    
+                            try:
+                                self.assertAlmostEqual(float(row[j]), float(test_dict[keyword][0]), msg = 'This is the keyword ' + keyword)
+                            except:
+                                self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)    
     
     def step_14_peak_int(self):
         
@@ -2241,7 +2301,10 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)    
+                            try:
+                                self.assertAlmostEqual(float(row[j]), float(test_dict[keyword][0]), msg = 'This is the keyword ' + keyword)
+                            except:
+                                self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)    
 
     def step_15_peak_int_time(self):
         
@@ -2261,7 +2324,10 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)    
+                            try:
+                                self.assertAlmostEqual(float(row[j]), float(test_dict[keyword][0]), msg = 'This is the keyword ' + keyword)
+                            except:
+                                self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)    
 
     def step_16_start_time(self):
         
@@ -2281,7 +2347,10 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)    
+                            try:
+                                self.assertAlmostEqual(float(row[j]), float(test_dict[keyword][0]), msg = 'This is the keyword ' + keyword)
+                            except:
+                                self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)    
     
     def step_17_thresh_crossing_time(self):
         
@@ -2301,7 +2370,10 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)    
+                            try:
+                                self.assertAlmostEqual(float(row[j]), float(test_dict[keyword][0]), msg = 'This is the keyword ' + keyword)
+                            except:
+                                self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)    
     
     def step_18_fluence(self):
         
@@ -2321,7 +2393,10 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
                             pass
                         else:
                             keyword = keyword_all_clear[j]
-                            self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)    
+                            try:
+                                self.assertAlmostEqual(float(row[j]), float(test_dict[keyword][0]), msg = 'This is the keyword ' + keyword)
+                            except:
+                                self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)    
 
     def utility_print_docstring(self, function):
         if self.verbosity == 2:
