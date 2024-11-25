@@ -25,8 +25,9 @@ def read_in_df(filename):
         df = pickle.load(pklfile)
         return df
     except:
-        sys.exit("RESUME: Cannot open pickle file containing "
-            "input dataframe. Please check the filename.")
+        logger.error("Cannot open pickle file containing "
+            f"input dataframe. Please check the filename: {filename}")
+        sys.exit()
 
 
 

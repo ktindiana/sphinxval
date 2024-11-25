@@ -6,31 +6,17 @@ from ..utils import match
 from ..utils import resume
 from ..utils import report
 from ..utils import duplicates
-import datetime
-import pickle
 import logging
 import logging.config
+import datetime
+import pickle
 import sys
 import os
-import pathlib
-import json
+
 
 logging.getLogger("MARKDOWN").setLevel(logging.WARNING)
 logging.getLogger("matplotlib").setLevel(logging.WARNING)
-
-#Create logger
 logger = logging.getLogger(__name__)
-
-
-def setup_logging():
-    # Create the logs/ directory if it does not yet exist
-    if not os.path.exists(cfg.logpath):
-        os.mkdir(cfg.logpath)
-
-    config_file = pathlib.Path('sphinxval/log/log_config.json')
-    with open(config_file) as f_in:
-        config = json.load(f_in)
-    logging.config.dictConfig(config)
 
 
 def validate(data_list, model_list, top=None, Resume=None):
@@ -61,11 +47,21 @@ def validate(data_list, model_list, top=None, Resume=None):
             :sphinx_df: (pandas dataframe) SPHINX dataframe.
             
     """
-    setup_logging()
-    
     #Reconstruct command line execution of sphinx
     logger.info("SPHINX called with: " + " ".join(sys.argv))
     logger.info("Starting SPHINX Validation and reading in files.")
+
+
+
+    #### RESUME ####
+    #If resuming, read in the dataframe specified by the user.
+    #Can use SPHINX_dataframe.pkl from a previous run, because will not
+    #have overwritten by this point.
+    r_df = None
+    if Resume is not None:
+        logger.info("RESUME: Reading in previous dataframe: "
+            + Resume)
+        r_df = resume.read_in_df(Resume)
 
     #Create Observation and Forecast objects from jsons (edge cases)
     #Unique identifier - issue time, triggers, prediction window - ignore for now
@@ -92,15 +88,9 @@ def validate(data_list, model_list, top=None, Resume=None):
     logger.info("Identified unique model names.")
     
     #### RESUME ####
-    #If resuming, read in the dataframe specified by the user.
-    #Can use SPHINX_dataframe.pkl from a previous run, because will not
-    #have overwritten by this point.
-    r_df = None
+    #Compare the newly read in forecasts to the resume dataframe and remove
+    #any duplicates from the new forecasts
     if Resume is not None:
-        logger.info("RESUME: Reading in previous dataframe: "
-            + Resume)
-        r_df = resume.read_in_df(Resume)
-        
         model_objs = duplicates.remove_resume_duplicates(r_df, model_objs)
     ################
     
@@ -121,7 +111,8 @@ def validate(data_list, model_list, top=None, Resume=None):
     sphinx_df = valid.intuitive_validation(matched_sphinx, model_names,
         all_energy_channels, all_observed_thresholds, observed_sep_events, profname_dict, r_df=r_df)
     logger.info("Completed validation.")
-    
+
+
     return sphinx_df
 
 
