@@ -321,6 +321,8 @@ def remove_forecast_duplicates(all_energy_channels, model_objs):
     
     """
     
+    removed = []
+    
     for energy_key in all_energy_channels:
         df = fill_forecast_df(model_objs[energy_key])
 
@@ -329,9 +331,10 @@ def remove_forecast_duplicates(all_energy_channels, model_objs):
 
         for i in sorted(dup_indices, reverse=True):
             logger.warning(f"DUPLICATE INPUT FORECAST: Removing duplicated forecast for energy channel {energy_key},  {model_objs[energy_key][i].source}")
+            removed.append(model_obs[energy_key][i])
             model_objs[energy_key].pop(i)
         
-    return model_objs
+    return model_objs, removed
 
 
 
@@ -351,6 +354,8 @@ def remove_resume_duplicates(r_df, model_objs):
     
     """
     
+    removed = []
+    
     for energy_key in model_objs.keys():
         df = fill_forecast_df(model_objs[energy_key])
 
@@ -359,13 +364,14 @@ def remove_resume_duplicates(r_df, model_objs):
         
         for i in sorted(dup_indices, reverse=True):
             logger.warning(f"DUPLICATE RESUME FORECAST: Removing duplicated forecast already present in the resume SPHINX_dataframe for energy channel {energy_key}, {model_objs[energy_key][i].source}")
+            removed.append(model_obs[energy_key][i])
             model_objs[energy_key].pop(i)
 
 
-    return model_objs
+    return model_objs, removed
 
 
-def remove_sphinx_duplicates(df):
+def remove_sphinx_duplicates(df, reason='Duplicate in sphinx dataframe'):
     """ Check the SPHINX dataframe for duplicate entries. Issue warning
         and remove repeated forecasts, combined with observatory information.
         
@@ -375,6 +381,7 @@ def remove_sphinx_duplicates(df):
         Output:
         
             :df: (dataframe) with unique entries
+            :reason: (string) "Evaluation Status" will be set to reason
         
     """
     #Extract key rows from the df that uniquely identify a forecast
@@ -408,5 +415,36 @@ def remove_sphinx_duplicates(df):
     
     #Keep only the entries that are marked as False for duplicates
     unique_df = df.loc[(dup[0] == False)]
+    duplicate_df = df.loc[(dup[0] == True)]
+    duplicate_df = duplicate_df.assign(**{"Evaluation Status": reason})
     
-    return unique_df
+    return unique_df, duplicate_df
+
+
+
+def add_to_not_evaluated(not_evaluated_sphinx, duplicates, reason):
+    """ Add duplicate entries to the not_evaluated_sphinx array. 
+    
+        Input:
+        
+            :not_evaluated_sphinx: (array) array of sphinx objects organized
+                by model and energy channel
+            :duplicates: (array) array of duplicate forcast objects
+            :reason: (string) message to add to sphinx.not_evaluated
+            
+        Output:
+        
+            :not_evaluated_sphinx: (array) with duplicates added as sphinx
+                objects
+    
+    """
+
+    for fcast in duplicates:
+        energy_channel = fcast.energy_channel
+        energy_key = objh.energy_channel_to_key(prediction.energy_channel)
+        
+        sphinx = objh.initialize_sphinx(fcast)
+        sphinx.not_evaluated = reason
+        not_evaluated_sphinx[fcast.short_name][energy_key].append(sphinx)
+        
+    return not_evaluated_sphinx

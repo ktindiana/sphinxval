@@ -497,6 +497,8 @@ class Forecast():
         self.issue_time = pd.NaT
         self.valid = None #indicates whether prediction window starts
                           #at the same time or after triggers/inputs
+        self.invalid_reason = None #If invalid, save reason
+        
         #General info
         self.species = None
         self.location = None
@@ -1145,36 +1147,76 @@ class Forecast():
         last_input_time = self.last_input_time()
         last_eruption_time, last_trigger_time = self.last_trigger_time()
 
+        self.valid = True
+        msg = ''
+        
         if pd.isnull(self.issue_time):
-            self.valid = None
+            self.valid = False
+            msg = "Issue time not available"
+            self.invalid_reason += msg + ";"
             if verbose:
-                logger.warning("Issue time not available.")
-            return self.valid
-            
+                logger.warning("Invalid forecast. " + msg)
+
+
         if pd.isnull(last_trigger_time) and pd.isnull(last_input_time):
             self.valid = False
+            msg = "Trigger and input timing data not available"
+            self.invalid_reason += msg + ";"
             if verbose:
-                logger.warning("Trigger and input timing data not available.")
-            return self.valid
+                logger.warning("Invalid forecast. " + msg)
 
-        self.valid = True
+
         if not pd.isnull(last_trigger_time):
             if self.issue_time < last_trigger_time:
                 self.valid = False
+                msg = "Issue time before trigger time"
+                self.invalid_reason += msg + ";"
+                if verbose:
+                    logger.warning("Invalid forecast. "
+                          "Issue time (" + str(self.issue_time) + ") must start after last trigger (" + str(last_trigger_time) + ").")
+
 
         if not pd.isnull(last_input_time):
             if self.issue_time < last_input_time:
                 self.valid = False
+                msg = "Issue time before input time"
+                self.invalid_reason += msg  + ";"
+                if verbose:
+                    logger.warning("Invalid forecast. "
+                          "Issue time (" + str(self.issue_time) + ") must start after last input time ("+ str(last_input_time) + ").")
 
-        if verbose and not self.valid:
-            logger.warning("Invalid forecast. "
-                  "Issue time (" + str(self.issue_time) + ") must start after last "
-                  "trigger (" + str(last_trigger_time) + ") or input time ("
-                  + str(last_input_time) + ").")
 
-        if self.prediction_window_start > self.prediction_window_end:
+        if pd.isnull(self.prediction_window_start) or pd.isnull(prediction_window_end):
             self.valid = False
-            logger.warning("Invalid forecast. Prediction window start time (" + self.prediction_window_start.strftime('%Y-%m-%dT%H:%M:%SZ') + ") is AFTER prediction window end time (" + self.prediction_window_end.strftime('%Y-%m-%dT%H:%M:%SZ') + ").")
+            msg = "Prediction window is not defined"
+            self.invalid_reason += msg + ";"
+            if verbose:
+                logger.warning("Invalid forecast. Prediction window start and/or end time are null.")
+        else:
+            if self.prediction_window_start > self.prediction_window_end:
+                self.valid = False
+                msg = "Prediction window end before prediction window start"
+                self.invalid_reason += msg + ";"
+                if verbose:
+                    logger.warning("Invalid forecast. Prediction window start time (" + self.prediction_window_start.strftime('%Y-%m-%dT%H:%M:%SZ') + ") is AFTER prediction window end time (" + self.prediction_window_end.strftime('%Y-%m-%dT%H:%M:%SZ') + ").")
+
+
+        if not pd.isnull(self.issue_time) and not pd.isnull(self.prediction_window_start):
+            td = self.prediction_window_start - self.issue_time
+            if td > datetime.timedelta(hours=cfg.max_warning_hours):
+                self.valid = False
+                msg = f"Issue time more than {nhours} hours before prediction window start"
+                self.invalid_reason += msg
+                if verbose:
+                    logger.warning("Invalid forecast. Issue time ("
+                        + self.issue_time.strftime('%Y-%m-%dT%H:%M:%SZ')
+                        + f") is more than {nhours} before prediction window start time ("
+                        + self.prediction_window_start.strftime('%Y-%m-%dT%H:%M:%SZ')
+                        + ").")
+                              
+        if self.valid is True:
+            self.invalid_reason = "Forecast is valid"
+
 
         return self.valid
 
@@ -1422,6 +1464,7 @@ class SPHINX:
         self.label = 'sphinx'
         self.energy_channel = energy_channel #dict
         self.prediction = None #Forecast object
+        self.not_evaluated = None #set if a reason cannot evaluate forecast
 
         #MATCHING INFORMATION
         #If user specified in config file to allow the observations
@@ -1588,7 +1631,6 @@ class SPHINX:
         self.observed_probability.update({key:Probability(np.nan, np.nan, np.nan, None)})
         
         return
-
 
 
     def match_report(self):
