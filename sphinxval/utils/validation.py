@@ -569,6 +569,7 @@ def fill_sphinx_df(evaluated_sphinx, model_names, all_energy_channels,
         for ek in all_energy_channels:
             logger.debug("---Model: " + model + ", Energy Channel: " + ek)
             for sphinx in evaluated_sphinx[model][ek]:
+                logger.debug(sphinx.prediction.source)
                 for tk in all_obs_thresholds[ek]:
                     fill_sphinx_dict_row(sphinx, dict, ek, tk, profname_dict)
                 
@@ -3628,23 +3629,26 @@ def intuitive_validation(evaluated_sphinx, not_evaluated_sphinx, model_names,
     
     #For each model and predicted quantity, create dataframe of paired up values
     #so can calculate metrics
-    logger.info("Filling dataframe with information from matched sphinx objects.")
+    logger.info("Filling SPHINX dataframe with information from matched sphinx objects.")
 
 
     #EVALUATED SPHINX OBJECTS: Fill dataframe for evaluated_sphinx
     df = fill_sphinx_df(evaluated_sphinx, model_names, all_energy_channels,
             all_observed_thresholds, profname_dict)
+    
     #Check for duplicated forecasts and remove
     df, duplicate_df = duplicates.remove_sphinx_duplicates(df)
-    logger.debug("Completed filling evaluated_sphinx dataframe. ")
+    logger.info("Completed filling evaluated_sphinx dataframe. ")
 
 
+    logger.info("Filling not evaluated SPHINX dataframe with information from not evaluated sphinx objects.")
     #NOT EVALUATED SPHINX OBJECTS: Fill dataframe for not_evaluated_sphinx
     df_not = fill_sphinx_df(not_evaluated_sphinx, model_names, all_energy_channels,
             all_observed_thresholds, profname_dict)
+    
     #Add the duplicates discarded from df
     df_not = pd.concat([df_not,duplicate_df])
-    logger.debug("Completed filling not_evaluated_sphinx dataframe. ")
+    logger.info("Completed filling not_evaluated_sphinx dataframe. ")
 
 
     ### RESUME WILL APPEND DF TO PREVIOUS DF
@@ -3668,7 +3672,7 @@ def intuitive_validation(evaluated_sphinx, not_evaluated_sphinx, model_names,
     logger.debug("Completed writing SPHINX_dataframe to file.")
 
     #Write NOT EVALUATED SPHINX dataframe to file
-    write_df(df_not, "not_evaluated_SPHINX_dataframe")
+    write_df(df_not, "SPHINX_not_evaluated_dataframe")
     logger.debug("Completed writing not_evaluated_SPHINX_dataframe to file.")
 
     validation_type = ["All", "First", "Last", "Max", "Mean"]

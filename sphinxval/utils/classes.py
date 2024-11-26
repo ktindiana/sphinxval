@@ -497,7 +497,7 @@ class Forecast():
         self.issue_time = pd.NaT
         self.valid = None #indicates whether prediction window starts
                           #at the same time or after triggers/inputs
-        self.invalid_reason = None #If invalid, save reason
+        self.invalid_reason = '' #If invalid, save reason
         
         #General info
         self.species = None
@@ -1186,7 +1186,7 @@ class Forecast():
                           "Issue time (" + str(self.issue_time) + ") must start after last input time ("+ str(last_input_time) + ").")
 
 
-        if pd.isnull(self.prediction_window_start) or pd.isnull(prediction_window_end):
+        if pd.isnull(self.prediction_window_start) or pd.isnull(self.prediction_window_end):
             self.valid = False
             msg = "Prediction window is not defined"
             self.invalid_reason += msg + ";"
@@ -1205,12 +1205,12 @@ class Forecast():
             td = self.prediction_window_start - self.issue_time
             if td > datetime.timedelta(hours=cfg.max_warning_hours):
                 self.valid = False
-                msg = f"Issue time more than {nhours} hours before prediction window start"
+                msg = f"Issue time more than {cfg.max_warning_hours} hours before prediction window start"
                 self.invalid_reason += msg
                 if verbose:
                     logger.warning("Invalid forecast. Issue time ("
                         + self.issue_time.strftime('%Y-%m-%dT%H:%M:%SZ')
-                        + f") is more than {nhours} before prediction window start time ("
+                        + f") is more than {cfg.max_warning_hours} before prediction window start time ("
                         + self.prediction_window_start.strftime('%Y-%m-%dT%H:%M:%SZ')
                         + ").")
                               
@@ -2589,7 +2589,10 @@ class SPHINX:
             predicted = obj.fluence
 
             pred_units = obj.units
-            obs_units = self.observed_fluence[tk].units
+            if self.observed_fluence:
+                obs_units = self.observed_fluence[tk].units
+            else:
+                obs_units = None
             if obs_units is not None and pred_units is not None:
                 if obs_units != pred_units:
                     #Find a conversion factor from the prediction units
@@ -2646,13 +2649,16 @@ class SPHINX:
 
 
             predicted = obj.fluence_spectrum
-
-            obs_units = self.observed_fluence_spectrum[tk].fluence_units
             pred_units = obj.fluence_units
+            
+            if self.observed_fluence_spectrum:
+                obs_units = self.observed_fluence_spectrum[tk].fluence_units
+            else:
+                obs_units = None
             
             if obs_units is not None and pred_units is not None:
                 if obs_units != pred_units:
-                    match_status = "Mismatched Units"
+                    match_status = "Units do not match"
 
         return predicted, pred_units, match_status
 

@@ -309,7 +309,7 @@ def pred_and_obs_overlap(fcast, obs):
     logger.debug("Prediction window: " + str(pred_win_st) + " to "
         + str(pred_win_end))
 
-    overlaps_bool = ((obs['observation_window_start'] <= pred_win_end) & (obs['observation_window_end'] >= pred_win_start)).tolist()
+    overlaps_bool = ((obs['observation_window_start'] <= pred_win_end) & (obs['observation_window_end'] >= pred_win_st)).tolist()
 
     return overlaps_bool
 
@@ -2207,6 +2207,7 @@ def setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_o
     observed_thresholds = {}
     for model in model_names:
         evaluated_sphinx.update({model:{'uses_eruptions':False}})
+        not_evaluated_sphinx.update({model:{'uses_eruptions':False}})
         observed_sep_events.update({model:{}})
         for energy_key in all_energy_channels:
             evaluated_sphinx[model].update({energy_key:[]})
@@ -2289,7 +2290,6 @@ def setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_o
             if not pd.isnull(sphinx.last_eruption_time):
                 evaluated_sphinx[name]['uses_eruptions'] = True
                 not_evaluated_sphinx[name]['uses_eruptions'] = True
-
 
             ###### PREDICTION AND OBSERVATION WINDOWS OVERLAP? #####
             #Do prediction and observation windows overlap?

@@ -331,7 +331,7 @@ def remove_forecast_duplicates(all_energy_channels, model_objs):
 
         for i in sorted(dup_indices, reverse=True):
             logger.warning(f"DUPLICATE INPUT FORECAST: Removing duplicated forecast for energy channel {energy_key},  {model_objs[energy_key][i].source}")
-            removed.append(model_obs[energy_key][i])
+            removed.append(model_objs[energy_key][i])
             model_objs[energy_key].pop(i)
         
     return model_objs, removed
@@ -364,7 +364,7 @@ def remove_resume_duplicates(r_df, model_objs):
         
         for i in sorted(dup_indices, reverse=True):
             logger.warning(f"DUPLICATE RESUME FORECAST: Removing duplicated forecast already present in the resume SPHINX_dataframe for energy channel {energy_key}, {model_objs[energy_key][i].source}")
-            removed.append(model_obs[energy_key][i])
+            removed.append(model_objs[energy_key][i])
             model_objs[energy_key].pop(i)
 
 
@@ -441,7 +441,7 @@ def add_to_not_evaluated(not_evaluated_sphinx, duplicates, reason):
 
     for fcast in duplicates:
         energy_channel = fcast.energy_channel
-        energy_key = objh.energy_channel_to_key(prediction.energy_channel)
+        energy_key = objh.energy_channel_to_key(fcast.energy_channel)
         
         sphinx = objh.initialize_sphinx(fcast)
         sphinx.not_evaluated = reason

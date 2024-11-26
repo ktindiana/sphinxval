@@ -109,7 +109,8 @@ def validate(data_list, model_list, top=None, Resume=None):
 
     #Add the excluded duplicates to not_evaluated_sphinx
     not_evaluated_sphinx = duplicates.add_to_not_evaluated(not_evaluated_sphinx, removed_fcast, "Duplicate input forecast")
-    not_evaluated_sphinx = duplicates.add_to_not_evaluated(not_evaluated_sphinx, removed_resume, "Duplicate forecast already present in the resume dataframe")
+    if Resume is not None:
+        not_evaluated_sphinx = duplicates.add_to_not_evaluated(not_evaluated_sphinx, removed_resume, "Duplicate forecast already present in the resume dataframe")
 
 
     #Perform intuitive validation
