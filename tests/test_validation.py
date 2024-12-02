@@ -24,6 +24,7 @@ import logging.config
 import pathlib
 import json
 from datetime import datetime
+import numpy as np
 
 from unittest.mock import patch
 import shutil # using this to delete the contents of the output folder each run - since the unittest is based on the existence/creation of certain files each loop
@@ -263,31 +264,31 @@ def fill_all_clear_dict_hit(dict, self):
         dict["Percent Correct"].append('1.0')
         dict["Bias"].append('1.0')
         dict["Hit Rate"].append('1.0')
-        dict["False Alarm Rate"].append('')
+        dict["False Alarm Rate"].append(np.nan)
         dict['False Negative Rate'].append('0.0')
         dict["Frequency of Misses"].append('0.0')
         dict["Frequency of Hits"].append('1.0')
-        dict["Probability of Correct Negatives"].append('')
-        dict["Frequency of Correct Negatives"].append('')
+        dict["Probability of Correct Negatives"].append(np.nan)
+        dict["Frequency of Correct Negatives"].append(np.nan)
         dict["False Alarm Ratio"].append('0.0')
-        dict["Detection Failure Ratio"].append('')
+        dict["Detection Failure Ratio"].append(np.nan)
         dict["Threat Score"].append('1.0') #Critical Success Index
-        dict["Odds Ratio"].append('')
-        dict["Gilbert Skill Score"].append('') #Equitable Threat Score
-        dict["True Skill Statistic"].append('') #Hanssen and Kuipers
+        dict["Odds Ratio"].append(np.nan)
+        dict["Gilbert Skill Score"].append(np.nan) #Equitable Threat Score
+        dict["True Skill Statistic"].append(np.nan) #Hanssen and Kuipers
                 #discriminant (true skill statistic, Peirce's skill score)
-        dict["Heidke Skill Score"].append('')
-        dict["Odds Ratio Skill Score"].append('')
-        dict["Symmetric Extreme Dependency Score"].append('')
+        dict["Heidke Skill Score"].append(np.nan)
+        dict["Odds Ratio Skill Score"].append(np.nan)
+        dict["Symmetric Extreme Dependency Score"].append(np.nan)
         dict["F1 Score"].append('1.0'),
         dict["F2 Score"].append('1.0'),
         dict["Fhalf Score"].append('1.0'),
         dict['Prevalence'].append('1.0'),
-        dict['Matthew Correlation Coefficient'].append(''),
-        dict['Informedness'].append(''),
-        dict['Markedness'].append(''),
-        dict['Prevalence Threshold'].append(''),
-        dict['Balanced Accuracy'].append(''),
+        dict['Matthew Correlation Coefficient'].append(np.nan),
+        dict['Informedness'].append(np.nan),
+        dict['Markedness'].append(np.nan),
+        dict['Prevalence Threshold'].append(np.nan),
+        dict['Balanced Accuracy'].append(np.nan),
         dict['Fowlkes-Mallows Index'].append('1.0'),
         dict["Number SEP Events Correctly Predicted"].append('1')
         dict["Number SEP Events Missed"].append('0')
@@ -310,34 +311,34 @@ def fill_all_clear_dict_CN(dict, self):
         dict["All Clear 'False Negatives' (Misses)"].append('0') #Misses
         dict["N (Total Number of Forecasts)"].append('1')
         dict["Percent Correct"].append('1.0')
-        dict["Bias"].append('')
-        dict["Hit Rate"].append('')
+        dict["Bias"].append(np.nan)
+        dict["Hit Rate"].append(np.nan)
         dict["False Alarm Rate"].append('0.0')
-        dict["False Negative Rate"].append('')
-        dict["Frequency of Misses"].append('')
-        dict["Frequency of Hits"].append('')
+        dict["False Negative Rate"].append(np.nan)
+        dict["Frequency of Misses"].append(np.nan)
+        dict["Frequency of Hits"].append(np.nan)
         dict["Probability of Correct Negatives"].append('1.0')
         dict["Frequency of Correct Negatives"].append('1.0')
-        dict["False Alarm Ratio"].append('')
+        dict["False Alarm Ratio"].append(np.nan)
         dict["Detection Failure Ratio"].append('0.0')
-        dict["Threat Score"].append('') #Critical Success Index
-        dict["Odds Ratio"].append('')
-        dict["Gilbert Skill Score"].append('') #Equitable Threat Score
-        dict["True Skill Statistic"].append('') #Hanssen and Kuipers
+        dict["Threat Score"].append(np.nan) #Critical Success Index
+        dict["Odds Ratio"].append(np.nan)
+        dict["Gilbert Skill Score"].append(np.nan) #Equitable Threat Score
+        dict["True Skill Statistic"].append(np.nan) #Hanssen and Kuipers
                 #discriminant (true skill statistic, Peirce's skill score)
-        dict["Heidke Skill Score"].append('')
-        dict["Odds Ratio Skill Score"].append('')
-        dict["Symmetric Extreme Dependency Score"].append('')
-        dict["F1 Score"].append(''),
-        dict["F2 Score"].append(''),
-        dict["Fhalf Score"].append(''),
+        dict["Heidke Skill Score"].append(np.nan)
+        dict["Odds Ratio Skill Score"].append(np.nan)
+        dict["Symmetric Extreme Dependency Score"].append(np.nan)
+        dict["F1 Score"].append(np.nan),
+        dict["F2 Score"].append(np.nan),
+        dict["Fhalf Score"].append(np.nan),
         dict['Prevalence'].append('0.0'),
-        dict['Matthew Correlation Coefficient'].append(''),
-        dict['Informedness'].append(''),
-        dict['Markedness'].append(''),
-        dict['Prevalence Threshold'].append(''),
-        dict['Balanced Accuracy'].append(''),
-        dict['Fowlkes-Mallows Index'].append(''),
+        dict['Matthew Correlation Coefficient'].append(np.nan),
+        dict['Informedness'].append(np.nan),
+        dict['Markedness'].append(np.nan),
+        dict['Prevalence Threshold'].append(np.nan),
+        dict['Balanced Accuracy'].append(np.nan),
+        dict['Fowlkes-Mallows Index'].append(np.nan),
         dict["Number SEP Events Correctly Predicted"].append('0')
         dict["Number SEP Events Missed"].append('0')
         dict["Predicted SEP Events"].append('None')
@@ -363,40 +364,40 @@ def fill_awt_dict(dict, self):
     dict["Median AWT for Predicted SEP All Clear to Observed SEP Start Time"].append('1.0')
 
             #Threshold Crossing Time Forecasts
-    dict["Mean AWT for Predicted SEP Threshold Crossing Time to Observed SEP Threshold Crossing Time"].append('')
-    dict["Median AWT for Predicted SEP Threshold Crossing Time to Observed SEP Threshold Crossing Time"].append('')
-    dict["Mean AWT for Predicted SEP Threshold Crossing Time to Observed SEP Start Time"].append('')
-    dict["Median AWT for Predicted SEP Threshold Crossing Time to Observed SEP Start Time"].append('')
+    dict["Mean AWT for Predicted SEP Threshold Crossing Time to Observed SEP Threshold Crossing Time"].append(np.nan)
+    dict["Median AWT for Predicted SEP Threshold Crossing Time to Observed SEP Threshold Crossing Time"].append(np.nan)
+    dict["Mean AWT for Predicted SEP Threshold Crossing Time to Observed SEP Start Time"].append(np.nan)
+    dict["Median AWT for Predicted SEP Threshold Crossing Time to Observed SEP Start Time"].append(np.nan)
 
             #Start Time Forecasts
-    dict["Mean AWT for Predicted SEP Start Time to Observed SEP Threshold Crossing Time"].append('')
-    dict["Median AWT for Predicted SEP Start Time to Observed SEP Threshold Crossing Time"].append('')
-    dict["Mean AWT for Predicted SEP Start Time to Observed SEP Start Time"].append('')
-    dict["Median AWT for Predicted SEP Start Time to Observed SEP Start Time"].append('')
+    dict["Mean AWT for Predicted SEP Start Time to Observed SEP Threshold Crossing Time"].append(np.nan)
+    dict["Median AWT for Predicted SEP Start Time to Observed SEP Threshold Crossing Time"].append(np.nan)
+    dict["Mean AWT for Predicted SEP Start Time to Observed SEP Start Time"].append(np.nan)
+    dict["Median AWT for Predicted SEP Start Time to Observed SEP Start Time"].append(np.nan)
  
             #Peak Intensity Forecasts
-    dict["Mean AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Threshold Crossing Time"].append('')
-    dict["Median AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Threshold Crossing Time"].append('')
-    dict["Mean AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Start Time"].append('')
-    dict["Median AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Start Time"].append('')
-    dict["Mean AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Peak Intensity (Onset Peak) Time"].append('')
-    dict["Median AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Peak Intensity (Onset Peak) Time"].append('')
+    dict["Mean AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Threshold Crossing Time"].append(np.nan)
+    dict["Median AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Threshold Crossing Time"].append(np.nan)
+    dict["Mean AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Start Time"].append(np.nan)
+    dict["Median AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Start Time"].append(np.nan)
+    dict["Mean AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Peak Intensity (Onset Peak) Time"].append(np.nan)
+    dict["Median AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Peak Intensity (Onset Peak) Time"].append(np.nan)
 
             #Peak Intensity Max Forecasts
-    dict["Mean AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Threshold Crossing Time"].append('')
-    dict["Median AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Threshold Crossing Time"].append('')
-    dict["Mean AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Start Time"].append('')
-    dict["Median AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Start Time"].append('')
-    dict["Mean AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Peak Intensity Max (Max Flux) Time"].append('')
-    dict["Median AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Peak Intensity Max (Max Flux) Time"].append('')
+    dict["Mean AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Threshold Crossing Time"].append(np.nan)
+    dict["Median AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Threshold Crossing Time"].append(np.nan)
+    dict["Mean AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Start Time"].append(np.nan)
+    dict["Median AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Start Time"].append(np.nan)
+    dict["Mean AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Peak Intensity Max (Max Flux) Time"].append(np.nan)
+    dict["Median AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Peak Intensity Max (Max Flux) Time"].append(np.nan)
 
             #End Time Forecasts
-    dict["Mean AWT for Predicted SEP End Time to Observed SEP Threshold Crossing Time"].append('')
-    dict["Median AWT for Predicted SEP End Time to Observed SEP Threshold Crossing Time"].append('')
-    dict["Mean AWT for Predicted SEP End Time to Observed SEP Start Time"].append('')
-    dict["Median AWT for Predicted SEP End Time to Observed SEP Start Time"].append('')
-    dict["Mean AWT for Predicted SEP End Time to Observed SEP End Time"].append('')
-    dict["Median AWT for Predicted SEP End Time to Observed SEP End Time"].append('')
+    dict["Mean AWT for Predicted SEP End Time to Observed SEP Threshold Crossing Time"].append(np.nan)
+    dict["Median AWT for Predicted SEP End Time to Observed SEP Threshold Crossing Time"].append(np.nan)
+    dict["Mean AWT for Predicted SEP End Time to Observed SEP Start Time"].append(np.nan)
+    dict["Median AWT for Predicted SEP End Time to Observed SEP Start Time"].append(np.nan)
+    dict["Mean AWT for Predicted SEP End Time to Observed SEP End Time"].append(np.nan)
+    dict["Median AWT for Predicted SEP End Time to Observed SEP End Time"].append(np.nan)
             
     return dict
 
@@ -410,8 +411,8 @@ def fill_probability_dict_highprob(dict, self):
     dict['ROC Curve Plot'].append("./tests/output/plots/ROC_curve_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf")
     dict['Brier Score'].append('0.0')
     dict['Brier Skill Score'].append('1.0')
-    dict['Spearman Correlation Coefficient'].append('')
-    dict['Area Under ROC Curve'].append('')
+    dict['Spearman Correlation Coefficient'].append(np.nan)
+    dict['Area Under ROC Curve'].append(np.nan)
     return dict
 
 def fill_probability_dict_lowprob(dict, self):
@@ -424,8 +425,8 @@ def fill_probability_dict_lowprob(dict, self):
     dict['ROC Curve Plot'].append("./tests/output/plots/ROC_curve_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf")
     dict['Brier Score'].append('1.0')
     dict['Brier Skill Score'].append('-0.06941692181172066')
-    dict['Spearman Correlation Coefficient'].append('')
-    dict['Area Under ROC Curve'].append('')
+    dict['Spearman Correlation Coefficient'].append(np.nan)
+    dict['Area Under ROC Curve'].append(np.nan)
     return dict
 
 
@@ -439,8 +440,8 @@ def fill_probability_dict_multprob(dict, self):
     dict['ROC Curve Plot'].append("./tests/output/plots/ROC_curve_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf")
     dict['Brier Score'].append('0.5')
     dict['Brier Skill Score'].append('0.4652915390941397')
-    dict['Spearman Correlation Coefficient'].append('')
-    dict['Area Under ROC Curve'].append('')
+    dict['Spearman Correlation Coefficient'].append(np.nan)
+    dict['Area Under ROC Curve'].append(np.nan)
     return dict
 
 
@@ -453,12 +454,12 @@ def fill_peak_intensity_max_dict(dict, self):
     dict["Threshold"].append(self.obs_thresholds[self.energy_key][0])
     dict["Prediction Energy Channel"].append(self.energy_key)
     dict["Prediction Threshold"].append(self.obs_thresholds[self.energy_key][0])
-    dict["Scatter Plot"].append('')
-    dict["Linear Regression Slope"].append('')
-    dict["Linear Regression y-intercept"].append('')
-    dict["Pearson Correlation Coefficient (Linear)"].append('')
-    dict["Pearson Correlation Coefficient (Log)"].append('')
-    dict["Spearman Correlation Coefficient (Linear)"].append('')
+    dict["Scatter Plot"].append(np.nan)
+    dict["Linear Regression Slope"].append(np.nan)
+    dict["Linear Regression y-intercept"].append(np.nan)
+    dict["Pearson Correlation Coefficient (Linear)"].append(np.nan)
+    dict["Pearson Correlation Coefficient (Log)"].append(np.nan)
+    dict["Spearman Correlation Coefficient (Linear)"].append(np.nan)
     dict["Mean Error (ME)"].append('0.0')
     dict["Median Error (MedE)"].append('0.0')
     dict["Mean Log Error (MLE)"].append('0.0')
@@ -475,7 +476,7 @@ def fill_peak_intensity_max_dict(dict, self):
     dict["Root Mean Square Error (RMSE)"].append('0.0')
     dict["Root Mean Square Log Error (RMSLE)"].append('0.0')
     dict["Median Symmetric Accuracy (MdSA)"].append('0.0')
-    dict.update({"Time Profile Selection Plot": ['']})
+    dict.update({"Time Profile Selection Plot": [np.nan]})
 
     return dict
 
@@ -492,9 +493,9 @@ def fill_peak_intensity_max_mult_dict(dict, self):
     dict["Scatter Plot"].append('./tests/output/plots/Correlation_peak_intensity_max_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf')
     dict["Linear Regression Slope"].append('-0.25000000000000006')
     dict["Linear Regression y-intercept"].append('-0.25')
-    dict["Pearson Correlation Coefficient (Linear)"].append('')
-    dict["Pearson Correlation Coefficient (Log)"].append('')
-    dict["Spearman Correlation Coefficient (Linear)"].append('')
+    dict["Pearson Correlation Coefficient (Linear)"].append(np.nan)
+    dict["Pearson Correlation Coefficient (Log)"].append(np.nan)
+    dict["Spearman Correlation Coefficient (Linear)"].append(np.nan)
     dict["Mean Error (ME)"].append('-4.995')
     dict["Median Error (MedE)"].append('-4.995')
     dict["Mean Log Error (MLE)"].append('-1.5')
@@ -511,7 +512,7 @@ def fill_peak_intensity_max_mult_dict(dict, self):
     dict["Root Mean Square Error (RMSE)"].append('7.06399674405361')
     dict["Root Mean Square Log Error (RMSLE)"].append('2.1213203435596424')
     dict["Median Symmetric Accuracy (MdSA)"].append('30.62277660168379')
-    dict.update({"Time Profile Selection Plot": ['']})
+    dict.update({"Time Profile Selection Plot": [np.nan]})
 
     return dict
 
@@ -524,12 +525,12 @@ def fill_peak_intensity_dict(dict, self):
     dict["Threshold"].append(self.obs_thresholds[self.energy_key][0])
     dict["Prediction Energy Channel"].append(self.energy_key)
     dict["Prediction Threshold"].append(self.obs_thresholds[self.energy_key][0])
-    dict["Scatter Plot"].append('')
-    dict["Linear Regression Slope"].append('')
-    dict["Linear Regression y-intercept"].append('')
-    dict["Pearson Correlation Coefficient (Linear)"].append('')
-    dict["Pearson Correlation Coefficient (Log)"].append('')
-    dict["Spearman Correlation Coefficient (Linear)"].append('')
+    dict["Scatter Plot"].append(np.nan)
+    dict["Linear Regression Slope"].append(np.nan)
+    dict["Linear Regression y-intercept"].append(np.nan)
+    dict["Pearson Correlation Coefficient (Linear)"].append(np.nan)
+    dict["Pearson Correlation Coefficient (Log)"].append(np.nan)
+    dict["Spearman Correlation Coefficient (Linear)"].append(np.nan)
     dict["Mean Error (ME)"].append('0.0')
     dict["Median Error (MedE)"].append('0.0')
     dict["Mean Log Error (MLE)"].append('0.0')
@@ -546,7 +547,7 @@ def fill_peak_intensity_dict(dict, self):
     dict["Root Mean Square Error (RMSE)"].append('0.0')
     dict["Root Mean Square Log Error (RMSLE)"].append('0.0')
     dict["Median Symmetric Accuracy (MdSA)"].append('0.0')
-    dict.update({"Time Profile Selection Plot": ['']})
+    dict.update({"Time Profile Selection Plot": [np.nan]})
 
     return dict
 
@@ -563,9 +564,9 @@ def fill_peak_intensity_mult_dict(dict, self):
     dict["Scatter Plot"].append('./tests/output/plots/Correlation_peak_intensity_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf')
     dict["Linear Regression Slope"].append('-0.25000000000000006')
     dict["Linear Regression y-intercept"].append('-0.25')
-    dict["Pearson Correlation Coefficient (Linear)"].append('')
-    dict["Pearson Correlation Coefficient (Log)"].append('')
-    dict["Spearman Correlation Coefficient (Linear)"].append('')
+    dict["Pearson Correlation Coefficient (Linear)"].append(np.nan)
+    dict["Pearson Correlation Coefficient (Log)"].append(np.nan)
+    dict["Spearman Correlation Coefficient (Linear)"].append(np.nan)
     dict["Mean Error (ME)"].append('-4.995')
     dict["Median Error (MedE)"].append('-4.995')
     dict["Mean Log Error (MLE)"].append('-1.5')
@@ -582,7 +583,7 @@ def fill_peak_intensity_mult_dict(dict, self):
     dict["Root Mean Square Error (RMSE)"].append('7.06399674405361')
     dict["Root Mean Square Log Error (RMSLE)"].append('2.1213203435596424')
     dict["Median Symmetric Accuracy (MdSA)"].append('30.62277660168379')
-    dict.update({"Time Profile Selection Plot": ['']})
+    dict.update({"Time Profile Selection Plot": [np.nan]})
     return dict
 
 
@@ -623,9 +624,9 @@ def fill_peak_intensity_metrics_dict_all(dict, self):
     dict["Scatter Plot"].append('./tests/output/plots/Correlation_peak_intensity_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf')
     dict["Linear Regression Slope"].append('0.5103481712895563')
     dict["Linear Regression y-intercept"].append('0.5103481712895562')
-    dict["Pearson Correlation Coefficient (Linear)"].append('')
-    dict["Pearson Correlation Coefficient (Log)"].append('')
-    dict["Spearman Correlation Coefficient (Linear)"].append('')
+    dict["Pearson Correlation Coefficient (Linear)"].append(np.nan)
+    dict["Pearson Correlation Coefficient (Log)"].append(np.nan)
+    dict["Spearman Correlation Coefficient (Linear)"].append(np.nan)
     dict["Mean Error (ME)"].append('0.5')
     dict["Median Error (MedE)"].append('0.5')
     dict["Mean Log Error (MLE)"].append('0.02069634257911257')
@@ -642,7 +643,7 @@ def fill_peak_intensity_metrics_dict_all(dict, self):
     dict["Root Mean Square Error (RMSE)"].append('0.7071067811865476')
     dict["Root Mean Square Log Error (RMSLE)"].append('0.02926904836690076')
     dict["Median Symmetric Accuracy (MdSA)"].append('0.04880884817015163')
-    dict.update({"Time Profile Selection Plot": ['']})
+    dict.update({"Time Profile Selection Plot": [np.nan]})
 
     return dict
 
@@ -656,8 +657,8 @@ def fill_time_profile_dict_all(dict, self):
     dict["Prediction Energy Channel"].append(self.energy_key)
     dict["Prediction Threshold"].append(self.obs_thresholds[self.energy_key][0])
     dict["Scatter Plot"].append('./tests/output/plots/Correlation_time_profile_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_20000101T000000.pdf')
-    dict["Linear Regression Slope"].append('')
-    dict["Linear Regression y-intercept"].append('')
+    dict["Linear Regression Slope"].append(np.nan)
+    dict["Linear Regression y-intercept"].append(np.nan)
     dict["Pearson Correlation Coefficient (Linear)"].append('-0.16603070802422484')
     dict["Pearson Correlation Coefficient (Log)"].append('-5.551115123125783e-17')
     dict["Spearman Correlation Coefficient (Linear)"].append('0.0')
@@ -830,9 +831,9 @@ def fill_max_flux_in_pred_win_metrics_dict_all(dict, self):
     dict["Scatter Plot"].append('./tests/output/plots/Correlation_max_flux_in_pred_win_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf')
     dict["Linear Regression Slope"].append('0.5103481712895563')
     dict["Linear Regression y-intercept"].append('0.5103481712895562')
-    dict["Pearson Correlation Coefficient (Linear)"].append('')
-    dict["Pearson Correlation Coefficient (Log)"].append('')
-    dict["Spearman Correlation Coefficient (Linear)"].append('')
+    dict["Pearson Correlation Coefficient (Linear)"].append(np.nan)
+    dict["Pearson Correlation Coefficient (Log)"].append(np.nan)
+    dict["Spearman Correlation Coefficient (Linear)"].append(np.nan)
     dict["Mean Error (ME)"].append('0.5')
     dict["Median Error (MedE)"].append('0.5')
     dict["Mean Log Error (MLE)"].append('0.02069634257911257')
@@ -874,9 +875,9 @@ def fill_peak_intensity_max_metrics_dict_all(dict, self):
     dict["Scatter Plot"].append('./tests/output/plots/Correlation_peak_intensity_max_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf')
     dict["Linear Regression Slope"].append('0.5103481712895563')
     dict["Linear Regression y-intercept"].append('0.5103481712895562')
-    dict["Pearson Correlation Coefficient (Linear)"].append('')
-    dict["Pearson Correlation Coefficient (Log)"].append('')
-    dict["Spearman Correlation Coefficient (Linear)"].append('')
+    dict["Pearson Correlation Coefficient (Linear)"].append(np.nan)
+    dict["Pearson Correlation Coefficient (Log)"].append(np.nan)
+    dict["Spearman Correlation Coefficient (Linear)"].append(np.nan)
     dict["Mean Error (ME)"].append('0.5')
     dict["Median Error (MedE)"].append('0.5')
     dict["Mean Log Error (MLE)"].append('0.02069634257911257')
@@ -893,7 +894,7 @@ def fill_peak_intensity_max_metrics_dict_all(dict, self):
     dict["Root Mean Square Error (RMSE)"].append('0.7071067811865476')
     dict["Root Mean Square Log Error (RMSLE)"].append('0.02926904836690076')
     dict["Median Symmetric Accuracy (MdSA)"].append('0.04880884817015163')
-    dict.update({"Time Profile Selection Plot": ['']})
+    dict.update({"Time Profile Selection Plot": [np.nan]})
 
     return dict
 
@@ -948,9 +949,9 @@ def fill_fluence_dict_all(dict, self):
     dict["Scatter Plot"].append('./tests/output/plots/Correlation_fluence_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf')
     dict["Linear Regression Slope"].append('0.42195511876358965')
     dict["Linear Regression y-intercept"].append('3.36735874637887')
-    dict["Pearson Correlation Coefficient (Linear)"].append('')
-    dict["Pearson Correlation Coefficient (Log)"].append('')
-    dict["Spearman Correlation Coefficient (Linear)"].append('')
+    dict["Pearson Correlation Coefficient (Linear)"].append(np.nan)
+    dict["Pearson Correlation Coefficient (Log)"].append(np.nan)
+    dict["Spearman Correlation Coefficient (Linear)"].append(np.nan)
     dict["Mean Error (ME)"].append('-90152088.20071295')
     dict["Median Error (MedE)"].append('-90152088.20071295')
     dict["Mean Log Error (MLE)"].append('-1.2456543445264794')
@@ -1011,7 +1012,7 @@ class TestAllClear0(unittest.TestCase):
             if pd.isnull(temp) and pd.isnull(self.dataframe[keywords][0]):
                 self.assertTrue(pd.isnull(self.dataframe[keywords][0]))
             else:
-                self.assertAlmostEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
+                self.assertEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
 
     def step_2(self):
         validate.calculate_intuitive_metrics(self.dataframe, self.model_names, self.all_energy_channels, \
@@ -1021,26 +1022,8 @@ class TestAllClear0(unittest.TestCase):
     def step_3(self):
         test_dict = initialize_all_clear_dict()
         test_dict = fill_all_clear_dict_hit(test_dict, self)
-        
-        
         csv_filename = os.path.join(config.outpath, 'csv', 'all_clear_metrics.csv')
-        keyword_all_clear = []
-        with open(csv_filename, mode = 'r') as csvfile:
-            reading = csv.reader(csvfile, delimiter = ',')
-            
-            for row in reading:
-                if keyword_all_clear == []:
-                    keyword_all_clear = row
-                else:
-                    for j in range(len(row)):
-                        if keyword_all_clear[j] == '':
-                            pass
-                        else:
-                            keyword = keyword_all_clear[j]
-                            try:
-                                self.assertAlmostEqual(float(row[j]), float(test_dict[keyword][0]), msg = 'This is the keyword ' + keyword)
-                            except:
-                                self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
+        utils.assert_equal_table(self, csv_filename, test_dict)
 
 
 
@@ -1051,23 +1034,7 @@ class TestAllClear0(unittest.TestCase):
         test_dict = fill_awt_dict(test_dict, self)
         csv_filename = os.path.join(config.outpath, 'csv', 'awt_metrics.csv')
         
-        keyword_all_clear = []
-        with open(csv_filename, mode = 'r') as csvfile:
-            reading = csv.reader(csvfile, delimiter = ',')
-            
-            for row in reading:
-                if keyword_all_clear == []:
-                    keyword_all_clear = row
-                else:
-                    for j in range(len(row)):
-                        if keyword_all_clear[j] == '':
-                            pass
-                        else:
-                            keyword = keyword_all_clear[j]
-                            try:
-                                self.assertAlmostEqual(float(row[j]), float(test_dict[keyword][0]), msg = 'This is the keyword ' + keyword)
-                            except:
-                                self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
+        utils.assert_equal_table(self, csv_filename, test_dict)
 
   
     def utility_print_docstring(self, function):
@@ -1137,9 +1104,9 @@ class TestAllClear1(unittest.TestCase):
             if pd.isnull(temp) and pd.isnull(self.dataframe[keywords][0]):
                 self.assertTrue(pd.isnull(self.dataframe[keywords][0]))
             elif keywords == 'All Threshold Crossing Times':
-                self.assertAlmostEqual(self.dataframe[keywords][0], str([temp]))
+                self.assertEqual(self.dataframe[keywords][0], str([temp]))
             else:
-                self.assertAlmostEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
+                self.assertEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
 
     def step_2(self):
         validate.calculate_intuitive_metrics(self.dataframe, self.model_names, self.all_energy_channels, \
@@ -1150,23 +1117,7 @@ class TestAllClear1(unittest.TestCase):
         test_dict = fill_all_clear_dict_CN(test_dict, self)
 
         csv_filename = os.path.join(config.outpath, 'csv', 'all_clear_metrics.csv')
-        keyword_all_clear = []
-        with open(csv_filename, mode = 'r') as csvfile:
-            reading = csv.reader(csvfile, delimiter = ',')
-            
-            for row in reading:
-                if keyword_all_clear == []:
-                    keyword_all_clear = row
-                else:
-                    for j in range(len(row)):
-                        if keyword_all_clear[j] == '':
-                            pass
-                        else:
-                            keyword = keyword_all_clear[j]
-                            try:
-                                self.assertAlmostEqual(float(row[j]), float(test_dict[keyword][0]), msg = 'This is the keyword ' + keyword)
-                            except:
-                                self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
+        utils.assert_equal_table(self, csv_filename, test_dict)
 
 
     def utility_print_docstring(self, function):
@@ -1264,7 +1215,7 @@ class TestPeakIntensity0(unittest.TestCase):
                 self.assertTrue(pd.isnull(self.dataframe[keywords][0]))
             
             else:
-                self.assertAlmostEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
+                self.assertEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
 
     def step_2(self):
         validate.calculate_intuitive_metrics(self.dataframe, self.model_names, self.all_energy_channels, \
@@ -1275,46 +1226,14 @@ class TestPeakIntensity0(unittest.TestCase):
         test_dict = fill_peak_intensity_dict(test_dict, self)
 
         csv_filename = os.path.join(config.outpath, 'csv', 'peak_intensity_metrics.csv')
-        keyword_all_clear = []
-        with open(csv_filename, mode = 'r') as csvfile:
-            reading = csv.reader(csvfile, delimiter = ',')
-            
-            for row in reading:
-                if keyword_all_clear == []:
-                    keyword_all_clear = row
-                else:
-                    for j in range(len(row)):
-                        if keyword_all_clear[j] == '':
-                            pass
-                        else:
-                            keyword = keyword_all_clear[j]
-                            try:
-                                self.assertAlmostEqual(float(row[j]), float(test_dict[keyword][0]), msg = 'This is the keyword ' + keyword)
-                            except:
-                                self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
+        utils.assert_equal_table(self, csv_filename, test_dict)
 
 
     def step_4(self):
         test_dict = initialize_time_dict()
         test_dict = fill_peak_intensity_time_dict(test_dict, self)
         csv_filename = os.path.join(config.outpath, 'csv', 'peak_intensity_time_metrics.csv')
-        keyword_peak_intensity_time = []
-        with open(csv_filename, mode = 'r') as csvfile:
-            reading = csv.reader(csvfile, delimiter = ',')
-            
-            for row in reading:
-                if keyword_peak_intensity_time == []:
-                    keyword_peak_intensity_time = row
-                else:
-                    for j in range(len(row)):
-                        if keyword_peak_intensity_time[j] == '':
-                            pass
-                        else:
-                            keyword = keyword_peak_intensity_time[j]                           
-                            try:
-                                self.assertAlmostEqual(float(row[j]), float(test_dict[keyword][0]), msg = 'This is the keyword ' + keyword)
-                            except:
-                                self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
+        utils.assert_equal_table(self, csv_filename, test_dict)
   
     def utility_print_docstring(self, function):
         if self.verbosity == 2:
@@ -1388,11 +1307,11 @@ class TestPeakIntensityMult(unittest.TestCase):
                 
                 temp[0] = str(datetime.strptime(str(temp[0]), '%Y-%m-%d %H:%M:%S') )
                 temp[1] = 'NaT'
-                self.assertAlmostEqual(self.dataframe[keywords][0], str(temp))
+                self.assertEqual(self.dataframe[keywords][0], str(temp))
             elif pd.isnull(temp) and pd.isnull(self.dataframe[keywords][0]):
                 self.assertTrue(pd.isnull(self.dataframe[keywords][0]))
             else:
-                self.assertAlmostEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
+                self.assertEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
 
             temp = utils.attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][1],\
                  self.energy_key, self.obs_thresholds)
@@ -1403,11 +1322,11 @@ class TestPeakIntensityMult(unittest.TestCase):
             if keywords == 'All Threshold Crossing Times': 
                 temp[0] = str(datetime.strptime(str(temp[0]), '%Y-%m-%d %H:%M:%S') )
                 temp[1] = 'NaT'
-                self.assertAlmostEqual(self.dataframe[keywords][1], str(temp))
+                self.assertEqual(self.dataframe[keywords][1], str(temp))
             elif pd.isnull(temp) and pd.isnull(self.dataframe[keywords][1]):
                 self.assertTrue(pd.isnull(self.dataframe[keywords][1]))
             else:
-                self.assertAlmostEqual(self.dataframe[keywords][1], temp, 'Error is in keyword ' + keywords)
+                self.assertEqual(self.dataframe[keywords][1], temp, 'Error is in keyword ' + keywords)
 
 
 
@@ -1419,23 +1338,7 @@ class TestPeakIntensityMult(unittest.TestCase):
         test_dict = initialize_flux_dict()
         test_dict = fill_peak_intensity_mult_dict(test_dict, self)
         csv_filename = os.path.join(config.outpath, 'csv', 'peak_intensity_metrics.csv')
-        keyword_all_clear = []
-        with open(csv_filename, mode = 'r') as csvfile:
-            reading = csv.reader(csvfile, delimiter = ',')
-            
-            for row in reading:
-                if keyword_all_clear == []:
-                    keyword_all_clear = row
-                else:
-                    for j in range(len(row)):
-                        if keyword_all_clear[j] == '':
-                            pass
-                        else:
-                            keyword = keyword_all_clear[j]
-                            try:
-                                self.assertAlmostEqual(float(row[j]), float(test_dict[keyword][0]), msg = 'This is the keyword ' + keyword)
-                            except:
-                                self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
+        utils.assert_equal_table(self, csv_filename, test_dict)
 
 
 
@@ -1512,7 +1415,7 @@ class TestPeakIntensityMax0(unittest.TestCase):
             if pd.isnull(temp) and pd.isnull(self.dataframe[keywords][0]):
                 self.assertTrue(pd.isnull(self.dataframe[keywords][0]))
             else:
-                self.assertAlmostEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
+                self.assertEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
             
 
     def step_2(self):
@@ -1523,23 +1426,7 @@ class TestPeakIntensityMax0(unittest.TestCase):
         test_dict = initialize_flux_dict()
         test_dict = fill_peak_intensity_max_dict(test_dict, self)
         csv_filename = os.path.join(config.outpath, 'csv', 'peak_intensity_max_metrics.csv')
-        keyword_all_clear = []
-        with open(csv_filename, mode = 'r') as csvfile:
-            reading = csv.reader(csvfile, delimiter = ',')
-            
-            for row in reading:
-                if keyword_all_clear == []:
-                    keyword_all_clear = row
-                else:
-                    for j in range(len(row)):
-                        if keyword_all_clear[j] == '':
-                            pass
-                        else:
-                            keyword = keyword_all_clear[j]
-                            try:
-                                self.assertAlmostEqual(float(row[j]), float(test_dict[keyword][0]), msg = 'This is the keyword ' + keyword)
-                            except:
-                                self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
+        utils.assert_equal_table(self, csv_filename, test_dict)
 
   
     def utility_print_docstring(self, function):
@@ -1623,11 +1510,11 @@ class TestPeakIntensityMaxMult(unittest.TestCase):
                 temp[0] = str(datetime.strptime(str(temp[0]), '%Y-%m-%d %H:%M:%S') )
                 temp[1] = 'NaT'
 
-                self.assertAlmostEqual(self.dataframe[keywords][0], str(temp))
+                self.assertEqual(self.dataframe[keywords][0], str(temp))
             elif pd.isnull(temp) and pd.isnull(self.dataframe[keywords][0]):
                 self.assertTrue(pd.isnull(self.dataframe[keywords][0]))
             else:
-                self.assertAlmostEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
+                self.assertEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
 
             temp = utils.attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][1],\
                  self.energy_key, self.obs_thresholds)
@@ -1638,11 +1525,11 @@ class TestPeakIntensityMaxMult(unittest.TestCase):
             if keywords == 'All Threshold Crossing Times': 
                 temp[0] = str(datetime.strptime(str(temp[0]), '%Y-%m-%d %H:%M:%S') )
                 temp[1] = 'NaT'
-                self.assertAlmostEqual(self.dataframe[keywords][1], str(temp))
+                self.assertEqual(self.dataframe[keywords][1], str(temp))
             elif pd.isnull(temp) and pd.isnull(self.dataframe[keywords][1]):
                 self.assertTrue(pd.isnull(self.dataframe[keywords][1]))
             else:
-                self.assertAlmostEqual(self.dataframe[keywords][1], temp, 'Error is in keyword ' + keywords)
+                self.assertEqual(self.dataframe[keywords][1], temp, 'Error is in keyword ' + keywords)
 
     def step_2(self):
         validate.calculate_intuitive_metrics(self.dataframe, self.model_names, self.all_energy_channels, \
@@ -1655,23 +1542,7 @@ class TestPeakIntensityMaxMult(unittest.TestCase):
         test_dict = fill_peak_intensity_max_mult_dict(test_dict, self)
         csv_filename = os.path.join(config.outpath, 'csv', 'peak_intensity_max_metrics.csv')
         
-        keyword_all_clear = []
-        with open(csv_filename, mode = 'r') as csvfile:
-            reading = csv.reader(csvfile, delimiter = ',')
-            
-            for row in reading:
-                if keyword_all_clear == []:
-                    keyword_all_clear = row
-                else:
-                    for j in range(len(row)):
-                        if keyword_all_clear[j] == '':
-                            pass
-                        else:
-                            keyword = keyword_all_clear[j]
-                            try:
-                                self.assertAlmostEqual(float(row[j]), float(test_dict[keyword][0]), msg = 'This is the keyword ' + keyword)
-                            except:
-                                self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
+        utils.assert_equal_table(self, csv_filename, test_dict)
 
         
     def utility_print_docstring(self, function):
@@ -1747,7 +1618,7 @@ class TestProbability0(unittest.TestCase):
             if pd.isnull(temp) and pd.isnull(self.dataframe[keywords][0]):
                 self.assertTrue(pd.isnull(self.dataframe[keywords][0]))
             else:
-                self.assertAlmostEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
+                self.assertEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
 
 
     def step_2(self):
@@ -1763,23 +1634,7 @@ class TestProbability0(unittest.TestCase):
         test_dict = initialize_probability_dict()
         test_dict = fill_probability_dict_highprob(test_dict, self)
         csv_filename = os.path.join(config.outpath, 'csv', 'probability_metrics.csv')
-        keyword_all_clear = []
-        with open(csv_filename, mode = 'r') as csvfile:
-            reading = csv.reader(csvfile, delimiter = ',')
-            
-            for row in reading:
-                if keyword_all_clear == []:
-                    keyword_all_clear = row
-                else:
-                    for j in range(len(row)):
-                        if keyword_all_clear[j] == '':
-                            pass
-                        else:
-                            keyword = keyword_all_clear[j]
-                            try:
-                                self.assertAlmostEqual(float(row[j]), float(test_dict[keyword][0]), msg = 'This is the keyword ' + keyword)
-                            except:
-                                self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
+        utils.assert_equal_table(self, csv_filename, test_dict)
 
 
 
@@ -1873,11 +1728,11 @@ class TestProbabilityMult(unittest.TestCase):
                 
                 temp[0] = str(datetime.strptime(str(temp[0]), '%Y-%m-%d %H:%M:%S') )
                 temp[1] = 'NaT'
-                self.assertAlmostEqual(self.dataframe[keywords][0], str(temp))
+                self.assertEqual(self.dataframe[keywords][0], str(temp))
             elif pd.isnull(temp) and pd.isnull(self.dataframe[keywords][0]):
                 self.assertTrue(pd.isnull(self.dataframe[keywords][0]))
             else:
-                self.assertAlmostEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
+                self.assertEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
 
             temp = utils.attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][1],\
                  self.energy_key, self.obs_thresholds)
@@ -1888,11 +1743,11 @@ class TestProbabilityMult(unittest.TestCase):
             if keywords == 'All Threshold Crossing Times': 
                 temp[0] = str(datetime.strptime(str(temp[0]), '%Y-%m-%d %H:%M:%S') )
                 temp[1] = 'NaT'
-                self.assertAlmostEqual(self.dataframe[keywords][1], str(temp))
+                self.assertEqual(self.dataframe[keywords][1], str(temp))
             elif pd.isnull(temp) and pd.isnull(self.dataframe[keywords][1]):
                 self.assertTrue(pd.isnull(self.dataframe[keywords][1]))
             else:
-                self.assertAlmostEqual(self.dataframe[keywords][1], temp, 'Error is in keyword ' + keywords)
+                self.assertEqual(self.dataframe[keywords][1], temp, 'Error is in keyword ' + keywords)
 
 
 
@@ -1904,23 +1759,7 @@ class TestProbabilityMult(unittest.TestCase):
         test_dict = initialize_probability_dict()
         test_dict = fill_probability_dict_multprob(test_dict, self)
         csv_filename = os.path.join(config.outpath, 'csv', 'probability_metrics.csv')
-        keyword_all_clear = []
-        with open(csv_filename, mode = 'r') as csvfile:
-            reading = csv.reader(csvfile, delimiter = ',')
-            
-            for row in reading:
-                if keyword_all_clear == []:
-                    keyword_all_clear = row
-                else:
-                    for j in range(len(row)):
-                        if keyword_all_clear[j] == '':
-                            pass
-                        else:
-                            keyword = keyword_all_clear[j]
-                            try:
-                                self.assertAlmostEqual(float(row[j]), float(test_dict[keyword][0]), msg = 'This is the keyword ' + keyword)
-                            except:
-                                self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
+        utils.assert_equal_table(self, csv_filename, test_dict)
  
 
     def utility_print_docstring(self, function):
@@ -2002,16 +1841,16 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
                 try:
                     for energies in range(len(self.dataframe[keywords][0])):
                         
-                        self.assertAlmostEqual(self.dataframe[keywords][0][energies]['energy_min'], temp[energies]['energy_min'], 'Error is in keyword ' + keywords + ' energy_min')
-                        self.assertAlmostEqual(self.dataframe[keywords][0][energies]['energy_max'], temp[energies]['energy_max'], 'Error is in keyword ' + keywords + ' energy_max')
-                        self.assertAlmostEqual(self.dataframe[keywords][0][energies]['fluence'], temp[energies]['fluence'], 'Error is in keyword ' + keywords + ' fluence')
+                        self.assertEqual(self.dataframe[keywords][0][energies]['energy_min'], temp[energies]['energy_min'], 'Error is in keyword ' + keywords + ' energy_min')
+                        self.assertEqual(self.dataframe[keywords][0][energies]['energy_max'], temp[energies]['energy_max'], 'Error is in keyword ' + keywords + ' energy_max')
+                        self.assertEqual(self.dataframe[keywords][0][energies]['fluence'], temp[energies]['fluence'], 'Error is in keyword ' + keywords + ' fluence')
                 except:
                     
                     self.assertTrue(pd.isna(self.dataframe[keywords][0]))
             elif pd.isna(temp) and pd.isna(self.dataframe[keywords][0]):
                 self.assertTrue(pd.isna(self.dataframe[keywords][0]))
             else:
-                self.assertAlmostEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
+                self.assertEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
 
             temp = utils.attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][1],\
                  self.energy_key, self.obs_thresholds)
@@ -2019,18 +1858,18 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
             if 'SEP Fluence Spectrum' in keywords and "Units" not in keywords:
                 try:
                     for energies in range(len(self.dataframe[keywords][1])):
-                        self.assertAlmostEqual(self.dataframe[keywords][1][energies]['energy_min'], temp[energies]['energy_min'], 'Error is in keyword ' + keywords + ' energy_min')
-                        self.assertAlmostEqual(self.dataframe[keywords][1][energies]['energy_max'], temp[energies]['energy_max'], 'Error is in keyword ' + keywords + ' energy_max')
-                        self.assertAlmostEqual(self.dataframe[keywords][1][energies]['fluence'], temp[energies]['fluence'], 'Error is in keyword ' + keywords + ' fluence')
+                        self.assertEqual(self.dataframe[keywords][1][energies]['energy_min'], temp[energies]['energy_min'], 'Error is in keyword ' + keywords + ' energy_min')
+                        self.assertEqual(self.dataframe[keywords][1][energies]['energy_max'], temp[energies]['energy_max'], 'Error is in keyword ' + keywords + ' energy_max')
+                        self.assertEqual(self.dataframe[keywords][1][energies]['fluence'], temp[energies]['fluence'], 'Error is in keyword ' + keywords + ' fluence')
                 except:
                     
                     self.assertTrue(pd.isna(self.dataframe[keywords][1]))
             elif pd.isna(temp) and pd.isna(self.dataframe[keywords][1]):
                 self.assertTrue(pd.isna(self.dataframe[keywords][1]))
             elif keywords == 'All Threshold Crossing Times':
-                self.assertAlmostEqual(self.dataframe[keywords][1], str(['NaT']))
+                self.assertEqual(self.dataframe[keywords][1], str(['NaT']))
             else:        
-                self.assertAlmostEqual(self.dataframe[keywords][1], temp, 'Error is in keyword ' + keywords)
+                self.assertEqual(self.dataframe[keywords][1], temp, 'Error is in keyword ' + keywords)
         for type in self.validation_type:
             
             validate.calculate_intuitive_metrics(self.dataframe, self.model_names, self.all_energy_channels, \
@@ -2055,23 +1894,9 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
         test_dict = initialize_probability_dict()
         test_dict = fill_probability_dict_all(test_dict, self)
         csv_filename = os.path.join(config.outpath, 'csv', 'probability_metrics.csv')
-        keyword_all_clear = []
-        with open(csv_filename, mode = 'r') as csvfile:
-            reading = csv.reader(csvfile, delimiter = ',')
-            
-            for row in reading:
-                if keyword_all_clear == []:
-                    keyword_all_clear = row
-                else:
-                    for j in range(len(row)):
-                        if keyword_all_clear[j] == '':
-                            pass
-                        else:
-                            keyword = keyword_all_clear[j]
-                            try:
-                                self.assertAlmostEqual(float(row[j]), float(test_dict[keyword][0]), msg = 'This is the keyword ' + keyword)
-                            except:
-                                self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
+
+        utils.assert_equal_table(self, csv_filename, test_dict)
+     
 
 
     def step_5_peak_int_max(self):
@@ -2079,70 +1904,27 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
         test_dict = initialize_flux_dict()
         test_dict = fill_peak_intensity_max_metrics_dict_all(test_dict, self)
         csv_filename = os.path.join(config.outpath, 'csv', 'peak_intensity_max_metrics.csv')
-        keyword_all_clear = []
-        with open(csv_filename, mode = 'r') as csvfile:
-            reading = csv.reader(csvfile, delimiter = ',')
-            
-            for row in reading:
-                if keyword_all_clear == []:
-                    keyword_all_clear = row
-                else:
-                    for j in range(len(row)):
-                        if keyword_all_clear[j] == '':
-                            pass
-                        else:
-                            keyword = keyword_all_clear[j]
-                            try:
-                                self.assertAlmostEqual(float(row[j]), float(test_dict[keyword][0]), msg = 'This is the keyword ' + keyword)
-                            except:
-                                self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
+   
+        utils.assert_equal_table(self, csv_filename, test_dict)
+        
 
     def step_6_time_prof(self):
        
         test_dict = initialize_flux_dict()
         test_dict = fill_time_profile_dict_all(test_dict, self)
         csv_filename = os.path.join(config.outpath, 'csv', 'time_profile_metrics.csv')
-        keyword_all_clear = []
-        with open(csv_filename, mode = 'r') as csvfile:
-            reading = csv.reader(csvfile, delimiter = ',')
-            
-            for row in reading:
-                if keyword_all_clear == []:
-                    keyword_all_clear = row
-                else:
-                    for j in range(len(row)):
-                        if keyword_all_clear[j] == '':
-                            pass
-                        else:
-                            keyword = keyword_all_clear[j]
-                            logger.debug(str(keyword) + ' ' + str(row[j]) + ' ' + str(test_dict[keyword][0]))
-                            try:
-                                self.assertAlmostEqual(float(row[j]), float(test_dict[keyword][0]), msg = 'This is the keyword ' + keyword)
-                            except:
-                                self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
+  
+        utils.assert_equal_table(self, csv_filename, test_dict)
+       
 
     def step_7_all_clear(self):
        
         test_dict = initialize_all_clear_dict()
         test_dict = fill_all_clear_dict_all(test_dict, self)
         csv_filename = os.path.join(config.outpath, 'csv', 'all_clear_metrics.csv')
-        keyword_all_clear = []
-        with open(csv_filename, mode = 'r') as csvfile:
-            reading = csv.reader(csvfile, delimiter = ',')
-            
-            for row in reading:
-                if keyword_all_clear == []:
-                    keyword_all_clear = row
-                else:
-                    for j in range(len(row)):
-                        if keyword_all_clear[j] == '':
-                            pass
-                        else:
-                            keyword = keyword_all_clear[j]
-                            try:
-                                self.assertAlmostEqual(float(row[j]), float(test_dict[keyword][0]), msg = 'This is the keyword ' + keyword)
-                            except:
-                                self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
+        
+        utils.assert_equal_table(self, csv_filename, test_dict)
+
 
     
     def step_8_awt(self):
@@ -2150,253 +1932,94 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
         test_dict = initialize_awt_dict()
         test_dict = fill_awt_dict_all(test_dict, self)
         csv_filename = os.path.join(config.outpath, 'csv', 'awt_metrics.csv')
-        keyword_all_clear = []
-        with open(csv_filename, mode = 'r') as csvfile:
-            reading = csv.reader(csvfile, delimiter = ',')
-            
-            for row in reading:
-                if keyword_all_clear == []:
-                    keyword_all_clear = row
-                else:
-                    for j in range(len(row)):
-                        if keyword_all_clear[j] == '':
-                            pass
-                        else:
-                            keyword = keyword_all_clear[j]
-                            try:
-                                self.assertAlmostEqual(float(row[j]), float(test_dict[keyword][0]), msg = 'This is the keyword ' + keyword)
-                            except:
-                                self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
+       
+        utils.assert_equal_table(self, csv_filename, test_dict)
+    
 
     def step_9_duration(self):
         
         test_dict = initialize_time_dict()
         test_dict = fill_duration_metrics_dict_all(test_dict, self)
         csv_filename = os.path.join(config.outpath, 'csv', 'duration_metrics.csv')
-        keyword_all_clear = []
-        with open(csv_filename, mode = 'r') as csvfile:
-            reading = csv.reader(csvfile, delimiter = ',')
-            
-            for row in reading:
-                if keyword_all_clear == []:
-                    keyword_all_clear = row
-                else:
-                    for j in range(len(row)):
-                        if keyword_all_clear[j] == '':
-                            pass
-                        else:
-                            keyword = keyword_all_clear[j]
-                            try:
-                                self.assertAlmostEqual(float(row[j]), float(test_dict[keyword][0]), msg = 'This is the keyword ' + keyword)
-                            except:
-                                self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
+   
+        utils.assert_equal_table(self, csv_filename, test_dict)
+     
     
     def step_10_end_time(self):
         
         test_dict = initialize_time_dict()
         test_dict = fill_end_time_metrics_dict_all(test_dict, self)
         csv_filename = os.path.join(config.outpath, 'csv', 'end_time_metrics.csv')
-        keyword_all_clear = []
-        with open(csv_filename, mode = 'r') as csvfile:
-            reading = csv.reader(csvfile, delimiter = ',')
-            
-            for row in reading:
-                if keyword_all_clear == []:
-                    keyword_all_clear = row
-                else:
-                    for j in range(len(row)):
-                        if keyword_all_clear[j] == '':
-                            pass
-                        else:
-                            keyword = keyword_all_clear[j]
-                            try:
-                                self.assertAlmostEqual(float(row[j]), float(test_dict[keyword][0]), msg = 'This is the keyword ' + keyword)
-                            except:
-                                self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
+      
+        utils.assert_equal_table(self, csv_filename, test_dict)
+    
 
     def step_11_last_data_to_issue_time(self):
         
         test_dict = initialize_time_dict()
         test_dict = fill_last_data_to_issue_time_metrics_dict_all(test_dict, self)
         csv_filename = os.path.join(config.outpath, 'csv', 'last_data_to_issue_time_metrics.csv')
-        keyword_all_clear = []
-        with open(csv_filename, mode = 'r') as csvfile:
-            reading = csv.reader(csvfile, delimiter = ',')
-            
-            for row in reading:
-                if keyword_all_clear == []:
-                    keyword_all_clear = row
-                else:
-                    for j in range(len(row)):
-                        if keyword_all_clear[j] == '':
-                            pass
-                        else:
-                            keyword = keyword_all_clear[j]
-                            try:
-                                self.assertAlmostEqual(float(row[j]), float(test_dict[keyword][0]), msg = 'This is the keyword ' + keyword)
-                            except:
-                                self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)
+    
+        utils.assert_equal_table(self, csv_filename, test_dict)
+        
 
     def step_12_max_flux_pred_win(self):
         
         test_dict = initialize_flux_dict()
         test_dict = fill_max_flux_in_pred_win_metrics_dict_all(test_dict, self)
         csv_filename = os.path.join(config.outpath, 'csv', 'max_flux_in_pred_win_metrics.csv')
-        keyword_all_clear = []
-        with open(csv_filename, mode = 'r') as csvfile:
-            reading = csv.reader(csvfile, delimiter = ',')
-            
-            for row in reading:
-                if keyword_all_clear == []:
-                    keyword_all_clear = row
-                else:
-                    for j in range(len(row)):
-                        if keyword_all_clear[j] == '':
-                            pass
-                        else:
-                            keyword = keyword_all_clear[j]
-                            try:
-                                self.assertAlmostEqual(float(row[j]), float(test_dict[keyword][0]), msg = 'This is the keyword ' + keyword)
-                            except:
-                                self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)    
+        
+        utils.assert_equal_table(self, csv_filename, test_dict)
+        
 
     def step_13_peak_int_max_time(self):
         
         test_dict = initialize_time_dict()
         test_dict = fill_peak_intensity_max_time_metrics_dict_all(test_dict, self)
         csv_filename = os.path.join(config.outpath, 'csv', 'peak_intensity_max_time_metrics.csv')
-        keyword_all_clear = []
-        with open(csv_filename, mode = 'r') as csvfile:
-            reading = csv.reader(csvfile, delimiter = ',')
-            
-            for row in reading:
-                if keyword_all_clear == []:
-                    keyword_all_clear = row
-                else:
-                    for j in range(len(row)):
-                        if keyword_all_clear[j] == '':
-                            pass
-                        else:
-                            keyword = keyword_all_clear[j]
-                            try:
-                                self.assertAlmostEqual(float(row[j]), float(test_dict[keyword][0]), msg = 'This is the keyword ' + keyword)
-                            except:
-                                self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)    
+        
+        utils.assert_equal_table(self, csv_filename, test_dict)
+       
     
     def step_14_peak_int(self):
         
         test_dict = initialize_flux_dict()
         test_dict = fill_peak_intensity_metrics_dict_all(test_dict, self)
         csv_filename = os.path.join(config.outpath, 'csv', 'peak_intensity_metrics.csv')
-        keyword_all_clear = []
-        with open(csv_filename, mode = 'r') as csvfile:
-            reading = csv.reader(csvfile, delimiter = ',')
-            
-            for row in reading:
-                if keyword_all_clear == []:
-                    keyword_all_clear = row
-                else:
-                    for j in range(len(row)):
-                        if keyword_all_clear[j] == '':
-                            pass
-                        else:
-                            keyword = keyword_all_clear[j]
-                            try:
-                                self.assertAlmostEqual(float(row[j]), float(test_dict[keyword][0]), msg = 'This is the keyword ' + keyword)
-                            except:
-                                self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)    
-
+        
+        utils.assert_equal_table(self, csv_filename, test_dict)
+        
     def step_15_peak_int_time(self):
         
         test_dict = initialize_time_dict()
         test_dict = fill_peak_intensity_time_dict_all(test_dict, self)
         csv_filename = os.path.join(config.outpath, 'csv', 'peak_intensity_time_metrics.csv')
-        keyword_all_clear = []
-        with open(csv_filename, mode = 'r') as csvfile:
-            reading = csv.reader(csvfile, delimiter = ',')
-            
-            for row in reading:
-                if keyword_all_clear == []:
-                    keyword_all_clear = row
-                else:
-                    for j in range(len(row)):
-                        if keyword_all_clear[j] == '':
-                            pass
-                        else:
-                            keyword = keyword_all_clear[j]
-                            try:
-                                self.assertAlmostEqual(float(row[j]), float(test_dict[keyword][0]), msg = 'This is the keyword ' + keyword)
-                            except:
-                                self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)    
+        utils.assert_equal_table(self, csv_filename, test_dict)
 
     def step_16_start_time(self):
         
         test_dict = initialize_time_dict()
         test_dict = fill_start_time_dict_all(test_dict, self)
         csv_filename = os.path.join(config.outpath, 'csv', 'start_time_metrics.csv')
-        keyword_all_clear = []
-        with open(csv_filename, mode = 'r') as csvfile:
-            reading = csv.reader(csvfile, delimiter = ',')
-            
-            for row in reading:
-                if keyword_all_clear == []:
-                    keyword_all_clear = row
-                else:
-                    for j in range(len(row)):
-                        if keyword_all_clear[j] == '':
-                            pass
-                        else:
-                            keyword = keyword_all_clear[j]
-                            try:
-                                self.assertAlmostEqual(float(row[j]), float(test_dict[keyword][0]), msg = 'This is the keyword ' + keyword)
-                            except:
-                                self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)    
+        utils.assert_equal_table(self, csv_filename, test_dict)
+       
     
     def step_17_thresh_crossing_time(self):
         
         test_dict = initialize_time_dict()
         test_dict = fill_threshold_crossing_time_dict_all(test_dict, self)
         csv_filename = os.path.join(config.outpath, 'csv', 'threshold_crossing_metrics.csv')
-        keyword_all_clear = []
-        with open(csv_filename, mode = 'r') as csvfile:
-            reading = csv.reader(csvfile, delimiter = ',')
-            
-            for row in reading:
-                if keyword_all_clear == []:
-                    keyword_all_clear = row
-                else:
-                    for j in range(len(row)):
-                        if keyword_all_clear[j] == '':
-                            pass
-                        else:
-                            keyword = keyword_all_clear[j]
-                            try:
-                                self.assertAlmostEqual(float(row[j]), float(test_dict[keyword][0]), msg = 'This is the keyword ' + keyword)
-                            except:
-                                self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)    
+       
+        utils.assert_equal_table(self, csv_filename, test_dict)
+        
     
     def step_18_fluence(self):
         
         test_dict = initialize_flux_dict()
         test_dict = fill_fluence_dict_all(test_dict, self)
         csv_filename = os.path.join(config.outpath, 'csv', 'fluence_metrics.csv')
-        keyword_all_clear = []
-        with open(csv_filename, mode = 'r') as csvfile:
-            reading = csv.reader(csvfile, delimiter = ',')
-            
-            for row in reading:
-                if keyword_all_clear == []:
-                    keyword_all_clear = row
-                else:
-                    for j in range(len(row)):
-                        if keyword_all_clear[j] == '':
-                            pass
-                        else:
-                            keyword = keyword_all_clear[j]
-                            try:
-                                self.assertAlmostEqual(float(row[j]), float(test_dict[keyword][0]), msg = 'This is the keyword ' + keyword)
-                            except:
-                                self.assertAlmostEqual(row[j], test_dict[keyword][0], msg = 'This is the keyword ' + keyword)    
+        utils.assert_equal_table(self, csv_filename, test_dict)
+        
 
     def utility_print_docstring(self, function):
         if self.verbosity == 2:

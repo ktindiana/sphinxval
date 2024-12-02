@@ -131,9 +131,9 @@ class Test_AllFields_Mismatch(unittest.TestCase):
                 try:
                     
                     for energies in range(len(self.dataframe[keywords][2])):
-                        self.assertAlmostEqual(self.dataframe[keywords][2][energies]['energy_min'], temp[energies]['energy_min'], 'Error is in keyword ' + keywords + ' energy_min')
-                        self.assertAlmostEqual(self.dataframe[keywords][2][energies]['energy_max'], temp[energies]['energy_max'], 'Error is in keyword ' + keywords + ' energy_max')
-                        self.assertAlmostEqual(self.dataframe[keywords][2][energies]['fluence'], temp[energies]['fluence'], 'Error is in keyword ' + keywords + ' fluence')
+                        self.assertEqual(self.dataframe[keywords][2][energies]['energy_min'], temp[energies]['energy_min'], 'Error is in keyword ' + keywords + ' energy_min')
+                        self.assertEqual(self.dataframe[keywords][2][energies]['energy_max'], temp[energies]['energy_max'], 'Error is in keyword ' + keywords + ' energy_max')
+                        self.assertEqual(self.dataframe[keywords][2][energies]['fluence'], temp[energies]['fluence'], 'Error is in keyword ' + keywords + ' fluence')
                 except:
                     
                     self.assertTrue(pd.isna(self.dataframe[keywords][2]))
@@ -142,7 +142,7 @@ class Test_AllFields_Mismatch(unittest.TestCase):
             elif pd.isna(temp) and pd.isna(self.dataframe[keywords][2]):
                 self.assertTrue(pd.isna(self.dataframe[keywords][2]))
             else:
-                self.assertAlmostEqual(self.dataframe[keywords][2], temp, 'Error is in keyword ' + keywords)
+                self.assertEqual(self.dataframe[keywords][2], temp, 'Error is in keyword ' + keywords)
 
 
     def step_2(self):

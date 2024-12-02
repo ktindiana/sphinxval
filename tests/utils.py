@@ -504,3 +504,32 @@ def attributes_of_sphinx_obj(keyword, sphinx_obj, energy_channel_key, threshold_
             else:
                 attribute = str([str(datetime.strptime(str(attribute[0]), '%Y-%m-%d %H:%M:%S') )])
         return attribute
+
+
+
+def assert_equal_table(self, filename, test_dict):
+    keyword_all_clear = []
+    print(filename)
+    with open(filename, mode = 'r') as csvfile:
+        reading = pd.read_csv(csvfile, delimiter = ',')
+    
+        for rows in reading.index:
+            # print('this is rows ', rows)
+            # print(reading.iloc[rows])
+            for keywords in reading.columns:
+                # print('this is keywords ', keywords)
+                # print()
+                if 'Unnamed' in keywords:
+                    pass
+                else:
+                    # keyword = keyword_all_clear
+                    # print(reading.iloc[rows][keywords], type(reading.iloc[rows][keywords]))#, column)#, test_dict[keyword][0])
+                    if pd.isna(reading.iloc[rows][keywords]):# and pd.isna(test_dict[keywords][0]):
+                        self.assertTrue(pd.isna(reading.iloc[rows][keywords]))
+                        self.assertTrue(test_dict[keywords][0], msg = 'This test_dict element should be a nan for keyword ' + keywords) 
+                    elif isinstance(reading.iloc[rows][keywords], str):
+                        self.assertEqual(reading.iloc[rows][keywords], test_dict[keywords][0], msg = 'This is the keyword ' + keywords) 
+                    else:
+                        self.assertAlmostEqual(reading.iloc[rows][keywords], float(test_dict[keywords][0]), msg = 'This is the keyword ' + keywords)
+                        
+                               
