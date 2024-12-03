@@ -142,7 +142,7 @@ class FluxMetricsTestCase(unittest.TestCase):
         y_pred = [1]
         result = metrics.calc_E(y_true, y_pred)
         hand_calc =  y_pred[0] - y_true[0]
-        self.assertEqual(result[0], hand_calc)
+        self.assertAlmostEqual(result[0], hand_calc)
 
 
         y_true = [10, 10, 10, 10]
@@ -153,7 +153,7 @@ class FluxMetricsTestCase(unittest.TestCase):
             temp.append(elements[0] - elements[1])
         hand_calc = np.mean(temp)
         result = np.mean(metrics.calc_E(y_true, y_pred))
-        self.assertEqual(result, hand_calc)
+        self.assertAlmostEqual(result, hand_calc)
 
         y_true = [10, 10, 10, 10]
         y_pred = [1, 1, 1, 1]
@@ -184,7 +184,7 @@ class FluxMetricsTestCase(unittest.TestCase):
         y_pred = [1]
         result = metrics.calc_AE(y_true, y_pred)
         hand_calc =  np.abs(y_pred[0] - y_true[0])
-        self.assertEqual(result[0], hand_calc)
+        self.assertAlmostEqual(result[0], hand_calc)
 
 
         y_true = [10, 10, 10, 10]
@@ -195,7 +195,7 @@ class FluxMetricsTestCase(unittest.TestCase):
             temp.append(np.abs(elements[0] - elements[1]))
         hand_calc = np.mean(temp)
         result = np.mean(metrics.calc_AE(y_true, y_pred))
-        self.assertEqual(result, hand_calc)
+        self.assertAlmostEqual(result, hand_calc)
 
         y_true = [10, 10, 10, 10]
         y_pred = [1, 1, 1, 1]
@@ -226,7 +226,7 @@ class FluxMetricsTestCase(unittest.TestCase):
         y_pred = [1]
         result = metrics.calc_LE(y_true, y_pred)
         hand_calc = np.log10(y_pred[0]) - np.log10(y_true[0])
-        self.assertEqual(result[0], -1)
+        self.assertAlmostEqual(result[0], -1)
 
 
         y_true = [10, 10, 10, 10]
@@ -237,7 +237,7 @@ class FluxMetricsTestCase(unittest.TestCase):
             temp.append(np.log10(elements[0]) - np.log10(elements[1]))
         hand_calc = np.mean(temp)
         result = np.mean(metrics.calc_LE(y_true, y_pred))
-        self.assertEqual(result, hand_calc)
+        self.assertAlmostEqual(result, hand_calc)
 
         y_true = [10, 10, 10, 10]
         y_pred = [1, 1, 1, 1]
@@ -271,7 +271,7 @@ class FluxMetricsTestCase(unittest.TestCase):
         y_pred = [1]
         result = metrics.calc_ALE(y_true, y_pred)
         hand_calc = np.abs(np.log10(y_pred[0]) - np.log10(y_true[0]))
-        self.assertEqual(result[0], hand_calc)
+        self.assertAlmostEqual(result[0], hand_calc)
 
 
         y_true = [10, 10, 10, 10]
@@ -282,7 +282,7 @@ class FluxMetricsTestCase(unittest.TestCase):
             temp.append(np.abs(np.log10(elements[0]) - np.log10(elements[1])))
         hand_calc = np.mean(temp)
         result = np.mean(metrics.calc_ALE(y_true, y_pred))
-        self.assertEqual(result, hand_calc)
+        self.assertAlmostEqual(result, hand_calc)
 
         y_true = [10, 10, 10, 10]
         y_pred = [1, 1, 1, 1]
@@ -315,7 +315,7 @@ class FluxMetricsTestCase(unittest.TestCase):
         y_pred = [1]
         result = metrics.calc_SE(y_true, y_pred)
         hand_calc = (y_pred[0] - y_true[0])**2
-        self.assertEqual(result[0], hand_calc)
+        self.assertAlmostEqual(result[0], hand_calc)
 
 
         y_true = [10, 10, 10, 10]
@@ -326,7 +326,7 @@ class FluxMetricsTestCase(unittest.TestCase):
             temp.append((elements[0] - elements[1])**2)
         hand_calc = np.mean(temp)
         result = np.mean(metrics.calc_SE(y_true, y_pred))
-        self.assertEqual(result, hand_calc)
+        self.assertAlmostEqual(result, hand_calc)
 
         y_true = [10, 10, 10, 10]
         y_pred = [1, 1, 1, 1]
@@ -356,7 +356,7 @@ class FluxMetricsTestCase(unittest.TestCase):
         y_pred = [1]
         result = metrics.calc_SLE(y_true, y_pred)
         hand_calc = (np.log10(y_pred[0]) - np.log10(y_true[0]))**2
-        self.assertEqual(result[0], hand_calc)
+        self.assertAlmostEqual(result[0], hand_calc)
 
 
         y_true = [10, 10, 10, 10]
@@ -367,7 +367,7 @@ class FluxMetricsTestCase(unittest.TestCase):
             temp.append((np.log10(elements[0]) - np.log10(elements[1]))**2)
         hand_calc = np.mean(temp)
         result = np.mean(metrics.calc_SLE(y_true, y_pred))
-        self.assertEqual(result, hand_calc)
+        self.assertAlmostEqual(result, hand_calc)
 
         y_true = [10, 10, 10, 10]
         y_pred = [1, 1, 1, 1]
@@ -403,7 +403,7 @@ class FluxMetricsTestCase(unittest.TestCase):
         hand_calc = math.sqrt((y_pred[0] - y_true[0])**2)
         # hand_calc = math.sqrt(sum(error)/len(error))
         
-        self.assertEqual(result, hand_calc)
+        self.assertAlmostEqual(result, hand_calc)
 
 
         y_true = [10, 10, 10, 10]
@@ -414,7 +414,7 @@ class FluxMetricsTestCase(unittest.TestCase):
             temp.append((elements[0] - elements[1])**2)
         hand_calc = math.sqrt(sum(temp)/len(temp))
         result = np.mean(metrics.calc_RMSE(y_true, y_pred))
-        self.assertEqual(result, hand_calc)
+        self.assertAlmostEqual(result, hand_calc)
 
         y_true = [10, 10, 10, 10]
         y_pred = [1, 1, 1, 1]
@@ -445,7 +445,7 @@ class FluxMetricsTestCase(unittest.TestCase):
         y_pred = [1]
         result = metrics.calc_RMSLE(y_true, y_pred)
         hand_calc = math.sqrt((np.log10(y_pred[0]) - np.log10(y_true[0]))**2)
-        self.assertEqual(result, hand_calc)
+        self.assertAlmostEqual(result, hand_calc)
 
 
         y_true = [10, 10, 10, 10]
@@ -456,7 +456,7 @@ class FluxMetricsTestCase(unittest.TestCase):
             temp.append((np.log10(elements[0]) - np.log10(elements[1]))**2)
         hand_calc = math.sqrt(sum(temp)/len(temp))
         result = np.mean(metrics.calc_RMSLE(y_true, y_pred))
-        self.assertEqual(result, hand_calc)
+        self.assertAlmostEqual(result, hand_calc)
 
         y_true = [10, 10, 10, 10]
         y_pred = [1, 1, 1, 1]
@@ -490,7 +490,7 @@ class FluxMetricsTestCase(unittest.TestCase):
         y_pred = [1]
         result = metrics.calc_PE(y_true, y_pred)
         hand_calc = (y_pred[0] - y_true[0]) / y_true[0]
-        self.assertEqual(result[0], hand_calc)
+        self.assertAlmostEqual(result[0], hand_calc)
 
 
         y_true = [10, 10, 10, 10]
@@ -501,7 +501,7 @@ class FluxMetricsTestCase(unittest.TestCase):
             temp.append((elements[0] - elements[1]) / elements[1])
         hand_calc = np.mean(temp)
         result = np.mean(metrics.calc_PE(y_true, y_pred))
-        self.assertEqual(result, hand_calc)
+        self.assertAlmostEqual(result, hand_calc)
 
         y_true = [10, 10, 10, 10]
         y_pred = [1, 1, 1, 1]
@@ -536,7 +536,7 @@ class FluxMetricsTestCase(unittest.TestCase):
         y_pred = [1]
         result = metrics.calc_APE(y_true, y_pred)
         hand_calc = np.abs(y_pred[0] - y_true[0]) / y_true[0]
-        self.assertEqual(result[0], hand_calc)
+        self.assertAlmostEqual(result[0], hand_calc)
 
 
         y_true = [10, 10, 10, 10]
@@ -547,7 +547,7 @@ class FluxMetricsTestCase(unittest.TestCase):
             temp.append(np.abs(elements[0] - elements[1]) / elements[1])
         hand_calc = np.mean(temp)
         result = np.mean(metrics.calc_APE(y_true, y_pred))
-        self.assertEqual(result, hand_calc)
+        self.assertAlmostEqual(result, hand_calc)
 
         y_true = [10, 10, 10, 10]
         y_pred = [1, 1, 1, 1]
@@ -580,7 +580,7 @@ class FluxMetricsTestCase(unittest.TestCase):
         y_pred = [1]
         result = metrics.calc_SPE(y_true, y_pred)
         hand_calc =  2.0 * (y_pred[0] - y_true[0]) / (y_pred[0] + y_true[0])
-        self.assertEqual(result[0], hand_calc)
+        self.assertAlmostEqual(result[0], hand_calc)
 
 
         y_true = [10, 10, 10, 10]
@@ -591,7 +591,7 @@ class FluxMetricsTestCase(unittest.TestCase):
             temp.append(2.0* (elements[0] - elements[1]) / (elements[0] + elements[1]))
         hand_calc = np.mean(temp)
         result = np.mean(metrics.calc_SPE(y_true, y_pred))
-        self.assertEqual(result, hand_calc)
+        self.assertAlmostEqual(result, hand_calc)
 
         y_true = [10, 10, 10, 10]
         y_pred = [1, 1, 1, 1]
@@ -626,7 +626,7 @@ class FluxMetricsTestCase(unittest.TestCase):
         y_pred = [1]
         result = metrics.calc_SAPE(y_true, y_pred)
         hand_calc =  2.0 * np.abs(y_pred[0] - y_true[0]) / (y_pred[0] + y_true[0])
-        self.assertEqual(result[0], hand_calc)
+        self.assertAlmostEqual(result[0], hand_calc)
 
 
         y_true = [10, 10, 10, 10]
@@ -637,7 +637,7 @@ class FluxMetricsTestCase(unittest.TestCase):
             temp.append(2.0* np.abs(elements[0] - elements[1]) / (elements[0] + elements[1]))
         hand_calc = np.mean(temp)
         result = np.mean(metrics.calc_SAPE(y_true, y_pred))
-        self.assertEqual(result, hand_calc)
+        self.assertAlmostEqual(result, hand_calc)
 
         y_true = [10, 10, 10, 10]
         y_pred = [1, 1, 1, 1]
@@ -678,7 +678,7 @@ class FluxMetricsTestCase(unittest.TestCase):
         y_pred = [11, 1, 11, 1]
         zipped = zip(y_pred, y_true)
         result = metrics.calc_pearson(y_true, y_pred)
-        self.assertEqual(result[0], 0)
+        self.assertAlmostEqual(result[0], 0)
 
         y_true = [10, 11, 12, 13]
         y_pred = [1, 2, 3, 4]
@@ -689,7 +689,7 @@ class FluxMetricsTestCase(unittest.TestCase):
         y_true = [10, 11, 12, 13]
         y_pred = [4, 3, 2, 1]
         result = metrics.calc_pearson(y_true, y_pred)
-        self.assertEqual(result[0], -0.9999999999999999)
+        self.assertAlmostEqual(result[0], -0.9999999999999999)
 
     
 #     # # Log Pearson Correlation Coefficient ################################################################################
@@ -705,7 +705,7 @@ class FluxMetricsTestCase(unittest.TestCase):
         y_pred = [11, 1, 11, 1]
         zipped = zip(y_pred, y_true)
         result = metrics.calc_pearson(y_true, y_pred)
-        self.assertEqual(result[1], 0)
+        self.assertAlmostEqual(result[1], 0)
 
         y_true = [1, 10, 100, 1000]
         y_pred = [1, 10, 100, 1000]
@@ -717,7 +717,7 @@ class FluxMetricsTestCase(unittest.TestCase):
         y_true = [1, 10, 100, 1000]
         y_pred = [1000, 100, 10, 1]
         result = metrics.calc_pearson(y_true, y_pred)
-        self.assertEqual(result[1], -0.9999999999999999)
+        self.assertAlmostEqual(result[1], -0.9999999999999999)
 
 
 
@@ -728,7 +728,7 @@ class FluxMetricsTestCase(unittest.TestCase):
         y_pred = [1]
         result = metrics.calc_MAR(y_true, y_pred)
         hand_calc = y_pred[0] / y_true[0]
-        self.assertEqual(result, hand_calc)
+        self.assertAlmostEqual(result, hand_calc)
         
 
         y_true = [10, 1, 1, 10]
@@ -739,7 +739,7 @@ class FluxMetricsTestCase(unittest.TestCase):
             temp.append(elements[0] / elements[1])
         hand_calc = np.mean(temp)
         result = metrics.calc_MAR(y_true, y_pred)
-        self.assertEqual(result, hand_calc)
+        self.assertAlmostEqual(result, hand_calc)
 
         y_true = [10, 11, 12, 13]
         y_pred = [0, 1, 2, 3]
@@ -749,7 +749,7 @@ class FluxMetricsTestCase(unittest.TestCase):
             temp.append(elements[0] / elements[1])
         hand_calc = np.mean(temp)
         result = metrics.calc_MAR(y_true, y_pred)
-        self.assertEqual(result, hand_calc)
+        self.assertAlmostEqual(result, hand_calc)
 
         y_true = [10, 11, 12, 13]
         y_pred = [3, 2, 1, 0]
@@ -759,7 +759,7 @@ class FluxMetricsTestCase(unittest.TestCase):
             temp.append(elements[0] / elements[1])
         hand_calc = np.mean(temp)
         result = metrics.calc_MAR(y_true, y_pred)
-        self.assertEqual(result, hand_calc)
+        self.assertAlmostEqual(result, hand_calc)
 
         y_true = [10]
         y_pred = [-1]
@@ -774,7 +774,7 @@ class FluxMetricsTestCase(unittest.TestCase):
         y_pred = [1]
         result = metrics.calc_MdSA(y_true, y_pred)
         hand_calc = (np.exp(np.median(np.abs(np.log(y_true[0] / y_pred[0])))) - 1.0)
-        self.assertEqual(result, hand_calc)
+        self.assertAlmostEqual(result, hand_calc)
         
 
         y_true = np.array([10, 1, 1, 10])
@@ -783,19 +783,19 @@ class FluxMetricsTestCase(unittest.TestCase):
         temp = []
         hand_calc = (np.exp(np.median(np.abs(np.log(y_true/ y_pred)))) - 1.0)
         result = metrics.calc_MdSA(y_true, y_pred)
-        self.assertEqual(result, hand_calc)
+        self.assertAlmostEqual(result, hand_calc)
 
         y_true = np.array([10, 11, 12, 13])
         y_pred = np.array([1, 2, 3, 4])
         hand_calc = (np.exp(np.median(np.abs(np.log(y_true/ y_pred)))) - 1.0)
         result = metrics.calc_MdSA(y_true, y_pred)
-        self.assertEqual(result, hand_calc)
+        self.assertAlmostEqual(result, hand_calc)
 
         y_true = np.array([10, 11, 12, 13])
         y_pred = np.array([4, 3, 2, 1])
         hand_calc = (np.exp(np.median(np.abs(np.log(y_true/ y_pred)))) - 1.0)
         result = metrics.calc_MdSA(y_true, y_pred)
-        self.assertEqual(result, hand_calc)
+        self.assertAlmostEqual(result, hand_calc)
 
         y_true = [10]
         y_pred = [-1]
@@ -816,7 +816,7 @@ class FluxMetricsTestCase(unittest.TestCase):
         y_pred = [11, 1, 11, 1]
         zipped = zip(y_pred, y_true)
         result = metrics.calc_spearman(y_true, y_pred)
-        self.assertEqual(result, 0)
+        self.assertAlmostEqual(result, 0)
 
         y_true = [10, 10]
         y_pred = [1]
@@ -844,54 +844,54 @@ class FluxMetricsTestCase(unittest.TestCase):
                 func_call = metrics.switch_error_func(metric, y_true, y_pred)
             if metric == 'E':
                 hand_calc = np.mean(y_pred - y_true)
-                self.assertEqual(np.mean(func_call), hand_calc)
+                self.assertAlmostEqual(np.mean(func_call), hand_calc)
             elif metric == 'AE':
                 hand_calc = np.mean(np.abs(y_pred - y_true))
-                self.assertEqual(np.mean(func_call), hand_calc)
+                self.assertAlmostEqual(np.mean(func_call), hand_calc)
             elif metric == 'LE':
                 hand_calc = np.mean(np.log10(y_pred) - np.log10(y_true))
-                self.assertEqual(np.mean(func_call), hand_calc)
+                self.assertAlmostEqual(np.mean(func_call), hand_calc)
             elif metric == 'ALE':
                 hand_calc = np.mean(np.abs(np.log10(y_pred) - np.log10(y_true)))
-                self.assertEqual(np.mean(func_call), hand_calc)
+                self.assertAlmostEqual(np.mean(func_call), hand_calc)
             elif metric == 'SE':
                 hand_calc = np.mean((y_pred - y_true)**2)
-                self.assertEqual(np.mean(func_call), hand_calc)
+                self.assertAlmostEqual(np.mean(func_call), hand_calc)
             elif metric == 'SLE':
                 hand_calc = np.mean((np.log10(y_pred) - np.log10(y_true))**2)
-                self.assertEqual(np.mean(func_call), hand_calc)
+                self.assertAlmostEqual(np.mean(func_call), hand_calc)
             elif metric == 'RMSE':
                 error = (y_pred - y_true)**2
                 hand_calc = math.sqrt(sum(error)/ len(error))
-                self.assertEqual(np.mean(func_call), hand_calc)
+                self.assertAlmostEqual(np.mean(func_call), hand_calc)
             elif metric == 'RMSLE':
                 error = (np.log10(y_pred) - np.log10(y_true))**2
                 hand_calc = math.sqrt(sum(error)/len(error))
-                self.assertEqual(np.mean(func_call), hand_calc)
+                self.assertAlmostEqual(np.mean(func_call), hand_calc)
             elif metric == 'PE':
                 hand_calc = np.mean((y_pred - y_true) / y_true)
-                self.assertEqual(np.mean(func_call), hand_calc)
+                self.assertAlmostEqual(np.mean(func_call), hand_calc)
             elif metric == 'APE':
                 hand_calc = np.mean(np.abs(y_pred - y_true) / y_true)
-                self.assertEqual(np.mean(func_call), hand_calc)
+                self.assertAlmostEqual(np.mean(func_call), hand_calc)
             elif metric == 'SPE':
                 hand_calc = np.mean(2.0 * (y_pred - y_true) / (y_pred + y_true))
-                self.assertEqual(np.mean(func_call), hand_calc)
+                self.assertAlmostEqual(np.mean(func_call), hand_calc)
             elif metric == 'SAPE':
                 hand_calc = np.mean(2.0 * np.abs(y_pred - y_true) / (y_pred + y_true))
-                self.assertEqual(np.mean(func_call), hand_calc)
+                self.assertAlmostEqual(np.mean(func_call), hand_calc)
             elif metric == 'r_lin':
-                self.assertEqual(func_call, 0)
+                self.assertAlmostEqual(func_call, 0)
             elif metric == 'r_log':
-                self.assertEqual(func_call, 0)
+                self.assertAlmostEqual(func_call, 0)
             elif metric == 'MAR':
                 hand_calc = np.mean(y_pred / y_true)
-                self.assertEqual(func_call, hand_calc)
+                self.assertAlmostEqual(func_call, hand_calc)
             elif metric == 'MdSA':
                 hand_calc = (np.exp(np.median(np.abs(np.log(y_true / y_pred)))) - 1.0)
-                self.assertEqual(func_call, hand_calc)
+                self.assertAlmostEqual(func_call, hand_calc)
             elif metric == 'spearman':
-                self.assertEqual(func_call, 0)
+                self.assertAlmostEqual(func_call, 0)
 
 
         metric = 'not_a_metric' # Testing the error raise       
@@ -905,7 +905,7 @@ class ProbabilityMetricsTestCase(unittest.TestCase):
         y_pred = [0.1]
         result = metrics.calc_brier(y_true, y_pred)
         hand_calc =  (y_pred[0] - y_true[0])**2
-        self.assertEqual(result, hand_calc)
+        self.assertAlmostEqual(result, hand_calc)
 
 
         y_true = [1., 1., 0., 0.]
@@ -916,7 +916,7 @@ class ProbabilityMetricsTestCase(unittest.TestCase):
             temp.append((elements[0] - elements[1])**2)
         hand_calc = np.mean(temp)
         result = np.mean(metrics.calc_brier(y_true, y_pred))
-        self.assertEqual(result, hand_calc)
+        self.assertAlmostEqual(result, hand_calc)
 
         y_true = [1, 1, 1, 1]
         y_pred = [0.1, 0.1, 0.1, 0.1]
@@ -949,7 +949,7 @@ class ProbabilityMetricsTestCase(unittest.TestCase):
             temp.append((elements[0] - elements[1])**2)
         hand_calc = np.mean(temp)
         result = np.mean(metrics.calc_brier(y_true, y_pred))
-        self.assertEqual(result, hand_calc)
+        self.assertAlmostEqual(result, hand_calc)
     
     
 #   # Brier Skill Score    
@@ -962,7 +962,7 @@ class ProbabilityMetricsTestCase(unittest.TestCase):
         clim_score = brier_score_loss(y_true, clim)
         result = metrics.calc_brier_skill(y_true, y_pred)
         hand_calc =  1 - ((y_pred[0] - y_true[0])**2 / clim_score)
-        self.assertEqual(result, hand_calc)
+        self.assertAlmostEqual(result, hand_calc)
 
 
         y_true = [1, 1, 0, 0]
@@ -976,7 +976,7 @@ class ProbabilityMetricsTestCase(unittest.TestCase):
         clim_score = brier_score_loss(y_true, clim)
         hand_calc = 1 - (np.mean(temp) / clim_score)
         result = metrics.calc_brier_skill(y_true, y_pred)
-        self.assertEqual(result, hand_calc)
+        self.assertAlmostEqual(result, hand_calc)
 
         y_true = [1, 1, 1, 1]
         y_pred = [0.1, 0.1, 0.1, 0.1]
@@ -1036,7 +1036,7 @@ class ProbabilityMetricsTestCase(unittest.TestCase):
         y_true = [1.0, 0.0]
         y_pred = [1.0, 0.0]
         result, _ = metrics.receiver_operator_characteristic(y_true, y_pred, 'Test')
-        self.assertEqual(result, 1)
+        self.assertAlmostEqual(result, 1)
 
         y_true = [1.0, 1.0, 1.0, 1.0]
         y_pred = [1.0, 1.0, 1.0, 1.0]
@@ -1065,37 +1065,37 @@ class ContigencyMetricsTestCase(unittest.TestCase):
         for score in result:
             # print(score)
             if score == 'TP':
-                self.assertEqual(result[score], 1)
+                self.assertAlmostEqual(result[score], 1)
                 # 1 hit
             elif score == 'FN':
-                self.assertEqual(result[score], 0)
+                self.assertAlmostEqual(result[score], 0)
                 # 0 Misses
             elif score == 'FP':
-                self.assertEqual(result[score], 0)
+                self.assertAlmostEqual(result[score], 0)
                 # 0 False Alarms
             elif score == 'TN':
-                self.assertEqual(result[score], 0)
+                self.assertAlmostEqual(result[score], 0)
                 # 0 True Negatives
             elif score == 'PC':
-                self.assertEqual(result[score], 1)
+                self.assertAlmostEqual(result[score], 1)
                 # PC = (h+c)/1 = 1+0/1
             elif score == 'B':
-                self.assertEqual(result[score], 1)
+                self.assertAlmostEqual(result[score], 1)
                 # B = h+f / h+m = 1+0/1+0
             elif score == 'H':
-                self.assertEqual(result[score], 1)
+                self.assertAlmostEqual(result[score], 1)
                 # H = h/h+m = 1 / 1+0 
             elif score == 'FAR':
-                self.assertEqual(result[score], 0)
+                self.assertAlmostEqual(result[score], 0)
                 # FAR = f / h+f = 0 / 1+0
             elif score == 'F':
                 self.assertTrue(math.isnan(result[score]))
                 # F = f / f+c = 0/0
             elif score == 'FOH':
-                self.assertEqual(result[score], 1)
+                self.assertAlmostEqual(result[score], 1)
                 # FOH = h / h+f = 1 / 1+0
             elif score == 'FOM':
-                self.assertEqual(result[score], 0)
+                self.assertAlmostEqual(result[score], 0)
                 # FOM = m / h+m = 0 / 1+0
             elif score == 'POCN':
                 self.assertTrue(math.isnan(result[score]))
@@ -1107,7 +1107,7 @@ class ContigencyMetricsTestCase(unittest.TestCase):
                 self.assertTrue(math.isnan(result[score]))
                 # FOCN = c / m+c = 0/0
             elif score == 'TS': 
-                self.assertEqual(result[score], 1)
+                self.assertAlmostEqual(result[score], 1)
                 # TS = h / h+f+m = 1/1+0+0
             elif score == 'OR':
                 self.assertTrue(math.isnan(result[score]))
@@ -1128,17 +1128,17 @@ class ContigencyMetricsTestCase(unittest.TestCase):
                 self.assertTrue(math.isnan(result[score]))
                 # SEDS = (log((h+f)/n)+log((h+m)/n) / log(h/n)) - 1 = (log((1+0)/1)+log((1+0)/1) / log(1/1)) - 1
             elif score == 'FONE':
-                self.assertEqual(result[score], 1)
+                self.assertAlmostEqual(result[score], 1)
             elif score == 'FTWO':
-                self.assertEqual(result[score], 1)
+                self.assertAlmostEqual(result[score], 1)
             elif score == 'FHALF':
-                self.assertEqual(result[score], 1)
+                self.assertAlmostEqual(result[score], 1)
                 # F-Scores (Beta = 0.5, 1, 2) = ((1+ Beta^2)* h) / ((1+Beta^2)*h + Beta^2 * m + f)
                 # F(Beta = 0.5) = ((1+0.5^2)*0) / ((1+0.5^2)*0 + 1 + 0)
                 # F(Beta = 1) = ((1+1^2)*1) / ((1+1^2)*1 + 0 + 0)
                 # F(Beta = 2) = ((1+2^2)*1) / ((1+2^2)*1 + 0 + 0)
             elif score == 'PREV':
-                self.assertEqual(result[score], 1)
+                self.assertAlmostEqual(result[score], 1)
                 # Prevalence = (h+m)/n = (1+0)/1
             elif score == 'MCC':
                 self.assertTrue(math.isnan(result[score]))
@@ -1156,7 +1156,7 @@ class ContigencyMetricsTestCase(unittest.TestCase):
                 self.assertTrue(math.isnan(result[score]))
                 # Balanced Accuracy = (1/2)*(h/(h+m)+c/(f+c) = 1/2 * (1/(1+0)+ 0/(0+0))
             elif score == 'FM':
-                self.assertEqual(result[score],1)
+                self.assertAlmostEqual(result[score],1)
                 # Fowlkes-Mallows Index = Sqrt((h/(h+f))*(h/(h+m))) = sqrt((1/(1+0))*((1/(1+0)))
 
 
@@ -1172,25 +1172,25 @@ class ContigencyMetricsTestCase(unittest.TestCase):
         for score in result:
             # print(score)
             if score == 'TP':
-                self.assertEqual(result[score], 0)
+                self.assertAlmostEqual(result[score], 0)
                 # 0 hits
             elif score == 'FN':
-                self.assertEqual(result[score], 1)
+                self.assertAlmostEqual(result[score], 1)
                 # 1 miss
             elif score == 'FP':
-                self.assertEqual(result[score], 0)
+                self.assertAlmostEqual(result[score], 0)
                 # 0 false alarms
             elif score == 'TN':
-                self.assertEqual(result[score], 0)
+                self.assertAlmostEqual(result[score], 0)
                 # 0 correct negatives
             elif score == 'PC':
-                self.assertEqual(result[score], 0)
+                self.assertAlmostEqual(result[score], 0)
                 # PC = h+c / n = 0+0 / 1
             elif score == 'B':
-                self.assertEqual(result[score], 0)
+                self.assertAlmostEqual(result[score], 0)
                 # B = h+f / h+m = 0+0 / 0+1
             elif score == 'H':
-                self.assertEqual(result[score], 0)
+                self.assertAlmostEqual(result[score], 0)
                 # H = h / h+m = 0 / 1+0
             elif score == 'FAR':
                 self.assertTrue(math.isnan(result[score]))
@@ -1202,31 +1202,31 @@ class ContigencyMetricsTestCase(unittest.TestCase):
                 self.assertTrue(math.isnan(result[score]))
                 # FOH = h / h+f = 0/ 0+0
             elif score == 'FOM':
-                self.assertEqual(result[score], 1)
+                self.assertAlmostEqual(result[score], 1)
                 # FOM = m / h+m = 1 / 0+1
             elif score == 'POCN':
                 self.assertTrue(math.isnan(result[score]))
                 # POCN = c / f+c = 0 / 0+0
             elif score == 'DFR':
-                self.assertEqual(result[score], 1)
+                self.assertAlmostEqual(result[score], 1)
                 # DFR = m / m+c = 1 / 1+0
             elif score == 'FOCN':
-                self.assertEqual(result[score], 0)
+                self.assertAlmostEqual(result[score], 0)
                 # FOCN = c / m+c = 0 / 1+0
             elif score == 'TS': 
-                self.assertEqual(result[score], 0)
+                self.assertAlmostEqual(result[score], 0)
                 # TS = h / h+f+m = 0 / 1+0+0
             elif score == 'OR':
                 self.assertTrue(math.isnan(result[score]))
                 # OR = hc / fm = 0*0 / 0*1
             elif score == 'GSS':
-                self.assertEqual(result[score], 0)
+                self.assertAlmostEqual(result[score], 0)
                 # GSS = h-(h+f)*(h+m)/n / h+f+m-(h+f)*(h+m)/n = 0-(0+0)*(0+1)/1 / 0+0+1-(0+0)(0+1)/1
             elif score == 'TSS':
                 self.assertTrue(math.isnan(result[score]))
                 # TSS = h / h+m - f / f+c = 0 / 1+0 - 0 / 0
             elif score == 'HSS':
-                self.assertEqual(result[score], 0)
+                self.assertAlmostEqual(result[score], 0)
                 # HSS = 2.0*(h*c-f*m) / (h+m)*(m+c)+(h+f)*(f+c) = 2*(0*0 - 0*1) / (1+0)(1+0)+(0+0)(0+0)
             elif score == 'ORSS':
                 self.assertTrue(math.isnan(result[score]))
@@ -1238,17 +1238,17 @@ class ContigencyMetricsTestCase(unittest.TestCase):
                 # RuntimeWarning: divide by zero encountered in log
                 # RuntimeWarning: invalid value encountered in scalar divide
             elif score == 'FONE':
-                self.assertEqual(result[score], 0)
+                self.assertAlmostEqual(result[score], 0)
             elif score == 'FTWO':
-                self.assertEqual(result[score], 0)
+                self.assertAlmostEqual(result[score], 0)
             elif score == 'FHALF':
-                self.assertEqual(result[score], 0)
+                self.assertAlmostEqual(result[score], 0)
                 # F-Scores (Beta = 0.5, 1, 2) = ((1+ Beta^2)* h) / ((1+Beta^2)*h + Beta^2 * m + f)
                 # F(Beta = 0.5) = ((1+0.5^2)*0) / ((1+0.5^2)*0 + 1 + 0)
                 # F(Beta = 1) = ((1+1^2)*0) / ((1+1^2)*0 + 1 + 0)
                 # F(Beta = 2) = ((1+2^2)*0) / ((1+2^2)*0 + 1 + 0)
             elif score == 'PREV':
-                self.assertEqual(result[score], 1)
+                self.assertAlmostEqual(result[score], 1)
                 # Prevalence = (h+m)/n = (0+1)/1
             elif score == 'MCC':
                 self.assertTrue(math.isnan(result[score]))
@@ -1281,19 +1281,19 @@ class ContigencyMetricsTestCase(unittest.TestCase):
         for score in result:
             # print(score)
             if score == 'TP':
-                self.assertEqual(result[score], 0)
+                self.assertAlmostEqual(result[score], 0)
                 # 0 hits
             elif score == 'FN':
-                self.assertEqual(result[score], 0)
+                self.assertAlmostEqual(result[score], 0)
                 # 0 miss
             elif score == 'FP':
-                self.assertEqual(result[score], 1)
+                self.assertAlmostEqual(result[score], 1)
                 # 1 false alarms
             elif score == 'TN':
-                self.assertEqual(result[score], 0)
+                self.assertAlmostEqual(result[score], 0)
                 # 0 correct negatives
             elif score == 'PC':
-                self.assertEqual(result[score], 0)
+                self.assertAlmostEqual(result[score], 0)
                 # PC = h+c / n = 0+0 / 1
             elif score == 'B':
                 self.assertTrue(result[score], 0)
@@ -1308,13 +1308,13 @@ class ContigencyMetricsTestCase(unittest.TestCase):
                 self.assertTrue(result[score], 1)
                 # f = f / f+c = 1 / 1+0
             elif score == 'FOH':
-                self.assertEqual(result[score], 0)
+                self.assertAlmostEqual(result[score], 0)
                 # FOH = h / h+f = 0/ 0+1
             elif score == 'FOM':
                 self.assertTrue(math.isnan(result[score]))
                 # FOM = m / h+m = 0 / 0+0
             elif score == 'POCN':
-                self.assertEqual(result[score], 0)
+                self.assertAlmostEqual(result[score], 0)
                 # POCN = c / f+c = 0 / 1+0
             elif score == 'DFR':
                 self.assertTrue(math.isnan(result[score]))
@@ -1323,19 +1323,19 @@ class ContigencyMetricsTestCase(unittest.TestCase):
                 self.assertTrue(math.isnan(result[score]))
                 # FOCN = c / m+c = 0 / 0+0
             elif score == 'TS': 
-                self.assertEqual(result[score], 0)
+                self.assertAlmostEqual(result[score], 0)
                 # TS = h / h+f+m = 0 / 0+1+0
             elif score == 'OR':
                 self.assertTrue(math.isnan(result[score]))
                 # OR = hc / fm = 0*0 / 0*1
             elif score == 'GSS':
-                self.assertEqual(result[score], 0)
+                self.assertAlmostEqual(result[score], 0)
                 # GSS = h-(h+f)*(h+m)/n / h+f+m-(h+f)*(h+m)/n = 0-(0+1)*(0+0)/1 / 0+1+0-(0+1)(0+0)/1
             elif score == 'TSS':
                 self.assertTrue(math.isnan(result[score]))
                 # TSS = h / h+m - f / f+c = 0 / 0+0 - 1 / 1+0
             elif score == 'HSS':
-                self.assertEqual(result[score], 0)
+                self.assertAlmostEqual(result[score], 0)
                 # HSS = 2.0*(h*c-f*m) / (h+m)*(m+c)+(h+f)*(f+c) = 2*(0*0 - 0*1) / (0+0)(0+0)+(0+1)(1+0)
             elif score == 'ORSS':
                 self.assertTrue(math.isnan(result[score]))
@@ -1347,17 +1347,17 @@ class ContigencyMetricsTestCase(unittest.TestCase):
                 # RuntimeWarning: divide by zero encountered in log
                 # RuntimeWarning: invalid value encountered in scalar divide
             elif score == 'FONE':
-                self.assertEqual(result[score], 0)
+                self.assertAlmostEqual(result[score], 0)
             elif score == 'FTWO':
-                self.assertEqual(result[score], 0)
+                self.assertAlmostEqual(result[score], 0)
             elif score == 'FHALF':
-                self.assertEqual(result[score], 0)
+                self.assertAlmostEqual(result[score], 0)
                 # F-Scores (Beta = 0.5, 1, 2) = ((1+ Beta^2)* h) / ((1+Beta^2)*h + Beta^2 * m + f)
                 # F(Beta = 0.5) = ((1+0.5^2)*0) / ((1+0.5^2)*0 + 0 + 1)
                 # F(Beta = 1) = ((1+1^2)*0) / ((1+1^2)*0 + 0 + 1)
                 # F(Beta = 2) = ((1+2^2)*0) / ((1+2^2)*0 + 0 + 1)
             elif score == 'PREV':
-                self.assertEqual(result[score], 0)
+                self.assertAlmostEqual(result[score], 0)
                 # Prevalence = (h+m)/n = (0+0)/1
             elif score == 'MCC':
                 self.assertTrue(math.isnan(result[score]))
@@ -1366,7 +1366,7 @@ class ContigencyMetricsTestCase(unittest.TestCase):
                 self.assertTrue(math.isnan(result[score]))
                 # Informedness = h/(h+m) + c/(f+c) - 1 = 0/(0+0) + 0/(1+0) - 1
             elif score == 'MARK':
-                self.assertEqual(result[score], -1)
+                self.assertAlmostEqual(result[score], -1)
                 # Markedness = h/(h+f) + c/(f+c) - 1 = 0/(0+1) + 0/(1+0) - 1
             elif score == 'PT':
                 self.assertTrue(math.isnan(result[score]))
@@ -1389,19 +1389,19 @@ class ContigencyMetricsTestCase(unittest.TestCase):
         for score in result:
             # print(score)
             if score == 'TP':
-                self.assertEqual(result[score], 0)
+                self.assertAlmostEqual(result[score], 0)
                 # 0 hits
             elif score == 'FN':
-                self.assertEqual(result[score], 0)
+                self.assertAlmostEqual(result[score], 0)
                 # 0 miss
             elif score == 'FP':
-                self.assertEqual(result[score], 0)
+                self.assertAlmostEqual(result[score], 0)
                 # 0 false alarms
             elif score == 'TN':
-                self.assertEqual(result[score], 1)
+                self.assertAlmostEqual(result[score], 1)
                 # 1 correct negatives
             elif score == 'PC':
-                self.assertEqual(result[score], 1)
+                self.assertAlmostEqual(result[score], 1)
                 # PC = h+c / n = 0+1 / 1
             elif score == 'B':
                 self.assertTrue(math.isnan(result[score]))
@@ -1413,7 +1413,7 @@ class ContigencyMetricsTestCase(unittest.TestCase):
                 self.assertTrue(math.isnan(result[score]))
                 # FAR = f / h+f = 0 / 0+0
             elif score == 'F':
-                self.assertEqual(result[score], 0)
+                self.assertAlmostEqual(result[score], 0)
                 # f = f / f+c = 0 / 1+0
             elif score == 'FOH':
                 self.assertTrue(math.isnan(result[score]))
@@ -1422,13 +1422,13 @@ class ContigencyMetricsTestCase(unittest.TestCase):
                 self.assertTrue(math.isnan(result[score]))
                 # FOM = m / h+m = 0 / 0+0
             elif score == 'POCN':
-                self.assertEqual(result[score], 1)
+                self.assertAlmostEqual(result[score], 1)
                 # POCN = c / f+c = 1 / 1+0
             elif score == 'DFR':
-                self.assertEqual(result[score], 0)
+                self.assertAlmostEqual(result[score], 0)
                 # DFR = m / m+c = 0 / 0+1
             elif score == 'FOCN':
-                self.assertEqual(result[score], 1)
+                self.assertAlmostEqual(result[score], 1)
                 # FOCN = c / m+c = 1 / 0+1
             elif score == 'TS': 
                 self.assertTrue(math.isnan(result[score]))
@@ -1465,7 +1465,7 @@ class ContigencyMetricsTestCase(unittest.TestCase):
                 # F(Beta = 1) = ((1+1^2)*0) / ((1+1^2)*0 + 0 + 0)
                 # F(Beta = 2) = ((1+2^2)*0) / ((1+2^2)*0 + 0 + 0)
             elif score == 'PREV':
-                self.assertEqual(result[score], 0)
+                self.assertAlmostEqual(result[score], 0)
                 # Prevalence = (h+m)/n = (0+0)/1
             elif score == 'MCC':
                 self.assertTrue(math.isnan(result[score]))
@@ -1497,28 +1497,28 @@ class ContigencyMetricsTestCase(unittest.TestCase):
         for score in result:
             # print(score)
             if score == 'TP':
-                self.assertEqual(result[score], 1)
+                self.assertAlmostEqual(result[score], 1)
                 # 1 hits
             elif score == 'FN':
-                self.assertEqual(result[score], 1)
+                self.assertAlmostEqual(result[score], 1)
                 # 1 miss
             elif score == 'FP':
-                self.assertEqual(result[score], 1)
+                self.assertAlmostEqual(result[score], 1)
                 # 1 false alarms
             elif score == 'TN':
-                self.assertEqual(result[score], 1)
+                self.assertAlmostEqual(result[score], 1)
                 # 1 correct negatives
             elif score == 'PC':
-                self.assertEqual(result[score], 1/2)
+                self.assertAlmostEqual(result[score], 1/2)
                 # PC = h+c / n = 1+1 / 4
             elif score == 'B':
-                self.assertEqual(result[score], 1)
+                self.assertAlmostEqual(result[score], 1)
                 # B = h+f / h+m = 1+1 / 1+1
             elif score == 'H':
-                self.assertEqual(result[score], 1/2)
+                self.assertAlmostEqual(result[score], 1/2)
                 # H = h / h+m = 1 / 1+1
             elif score == 'FAR':
-                self.assertEqual(result[score], 1/2)
+                self.assertAlmostEqual(result[score], 1/2)
                 # FAR = f / h+f = 1 / 1+1
             elif score == 'F':
                 self.assertTrue(result[score], 1/2)
@@ -1530,65 +1530,65 @@ class ContigencyMetricsTestCase(unittest.TestCase):
                 self.assertTrue(result[score], 1/2)
                 # FOM = m / h+m = 1 / 1+1
             elif score == 'POCN':
-                self.assertEqual(result[score], 1/2)
+                self.assertAlmostEqual(result[score], 1/2)
                 # POCN = c / f+c = 1 / 1+1
             elif score == 'DFR':
                 self.assertTrue(result[score], 1/2)
                 # DFR = m / m+c = 1 / 1+1
             elif score == 'FOCN':
-                self.assertEqual(result[score], 1/2)
+                self.assertAlmostEqual(result[score], 1/2)
                 # FOCN = c / m+c = 1 / 1+1
             elif score == 'TS': 
-                self.assertEqual(result[score], 1/3)
+                self.assertAlmostEqual(result[score], 1/3)
                 # TS = h / h+f+m = 1 / 1+1+1
             elif score == 'OR':
-                self.assertEqual(result[score], 1)
+                self.assertAlmostEqual(result[score], 1)
                 # OR = hc / fm = 1*1 / 1*1
             elif score == 'GSS':
-                self.assertEqual(result[score], 0)
+                self.assertAlmostEqual(result[score], 0)
                 # GSS = h-(h+f)*(h+m)/n / h+f+m-(h+f)*(h+m)/n = 1-(1+1)*(1+1)/4 / 1+1+1-(1+1)(1+1)/4   = 
             elif score == 'TSS':
-                self.assertEqual(result[score], 0)
+                self.assertAlmostEqual(result[score], 0)
                 # TSS = h / h+m - f / f+c = 1 / 1+1 - 1 / 1+1
             elif score == 'HSS':
-                self.assertEqual(result[score], 0)
+                self.assertAlmostEqual(result[score], 0)
                 # HSS = 2.0*(h*c-f*m) / (h+m)*(m+c)+(h+f)*(f+c) = 2*(1*1 - 1*1) / (1+1)(1+1)+(1+1)(1+1)
             elif score == 'ORSS':
-                self.assertEqual(result[score], 0)
+                self.assertAlmostEqual(result[score], 0)
                 # ORSS = h*c-m*f / h*c+m*f = 1*1-1*1 / 1*1+1*1
             elif score == 'SEDS':
-                self.assertEqual(result[score], 0)
+                self.assertAlmostEqual(result[score], 0)
                 # SEDS = (log((h+f)/n)+log((h+m)/n) / log(h/n)) - 1 = (log((1+1)/1)+log((1+1)/1) / log(1/1)) - 1
             elif score == 'FONE':
-                self.assertEqual(result[score], 0.5)
+                self.assertAlmostEqual(result[score], 0.5)
             elif score == 'FTWO':
-                self.assertEqual(result[score], 0.5)
+                self.assertAlmostEqual(result[score], 0.5)
             elif score == 'FHALF':
-                self.assertEqual(result[score], 0.5)
+                self.assertAlmostEqual(result[score], 0.5)
                 # F-Scores (Beta = 0.5, 1, 2) = ((1+ Beta^2)* h) / ((1+Beta^2)*h + Beta^2 * m + f)
                 # F(Beta = 0.5) = ((1+0.5^2)*1) / ((1+0.5^2)*1 + 1 + 1)
                 # F(Beta = 1) = ((1+1^2)*1) / ((1+1^2)*1 + 1 + 1)
                 # F(Beta = 2) = ((1+2^2)*1) / ((1+2^2)*1 + 1 + 1)
             elif score == 'PREV':
-                self.assertEqual(result[score], 1/2)
+                self.assertAlmostEqual(result[score], 1/2)
                 # Prevalence = (h+m)/n = (1+1)/4
             elif score == 'MCC':
-                self.assertEqual(result[score], 0)
+                self.assertAlmostEqual(result[score], 0)
                 # Matthew Correlation Coefficient = (h*c-f*m)/Sqrt((h+f)*(h+m)*(c+f)*(f+m)) = (1*1-1*1)/sqrt((1+1)*(1+1)*(1+1)*(1+1))
             elif score == 'INFORM':
-                self.assertEqual(result[score], 0)
+                self.assertAlmostEqual(result[score], 0)
                 # Informedness = h/(h+m) + c/(f+c) - 1 = 1/(1+1) + 1/(1+1) - 1
             elif score == 'MARK':
-                self.assertEqual(result[score], 0)
+                self.assertAlmostEqual(result[score], 0)
                 # Markedness = h/(h+f) + c/(f+c) - 1 = 1/(1+1) + 1/(1+1) - 1
             elif score == 'PT':
                 self.assertTrue(math.isnan(result[score]))
                 # Prevalence Threshold = (Sqrt(h/(h+m)*f/(f+c))-(f/(f+c))) / (h/(h+m)-f/(f+c)) = (Sqrt(1/(1+1)*1/(1+1))-(1/(1+1))) / (1/(1+1)-1/(1+1))
             elif score == 'BA':
-                self.assertEqual(result[score], 1/2)
+                self.assertAlmostEqual(result[score], 1/2)
                 # Balanced Accuracy = (1/2)*(h/(h+m)+c/(f+c) = 1/2 * (1/(1+1)+ 1/(1+1))
             elif score == 'FM':
-                self.assertEqual(result[score],1/2)
+                self.assertAlmostEqual(result[score],1/2)
                 # Fowlkes-Mallows Index = Sqrt((h/(h+f))*(h/(h+m))) = sqrt((1/(1+1))*((1/(1+1)))
 
 
@@ -1603,28 +1603,28 @@ class ContigencyMetricsTestCase(unittest.TestCase):
         for score in result:
             # print(score)
             if score == 'TP':
-                self.assertEqual(result[score], 1)
+                self.assertAlmostEqual(result[score], 1)
                 # 1 hits
             elif score == 'FN':
-                self.assertEqual(result[score], 2)
+                self.assertAlmostEqual(result[score], 2)
                 # 2 miss
             elif score == 'FP':
-                self.assertEqual(result[score], 3)
+                self.assertAlmostEqual(result[score], 3)
                 # 3 false alarms
             elif score == 'TN':
-                self.assertEqual(result[score], 4)
+                self.assertAlmostEqual(result[score], 4)
                 # 4 correct negatives
             elif score == 'PC':
-                self.assertEqual(result[score], 1/2)
+                self.assertAlmostEqual(result[score], 1/2)
                 # PC = h+c / n = 1+4 / 10
             elif score == 'B':
-                self.assertEqual(result[score], 4/3)
+                self.assertAlmostEqual(result[score], 4/3)
                 # B = h+f / h+m = 1+3 / 1+2
             elif score == 'H':
-                self.assertEqual(result[score], 1/3)
+                self.assertAlmostEqual(result[score], 1/3)
                 # H = h / h+m = 1 / 1+2
             elif score == 'FAR':
-                self.assertEqual(result[score], 3/4)
+                self.assertAlmostEqual(result[score], 3/4)
                 # FAR = f / h+f = 3 / 1+3
             elif score == 'F':
                 self.assertTrue(result[score], 3/7)
@@ -1636,50 +1636,50 @@ class ContigencyMetricsTestCase(unittest.TestCase):
                 self.assertTrue(result[score], 2/3)
                 # FOM = m / h+m = 2 / 1+2
             elif score == 'POCN':
-                self.assertEqual(result[score], 4/7)
+                self.assertAlmostEqual(result[score], 4/7)
                 # POCN = c / f+c = 4 / 4+3
             elif score == 'DFR':
                 self.assertTrue(result[score], 1/3)
                 # DFR = m / m+c = 2 / 2+4
             elif score == 'FOCN':
-                self.assertEqual(result[score], 2/3)
+                self.assertAlmostEqual(result[score], 2/3)
                 # FOCN = c / m+c = 4 / 2+4
             elif score == 'TS': 
-                self.assertEqual(result[score], 1/6)
+                self.assertAlmostEqual(result[score], 1/6)
                 # TS = h / h+f+m = 1 / 1+2+3
             elif score == 'OR':
-                self.assertEqual(result[score], 2/3)
+                self.assertAlmostEqual(result[score], 2/3)
                 # OR = hc / fm = 1*4 / 2*3
             elif score == 'GSS':
                 self.assertAlmostEqual(result[score], -1/24)
                 # GSS = h-(h+f)*(h+m)/n / h+f+m-(h+f)*(h+m)/n = 1-(1+3)*(1+2)/10 / 1+3+2-(1+3)(1+2)/10    
             elif score == 'TSS':
-                self.assertEqual(result[score], -2/21)
+                self.assertAlmostEqual(result[score], -2/21)
                 # TSS = h / h+m - f / f+c = 1 / 1+2 - 3 / 3+4
             elif score == 'HSS':
-                self.assertEqual(result[score], -2/23)
+                self.assertAlmostEqual(result[score], -2/23)
                 # HSS = 2.0*(h*c-f*m) / (h+m)*(m+c)+(h+f)*(f+c) = 2*(1*4 - 2*3) / (1+2)(2+4)+(1+3)(3+4)
             elif score == 'ORSS':
-                self.assertEqual(result[score], -1/5)
+                self.assertAlmostEqual(result[score], -1/5)
                 # ORSS = h*c-m*f / h*c+m*f = 1*4-2*3 / 1*4+2*3
             elif score == 'SEDS':
-                self.assertEqual(result[score], ((np.log(4/10)+np.log(3/10))/np.log(1/10)) - 1)
+                self.assertAlmostEqual(result[score], ((np.log(4/10)+np.log(3/10))/np.log(1/10)) - 1)
                 # SEDS = (log((h+f)/n)+log((h+m)/n) / log(h/n)) - 1 = (log((1+3)/10)+log((1+2)/10) / log(1/10)) - 1
             elif score == 'FONE':
-                self.assertEqual(result[score], ((1+1**2)*1) / ((1+1**2)*1 + 2*(1**2) + 3))
+                self.assertAlmostEqual(result[score], ((1+1**2)*1) / ((1+1**2)*1 + 2*(1**2) + 3))
             elif score == 'FTWO':
-                self.assertEqual(result[score], ((1+2**2)*1) / ((1+2**2)*1 + 2*(2**2) + 3))         
+                self.assertAlmostEqual(result[score], ((1+2**2)*1) / ((1+2**2)*1 + 2*(2**2) + 3))         
             elif score == 'FHALF':
-                self.assertEqual(result[score], ((1+0.5**2)*1) / ((1+0.5**2)*1 + 2*(0.5**2) + 3))   
+                self.assertAlmostEqual(result[score], ((1+0.5**2)*1) / ((1+0.5**2)*1 + 2*(0.5**2) + 3))   
                 # F-Scores (Beta = 0.5, 1, 2) = ((1+ Beta^2)* h) / ((1+Beta^2)*h + Beta^2 * m + f)
                 # F(Beta = 0.5) = ((1+0.5^2)*1) / ((1+0.5^2)*1 + 2 + 3)
                 # F(Beta = 1) = ((1+1^2)*1) / ((1+1^2)*1 + 2 + 3)
                 # F(Beta = 2) = ((1+2^2)*1) / ((1+2^2)*1 + 2 + 3)
             elif score == 'PREV':
-                self.assertEqual(result[score], 3/10)
+                self.assertAlmostEqual(result[score], 3/10)
                 # Prevalence = (h+m)/n = (1+2)/10
             elif score == 'MCC':
-                self.assertEqual(result[score], -2/np.sqrt(504))
+                self.assertAlmostEqual(result[score], -2/np.sqrt(504))
                 # Matthew Correlation Coefficient = (h*c-f*m)/Sqrt((h+f)*(h+m)*(c+f)*(c+m)) = (1*4-3*2)/sqrt((1+3)*(1+2)*(4+3)*(4+2))
             elif score == 'INFORM':
                 self.assertAlmostEqual(result[score], -2/21)
@@ -1688,13 +1688,13 @@ class ContigencyMetricsTestCase(unittest.TestCase):
                 self.assertAlmostEqual(result[score], -5/28)
                 # Markedness = h/(h+f) + c/(f+c) - 1 = 1/(1+3) + 4/(3+4) - 1 = 1/4 + 4/7 - 1 = 7/28 + 16/28 - 1 = 23/28 - 1
             elif score == 'PT':
-                self.assertEqual(result[score], (np.sqrt(3/21)- 3/7)/(-2/21))
+                self.assertAlmostEqual(result[score], (np.sqrt(3/21)- 3/7)/(-2/21))
                 # Prevalence Threshold = (Sqrt(h/(h+m)*f/(f+c))-(f/(f+c))) / (h/(h+m)-f/(f+c)) = (Sqrt(1/(1+2)*3/(3+4))-(3/(3+4))) / (1/(1+2)-3/(3+4))
             elif score == 'BA':
                 self.assertAlmostEqual(result[score], 19/42)
                 # Balanced Accuracy = (1/2)*(h/(h+m)+c/(f+c) = 1/2 * (1/(1+2)+ 4/(3+4))
             elif score == 'FM':
-                self.assertEqual(result[score], np.sqrt(1/12))
+                self.assertAlmostEqual(result[score], np.sqrt(1/12))
                 # Fowlkes-Mallows Index = Sqrt((h/(h+f))*(h/(h+m))) = sqrt((1/(1+3))*((1/(1+2)))
              
     
@@ -1715,7 +1715,7 @@ class TimeMetricsTestCase(unittest.TestCase):
         y_pred = [datetime.datetime.utcnow() - datetime.timedelta(days=1)]
         result = metrics.calc_E(y_true, y_pred)
         hand_calc =  y_pred[0] - y_true[0]
-        self.assertEqual(result[0], hand_calc)
+        self.assertAlmostEqual(result[0], hand_calc)
 
 
         y_true = [datetime.datetime.utcnow(), datetime.datetime.utcnow(), datetime.datetime.utcnow(), datetime.datetime.utcnow()]
@@ -1728,7 +1728,7 @@ class TimeMetricsTestCase(unittest.TestCase):
         result = metrics.calc_E(y_true, y_pred)
         result_list = [x.days for x in result]
         hand_calc_list = [x.days for x in hand_calc]
-        self.assertEqual(result_list, hand_calc_list)
+        self.assertAlmostEqual(result_list, hand_calc_list)
 
         y_true = [datetime.datetime.utcnow(), datetime.datetime.utcnow(), datetime.datetime.utcnow(), datetime.datetime.utcnow()]
         y_pred = [datetime.datetime.utcnow() - datetime.timedelta(days=1), datetime.datetime.utcnow() - datetime.timedelta(days=1), datetime.datetime.utcnow() - datetime.timedelta(days=1), datetime.datetime.utcnow() - datetime.timedelta(days=1)]
@@ -1750,7 +1750,7 @@ class TimeMetricsTestCase(unittest.TestCase):
         y_pred = [datetime.datetime.utcnow() - datetime.timedelta(days=1)]
         result = metrics.calc_E(y_true, y_pred)
         hand_calc =  y_pred[0] - y_true[0]
-        self.assertEqual(result[0], hand_calc)
+        self.assertAlmostEqual(result[0], hand_calc)
 
 
         y_true = [datetime.datetime.utcnow(), datetime.datetime.utcnow(), datetime.datetime.utcnow(), datetime.datetime.utcnow()]
@@ -1761,7 +1761,7 @@ class TimeMetricsTestCase(unittest.TestCase):
             temp.append(elements[0] - elements[1])
         hand_calc = np.median(temp)
         result = np.median(metrics.calc_E(y_true, y_pred))
-        self.assertEqual(result, hand_calc)
+        self.assertAlmostEqual(result, hand_calc)
 
         y_true = [datetime.datetime.utcnow(), datetime.datetime.utcnow(), datetime.datetime.utcnow(), datetime.datetime.utcnow()]
         y_pred = [datetime.datetime.utcnow() - datetime.timedelta(days=1), datetime.datetime.utcnow() - datetime.timedelta(days=1), datetime.datetime.utcnow() - datetime.timedelta(days=1), datetime.datetime.utcnow() - datetime.timedelta(days=1)]
@@ -1781,7 +1781,7 @@ class TimeMetricsTestCase(unittest.TestCase):
         y_pred = [datetime.datetime.utcnow() - datetime.timedelta(days=1)]
         result = metrics.calc_AE(y_true, y_pred)
         hand_calc =  np.abs(y_pred[0] - y_true[0])
-        self.assertEqual(result[0], hand_calc)
+        self.assertAlmostEqual(result[0], hand_calc)
 
 
         y_true = [datetime.datetime.utcnow(), datetime.datetime.utcnow(), datetime.datetime.utcnow(), datetime.datetime.utcnow()]
@@ -1794,7 +1794,7 @@ class TimeMetricsTestCase(unittest.TestCase):
         result = metrics.calc_AE(y_true, y_pred)
         result_list = [x.days for x in result]
         hand_calc_list = [x.days for x in hand_calc]
-        self.assertEqual(result_list, hand_calc_list)
+        self.assertAlmostEqual(result_list, hand_calc_list)
       
       
 
@@ -1818,7 +1818,7 @@ class TimeMetricsTestCase(unittest.TestCase):
         y_pred = [datetime.datetime.utcnow() - datetime.timedelta(days=1)]
         result = metrics.calc_AE(y_true, y_pred)
         hand_calc =  np.abs(y_pred[0] - y_true[0])
-        self.assertEqual(result[0], hand_calc)
+        self.assertAlmostEqual(result[0], hand_calc)
 
 
         y_true = [datetime.datetime.utcnow(), datetime.datetime.utcnow(), datetime.datetime.utcnow(), datetime.datetime.utcnow()]
@@ -1829,7 +1829,7 @@ class TimeMetricsTestCase(unittest.TestCase):
             temp.append(np.abs(elements[0] - elements[1]))
         hand_calc = np.median(temp)
         result = np.median(metrics.calc_AE(y_true, y_pred))
-        self.assertEqual(result, hand_calc)
+        self.assertAlmostEqual(result, hand_calc)
 
         y_true = [datetime.datetime.utcnow(), datetime.datetime.utcnow(), datetime.datetime.utcnow(), datetime.datetime.utcnow()]
         y_pred = [datetime.datetime.utcnow() - datetime.timedelta(days=1), datetime.datetime.utcnow() - datetime.timedelta(days=1), datetime.datetime.utcnow() - datetime.timedelta(days=1), datetime.datetime.utcnow() - datetime.timedelta(days=1)]
@@ -1848,15 +1848,15 @@ class MiscTestCases(unittest.TestCase):
     def test_calc_mean(self):
         test_array = [0, 1, 2, 3]
         result = metrics.calc_mean(test_array)
-        self.assertEqual(result, 3/2)
+        self.assertAlmostEqual(result, 3/2)
 
         test_array = 0
         result = metrics.calc_mean(test_array)
-        self.assertEqual(result, 0)
+        self.assertAlmostEqual(result, 0)
 
         test_array = -1
         result = metrics.calc_mean(test_array)
-        self.assertEqual(result, -1)
+        self.assertAlmostEqual(result, -1)
 
     def test_arr_to_df_fails(self):
         arr = [[1]]
@@ -1869,22 +1869,22 @@ class MiscTestCases(unittest.TestCase):
         n = 1
         d = 1
         result = metrics.check_div(n, d)
-        self.assertEqual(result, 1)
+        self.assertAlmostEqual(result, 1)
 
         n = 0
         d = 1
         result = metrics.check_div(n, d)
-        self.assertEqual(result, 0)
+        self.assertAlmostEqual(result, 0)
 
         n = 1
         d = 0
         result = metrics.check_div(n, d)
-        self.assertEqual(result, np.inf)
+        self.assertAlmostEqual(result, np.inf)
 
         n = -1
         d = 0
         result = metrics.check_div(n, d)
-        self.assertEqual(result, -np.inf)
+        self.assertAlmostEqual(result, -np.inf)
 
         n = 0
         d = 0
@@ -1895,8 +1895,8 @@ class MiscTestCases(unittest.TestCase):
         arr_1 = [0]
         arr_2 = [0]
         result_1, result_2 = metrics.remove_none(arr_1, arr_2)
-        self.assertEqual(arr_1, result_1)
-        self.assertEqual(arr_2, result_2)
+        self.assertAlmostEqual(arr_1, result_1)
+        self.assertAlmostEqual(arr_2, result_2)
 
         arr_1 = []
         arr_2 = [0]
@@ -1906,27 +1906,27 @@ class MiscTestCases(unittest.TestCase):
         arr_1 = [None, 0]
         arr_2 = [0, 0]
         result_1, result_2 = metrics.remove_none(arr_1, arr_2)
-        self.assertEqual(result_1, [0])
-        self.assertEqual(result_2, [0])
+        self.assertAlmostEqual(result_1, [0])
+        self.assertAlmostEqual(result_2, [0])
 
         arr_1 = [0, 0]
         arr_2 = [None, 0]
         result_1, result_2 = metrics.remove_none(arr_1, arr_2)
-        self.assertEqual(result_1, [0])
-        self.assertEqual(result_2, [0])
+        self.assertAlmostEqual(result_1, [0])
+        self.assertAlmostEqual(result_2, [0])
 
         arr_1 = [0, None]
         arr_2 = [None, 0]
         result_1, result_2 = metrics.remove_none(arr_1, arr_2)
-        self.assertEqual(result_1, [])
-        self.assertEqual(result_2, [])
+        self.assertAlmostEqual(result_1, [])
+        self.assertAlmostEqual(result_2, [])
 
     def test_remove_zero(self):
         arr_1 = [1]
         arr_2 = [1]
         result_1, result_2 = metrics.remove_zero(arr_1, arr_2)
-        self.assertEqual(arr_1, result_1)
-        self.assertEqual(arr_2, result_2)
+        self.assertAlmostEqual(arr_1, result_1)
+        self.assertAlmostEqual(arr_2, result_2)
 
         arr_1 = []
         arr_2 = [1]
@@ -1936,17 +1936,17 @@ class MiscTestCases(unittest.TestCase):
         arr_1 = [0., 1]
         arr_2 = [1, 1]
         result_1, result_2 = metrics.remove_zero(arr_1, arr_2)
-        self.assertEqual(result_1, [1])
-        self.assertEqual(result_2, [1])
+        self.assertAlmostEqual(result_1, [1])
+        self.assertAlmostEqual(result_2, [1])
 
         arr_1 = [1, 1]
         arr_2 = [0., 1]
         result_1, result_2 = metrics.remove_zero(arr_1, arr_2)
-        self.assertEqual(result_1, [1])
-        self.assertEqual(result_2, [1])
+        self.assertAlmostEqual(result_1, [1])
+        self.assertAlmostEqual(result_2, [1])
 
         arr_1 = [1, 0.]
         arr_2 = [0., 1]
         result_1, result_2 = metrics.remove_zero(arr_1, arr_2)
-        self.assertEqual(result_1, [])
-        self.assertEqual(result_2, [])
+        self.assertAlmostEqual(result_1, [])
+        self.assertAlmostEqual(result_2, [])
