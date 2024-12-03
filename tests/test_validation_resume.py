@@ -291,7 +291,7 @@ class Test_Resume(unittest.TestCase):
         self.all_observed_thresholds = resume.identify_thresholds_per_energy_channel(self.df)
         validate.write_df(self.df, "SPHINX_dataframe")
         logger.debug("Completed writing SPHINX_dataframe to file.")
-        self.assertEqual(len(self.df), len(r_df)+len(self.dataframe), msg = 'The dataframe from the resume feature is not equal to the "old" dataframe and the new dataframe')
+        self.assertAlmostEqual(len(self.df), len(r_df)+len(self.dataframe), msg = 'The dataframe from the resume feature is not equal to the "old" dataframe and the new dataframe')
     def step_3(self):
         """
         step 3 uses the step 2 dataframe to follow the rest of the normal validation workflow.
