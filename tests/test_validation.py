@@ -972,817 +972,817 @@ def fill_fluence_dict_all(dict, self):
 
     return dict
 
-# class TestAllClear0(unittest.TestCase):
+class TestAllClear0(unittest.TestCase):
     
 
-#     def load_verbosity(self):
-#         self.verbosity = utils.utility_get_verbosity()
+    def load_verbosity(self):
+        self.verbosity = utils.utility_get_verbosity()
     
     
-#     def step_0(self): 
-#         validate.prepare_outdirs()
-#         self.energy_channel = {'min': 10, 'max': -1, 'units': 'MeV'}
-#         self.energy_key = objh.energy_channel_to_key(self.energy_channel)
-#         self.all_energy_channels = [self.energy_key] 
-#         self.model_names = ['Test_model_0']
-#         observation_json = './tests/files/observations/validation/all_clear/all_clear_false.json'
-#         observation = utils.utility_load_observation(observation_json, self.energy_channel)
-#         observation_objects = {self.energy_key: [observation]}
-#         self.verbosity = utils.utility_get_verbosity()
-#         forecast_json = './tests/files/forecasts/validation/all_clear/pred_all_clear_false.json'
-#         forecast = utils.utility_load_forecast(forecast_json, self.energy_channel)
-#         forecast_objects = {self.energy_key: [forecast]}
-#         self.sphinx, self.obs_thresholds, self.obs_sep_events = utils.utility_match_sphinx(self.all_energy_channels,\
-#              self.model_names, observation_objects, forecast_objects)
-#         self.profname_dict = None
-#         self.DoResume = False
+    def step_0(self): 
+        validate.prepare_outdirs()
+        self.energy_channel = {'min': 10, 'max': -1, 'units': 'MeV'}
+        self.energy_key = objh.energy_channel_to_key(self.energy_channel)
+        self.all_energy_channels = [self.energy_key] 
+        self.model_names = ['Test_model_0']
+        observation_json = './tests/files/observations/validation/all_clear/all_clear_false.json'
+        observation = utils.utility_load_observation(observation_json, self.energy_channel)
+        observation_objects = {self.energy_key: [observation]}
+        self.verbosity = utils.utility_get_verbosity()
+        forecast_json = './tests/files/forecasts/validation/all_clear/pred_all_clear_false.json'
+        forecast = utils.utility_load_forecast(forecast_json, self.energy_channel)
+        forecast_objects = {self.energy_key: [forecast]}
+        self.sphinx, self.obs_thresholds, self.obs_sep_events = utils.utility_match_sphinx(self.all_energy_channels,\
+             self.model_names, observation_objects, forecast_objects)
+        self.profname_dict = None
+        self.DoResume = False
         
-#         self.validation_quantity = ['all_clear', 'awt', 'duration', 'end_time', 'fluence', 'max_flux_in_pred_window', 'peak_intensity_max', 'peak_intensity_max_time', 'peak_intensity' \
-#             'peak_intensity_time', 'probability', 'start_time', 'threshold_crossing', 'time_profile']
-#         self.quantities_tested = ['all_clear', 'awt']
-#         self.validation_type = ['All']
+        self.validation_quantity = ['all_clear', 'awt', 'duration', 'end_time', 'fluence', 'max_flux_in_pred_window', 'peak_intensity_max', 'peak_intensity_max_time', 'peak_intensity' \
+            'peak_intensity_time', 'probability', 'start_time', 'threshold_crossing', 'time_profile']
+        self.quantities_tested = ['all_clear', 'awt']
+        self.validation_type = ['All']
         
-#     def step_1(self):
+    def step_1(self):
        
-#         self.dataframe = validate.fill_sphinx_df(self.sphinx, self.model_names, self.all_energy_channels, \
-#             self.obs_thresholds, self.profname_dict)
-#         for keywords in self.dataframe:            
-#             temp = utils.attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][0],\
-#                  self.energy_key, self.obs_thresholds)
-#             if pd.isnull(temp) and pd.isnull(self.dataframe[keywords][0]):
-#                 self.assertTrue(pd.isnull(self.dataframe[keywords][0]))
-#             else:
-#                 self.assertEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
+        self.dataframe = validate.fill_sphinx_df(self.sphinx, self.model_names, self.all_energy_channels, \
+            self.obs_thresholds, self.profname_dict)
+        for keywords in self.dataframe:            
+            temp = utils.attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][0],\
+                 self.energy_key, self.obs_thresholds)
+            if pd.isnull(temp) and pd.isnull(self.dataframe[keywords][0]):
+                self.assertTrue(pd.isnull(self.dataframe[keywords][0]))
+            else:
+                self.assertEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
 
-#     def step_2(self):
-#         validate.calculate_intuitive_metrics(self.dataframe, self.model_names, self.all_energy_channels, \
-#                 self.obs_thresholds, 'All')
+    def step_2(self):
+        validate.calculate_intuitive_metrics(self.dataframe, self.model_names, self.all_energy_channels, \
+                self.obs_thresholds, 'All')
     
 
-#     def step_3(self):
-#         test_dict = initialize_all_clear_dict()
-#         test_dict = fill_all_clear_dict_hit(test_dict, self)
-#         csv_filename = os.path.join(config.outpath, 'csv', 'all_clear_metrics.csv')
-#         utils.assert_equal_table(self, csv_filename, test_dict)
+    def step_3(self):
+        test_dict = initialize_all_clear_dict()
+        test_dict = fill_all_clear_dict_hit(test_dict, self)
+        csv_filename = os.path.join(config.outpath, 'csv', 'all_clear_metrics.csv')
+        utils.assert_equal_table(self, csv_filename, test_dict)
 
 
 
 
-#     def step_5(self):
+    def step_5(self):
         
-#         test_dict = initialize_awt_dict()
-#         test_dict = fill_awt_dict(test_dict, self)
-#         csv_filename = os.path.join(config.outpath, 'csv', 'awt_metrics.csv')
+        test_dict = initialize_awt_dict()
+        test_dict = fill_awt_dict(test_dict, self)
+        csv_filename = os.path.join(config.outpath, 'csv', 'awt_metrics.csv')
         
-#         utils.assert_equal_table(self, csv_filename, test_dict)
+        utils.assert_equal_table(self, csv_filename, test_dict)
 
   
-#     def utility_print_docstring(self, function):
-#         if self.verbosity == 2:
-#             print('\n//----------------------------------------------------')
-#             print(function.__doc__)
+    def utility_print_docstring(self, function):
+        if self.verbosity == 2:
+            print('\n//----------------------------------------------------')
+            print(function.__doc__)
 
-#     def _steps(self):
-#         for name in dir(self): # dir() result is implicitly sorted
-#             if name.startswith("step"):
-#                 yield name, getattr(self, name)
+    def _steps(self):
+        for name in dir(self): # dir() result is implicitly sorted
+            if name.startswith("step"):
+                yield name, getattr(self, name)
         
-#     @patch('sphinxval.utils.config.outpath', './tests/output')
+    @patch('sphinxval.utils.config.outpath', './tests/output')
 
-#     def test_all_clear_0(self):
-#         validate.prepare_outdirs()
-#         for name, step in self._steps():
-#             try:
-#                 step()
-#             except Exception as e:
-#                 self.fail("{} failed ({}: {})".format(step, type(e), e))
-#         utils.utility_delete_output()
+    def test_all_clear_0(self):
+        validate.prepare_outdirs()
+        for name, step in self._steps():
+            try:
+                step()
+            except Exception as e:
+                self.fail("{} failed ({}: {})".format(step, type(e), e))
+        utils.utility_delete_output()
 
 
-# class TestAllClear1(unittest.TestCase):
+class TestAllClear1(unittest.TestCase):
 
-#     def load_verbosity(self):
-#         self.verbosity = utility_get_verbosity()
+    def load_verbosity(self):
+        self.verbosity = utility_get_verbosity()
     
     
 
-#     def step_0(self): 
-#         validate.prepare_outdirs()
+    def step_0(self): 
+        validate.prepare_outdirs()
         
 
 
-#         self.energy_channel = {'min': 10, 'max': -1, 'units': 'MeV'}
-#         self.energy_key = objh.energy_channel_to_key(self.energy_channel)
-#         self.all_energy_channels = [self.energy_key] 
-#         self.model_names = ['Test_model_0']
-#         observation_json = './tests/files/observations/validation/all_clear/all_clear_true.json'
-#         observation = utils.utility_load_observation(observation_json, self.energy_channel)
-#         observation_objects = {self.energy_key: [observation]}
-#         self.verbosity = utils.utility_get_verbosity()
-#         forecast_json = './tests/files/forecasts/validation/all_clear/pred_all_clear_true.json'
-#         forecast = utils.utility_load_forecast(forecast_json, self.energy_channel)
-#         forecast_objects = {self.energy_key: [forecast]}
-#         self.sphinx, self.obs_thresholds, self.obs_sep_events = utils.utility_match_sphinx(self.all_energy_channels,\
-#              self.model_names, observation_objects, forecast_objects)
-#         self.profname_dict = None
-#         self.DoResume = False
+        self.energy_channel = {'min': 10, 'max': -1, 'units': 'MeV'}
+        self.energy_key = objh.energy_channel_to_key(self.energy_channel)
+        self.all_energy_channels = [self.energy_key] 
+        self.model_names = ['Test_model_0']
+        observation_json = './tests/files/observations/validation/all_clear/all_clear_true.json'
+        observation = utils.utility_load_observation(observation_json, self.energy_channel)
+        observation_objects = {self.energy_key: [observation]}
+        self.verbosity = utils.utility_get_verbosity()
+        forecast_json = './tests/files/forecasts/validation/all_clear/pred_all_clear_true.json'
+        forecast = utils.utility_load_forecast(forecast_json, self.energy_channel)
+        forecast_objects = {self.energy_key: [forecast]}
+        self.sphinx, self.obs_thresholds, self.obs_sep_events = utils.utility_match_sphinx(self.all_energy_channels,\
+             self.model_names, observation_objects, forecast_objects)
+        self.profname_dict = None
+        self.DoResume = False
         
-#         self.validation_quantity = ['all_clear', 'awt', 'duration', 'end_time', 'fluence', 'max_flux_in_pred_window', 'peak_intensity_max', 'peak_intensity_max_time', 'peak_intensity' \
-#             'peak_intensity_time', 'probability', 'start_time', 'threshold_crossing', 'time_profile']
-#         self.quantities_tested = ['all_clear']
-#         self.validation_type = ['All']
+        self.validation_quantity = ['all_clear', 'awt', 'duration', 'end_time', 'fluence', 'max_flux_in_pred_window', 'peak_intensity_max', 'peak_intensity_max_time', 'peak_intensity' \
+            'peak_intensity_time', 'probability', 'start_time', 'threshold_crossing', 'time_profile']
+        self.quantities_tested = ['all_clear']
+        self.validation_type = ['All']
         
-#     def step_1(self):
+    def step_1(self):
         
-#         self.dataframe = validate.fill_sphinx_df(self.sphinx, self.model_names, self.all_energy_channels, \
-#             self.obs_thresholds, self.profname_dict)
-#         for keywords in self.dataframe:
-#             # temp = self.sphinx['Test_model_0'][self.energy_key].prediction.short_name\
+        self.dataframe = validate.fill_sphinx_df(self.sphinx, self.model_names, self.all_energy_channels, \
+            self.obs_thresholds, self.profname_dict)
+        for keywords in self.dataframe:
+            # temp = self.sphinx['Test_model_0'][self.energy_key].prediction.short_name\
             
-#             temp = utils.attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][0],\
-#                  self.energy_key, self.obs_thresholds)
-#             if pd.isnull(temp) and pd.isnull(self.dataframe[keywords][0]):
-#                 self.assertTrue(pd.isnull(self.dataframe[keywords][0]))
-#             elif keywords == 'All Threshold Crossing Times':
-#                 self.assertEqual(self.dataframe[keywords][0], str([temp]))
-#             else:
-#                 self.assertEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
+            temp = utils.attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][0],\
+                 self.energy_key, self.obs_thresholds)
+            if pd.isnull(temp) and pd.isnull(self.dataframe[keywords][0]):
+                self.assertTrue(pd.isnull(self.dataframe[keywords][0]))
+            elif keywords == 'All Threshold Crossing Times':
+                self.assertEqual(self.dataframe[keywords][0], str([temp]))
+            else:
+                self.assertEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
 
-#     def step_2(self):
-#         validate.calculate_intuitive_metrics(self.dataframe, self.model_names, self.all_energy_channels, \
-#             self.obs_thresholds, 'All')
+    def step_2(self):
+        validate.calculate_intuitive_metrics(self.dataframe, self.model_names, self.all_energy_channels, \
+            self.obs_thresholds, 'All')
     
-#     def step_3(self):
-#         test_dict = initialize_all_clear_dict()
-#         test_dict = fill_all_clear_dict_CN(test_dict, self)
+    def step_3(self):
+        test_dict = initialize_all_clear_dict()
+        test_dict = fill_all_clear_dict_CN(test_dict, self)
 
-#         csv_filename = os.path.join(config.outpath, 'csv', 'all_clear_metrics.csv')
-#         utils.assert_equal_table(self, csv_filename, test_dict)
-
-
-#     def utility_print_docstring(self, function):
-#         if self.verbosity == 2:
-#             print('\n//----------------------------------------------------')
-#             print(function.__doc__)
-
-#     def _steps(self):
-#         for name in dir(self): # dir() result is implicitly sorted
-#             if name.startswith("step"):
-#                 yield name, getattr(self, name)
-
-#     @patch('sphinxval.utils.config.outpath', './tests/output')
-
-#     def test_all_clear_1(self):
-#         validate.prepare_outdirs()
-#         for name, step in self._steps():
-#             try:
-#                 step()
-#             except Exception as e:
-#                 self.fail("{} failed ({}: {})".format(step, type(e), e))
-#         utils.utility_delete_output()
+        csv_filename = os.path.join(config.outpath, 'csv', 'all_clear_metrics.csv')
+        utils.assert_equal_table(self, csv_filename, test_dict)
 
 
-# class TestAllClearGarbage(unittest.TestCase):
+    def utility_print_docstring(self, function):
+        if self.verbosity == 2:
+            print('\n//----------------------------------------------------')
+            print(function.__doc__)
 
-#     def load_verbosity(self):
-#         self.verbosity = utils.utility_get_verbosity()
-    
-    
-#     @patch('sphinxval.utils.config.outpath', './tests/output')
+    def _steps(self):
+        for name in dir(self): # dir() result is implicitly sorted
+            if name.startswith("step"):
+                yield name, getattr(self, name)
 
-#     def test_garbage(self): 
-#         validate.prepare_outdirs()
+    @patch('sphinxval.utils.config.outpath', './tests/output')
 
-#         with self.assertRaises(NameError, msg = 'Giving purposeful garbage, should exit'):
-#             self.energy_channel = {'min': 10, 'max': -1, 'units': 'MeV'}
-#             self.energy_key = objh.energy_channel_to_key(self.energy_channel)
-#             self.all_energy_channels = [self.energy_key] 
-#             self.model_names = ['Test_model_0']
-#             observation_json = './tests/files/observations/validation/all_clear/all_clear_false.json'
-#             observation = utils.utility_load_observation(observation_json, self.energy_channel)
-#             observation_objects = {self.energy_key: [observation]}
-#             self.verbosity = utils.utility_get_verbosity()
-#             forecast_json = './tests/files/forecasts/validation/all_clear/pred_all_clear_garbage.json'
-#             forecast = utils.utility_load_forecast(forecast_json, self.energy_channel)
-#             forecast_objects = {self.energy_key: [forecast]}
-#             self.sphinx, self.obs_thresholds, self.obs_sep_events = utils.utility_match_sphinx(self.all_energy_channels,\
-#                 self.model_names, observation_objects, forecast_objects)
+    def test_all_clear_1(self):
+        validate.prepare_outdirs()
+        for name, step in self._steps():
+            try:
+                step()
+            except Exception as e:
+                self.fail("{} failed ({}: {})".format(step, type(e), e))
+        utils.utility_delete_output()
 
 
+class TestAllClearGarbage(unittest.TestCase):
 
-
-
-# class TestPeakIntensity0(unittest.TestCase):
-
-#     def load_verbosity(self):
-#         self.verbosity = utils.utility_get_verbosity()
+    def load_verbosity(self):
+        self.verbosity = utils.utility_get_verbosity()
     
     
+    @patch('sphinxval.utils.config.outpath', './tests/output')
 
-#     def step_0(self): 
-#         validate.prepare_outdirs()
-#         self.energy_channel = {'min': 10, 'max': -1, 'units': 'MeV'}
-#         self.energy_key = objh.energy_channel_to_key(self.energy_channel)
-#         self.all_energy_channels = [self.energy_key] 
-#         self.model_names = ['Test_model_0']
-#         observation_json = './tests/files/observations/validation/all_clear/all_clear_false.json'
-#         observation = utils.utility_load_observation(observation_json, self.energy_channel)
-#         observation_objects = {self.energy_key: [observation]}
-#         self.verbosity = utils.utility_get_verbosity()
-#         forecast_json = './tests/files/forecasts/validation/onset_peak/pred_all_clear_false.json'
-#         forecast = utils.utility_load_forecast(forecast_json, self.energy_channel)
-#         forecast_objects = {self.energy_key: [forecast]}
-#         self.sphinx, self.obs_thresholds, self.obs_sep_events = utils.utility_match_sphinx(self.all_energy_channels,\
-#              self.model_names, observation_objects, forecast_objects)
-#         self.profname_dict = None
-#         self.DoResume = False
+    def test_garbage(self): 
+        validate.prepare_outdirs()
+
+        with self.assertRaises(NameError, msg = 'Giving purposeful garbage, should exit'):
+            self.energy_channel = {'min': 10, 'max': -1, 'units': 'MeV'}
+            self.energy_key = objh.energy_channel_to_key(self.energy_channel)
+            self.all_energy_channels = [self.energy_key] 
+            self.model_names = ['Test_model_0']
+            observation_json = './tests/files/observations/validation/all_clear/all_clear_false.json'
+            observation = utils.utility_load_observation(observation_json, self.energy_channel)
+            observation_objects = {self.energy_key: [observation]}
+            self.verbosity = utils.utility_get_verbosity()
+            forecast_json = './tests/files/forecasts/validation/all_clear/pred_all_clear_garbage.json'
+            forecast = utils.utility_load_forecast(forecast_json, self.energy_channel)
+            forecast_objects = {self.energy_key: [forecast]}
+            self.sphinx, self.obs_thresholds, self.obs_sep_events = utils.utility_match_sphinx(self.all_energy_channels,\
+                self.model_names, observation_objects, forecast_objects)
+
+
+
+
+
+class TestPeakIntensity0(unittest.TestCase):
+
+    def load_verbosity(self):
+        self.verbosity = utils.utility_get_verbosity()
+    
+    
+
+    def step_0(self): 
+        validate.prepare_outdirs()
+        self.energy_channel = {'min': 10, 'max': -1, 'units': 'MeV'}
+        self.energy_key = objh.energy_channel_to_key(self.energy_channel)
+        self.all_energy_channels = [self.energy_key] 
+        self.model_names = ['Test_model_0']
+        observation_json = './tests/files/observations/validation/all_clear/all_clear_false.json'
+        observation = utils.utility_load_observation(observation_json, self.energy_channel)
+        observation_objects = {self.energy_key: [observation]}
+        self.verbosity = utils.utility_get_verbosity()
+        forecast_json = './tests/files/forecasts/validation/onset_peak/pred_all_clear_false.json'
+        forecast = utils.utility_load_forecast(forecast_json, self.energy_channel)
+        forecast_objects = {self.energy_key: [forecast]}
+        self.sphinx, self.obs_thresholds, self.obs_sep_events = utils.utility_match_sphinx(self.all_energy_channels,\
+             self.model_names, observation_objects, forecast_objects)
+        self.profname_dict = None
+        self.DoResume = False
         
-#         self.validation_quantity = ['all_clear', 'awt', 'duration', 'end_time', 'fluence', 'max_flux_in_pred_window', 'peak_intensity_max', 'peak_intensity_max_time', 'peak_intensity' \
-#             'peak_intensity_time', 'probability', 'start_time', 'threshold_crossing', 'time_profile']
-#         self.quantities_tested = ['all_clear', 'peak_intensity']
-#         self.validation_type = ['All']
+        self.validation_quantity = ['all_clear', 'awt', 'duration', 'end_time', 'fluence', 'max_flux_in_pred_window', 'peak_intensity_max', 'peak_intensity_max_time', 'peak_intensity' \
+            'peak_intensity_time', 'probability', 'start_time', 'threshold_crossing', 'time_profile']
+        self.quantities_tested = ['all_clear', 'peak_intensity']
+        self.validation_type = ['All']
         
-#     def step_1(self):
+    def step_1(self):
         
-#         self.dataframe = validate.fill_sphinx_df(self.sphinx, self.model_names, self.all_energy_channels, \
-#             self.obs_thresholds, self.profname_dict)
-#         for keywords in self.dataframe:
-#             # temp = self.sphinx['Test_model_0'][self.energy_key].prediction.short_name\
+        self.dataframe = validate.fill_sphinx_df(self.sphinx, self.model_names, self.all_energy_channels, \
+            self.obs_thresholds, self.profname_dict)
+        for keywords in self.dataframe:
+            # temp = self.sphinx['Test_model_0'][self.energy_key].prediction.short_name\
             
-#             temp = utils.attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][0],\
-#                  self.energy_key, self.obs_thresholds)
-#             if pd.isnull(temp) and pd.isnull(self.dataframe[keywords][0]):
-#                 self.assertTrue(pd.isnull(self.dataframe[keywords][0]))
+            temp = utils.attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][0],\
+                 self.energy_key, self.obs_thresholds)
+            if pd.isnull(temp) and pd.isnull(self.dataframe[keywords][0]):
+                self.assertTrue(pd.isnull(self.dataframe[keywords][0]))
             
-#             else:
-#                 self.assertEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
+            else:
+                self.assertEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
 
-#     def step_2(self):
-#         validate.calculate_intuitive_metrics(self.dataframe, self.model_names, self.all_energy_channels, \
-#             self.obs_thresholds, 'All')
+    def step_2(self):
+        validate.calculate_intuitive_metrics(self.dataframe, self.model_names, self.all_energy_channels, \
+            self.obs_thresholds, 'All')
     
-#     def step_3(self):
-#         test_dict = initialize_flux_dict()
-#         test_dict = fill_peak_intensity_dict(test_dict, self)
+    def step_3(self):
+        test_dict = initialize_flux_dict()
+        test_dict = fill_peak_intensity_dict(test_dict, self)
 
-#         csv_filename = os.path.join(config.outpath, 'csv', 'peak_intensity_metrics.csv')
-#         utils.assert_equal_table(self, csv_filename, test_dict)
+        csv_filename = os.path.join(config.outpath, 'csv', 'peak_intensity_metrics.csv')
+        utils.assert_equal_table(self, csv_filename, test_dict)
 
 
-#     def step_4(self):
-#         test_dict = initialize_time_dict()
-#         test_dict = fill_peak_intensity_time_dict(test_dict, self)
-#         csv_filename = os.path.join(config.outpath, 'csv', 'peak_intensity_time_metrics.csv')
-#         utils.assert_equal_table(self, csv_filename, test_dict)
+    def step_4(self):
+        test_dict = initialize_time_dict()
+        test_dict = fill_peak_intensity_time_dict(test_dict, self)
+        csv_filename = os.path.join(config.outpath, 'csv', 'peak_intensity_time_metrics.csv')
+        utils.assert_equal_table(self, csv_filename, test_dict)
   
-#     def utility_print_docstring(self, function):
-#         if self.verbosity == 2:
-#             print('\n//----------------------------------------------------')
-#             print(function.__doc__)
+    def utility_print_docstring(self, function):
+        if self.verbosity == 2:
+            print('\n//----------------------------------------------------')
+            print(function.__doc__)
 
-#     def _steps(self):
-#         for name in dir(self): # dir() result is implicitly sorted
-#             if name.startswith("step"):
-#                 yield name, getattr(self, name)
+    def _steps(self):
+        for name in dir(self): # dir() result is implicitly sorted
+            if name.startswith("step"):
+                yield name, getattr(self, name)
         
-#     @patch('sphinxval.utils.config.outpath', './tests/output')
+    @patch('sphinxval.utils.config.outpath', './tests/output')
 
-#     def test_peak_intensity_0(self):
-#         validate.prepare_outdirs()
-#         for name, step in self._steps():
-#             try:
-#                 step()
-#             except Exception as e:
-#                 self.fail("{} failed ({}: {})".format(step, type(e), e))
-#         utils.utility_delete_output()
+    def test_peak_intensity_0(self):
+        validate.prepare_outdirs()
+        for name, step in self._steps():
+            try:
+                step()
+            except Exception as e:
+                self.fail("{} failed ({}: {})".format(step, type(e), e))
+        utils.utility_delete_output()
 
 
-# class TestPeakIntensityMult(unittest.TestCase):
+class TestPeakIntensityMult(unittest.TestCase):
 
-#     def load_verbosity(self):
-#         self.verbosity = utils.utility_get_verbosity()
+    def load_verbosity(self):
+        self.verbosity = utils.utility_get_verbosity()
     
     
 
-#     def step_0(self): 
-#         validate.prepare_outdirs()
+    def step_0(self): 
+        validate.prepare_outdirs()
         
 
 
-#         self.energy_channel = {'min': 10, 'max': -1, 'units': 'MeV'}
-#         self.energy_key = objh.energy_channel_to_key(self.energy_channel)
-#         self.all_energy_channels = [self.energy_key] 
-#         self.model_names = ['Test_model_0']
-#         observation_json = ['./tests/files/observations/validation/all_clear/all_clear_false.json', './tests/files/observations/validation/all_clear/all_clear_true.json']
-#         observation_objects = {self.energy_key: []}
-#         for jsons in observation_json:
-#             observation = utils.utility_load_observation(jsons, self.energy_channel)
-#             observation_objects[self.energy_key].append(observation)
+        self.energy_channel = {'min': 10, 'max': -1, 'units': 'MeV'}
+        self.energy_key = objh.energy_channel_to_key(self.energy_channel)
+        self.all_energy_channels = [self.energy_key] 
+        self.model_names = ['Test_model_0']
+        observation_json = ['./tests/files/observations/validation/all_clear/all_clear_false.json', './tests/files/observations/validation/all_clear/all_clear_true.json']
+        observation_objects = {self.energy_key: []}
+        for jsons in observation_json:
+            observation = utils.utility_load_observation(jsons, self.energy_channel)
+            observation_objects[self.energy_key].append(observation)
         
-#         self.verbosity = utils.utility_get_verbosity()
-#         forecast_json = ['./tests/files/forecasts/validation/onset_peak/pred_all_clear_false.json', './tests/files/forecasts/validation/onset_peak/pred_all_clear_true.json']
-#         forecast_objects = {self.energy_key: []}
-#         for jsons in forecast_json:
-#             forecast = utils.utility_load_forecast(jsons, self.energy_channel)
-#             forecast_objects[self.energy_key].append(forecast)
-#         self.sphinx, self.obs_thresholds, self.obs_sep_events = utils.utility_match_sphinx(self.all_energy_channels, self.model_names, observation_objects, forecast_objects)
-#         self.profname_dict = None
-#         self.DoResume = False
+        self.verbosity = utils.utility_get_verbosity()
+        forecast_json = ['./tests/files/forecasts/validation/onset_peak/pred_all_clear_false.json', './tests/files/forecasts/validation/onset_peak/pred_all_clear_true.json']
+        forecast_objects = {self.energy_key: []}
+        for jsons in forecast_json:
+            forecast = utils.utility_load_forecast(jsons, self.energy_channel)
+            forecast_objects[self.energy_key].append(forecast)
+        self.sphinx, self.obs_thresholds, self.obs_sep_events = utils.utility_match_sphinx(self.all_energy_channels, self.model_names, observation_objects, forecast_objects)
+        self.profname_dict = None
+        self.DoResume = False
         
-#         self.validation_quantity = ['all_clear', 'awt', 'duration', 'end_time', 'fluence', 'max_flux_in_pred_window', 'peak_intensity_max', 'peak_intensity_max_time', 'peak_intensity' \
-#             'peak_intensity_time', 'probability', 'start_time', 'threshold_crossing', 'time_profile']
-#         self.quantities_tested = ['peak_intensity']
-#         self.validation_type = ['All']
+        self.validation_quantity = ['all_clear', 'awt', 'duration', 'end_time', 'fluence', 'max_flux_in_pred_window', 'peak_intensity_max', 'peak_intensity_max_time', 'peak_intensity' \
+            'peak_intensity_time', 'probability', 'start_time', 'threshold_crossing', 'time_profile']
+        self.quantities_tested = ['peak_intensity']
+        self.validation_type = ['All']
         
-#     def step_1(self):
-#         self.dataframe = validate.fill_sphinx_df(self.sphinx, self.model_names, self.all_energy_channels, \
-#             self.obs_thresholds, self.profname_dict)
+    def step_1(self):
+        self.dataframe = validate.fill_sphinx_df(self.sphinx, self.model_names, self.all_energy_channels, \
+            self.obs_thresholds, self.profname_dict)
        
-#         for keywords in self.dataframe:
+        for keywords in self.dataframe:
             
-#             temp = utils.attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][0],\
-#                  self.energy_key, self.obs_thresholds)
+            temp = utils.attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][0],\
+                 self.energy_key, self.obs_thresholds)
             
-#             if keywords == 'All Threshold Crossing Times': 
+            if keywords == 'All Threshold Crossing Times': 
                 
-#                 temp[0] = str(datetime.strptime(str(temp[0]), '%Y-%m-%d %H:%M:%S') )
-#                 temp[1] = 'NaT'
-#                 self.assertEqual(self.dataframe[keywords][0], str(temp))
-#             elif pd.isnull(temp) and pd.isnull(self.dataframe[keywords][0]):
-#                 self.assertTrue(pd.isnull(self.dataframe[keywords][0]))
-#             else:
-#                 self.assertEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
+                temp[0] = str(datetime.strptime(str(temp[0]), '%Y-%m-%d %H:%M:%S') )
+                temp[1] = 'NaT'
+                self.assertEqual(self.dataframe[keywords][0], str(temp))
+            elif pd.isnull(temp) and pd.isnull(self.dataframe[keywords][0]):
+                self.assertTrue(pd.isnull(self.dataframe[keywords][0]))
+            else:
+                self.assertEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
 
-#             temp = utils.attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][1],\
-#                  self.energy_key, self.obs_thresholds)
+            temp = utils.attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][1],\
+                 self.energy_key, self.obs_thresholds)
             
             
-#             # specific fix for this keyword since this can have the value of "['Timestamp(YYYY-MM-DD)', 'NaT']" which it incredibly
-#             # hard to deal with since its a string of a an array of strings... 
-#             if keywords == 'All Threshold Crossing Times': 
-#                 temp[0] = str(datetime.strptime(str(temp[0]), '%Y-%m-%d %H:%M:%S') )
-#                 temp[1] = 'NaT'
-#                 self.assertEqual(self.dataframe[keywords][1], str(temp))
-#             elif pd.isnull(temp) and pd.isnull(self.dataframe[keywords][1]):
-#                 self.assertTrue(pd.isnull(self.dataframe[keywords][1]))
-#             else:
-#                 self.assertEqual(self.dataframe[keywords][1], temp, 'Error is in keyword ' + keywords)
+            # specific fix for this keyword since this can have the value of "['Timestamp(YYYY-MM-DD)', 'NaT']" which it incredibly
+            # hard to deal with since its a string of a an array of strings... 
+            if keywords == 'All Threshold Crossing Times': 
+                temp[0] = str(datetime.strptime(str(temp[0]), '%Y-%m-%d %H:%M:%S') )
+                temp[1] = 'NaT'
+                self.assertEqual(self.dataframe[keywords][1], str(temp))
+            elif pd.isnull(temp) and pd.isnull(self.dataframe[keywords][1]):
+                self.assertTrue(pd.isnull(self.dataframe[keywords][1]))
+            else:
+                self.assertEqual(self.dataframe[keywords][1], temp, 'Error is in keyword ' + keywords)
 
 
 
-#     def step_2(self):
-#         validate.calculate_intuitive_metrics(self.dataframe, self.model_names, self.all_energy_channels, \
-#             self.obs_thresholds, 'All')
+    def step_2(self):
+        validate.calculate_intuitive_metrics(self.dataframe, self.model_names, self.all_energy_channels, \
+            self.obs_thresholds, 'All')
     
-#     def step_3(self):    
-#         test_dict = initialize_flux_dict()
-#         test_dict = fill_peak_intensity_mult_dict(test_dict, self)
-#         csv_filename = os.path.join(config.outpath, 'csv', 'peak_intensity_metrics.csv')
-#         utils.assert_equal_table(self, csv_filename, test_dict)
+    def step_3(self):    
+        test_dict = initialize_flux_dict()
+        test_dict = fill_peak_intensity_mult_dict(test_dict, self)
+        csv_filename = os.path.join(config.outpath, 'csv', 'peak_intensity_metrics.csv')
+        utils.assert_equal_table(self, csv_filename, test_dict)
 
 
 
-
-    
 
     
 
-#     def utility_print_docstring(self, function):
-#         if self.verbosity == 2:
-#             print('\n//----------------------------------------------------')
-#             print(function.__doc__)
+    
 
-#     def _steps(self):
-#         for name in dir(self): # dir() result is implicitly sorted
-#             if name.startswith("step"):
-#                 yield name, getattr(self, name)
+    def utility_print_docstring(self, function):
+        if self.verbosity == 2:
+            print('\n//----------------------------------------------------')
+            print(function.__doc__)
+
+    def _steps(self):
+        for name in dir(self): # dir() result is implicitly sorted
+            if name.startswith("step"):
+                yield name, getattr(self, name)
         
 
-#     @patch('sphinxval.utils.config.outpath', './tests/output')
+    @patch('sphinxval.utils.config.outpath', './tests/output')
 
-#     def test_peak_intensity_1(self):
-#         validate.prepare_outdirs()
-#         for name, step in self._steps():
-#             try:
-#                 step()
-#             except Exception as e:
-#                 self.fail("{} failed ({}: {})".format(step, type(e), e))
-#         utils.utility_delete_output()
+    def test_peak_intensity_1(self):
+        validate.prepare_outdirs()
+        for name, step in self._steps():
+            try:
+                step()
+            except Exception as e:
+                self.fail("{} failed ({}: {})".format(step, type(e), e))
+        utils.utility_delete_output()
 
         
 
 
 
 
-# class TestPeakIntensityMax0(unittest.TestCase):
+class TestPeakIntensityMax0(unittest.TestCase):
 
-#     def load_verbosity(self):
-#         self.verbosity = utility_get_verbosity()
+    def load_verbosity(self):
+        self.verbosity = utility_get_verbosity()
     
     
 
-#     def step_0(self): 
-#         validate.prepare_outdirs()
-#         self.energy_channel = {'min': 10, 'max': -1, 'units': 'MeV'}
-#         self.energy_key = objh.energy_channel_to_key(self.energy_channel)
-#         self.all_energy_channels = [self.energy_key] 
-#         self.model_names = ['Test_model_0']
-#         observation_json = './tests/files/observations/validation/all_clear/all_clear_false.json'
-#         observation = utils.utility_load_observation(observation_json, self.energy_channel)
-#         observation_objects = {self.energy_key: [observation]}
-#         self.verbosity = utils.utility_get_verbosity()
-#         forecast_json = './tests/files/forecasts/validation/max_peak/pred_all_clear_false.json'
-#         forecast = utils.utility_load_forecast(forecast_json, self.energy_channel)
-#         forecast_objects = {self.energy_key: [forecast]}
-#         self.sphinx, self.obs_thresholds, self.obs_sep_events = utils.utility_match_sphinx(self.all_energy_channels,\
-#              self.model_names, observation_objects, forecast_objects)
-#         self.profname_dict = None
-#         self.DoResume = False
+    def step_0(self): 
+        validate.prepare_outdirs()
+        self.energy_channel = {'min': 10, 'max': -1, 'units': 'MeV'}
+        self.energy_key = objh.energy_channel_to_key(self.energy_channel)
+        self.all_energy_channels = [self.energy_key] 
+        self.model_names = ['Test_model_0']
+        observation_json = './tests/files/observations/validation/all_clear/all_clear_false.json'
+        observation = utils.utility_load_observation(observation_json, self.energy_channel)
+        observation_objects = {self.energy_key: [observation]}
+        self.verbosity = utils.utility_get_verbosity()
+        forecast_json = './tests/files/forecasts/validation/max_peak/pred_all_clear_false.json'
+        forecast = utils.utility_load_forecast(forecast_json, self.energy_channel)
+        forecast_objects = {self.energy_key: [forecast]}
+        self.sphinx, self.obs_thresholds, self.obs_sep_events = utils.utility_match_sphinx(self.all_energy_channels,\
+             self.model_names, observation_objects, forecast_objects)
+        self.profname_dict = None
+        self.DoResume = False
         
-#         self.validation_quantity = ['all_clear', 'awt', 'duration', 'end_time', 'fluence', 'max_flux_in_pred_window', 'peak_intensity_max', 'peak_intensity_max_time', 'peak_intensity' \
-#             'peak_intensity_time', 'probability', 'start_time', 'threshold_crossing', 'time_profile']
-#         self.quantities_tested = ['all_clear', 'peak_intensity_max']
-#         self.validation_type = ['All']
+        self.validation_quantity = ['all_clear', 'awt', 'duration', 'end_time', 'fluence', 'max_flux_in_pred_window', 'peak_intensity_max', 'peak_intensity_max_time', 'peak_intensity' \
+            'peak_intensity_time', 'probability', 'start_time', 'threshold_crossing', 'time_profile']
+        self.quantities_tested = ['all_clear', 'peak_intensity_max']
+        self.validation_type = ['All']
         
-#     def step_1(self):
-#         self.dataframe = validate.fill_sphinx_df(self.sphinx, self.model_names, self.all_energy_channels, \
-#             self.obs_thresholds, self.profname_dict)
-#         for keywords in self.dataframe:
+    def step_1(self):
+        self.dataframe = validate.fill_sphinx_df(self.sphinx, self.model_names, self.all_energy_channels, \
+            self.obs_thresholds, self.profname_dict)
+        for keywords in self.dataframe:
         
             
-#             temp = utils.attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][0],\
-#                  self.energy_key, self.obs_thresholds)
-#             if pd.isnull(temp) and pd.isnull(self.dataframe[keywords][0]):
-#                 self.assertTrue(pd.isnull(self.dataframe[keywords][0]))
-#             else:
-#                 self.assertEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
+            temp = utils.attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][0],\
+                 self.energy_key, self.obs_thresholds)
+            if pd.isnull(temp) and pd.isnull(self.dataframe[keywords][0]):
+                self.assertTrue(pd.isnull(self.dataframe[keywords][0]))
+            else:
+                self.assertEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
             
 
-#     def step_2(self):
-#         validate.calculate_intuitive_metrics(self.dataframe, self.model_names, self.all_energy_channels, \
-#             self.obs_thresholds, 'All')
+    def step_2(self):
+        validate.calculate_intuitive_metrics(self.dataframe, self.model_names, self.all_energy_channels, \
+            self.obs_thresholds, 'All')
     
-#     def step_3(self):
-#         test_dict = initialize_flux_dict()
-#         test_dict = fill_peak_intensity_max_dict(test_dict, self)
-#         csv_filename = os.path.join(config.outpath, 'csv', 'peak_intensity_max_metrics.csv')
-#         utils.assert_equal_table(self, csv_filename, test_dict)
+    def step_3(self):
+        test_dict = initialize_flux_dict()
+        test_dict = fill_peak_intensity_max_dict(test_dict, self)
+        csv_filename = os.path.join(config.outpath, 'csv', 'peak_intensity_max_metrics.csv')
+        utils.assert_equal_table(self, csv_filename, test_dict)
 
   
-#     def utility_print_docstring(self, function):
-#         if self.verbosity == 2:
-#             print('\n//----------------------------------------------------')
-#             print(function.__doc__)
+    def utility_print_docstring(self, function):
+        if self.verbosity == 2:
+            print('\n//----------------------------------------------------')
+            print(function.__doc__)
 
-#     def _steps(self):
-#         for name in dir(self): # dir() result is implicitly sorted
-#             if name.startswith("step"):
-#                 yield name, getattr(self, name)
+    def _steps(self):
+        for name in dir(self): # dir() result is implicitly sorted
+            if name.startswith("step"):
+                yield name, getattr(self, name)
         
    
-#     @patch('sphinxval.utils.config.outpath', './tests/output')
+    @patch('sphinxval.utils.config.outpath', './tests/output')
 
-#     def test_peak_intensity_max_0(self):
-#         validate.prepare_outdirs()
-#         for name, step in self._steps():
-#             try:
-#                 step()
-#             except Exception as e:
-#                 self.fail("{} failed ({}: {})".format(step, type(e), e))
-#         utils.utility_delete_output()
+    def test_peak_intensity_max_0(self):
+        validate.prepare_outdirs()
+        for name, step in self._steps():
+            try:
+                step()
+            except Exception as e:
+                self.fail("{} failed ({}: {})".format(step, type(e), e))
+        utils.utility_delete_output()
 
 
-# class TestPeakIntensityMaxMult(unittest.TestCase):
+class TestPeakIntensityMaxMult(unittest.TestCase):
 
-#     def load_verbosity(self):
-#         self.verbosity = utils.utility_get_verbosity()
+    def load_verbosity(self):
+        self.verbosity = utils.utility_get_verbosity()
     
     
 
-#     def step_0(self): 
-#         validate.prepare_outdirs()
+    def step_0(self): 
+        validate.prepare_outdirs()
         
 
 
-#         self.energy_channel = {'min': 10, 'max': -1, 'units': 'MeV'}
-#         self.energy_key = objh.energy_channel_to_key(self.energy_channel)
-#         self.all_energy_channels = [self.energy_key] 
-#         self.model_names = ['Test_model_0']
-#         observation_json = ['./tests/files/observations/validation/all_clear/all_clear_false.json', './tests/files/observations/validation/all_clear/all_clear_true.json']
-#         observation_objects = {self.energy_key: []}
-#         for jsons in observation_json:
-#             observation = utils.utility_load_observation(jsons, self.energy_channel)
-#             observation_objects[self.energy_key].append(observation)
+        self.energy_channel = {'min': 10, 'max': -1, 'units': 'MeV'}
+        self.energy_key = objh.energy_channel_to_key(self.energy_channel)
+        self.all_energy_channels = [self.energy_key] 
+        self.model_names = ['Test_model_0']
+        observation_json = ['./tests/files/observations/validation/all_clear/all_clear_false.json', './tests/files/observations/validation/all_clear/all_clear_true.json']
+        observation_objects = {self.energy_key: []}
+        for jsons in observation_json:
+            observation = utils.utility_load_observation(jsons, self.energy_channel)
+            observation_objects[self.energy_key].append(observation)
         
-#         self.verbosity = utils.utility_get_verbosity()
-#         forecast_json = ['./tests/files/forecasts/validation/max_peak/pred_all_clear_false.json', './tests/files/forecasts/validation/max_peak/pred_all_clear_true.json']
-#         forecast_objects = {self.energy_key: []}
-#         for jsons in forecast_json:
-#             forecast = utils.utility_load_forecast(jsons, self.energy_channel)
-#             forecast_objects[self.energy_key].append(forecast)
-#         self.sphinx, self.obs_thresholds, self.obs_sep_events = utils.utility_match_sphinx(self.all_energy_channels, self.model_names, observation_objects, forecast_objects)
-#         self.profname_dict = None
-#         self.DoResume = False
+        self.verbosity = utils.utility_get_verbosity()
+        forecast_json = ['./tests/files/forecasts/validation/max_peak/pred_all_clear_false.json', './tests/files/forecasts/validation/max_peak/pred_all_clear_true.json']
+        forecast_objects = {self.energy_key: []}
+        for jsons in forecast_json:
+            forecast = utils.utility_load_forecast(jsons, self.energy_channel)
+            forecast_objects[self.energy_key].append(forecast)
+        self.sphinx, self.obs_thresholds, self.obs_sep_events = utils.utility_match_sphinx(self.all_energy_channels, self.model_names, observation_objects, forecast_objects)
+        self.profname_dict = None
+        self.DoResume = False
         
-#         self.validation_quantity = ['all_clear', 'awt', 'duration', 'end_time', 'fluence', 'max_flux_in_pred_window', 'peak_intensity_max', 'peak_intensity_max_time', 'peak_intensity' \
-#             'peak_intensity_time', 'probability', 'start_time', 'threshold_crossing', 'time_profile']
-#         self.quantities_tested = ['peak_intensity_max']
-#         self.validation_type = ['All']
+        self.validation_quantity = ['all_clear', 'awt', 'duration', 'end_time', 'fluence', 'max_flux_in_pred_window', 'peak_intensity_max', 'peak_intensity_max_time', 'peak_intensity' \
+            'peak_intensity_time', 'probability', 'start_time', 'threshold_crossing', 'time_profile']
+        self.quantities_tested = ['peak_intensity_max']
+        self.validation_type = ['All']
         
-#     def step_1(self):
-#         """
-#         Tests that the dataframe is built correctly with the correct fields being filled in/added.
-#         The observation and forecast have exactly the same observation/prediction windows. 
-#         Matching requires (at a minimum) that there is a prediction window start/end with an observed
-#         SEP start time within the prediction window and that the last data time/trigger occur before the
-#         observed SEP start time.
-#         Observed all clear is False
-#         Forecast all clear is False
-#         """
-#         self.dataframe = validate.fill_sphinx_df(self.sphinx, self.model_names, self.all_energy_channels, \
-#             self.obs_thresholds, self.profname_dict)
+    def step_1(self):
+        """
+        Tests that the dataframe is built correctly with the correct fields being filled in/added.
+        The observation and forecast have exactly the same observation/prediction windows. 
+        Matching requires (at a minimum) that there is a prediction window start/end with an observed
+        SEP start time within the prediction window and that the last data time/trigger occur before the
+        observed SEP start time.
+        Observed all clear is False
+        Forecast all clear is False
+        """
+        self.dataframe = validate.fill_sphinx_df(self.sphinx, self.model_names, self.all_energy_channels, \
+            self.obs_thresholds, self.profname_dict)
        
-#         for keywords in self.dataframe:
-#             temp = utils.attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][0],\
-#                  self.energy_key, self.obs_thresholds)
-#             if keywords == 'All Threshold Crossing Times': 
+        for keywords in self.dataframe:
+            temp = utils.attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][0],\
+                 self.energy_key, self.obs_thresholds)
+            if keywords == 'All Threshold Crossing Times': 
                 
-#                 temp[0] = str(datetime.strptime(str(temp[0]), '%Y-%m-%d %H:%M:%S') )
-#                 temp[1] = 'NaT'
+                temp[0] = str(datetime.strptime(str(temp[0]), '%Y-%m-%d %H:%M:%S') )
+                temp[1] = 'NaT'
 
-#                 self.assertEqual(self.dataframe[keywords][0], str(temp))
-#             elif pd.isnull(temp) and pd.isnull(self.dataframe[keywords][0]):
-#                 self.assertTrue(pd.isnull(self.dataframe[keywords][0]))
-#             else:
-#                 self.assertEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
+                self.assertEqual(self.dataframe[keywords][0], str(temp))
+            elif pd.isnull(temp) and pd.isnull(self.dataframe[keywords][0]):
+                self.assertTrue(pd.isnull(self.dataframe[keywords][0]))
+            else:
+                self.assertEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
 
-#             temp = utils.attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][1],\
-#                  self.energy_key, self.obs_thresholds)
+            temp = utils.attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][1],\
+                 self.energy_key, self.obs_thresholds)
             
             
-#             # specific fix for this keyword since this can have the value of "['Timestamp(YYYY-MM-DD)', 'NaT']" which it incredibly
-#             # hard to deal with since its a string of a an array of strings... 
-#             if keywords == 'All Threshold Crossing Times': 
-#                 temp[0] = str(datetime.strptime(str(temp[0]), '%Y-%m-%d %H:%M:%S') )
-#                 temp[1] = 'NaT'
-#                 self.assertEqual(self.dataframe[keywords][1], str(temp))
-#             elif pd.isnull(temp) and pd.isnull(self.dataframe[keywords][1]):
-#                 self.assertTrue(pd.isnull(self.dataframe[keywords][1]))
-#             else:
-#                 self.assertEqual(self.dataframe[keywords][1], temp, 'Error is in keyword ' + keywords)
+            # specific fix for this keyword since this can have the value of "['Timestamp(YYYY-MM-DD)', 'NaT']" which it incredibly
+            # hard to deal with since its a string of a an array of strings... 
+            if keywords == 'All Threshold Crossing Times': 
+                temp[0] = str(datetime.strptime(str(temp[0]), '%Y-%m-%d %H:%M:%S') )
+                temp[1] = 'NaT'
+                self.assertEqual(self.dataframe[keywords][1], str(temp))
+            elif pd.isnull(temp) and pd.isnull(self.dataframe[keywords][1]):
+                self.assertTrue(pd.isnull(self.dataframe[keywords][1]))
+            else:
+                self.assertEqual(self.dataframe[keywords][1], temp, 'Error is in keyword ' + keywords)
 
-#     def step_2(self):
-#         validate.calculate_intuitive_metrics(self.dataframe, self.model_names, self.all_energy_channels, \
-#             self.obs_thresholds, 'All')
-#         validate.write_df(self.dataframe, "SPHINX_dataframe")
+    def step_2(self):
+        validate.calculate_intuitive_metrics(self.dataframe, self.model_names, self.all_energy_channels, \
+            self.obs_thresholds, 'All')
+        validate.write_df(self.dataframe, "SPHINX_dataframe")
         
     
-#     def step_3(self):
-#         test_dict = initialize_flux_dict()
-#         test_dict = fill_peak_intensity_max_mult_dict(test_dict, self)
-#         csv_filename = os.path.join(config.outpath, 'csv', 'peak_intensity_max_metrics.csv')
+    def step_3(self):
+        test_dict = initialize_flux_dict()
+        test_dict = fill_peak_intensity_max_mult_dict(test_dict, self)
+        csv_filename = os.path.join(config.outpath, 'csv', 'peak_intensity_max_metrics.csv')
         
-#         utils.assert_equal_table(self, csv_filename, test_dict)
+        utils.assert_equal_table(self, csv_filename, test_dict)
 
         
-#     def utility_print_docstring(self, function):
-#         if self.verbosity == 2:
-#             print('\n//----------------------------------------------------')
-#             print(function.__doc__)
+    def utility_print_docstring(self, function):
+        if self.verbosity == 2:
+            print('\n//----------------------------------------------------')
+            print(function.__doc__)
 
-#     def _steps(self):
-#         for name in dir(self): # dir() result is implicitly sorted
-#             if name.startswith("step"):
-#                 yield name, getattr(self, name)
-
-
-#     @patch('sphinxval.utils.config.outpath', './tests/output')
-
-#     def test_peak_intensity_max_1(self):
-#         validate.prepare_outdirs()
-#         for name, step in self._steps():
-#             try:
-#                 step()
-#             except Exception as e:
-#                 self.fail("{} failed ({}: {})".format(step, type(e), e))
-#         utils.utility_delete_output()
+    def _steps(self):
+        for name in dir(self): # dir() result is implicitly sorted
+            if name.startswith("step"):
+                yield name, getattr(self, name)
 
 
+    @patch('sphinxval.utils.config.outpath', './tests/output')
 
-# class TestProbability0(unittest.TestCase):
+    def test_peak_intensity_max_1(self):
+        validate.prepare_outdirs()
+        for name, step in self._steps():
+            try:
+                step()
+            except Exception as e:
+                self.fail("{} failed ({}: {})".format(step, type(e), e))
+        utils.utility_delete_output()
 
-#     def load_verbosity(self):
-#         self.verbosity = utils.utility_get_verbosity()
+
+
+class TestProbability0(unittest.TestCase):
+
+    def load_verbosity(self):
+        self.verbosity = utils.utility_get_verbosity()
     
     
 
-#     def step_0(self): 
-#         validate.prepare_outdirs()
-#         self.energy_channel = {'min': 10, 'max': -1, 'units': 'MeV'}
-#         self.energy_key = objh.energy_channel_to_key(self.energy_channel)
-#         self.all_energy_channels = [self.energy_key] 
-#         self.model_names = ['Test_model_0']
-#         observation_json = './tests/files/observations/validation/all_clear/all_clear_false.json'
-#         observation = utils.utility_load_observation(observation_json, self.energy_channel)
-#         observation_objects = {self.energy_key: [observation]}
-#         self.verbosity = utils.utility_get_verbosity()
-#         forecast_json = './tests/files/forecasts/validation/probability/pred_probability_all_clear_false.json'
-#         forecast = utils.utility_load_forecast(forecast_json, self.energy_channel)
-#         forecast_objects = {self.energy_key: [forecast]}
-#         self.sphinx, self.obs_thresholds, self.obs_sep_events = utils.utility_match_sphinx(self.all_energy_channels,\
-#              self.model_names, observation_objects, forecast_objects)
-#         self.profname_dict = None
-#         self.DoResume = False
+    def step_0(self): 
+        validate.prepare_outdirs()
+        self.energy_channel = {'min': 10, 'max': -1, 'units': 'MeV'}
+        self.energy_key = objh.energy_channel_to_key(self.energy_channel)
+        self.all_energy_channels = [self.energy_key] 
+        self.model_names = ['Test_model_0']
+        observation_json = './tests/files/observations/validation/all_clear/all_clear_false.json'
+        observation = utils.utility_load_observation(observation_json, self.energy_channel)
+        observation_objects = {self.energy_key: [observation]}
+        self.verbosity = utils.utility_get_verbosity()
+        forecast_json = './tests/files/forecasts/validation/probability/pred_probability_all_clear_false.json'
+        forecast = utils.utility_load_forecast(forecast_json, self.energy_channel)
+        forecast_objects = {self.energy_key: [forecast]}
+        self.sphinx, self.obs_thresholds, self.obs_sep_events = utils.utility_match_sphinx(self.all_energy_channels,\
+             self.model_names, observation_objects, forecast_objects)
+        self.profname_dict = None
+        self.DoResume = False
         
-#         self.validation_quantity = ['all_clear', 'awt', 'duration', 'end_time', 'fluence', 'max_flux_in_pred_window', 'peak_intensity_max', 'peak_intensity_max_time', 'peak_intensity' \
-#             'peak_intensity_time', 'probability', 'start_time', 'threshold_crossing', 'time_profile']
-#         self.quantities_tested = ['probability']
-#         self.validation_type = ['All']
+        self.validation_quantity = ['all_clear', 'awt', 'duration', 'end_time', 'fluence', 'max_flux_in_pred_window', 'peak_intensity_max', 'peak_intensity_max_time', 'peak_intensity' \
+            'peak_intensity_time', 'probability', 'start_time', 'threshold_crossing', 'time_profile']
+        self.quantities_tested = ['probability']
+        self.validation_type = ['All']
         
-#     def step_1(self):
-#         """
-#         Tests that the dataframe is built correctly with the correct fields being filled in/added.
-#         The observation and forecast have exactly the same observation/prediction windows. 
-#         Matching requires (at a minimum) that there is a prediction window start/end with an observed
-#         SEP start time within the prediction window and that the last data time/trigger occur before the
-#         observed SEP start time.
-#         Observed all clear is False
-#         Forecast all clear is False
-#         """
-#         self.dataframe = validate.fill_sphinx_df(self.sphinx, self.model_names, self.all_energy_channels, \
-#             self.obs_thresholds, self.profname_dict)
-#         for keywords in self.dataframe:
-#             # temp = self.sphinx['Test_model_0'][self.energy_key].prediction.short_name\
-#             temp = utils.attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][0],\
-#                  self.energy_key, self.obs_thresholds)
-#             if pd.isnull(temp) and pd.isnull(self.dataframe[keywords][0]):
-#                 self.assertTrue(pd.isnull(self.dataframe[keywords][0]))
-#             else:
-#                 self.assertEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
+    def step_1(self):
+        """
+        Tests that the dataframe is built correctly with the correct fields being filled in/added.
+        The observation and forecast have exactly the same observation/prediction windows. 
+        Matching requires (at a minimum) that there is a prediction window start/end with an observed
+        SEP start time within the prediction window and that the last data time/trigger occur before the
+        observed SEP start time.
+        Observed all clear is False
+        Forecast all clear is False
+        """
+        self.dataframe = validate.fill_sphinx_df(self.sphinx, self.model_names, self.all_energy_channels, \
+            self.obs_thresholds, self.profname_dict)
+        for keywords in self.dataframe:
+            # temp = self.sphinx['Test_model_0'][self.energy_key].prediction.short_name\
+            temp = utils.attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][0],\
+                 self.energy_key, self.obs_thresholds)
+            if pd.isnull(temp) and pd.isnull(self.dataframe[keywords][0]):
+                self.assertTrue(pd.isnull(self.dataframe[keywords][0]))
+            else:
+                self.assertEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
 
 
-#     def step_2(self):
-#         self.assertFalse(self.DoResume)
+    def step_2(self):
+        self.assertFalse(self.DoResume)
     
-#     def step_3(self):
-#         validate.calculate_intuitive_metrics(self.dataframe, self.model_names, self.all_energy_channels, \
-#             self.obs_thresholds, 'All')
+    def step_3(self):
+        validate.calculate_intuitive_metrics(self.dataframe, self.model_names, self.all_energy_channels, \
+            self.obs_thresholds, 'All')
         
        
 
-#     def step_4(self):
-#         test_dict = initialize_probability_dict()
-#         test_dict = fill_probability_dict_highprob(test_dict, self)
-#         csv_filename = os.path.join(config.outpath, 'csv', 'probability_metrics.csv')
-#         utils.assert_equal_table(self, csv_filename, test_dict)
+    def step_4(self):
+        test_dict = initialize_probability_dict()
+        test_dict = fill_probability_dict_highprob(test_dict, self)
+        csv_filename = os.path.join(config.outpath, 'csv', 'probability_metrics.csv')
+        utils.assert_equal_table(self, csv_filename, test_dict)
 
 
 
     
 
-#     def utility_print_docstring(self, function):
-#         if self.verbosity == 2:
-#             print('\n//----------------------------------------------------')
-#             print(function.__doc__)
+    def utility_print_docstring(self, function):
+        if self.verbosity == 2:
+            print('\n//----------------------------------------------------')
+            print(function.__doc__)
 
-#     def _steps(self):
-#         for name in dir(self): # dir() result is implicitly sorted
-#             if name.startswith("step"):
-#                 yield name, getattr(self, name)
+    def _steps(self):
+        for name in dir(self): # dir() result is implicitly sorted
+            if name.startswith("step"):
+                yield name, getattr(self, name)
         
 
 
-#     @patch('sphinxval.utils.config.outpath', './tests/output')
+    @patch('sphinxval.utils.config.outpath', './tests/output')
 
-#     def test_prob_0(self):
-#         validate.prepare_outdirs()
-#         for name, step in self._steps():
-#             try:
-#                 step()
-#             except Exception as e:
-#                 self.fail("{} failed ({}: {})".format(step, type(e), e))
-#         utils.utility_delete_output()
-
-
+    def test_prob_0(self):
+        validate.prepare_outdirs()
+        for name, step in self._steps():
+            try:
+                step()
+            except Exception as e:
+                self.fail("{} failed ({}: {})".format(step, type(e), e))
+        utils.utility_delete_output()
 
 
-# class TestProbabilityMult(unittest.TestCase):
 
-#     def load_verbosity(self):
-#         self.verbosity = utils.utility_get_verbosity()
+
+class TestProbabilityMult(unittest.TestCase):
+
+    def load_verbosity(self):
+        self.verbosity = utils.utility_get_verbosity()
     
     
 
-#     def step_0(self): 
-#         validate.prepare_outdirs()
+    def step_0(self): 
+        validate.prepare_outdirs()
         
 
 
-#         self.energy_channel = {'min': 10, 'max': -1, 'units': 'MeV'}
-#         self.energy_key = objh.energy_channel_to_key(self.energy_channel)
-#         self.all_energy_channels = [self.energy_key] 
-#         self.model_names = ['Test_model_0']
-#         observation_json = ['./tests/files/observations/validation/all_clear/all_clear_false.json', './tests/files/observations/validation/all_clear/all_clear_true.json']
-#         observation_objects = {self.energy_key: []}
-#         for jsons in observation_json:
-#             observation = utils.utility_load_observation(jsons, self.energy_channel)
-#             observation_objects[self.energy_key].append(observation)
+        self.energy_channel = {'min': 10, 'max': -1, 'units': 'MeV'}
+        self.energy_key = objh.energy_channel_to_key(self.energy_channel)
+        self.all_energy_channels = [self.energy_key] 
+        self.model_names = ['Test_model_0']
+        observation_json = ['./tests/files/observations/validation/all_clear/all_clear_false.json', './tests/files/observations/validation/all_clear/all_clear_true.json']
+        observation_objects = {self.energy_key: []}
+        for jsons in observation_json:
+            observation = utils.utility_load_observation(jsons, self.energy_channel)
+            observation_objects[self.energy_key].append(observation)
         
-#         self.verbosity = utils.utility_get_verbosity()
-#         forecast_json = ['./tests/files/forecasts/validation/probability/pred_probability_all_clear_false.json', './tests/files/forecasts/validation/probability/pred_probability_all_clear_true.json']
-#         forecast_objects = {self.energy_key: []}
-#         for jsons in forecast_json:
-#             forecast = utils.utility_load_forecast(jsons, self.energy_channel)
-#             forecast_objects[self.energy_key].append(forecast)
-#         self.sphinx, self.obs_thresholds, self.obs_sep_events = utils.utility_match_sphinx(self.all_energy_channels, self.model_names, observation_objects, forecast_objects)
-#         self.profname_dict = None
-#         self.DoResume = False
+        self.verbosity = utils.utility_get_verbosity()
+        forecast_json = ['./tests/files/forecasts/validation/probability/pred_probability_all_clear_false.json', './tests/files/forecasts/validation/probability/pred_probability_all_clear_true.json']
+        forecast_objects = {self.energy_key: []}
+        for jsons in forecast_json:
+            forecast = utils.utility_load_forecast(jsons, self.energy_channel)
+            forecast_objects[self.energy_key].append(forecast)
+        self.sphinx, self.obs_thresholds, self.obs_sep_events = utils.utility_match_sphinx(self.all_energy_channels, self.model_names, observation_objects, forecast_objects)
+        self.profname_dict = None
+        self.DoResume = False
         
-#         self.validation_quantity = ['all_clear', 'awt', 'duration', 'end_time', 'fluence', 'max_flux_in_pred_window', 'peak_intensity_max', 'peak_intensity_max_time', 'peak_intensity' \
-#             'peak_intensity_time', 'probability', 'start_time', 'threshold_crossing', 'time_profile']
-#         self.quantities_tested = ['probability']
-#         self.validation_type = ['All']
+        self.validation_quantity = ['all_clear', 'awt', 'duration', 'end_time', 'fluence', 'max_flux_in_pred_window', 'peak_intensity_max', 'peak_intensity_max_time', 'peak_intensity' \
+            'peak_intensity_time', 'probability', 'start_time', 'threshold_crossing', 'time_profile']
+        self.quantities_tested = ['probability']
+        self.validation_type = ['All']
         
-#     def step_1(self):
-#         """
-#         Tests that the dataframe is built correctly with the correct fields being filled in/added.
-#         The observation and forecast have exactly the same observation/prediction windows. 
-#         Matching requires (at a minimum) that there is a prediction window start/end with an observed
-#         SEP start time within the prediction window and that the last data time/trigger occur before the
-#         observed SEP start time.
-#         Observed all clear is False
-#         Forecast all clear is False
-#         """
-#         self.dataframe = validate.fill_sphinx_df(self.sphinx, self.model_names, self.all_energy_channels, \
-#             self.obs_thresholds, self.profname_dict)
+    def step_1(self):
+        """
+        Tests that the dataframe is built correctly with the correct fields being filled in/added.
+        The observation and forecast have exactly the same observation/prediction windows. 
+        Matching requires (at a minimum) that there is a prediction window start/end with an observed
+        SEP start time within the prediction window and that the last data time/trigger occur before the
+        observed SEP start time.
+        Observed all clear is False
+        Forecast all clear is False
+        """
+        self.dataframe = validate.fill_sphinx_df(self.sphinx, self.model_names, self.all_energy_channels, \
+            self.obs_thresholds, self.profname_dict)
        
-#         for keywords in self.dataframe:
-#             # temp = self.sphinx['Test_model_0'][self.energy_key].prediction.short_name\
+        for keywords in self.dataframe:
+            # temp = self.sphinx['Test_model_0'][self.energy_key].prediction.short_name\
             
-#             temp = utils.attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][0],\
-#                  self.energy_key, self.obs_thresholds)
+            temp = utils.attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][0],\
+                 self.energy_key, self.obs_thresholds)
             
-#             # specific fix for this keyword since this can have the value of "['NaT']" which is not pd.NaT which means 
-#             # if does not get caught by the isnull(). Probably a temp fix on my end
-#             if keywords == 'All Threshold Crossing Times': 
+            # specific fix for this keyword since this can have the value of "['NaT']" which is not pd.NaT which means 
+            # if does not get caught by the isnull(). Probably a temp fix on my end
+            if keywords == 'All Threshold Crossing Times': 
                 
-#                 temp[0] = str(datetime.strptime(str(temp[0]), '%Y-%m-%d %H:%M:%S') )
-#                 temp[1] = 'NaT'
-#                 self.assertEqual(self.dataframe[keywords][0], str(temp))
-#             elif pd.isnull(temp) and pd.isnull(self.dataframe[keywords][0]):
-#                 self.assertTrue(pd.isnull(self.dataframe[keywords][0]))
-#             else:
-#                 self.assertEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
+                temp[0] = str(datetime.strptime(str(temp[0]), '%Y-%m-%d %H:%M:%S') )
+                temp[1] = 'NaT'
+                self.assertEqual(self.dataframe[keywords][0], str(temp))
+            elif pd.isnull(temp) and pd.isnull(self.dataframe[keywords][0]):
+                self.assertTrue(pd.isnull(self.dataframe[keywords][0]))
+            else:
+                self.assertEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
 
-#             temp = utils.attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][1],\
-#                  self.energy_key, self.obs_thresholds)
+            temp = utils.attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][1],\
+                 self.energy_key, self.obs_thresholds)
             
             
-#             # specific fix for this keyword since this can have the value of "['Timestamp(YYYY-MM-DD)', 'NaT']" which it incredibly
-#             # hard to deal with since its a string of a an array of strings... 
-#             if keywords == 'All Threshold Crossing Times': 
-#                 temp[0] = str(datetime.strptime(str(temp[0]), '%Y-%m-%d %H:%M:%S') )
-#                 temp[1] = 'NaT'
-#                 self.assertEqual(self.dataframe[keywords][1], str(temp))
-#             elif pd.isnull(temp) and pd.isnull(self.dataframe[keywords][1]):
-#                 self.assertTrue(pd.isnull(self.dataframe[keywords][1]))
-#             else:
-#                 self.assertEqual(self.dataframe[keywords][1], temp, 'Error is in keyword ' + keywords)
+            # specific fix for this keyword since this can have the value of "['Timestamp(YYYY-MM-DD)', 'NaT']" which it incredibly
+            # hard to deal with since its a string of a an array of strings... 
+            if keywords == 'All Threshold Crossing Times': 
+                temp[0] = str(datetime.strptime(str(temp[0]), '%Y-%m-%d %H:%M:%S') )
+                temp[1] = 'NaT'
+                self.assertEqual(self.dataframe[keywords][1], str(temp))
+            elif pd.isnull(temp) and pd.isnull(self.dataframe[keywords][1]):
+                self.assertTrue(pd.isnull(self.dataframe[keywords][1]))
+            else:
+                self.assertEqual(self.dataframe[keywords][1], temp, 'Error is in keyword ' + keywords)
 
 
 
-#     def step_2(self):
-#         validate.calculate_intuitive_metrics(self.dataframe, self.model_names, self.all_energy_channels, \
-#             self.obs_thresholds, 'All')
+    def step_2(self):
+        validate.calculate_intuitive_metrics(self.dataframe, self.model_names, self.all_energy_channels, \
+            self.obs_thresholds, 'All')
     
-#     def step_3(self):
-#         test_dict = initialize_probability_dict()
-#         test_dict = fill_probability_dict_multprob(test_dict, self)
-#         csv_filename = os.path.join(config.outpath, 'csv', 'probability_metrics.csv')
-#         utils.assert_equal_table(self, csv_filename, test_dict)
+    def step_3(self):
+        test_dict = initialize_probability_dict()
+        test_dict = fill_probability_dict_multprob(test_dict, self)
+        csv_filename = os.path.join(config.outpath, 'csv', 'probability_metrics.csv')
+        utils.assert_equal_table(self, csv_filename, test_dict)
  
 
-#     def utility_print_docstring(self, function):
-#         if self.verbosity == 2:
-#             print('\n//----------------------------------------------------')
-#             print(function.__doc__)
+    def utility_print_docstring(self, function):
+        if self.verbosity == 2:
+            print('\n//----------------------------------------------------')
+            print(function.__doc__)
 
-#     def _steps(self):
-#         for name in dir(self): # dir() result is implicitly sorted
-#             if name.startswith("step"):
-#                 yield name, getattr(self, name)
+    def _steps(self):
+        for name in dir(self): # dir() result is implicitly sorted
+            if name.startswith("step"):
+                yield name, getattr(self, name)
         
    
-#     @patch('sphinxval.utils.config.outpath', './tests/output')
+    @patch('sphinxval.utils.config.outpath', './tests/output')
     
-#     def test_prob_1(self):
-#         validate.prepare_outdirs()
-#         for name, step in self._steps():
-#             try:
-#                 step()
-#             except Exception as e:
-#                 self.fail("{} failed ({}: {})".format(step, type(e), e))
-#         utils.utility_delete_output()
+    def test_prob_1(self):
+        validate.prepare_outdirs()
+        for name, step in self._steps():
+            try:
+                step()
+            except Exception as e:
+                self.fail("{} failed ({}: {})".format(step, type(e), e))
+        utils.utility_delete_output()
 
 
 class TestShortNameChanger(unittest.TestCase):
@@ -1858,262 +1858,262 @@ class TestShortNameChanger(unittest.TestCase):
 
 
 
-# class Test_AllFields_MultipleForecasts(unittest.TestCase):
+class Test_AllFields_MultipleForecasts(unittest.TestCase):
 
-#     def load_verbosity(self):
-#         self.verbosity = utils.utility_get_verbosity()
+    def load_verbosity(self):
+        self.verbosity = utils.utility_get_verbosity()
     
     
-#     def step_1(self):
-#         """
-#         Tests that the dataframe is built correctly with the correct fields being filled in/added.
-#         The observation and forecast have exactly the same observation/prediction windows. 
-#         Matching requires (at a minimum) that there is a prediction window start/end with an observed
-#         SEP start time within the prediction window and that the last data time/trigger occur before the
-#         observed SEP start time.
-#         Observed all clear is False
-#         Forecast all clear is False
-#         """
-#         validate.prepare_outdirs()
+    def step_1(self):
+        """
+        Tests that the dataframe is built correctly with the correct fields being filled in/added.
+        The observation and forecast have exactly the same observation/prediction windows. 
+        Matching requires (at a minimum) that there is a prediction window start/end with an observed
+        SEP start time within the prediction window and that the last data time/trigger occur before the
+        observed SEP start time.
+        Observed all clear is False
+        Forecast all clear is False
+        """
+        validate.prepare_outdirs()
         
 
-#         validation_type = ["All", "First", "Last", "Max", "Mean"]
-#         self.energy_channel = {'min': 10, 'max': -1, 'units': 'MeV'}
-#         self.energy_key = objh.energy_channel_to_key(self.energy_channel)
-#         self.all_energy_channels = [self.energy_key] 
-#         self.model_names = ['Test_model_0']
-#         observation_json = ['./tests/files/observations/validation/all/all_clear_false.json', './tests/files/observations/validation/all/all_clear_true.json']
-#         observation_objects = {self.energy_key: []}
-#         for jsons in observation_json:
-#             observation = utils.utility_load_observation(jsons, self.energy_channel)
-#             observation_objects[self.energy_key].append(observation)
+        validation_type = ["All", "First", "Last", "Max", "Mean"]
+        self.energy_channel = {'min': 10, 'max': -1, 'units': 'MeV'}
+        self.energy_key = objh.energy_channel_to_key(self.energy_channel)
+        self.all_energy_channels = [self.energy_key] 
+        self.model_names = ['Test_model_0']
+        observation_json = ['./tests/files/observations/validation/all/all_clear_false.json', './tests/files/observations/validation/all/all_clear_true.json']
+        observation_objects = {self.energy_key: []}
+        for jsons in observation_json:
+            observation = utils.utility_load_observation(jsons, self.energy_channel)
+            observation_objects[self.energy_key].append(observation)
         
-#         self.verbosity = utils.utility_get_verbosity()
-#         forecast_json = ['./tests/files/forecasts/validation/all/pred_timeprof_all_clear_false.json', './tests/files/forecasts/validation/all/pred_timeprof_all_clear_true.json', './tests/files/forecasts/validation/all/flare_pred_timeprof_all_clear_false.json']
-#         forecast_objects = {self.energy_key: []}
-#         for jsons in forecast_json:
-#             forecast = utils.utility_load_forecast(jsons, self.energy_channel)
-#             forecast_objects[self.energy_key].append(forecast)
-#         self.sphinx, self.obs_thresholds, self.obs_sep_events = utils.utility_match_sphinx(self.all_energy_channels, self.model_names, observation_objects, forecast_objects)
-#         self.profname_dict = None
-#         self.DoResume = False
+        self.verbosity = utils.utility_get_verbosity()
+        forecast_json = ['./tests/files/forecasts/validation/all/pred_timeprof_all_clear_false.json', './tests/files/forecasts/validation/all/pred_timeprof_all_clear_true.json', './tests/files/forecasts/validation/all/flare_pred_timeprof_all_clear_false.json']
+        forecast_objects = {self.energy_key: []}
+        for jsons in forecast_json:
+            forecast = utils.utility_load_forecast(jsons, self.energy_channel)
+            forecast_objects[self.energy_key].append(forecast)
+        self.sphinx, self.obs_thresholds, self.obs_sep_events = utils.utility_match_sphinx(self.all_energy_channels, self.model_names, observation_objects, forecast_objects)
+        self.profname_dict = None
+        self.DoResume = False
         
-#         self.validation_quantity = ['all_clear', 'awt', 'duration', 'end_time', 'fluence', 'max_flux_in_pred_window', 'peak_intensity_max', 'peak_intensity_max_time', 'peak_intensity' \
-#             'peak_intensity_time', 'probability', 'start_time', 'threshold_crossing', 'time_profile']
-#         self.validation_type = ["All", "First", "Last", "Max", "Mean"]
+        self.validation_quantity = ['all_clear', 'awt', 'duration', 'end_time', 'fluence', 'max_flux_in_pred_window', 'peak_intensity_max', 'peak_intensity_max_time', 'peak_intensity' \
+            'peak_intensity_time', 'probability', 'start_time', 'threshold_crossing', 'time_profile']
+        self.validation_type = ["All", "First", "Last", "Max", "Mean"]
 
-#         self.dataframe = validate.fill_sphinx_df(self.sphinx, self.model_names, self.all_energy_channels, \
-#             self.obs_thresholds, self.profname_dict)
+        self.dataframe = validate.fill_sphinx_df(self.sphinx, self.model_names, self.all_energy_channels, \
+            self.obs_thresholds, self.profname_dict)
        
-#         for keywords in self.dataframe:
+        for keywords in self.dataframe:
             
-#             temp = utils.attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][0],\
-#                  self.energy_key, self.obs_thresholds)
+            temp = utils.attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][0],\
+                 self.energy_key, self.obs_thresholds)
             
-#             if 'SEP Fluence Spectrum' in keywords and "Units" not in keywords:
-#                 try:
-#                     for energies in range(len(self.dataframe[keywords][0])):
+            if 'SEP Fluence Spectrum' in keywords and "Units" not in keywords:
+                try:
+                    for energies in range(len(self.dataframe[keywords][0])):
                         
-#                         self.assertEqual(self.dataframe[keywords][0][energies]['energy_min'], temp[energies]['energy_min'], 'Error is in keyword ' + keywords + ' energy_min')
-#                         self.assertEqual(self.dataframe[keywords][0][energies]['energy_max'], temp[energies]['energy_max'], 'Error is in keyword ' + keywords + ' energy_max')
-#                         self.assertEqual(self.dataframe[keywords][0][energies]['fluence'], temp[energies]['fluence'], 'Error is in keyword ' + keywords + ' fluence')
-#                 except:
+                        self.assertEqual(self.dataframe[keywords][0][energies]['energy_min'], temp[energies]['energy_min'], 'Error is in keyword ' + keywords + ' energy_min')
+                        self.assertEqual(self.dataframe[keywords][0][energies]['energy_max'], temp[energies]['energy_max'], 'Error is in keyword ' + keywords + ' energy_max')
+                        self.assertEqual(self.dataframe[keywords][0][energies]['fluence'], temp[energies]['fluence'], 'Error is in keyword ' + keywords + ' fluence')
+                except:
                     
-#                     self.assertTrue(pd.isna(self.dataframe[keywords][0]))
-#             elif pd.isna(temp) and pd.isna(self.dataframe[keywords][0]):
-#                 self.assertTrue(pd.isna(self.dataframe[keywords][0]))
-#             else:
-#                 self.assertEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
+                    self.assertTrue(pd.isna(self.dataframe[keywords][0]))
+            elif pd.isna(temp) and pd.isna(self.dataframe[keywords][0]):
+                self.assertTrue(pd.isna(self.dataframe[keywords][0]))
+            else:
+                self.assertEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
 
-#             temp = utils.attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][1],\
-#                  self.energy_key, self.obs_thresholds)
+            temp = utils.attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][1],\
+                 self.energy_key, self.obs_thresholds)
             
-#             if 'SEP Fluence Spectrum' in keywords and "Units" not in keywords:
-#                 try:
-#                     for energies in range(len(self.dataframe[keywords][1])):
-#                         self.assertEqual(self.dataframe[keywords][1][energies]['energy_min'], temp[energies]['energy_min'], 'Error is in keyword ' + keywords + ' energy_min')
-#                         self.assertEqual(self.dataframe[keywords][1][energies]['energy_max'], temp[energies]['energy_max'], 'Error is in keyword ' + keywords + ' energy_max')
-#                         self.assertEqual(self.dataframe[keywords][1][energies]['fluence'], temp[energies]['fluence'], 'Error is in keyword ' + keywords + ' fluence')
-#                 except:
+            if 'SEP Fluence Spectrum' in keywords and "Units" not in keywords:
+                try:
+                    for energies in range(len(self.dataframe[keywords][1])):
+                        self.assertEqual(self.dataframe[keywords][1][energies]['energy_min'], temp[energies]['energy_min'], 'Error is in keyword ' + keywords + ' energy_min')
+                        self.assertEqual(self.dataframe[keywords][1][energies]['energy_max'], temp[energies]['energy_max'], 'Error is in keyword ' + keywords + ' energy_max')
+                        self.assertEqual(self.dataframe[keywords][1][energies]['fluence'], temp[energies]['fluence'], 'Error is in keyword ' + keywords + ' fluence')
+                except:
                     
-#                     self.assertTrue(pd.isna(self.dataframe[keywords][1]))
-#             elif pd.isna(temp) and pd.isna(self.dataframe[keywords][1]):
-#                 self.assertTrue(pd.isna(self.dataframe[keywords][1]))
-#             elif keywords == 'All Threshold Crossing Times':
-#                 self.assertEqual(self.dataframe[keywords][1], str(['NaT']))
-#             else:        
-#                 self.assertEqual(self.dataframe[keywords][1], temp, 'Error is in keyword ' + keywords)
-#         for type in self.validation_type:
+                    self.assertTrue(pd.isna(self.dataframe[keywords][1]))
+            elif pd.isna(temp) and pd.isna(self.dataframe[keywords][1]):
+                self.assertTrue(pd.isna(self.dataframe[keywords][1]))
+            elif keywords == 'All Threshold Crossing Times':
+                self.assertEqual(self.dataframe[keywords][1], str(['NaT']))
+            else:        
+                self.assertEqual(self.dataframe[keywords][1], temp, 'Error is in keyword ' + keywords)
+        for type in self.validation_type:
             
-#             validate.calculate_intuitive_metrics(self.dataframe, self.model_names, self.all_energy_channels, \
-#                 self.obs_thresholds, type)
+            validate.calculate_intuitive_metrics(self.dataframe, self.model_names, self.all_energy_channels, \
+                self.obs_thresholds, type)
 
-#     def step_2(self):
-#         self.assertFalse(self.DoResume)
+    def step_2(self):
+        self.assertFalse(self.DoResume)
     
-#     def step_3(self):
-#         """
-#         step 3 writes the dataframe to a file and then checks that those files exist
-#         """
-#         validate.write_df(self.dataframe, "SPHINX_dataframe")
+    def step_3(self):
+        """
+        step 3 writes the dataframe to a file and then checks that those files exist
+        """
+        validate.write_df(self.dataframe, "SPHINX_dataframe")
         
-#         self.assertTrue(os.path.isfile('./tests/output/csv/SPHINX_dataframe.csv'), msg = 'SPHINX_dataframe.csv does not exist, check the file is output correctly')
-#         self.assertTrue(os.path.isfile('./tests/output/pkl/SPHINX_dataframe.pkl'), msg = 'SPHINX_dataframe.pkl does not exist, check the file is output correctly')
+        self.assertTrue(os.path.isfile('./tests/output/csv/SPHINX_dataframe.csv'), msg = 'SPHINX_dataframe.csv does not exist, check the file is output correctly')
+        self.assertTrue(os.path.isfile('./tests/output/pkl/SPHINX_dataframe.pkl'), msg = 'SPHINX_dataframe.pkl does not exist, check the file is output correctly')
 
         
 
-#     def step_4_prob(self):
+    def step_4_prob(self):
         
-#         test_dict = initialize_probability_dict()
-#         test_dict = fill_probability_dict_all(test_dict, self)
-#         csv_filename = os.path.join(config.outpath, 'csv', 'probability_metrics.csv')
+        test_dict = initialize_probability_dict()
+        test_dict = fill_probability_dict_all(test_dict, self)
+        csv_filename = os.path.join(config.outpath, 'csv', 'probability_metrics.csv')
 
-#         utils.assert_equal_table(self, csv_filename, test_dict)
+        utils.assert_equal_table(self, csv_filename, test_dict)
      
 
 
-#     def step_5_peak_int_max(self):
+    def step_5_peak_int_max(self):
         
-#         test_dict = initialize_flux_dict()
-#         test_dict = fill_peak_intensity_max_metrics_dict_all(test_dict, self)
-#         csv_filename = os.path.join(config.outpath, 'csv', 'peak_intensity_max_metrics.csv')
+        test_dict = initialize_flux_dict()
+        test_dict = fill_peak_intensity_max_metrics_dict_all(test_dict, self)
+        csv_filename = os.path.join(config.outpath, 'csv', 'peak_intensity_max_metrics.csv')
    
-#         utils.assert_equal_table(self, csv_filename, test_dict)
+        utils.assert_equal_table(self, csv_filename, test_dict)
         
 
-#     def step_6_time_prof(self):
+    def step_6_time_prof(self):
        
-#         test_dict = initialize_flux_dict()
-#         test_dict = fill_time_profile_dict_all(test_dict, self)
-#         csv_filename = os.path.join(config.outpath, 'csv', 'time_profile_metrics.csv')
+        test_dict = initialize_flux_dict()
+        test_dict = fill_time_profile_dict_all(test_dict, self)
+        csv_filename = os.path.join(config.outpath, 'csv', 'time_profile_metrics.csv')
   
-#         utils.assert_equal_table(self, csv_filename, test_dict)
+        utils.assert_equal_table(self, csv_filename, test_dict)
        
 
-#     def step_7_all_clear(self):
+    def step_7_all_clear(self):
        
-#         test_dict = initialize_all_clear_dict()
-#         test_dict = fill_all_clear_dict_all(test_dict, self)
-#         csv_filename = os.path.join(config.outpath, 'csv', 'all_clear_metrics.csv')
+        test_dict = initialize_all_clear_dict()
+        test_dict = fill_all_clear_dict_all(test_dict, self)
+        csv_filename = os.path.join(config.outpath, 'csv', 'all_clear_metrics.csv')
         
-#         utils.assert_equal_table(self, csv_filename, test_dict)
+        utils.assert_equal_table(self, csv_filename, test_dict)
 
 
     
-#     def step_8_awt(self):
+    def step_8_awt(self):
         
-#         test_dict = initialize_awt_dict()
-#         test_dict = fill_awt_dict_all(test_dict, self)
-#         csv_filename = os.path.join(config.outpath, 'csv', 'awt_metrics.csv')
+        test_dict = initialize_awt_dict()
+        test_dict = fill_awt_dict_all(test_dict, self)
+        csv_filename = os.path.join(config.outpath, 'csv', 'awt_metrics.csv')
        
-#         utils.assert_equal_table(self, csv_filename, test_dict)
+        utils.assert_equal_table(self, csv_filename, test_dict)
     
 
-#     def step_9_duration(self):
+    def step_9_duration(self):
         
-#         test_dict = initialize_time_dict()
-#         test_dict = fill_duration_metrics_dict_all(test_dict, self)
-#         csv_filename = os.path.join(config.outpath, 'csv', 'duration_metrics.csv')
+        test_dict = initialize_time_dict()
+        test_dict = fill_duration_metrics_dict_all(test_dict, self)
+        csv_filename = os.path.join(config.outpath, 'csv', 'duration_metrics.csv')
    
-#         utils.assert_equal_table(self, csv_filename, test_dict)
+        utils.assert_equal_table(self, csv_filename, test_dict)
      
     
-#     def step_10_end_time(self):
+    def step_10_end_time(self):
         
-#         test_dict = initialize_time_dict()
-#         test_dict = fill_end_time_metrics_dict_all(test_dict, self)
-#         csv_filename = os.path.join(config.outpath, 'csv', 'end_time_metrics.csv')
+        test_dict = initialize_time_dict()
+        test_dict = fill_end_time_metrics_dict_all(test_dict, self)
+        csv_filename = os.path.join(config.outpath, 'csv', 'end_time_metrics.csv')
       
-#         utils.assert_equal_table(self, csv_filename, test_dict)
+        utils.assert_equal_table(self, csv_filename, test_dict)
     
 
-#     def step_11_last_data_to_issue_time(self):
+    def step_11_last_data_to_issue_time(self):
         
-#         test_dict = initialize_time_dict()
-#         test_dict = fill_last_data_to_issue_time_metrics_dict_all(test_dict, self)
-#         csv_filename = os.path.join(config.outpath, 'csv', 'last_data_to_issue_time_metrics.csv')
+        test_dict = initialize_time_dict()
+        test_dict = fill_last_data_to_issue_time_metrics_dict_all(test_dict, self)
+        csv_filename = os.path.join(config.outpath, 'csv', 'last_data_to_issue_time_metrics.csv')
     
-#         utils.assert_equal_table(self, csv_filename, test_dict)
+        utils.assert_equal_table(self, csv_filename, test_dict)
         
 
-#     def step_12_max_flux_pred_win(self):
+    def step_12_max_flux_pred_win(self):
         
-#         test_dict = initialize_flux_dict()
-#         test_dict = fill_max_flux_in_pred_win_metrics_dict_all(test_dict, self)
-#         csv_filename = os.path.join(config.outpath, 'csv', 'max_flux_in_pred_win_metrics.csv')
+        test_dict = initialize_flux_dict()
+        test_dict = fill_max_flux_in_pred_win_metrics_dict_all(test_dict, self)
+        csv_filename = os.path.join(config.outpath, 'csv', 'max_flux_in_pred_win_metrics.csv')
         
-#         utils.assert_equal_table(self, csv_filename, test_dict)
+        utils.assert_equal_table(self, csv_filename, test_dict)
         
 
-#     def step_13_peak_int_max_time(self):
+    def step_13_peak_int_max_time(self):
         
-#         test_dict = initialize_time_dict()
-#         test_dict = fill_peak_intensity_max_time_metrics_dict_all(test_dict, self)
-#         csv_filename = os.path.join(config.outpath, 'csv', 'peak_intensity_max_time_metrics.csv')
+        test_dict = initialize_time_dict()
+        test_dict = fill_peak_intensity_max_time_metrics_dict_all(test_dict, self)
+        csv_filename = os.path.join(config.outpath, 'csv', 'peak_intensity_max_time_metrics.csv')
         
-#         utils.assert_equal_table(self, csv_filename, test_dict)
+        utils.assert_equal_table(self, csv_filename, test_dict)
        
     
-#     def step_14_peak_int(self):
+    def step_14_peak_int(self):
         
-#         test_dict = initialize_flux_dict()
-#         test_dict = fill_peak_intensity_metrics_dict_all(test_dict, self)
-#         csv_filename = os.path.join(config.outpath, 'csv', 'peak_intensity_metrics.csv')
+        test_dict = initialize_flux_dict()
+        test_dict = fill_peak_intensity_metrics_dict_all(test_dict, self)
+        csv_filename = os.path.join(config.outpath, 'csv', 'peak_intensity_metrics.csv')
         
-#         utils.assert_equal_table(self, csv_filename, test_dict)
+        utils.assert_equal_table(self, csv_filename, test_dict)
         
-#     def step_15_peak_int_time(self):
+    def step_15_peak_int_time(self):
         
-#         test_dict = initialize_time_dict()
-#         test_dict = fill_peak_intensity_time_dict_all(test_dict, self)
-#         csv_filename = os.path.join(config.outpath, 'csv', 'peak_intensity_time_metrics.csv')
-#         utils.assert_equal_table(self, csv_filename, test_dict)
+        test_dict = initialize_time_dict()
+        test_dict = fill_peak_intensity_time_dict_all(test_dict, self)
+        csv_filename = os.path.join(config.outpath, 'csv', 'peak_intensity_time_metrics.csv')
+        utils.assert_equal_table(self, csv_filename, test_dict)
 
-#     def step_16_start_time(self):
+    def step_16_start_time(self):
         
-#         test_dict = initialize_time_dict()
-#         test_dict = fill_start_time_dict_all(test_dict, self)
-#         csv_filename = os.path.join(config.outpath, 'csv', 'start_time_metrics.csv')
-#         utils.assert_equal_table(self, csv_filename, test_dict)
+        test_dict = initialize_time_dict()
+        test_dict = fill_start_time_dict_all(test_dict, self)
+        csv_filename = os.path.join(config.outpath, 'csv', 'start_time_metrics.csv')
+        utils.assert_equal_table(self, csv_filename, test_dict)
        
     
-#     def step_17_thresh_crossing_time(self):
+    def step_17_thresh_crossing_time(self):
         
-#         test_dict = initialize_time_dict()
-#         test_dict = fill_threshold_crossing_time_dict_all(test_dict, self)
-#         csv_filename = os.path.join(config.outpath, 'csv', 'threshold_crossing_metrics.csv')
+        test_dict = initialize_time_dict()
+        test_dict = fill_threshold_crossing_time_dict_all(test_dict, self)
+        csv_filename = os.path.join(config.outpath, 'csv', 'threshold_crossing_metrics.csv')
        
-#         utils.assert_equal_table(self, csv_filename, test_dict)
+        utils.assert_equal_table(self, csv_filename, test_dict)
         
     
-#     def step_18_fluence(self):
+    def step_18_fluence(self):
         
-#         test_dict = initialize_flux_dict()
-#         test_dict = fill_fluence_dict_all(test_dict, self)
-#         csv_filename = os.path.join(config.outpath, 'csv', 'fluence_metrics.csv')
-#         utils.assert_equal_table(self, csv_filename, test_dict)
-        
-
-#     def utility_print_docstring(self, function):
-#         if self.verbosity == 2:
-#             print('\n//----------------------------------------------------')
-#             print(function.__doc__)
-
-#     def _steps(self):
-#         for name in dir(self): # dir() result is implicitly sorted
-#             if name.startswith("step"):
-#                 yield name, getattr(self, name)
+        test_dict = initialize_flux_dict()
+        test_dict = fill_fluence_dict_all(test_dict, self)
+        csv_filename = os.path.join(config.outpath, 'csv', 'fluence_metrics.csv')
+        utils.assert_equal_table(self, csv_filename, test_dict)
         
 
-#     @patch('sphinxval.utils.config.outpath', './tests/output')
+    def utility_print_docstring(self, function):
+        if self.verbosity == 2:
+            print('\n//----------------------------------------------------')
+            print(function.__doc__)
+
+    def _steps(self):
+        for name in dir(self): # dir() result is implicitly sorted
+            if name.startswith("step"):
+                yield name, getattr(self, name)
+        
+
+    @patch('sphinxval.utils.config.outpath', './tests/output')
     
-#     def test_all(self):
-#         validate.prepare_outdirs()
-#         for name, step in self._steps():
-#             try:
-#                 step()
-#             except Exception as e:
-#                 self.fail("{} failed ({}: {})".format(step, type(e), e))
-#         utils.utility_delete_output()
+    def test_all(self):
+        validate.prepare_outdirs()
+        for name, step in self._steps():
+            try:
+                step()
+            except Exception as e:
+                self.fail("{} failed ({}: {})".format(step, type(e), e))
+        utils.utility_delete_output()
 
 
