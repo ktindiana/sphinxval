@@ -24,6 +24,8 @@ tests/logs/
 
 
 
+venv/*
+
 bin/sepval_post_analysis.py
 sphinxval/utils/sepval_post_analysis.py
 

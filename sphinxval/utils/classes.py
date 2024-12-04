@@ -493,6 +493,7 @@ class Forecast():
         #energy channel. Will be a list if present.
         self.all_thresholds = None
         self.short_name = None
+        self.original_short_name = None
         self.issue_time = pd.NaT
         self.valid = None #indicates whether prediction window starts
                           #at the same time or after triggers/inputs
@@ -664,7 +665,10 @@ class Forecast():
         is_good, dataD = vjson.check_forecast_json(full_json, self.energy_channel)
         if not is_good: return is_good
         
+        self.original_short_name = full_json['sep_forecast_submission']['model']['short_name']
         self.short_name = full_json['sep_forecast_submission']['model']['short_name']
+        if cfg.shortname_grouping: # If the shortname is no good, then we replace it
+            self.short_name = objh.shortname_grouper(self.short_name, cfg.shortname_grouping)
         issue_time = full_json['sep_forecast_submission']['issue_time']
         if isinstance(issue_time, str):
             issue_time = vjson.zulu_to_time(issue_time)

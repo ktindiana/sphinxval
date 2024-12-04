@@ -115,7 +115,6 @@ def zulu_to_time(zt):
     return dt
 
 
-
 def write_json(template, filename):
     """ Write json template to json file.
         
@@ -320,6 +319,12 @@ def load_objects_from_json(data_list, model_list):
     #Load json objects
     for json in model_jsons:
         short_name = json["sep_forecast_submission"]["model"]["short_name"]
+
+        #put shortname 'fix' here
+        # logger.debug('Before renaming: ' + str(short_name))
+        if cfg.shortname_grouping:
+            short_name = objh.shortname_grouper(short_name, cfg.shortname_grouping)
+        # logger.debug('out of rename function ' + str(short_name))
         for channel in all_energy_channels:
             key = objh.energy_channel_to_key(channel)
             obj, is_good = forecast_object_from_json(json, channel)

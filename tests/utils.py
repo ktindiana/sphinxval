@@ -38,7 +38,7 @@ def utility_setup_logging():
         if not os.path.exists(config.logpath):
             os.mkdir(config.logpath)
 
-        config_file = pathlib.Path('tests/log_config_tests.json')
+        config_file = pathlib.Path('./tests/log_config_tests.json')
         with open(config_file) as f_in:
             config_ = json.load(f_in)
         logging.config.dictConfig(config_)
@@ -269,7 +269,8 @@ def attributes_of_sphinx_obj(keyword, sphinx_obj, energy_channel_key, threshold_
         'Forecast Path': 'path',
         'Forecast Issue Time': 'issue_time',
         'Prediction Window Start': 'prediction_window_start',
-        'Prediction Window End': 'prediction_window_end'
+        'Prediction Window End': 'prediction_window_end',
+        'Original Model Short Name': 'original_short_name'
     }
     if keyword in depth_prediction:
         return getattr(sphinx_obj.prediction, depth_prediction[keyword], None)

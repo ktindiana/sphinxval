@@ -37,6 +37,12 @@ logpath = './tests/logs'
 #Set do_mismatch = True to allow comparison of mismatched energy channels and thresholds
 do_mismatch = True
 
+######SHORTNAME#####
+# Set to a list of items if you want to group a model's submodules to share
+# the same shortname (example: 'UMASEP-10 WCP' -> 'UMASEP-10')
+# shortname_grouping = False
+shortname_grouping = False
+
 #mm stands for "mismatch"
 #WRITE UNITS IN SAME FORMAT AS REQUESTED FOR SEP SCOREBOARDS
 #Write energy units as "MeV", "GeV", etc

@@ -5,6 +5,7 @@ import datetime
 from astropy import units as u
 import logging
 import pandas as pd
+import re
 
 __author__ = "Katie Whitman"
 __maintainer__ = "Katie Whitman"
@@ -18,7 +19,7 @@ __email__ = "kathryn.whitman@nasa.gov"
 #Create logger
 logger = logging.getLogger(__name__)
 
-def build_model_list(all_model):
+def build_model_list(all_model, shortname_grouping):
     """ Identify all of the models represented in the list from the entry in
         ['sep_forecast_submission']['model']['short_name']
         
@@ -270,3 +271,34 @@ def get_threshold_crossing_time(obj, threshold):
                 obj.threshold_crossings[i].crossing_time
     
     return threshold_crossing_time
+
+
+def shortname_grouper(shortname, list_of_shortnames):
+    """ Function to rewrite model shortnames when
+    desired. Uses the config file (shortname_grouping) to determine the proper
+    mapping of actual shortname to the shorter shortname you
+    desire. Set shortname_grouping to none if you don't want to change
+    any shortnames.
+    The list of shortnames from the config file takes the form:
+    list_of_shortnames = {
+    pattern_string: replacement_shortname,
+    pattern_string: replacement_shortname
+    }
+    Which can be as long as you desire.
+    The pattern strings contain the pattern in each shortname that you are searching for,
+    for example 'UMASEP-10 .*' or 'UMASEP-100 .*' will match to any UMASEP-10 or UMASEP-100
+    submodule respectively. The replacement_shortname is the string you want to be the
+    new shortname 
+    
+    """
+    for patterns in range(len(list_of_shortnames)):
+       
+        # logger.debug(str(list_of_shortnames[patterns][0]) + ' ' + str(shortname))
+        temp = re.match(list_of_shortnames[patterns][0], shortname)
+        # logger.debug(str(temp)) # Most of the time this is None, only useful if there is a model name you are replacing
+        if temp:
+            return list_of_shortnames[patterns][1]
+            break
+        else:
+            pass
+    return shortname    

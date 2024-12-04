@@ -1785,6 +1785,79 @@ class TestProbabilityMult(unittest.TestCase):
         utils.utility_delete_output()
 
 
+class TestShortNameChanger(unittest.TestCase):
+
+    def load_verbosity(self):
+        self.verbosity = utility_get_verbosity()
+    
+    
+
+    def step_0(self): 
+        validate.prepare_outdirs()
+        # print(sphinxval.utils.config.shortname_grouping)
+        self.energy_channel = {'min': 10, 'max': -1, 'units': 'MeV'}
+        self.energy_key = objh.energy_channel_to_key(self.energy_channel)
+        self.all_energy_channels = [self.energy_key] 
+        self.model_names = ['new_shortname_for_testing']
+        observation_json = './tests/files/observations/validation/all_clear/all_clear_false.json'
+        observation = utils.utility_load_observation(observation_json, self.energy_channel)
+        observation_objects = {self.energy_key: [observation]}
+        self.verbosity = utils.utility_get_verbosity()
+        forecast_json = './tests/files/forecasts/validation/max_peak/pred_all_clear_false.json'
+        forecast = utils.utility_load_forecast(forecast_json, self.energy_channel)
+        forecast_objects = {self.energy_key: [forecast]}
+        self.sphinx, self.obs_thresholds, self.obs_sep_events = utils.utility_match_sphinx(self.all_energy_channels,\
+             self.model_names, observation_objects, forecast_objects)
+        self.profname_dict = None
+        self.DoResume = False
+        
+        self.validation_quantity = ['all_clear', 'awt', 'duration', 'end_time', 'fluence', 'max_flux_in_pred_window', 'peak_intensity_max', 'peak_intensity_max_time', 'peak_intensity' \
+            'peak_intensity_time', 'probability', 'start_time', 'threshold_crossing', 'time_profile']
+        self.quantities_tested = ['all_clear', 'peak_intensity_max']
+        self.validation_type = ['All']
+        
+    def step_1(self):
+        self.dataframe = validate.fill_sphinx_df(self.sphinx, self.model_names, self.all_energy_channels, \
+            self.obs_thresholds, self.profname_dict)
+        for keywords in self.dataframe:
+            temp = utils.attributes_of_sphinx_obj(keywords, self.sphinx['new_shortname_for_testing'][self.all_energy_channels[0]][0],\
+                 self.energy_key, self.obs_thresholds)
+            if pd.isnull(temp) and pd.isnull(self.dataframe[keywords][0]):
+                self.assertTrue(pd.isnull(self.dataframe[keywords][0]))
+            else:
+                self.assertEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
+            
+  
+    def utility_print_docstring(self, function):
+        if self.verbosity == 2:
+            print('\n//----------------------------------------------------')
+            print(function.__doc__)
+
+    def _steps(self):
+        for name in dir(self): # dir() result is implicitly sorted
+            if name.startswith("step"):
+                yield name, getattr(self, name)
+        
+   
+    @patch('sphinxval.utils.config.outpath', './tests/output')
+    @patch('sphinxval.utils.config.shortname_grouping', [('Test_model_0.*', 'new_shortname_for_testing')])
+
+    def test_shortname_change(self):
+        validate.prepare_outdirs()
+        for name, step in self._steps():
+            try:
+                step()
+            except Exception as e:
+                self.fail("{} failed ({}: {})".format(step, type(e), e))
+        utils.utility_delete_output()
+
+
+
+
+
+
+
+
 class Test_AllFields_MultipleForecasts(unittest.TestCase):
 
     def load_verbosity(self):
