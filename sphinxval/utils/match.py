@@ -2233,8 +2233,8 @@ def setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_o
             sphinx.last_input_time = fcast.last_input_time()
 
             name = fcast.short_name
-            if 'UMASEP' in name and cfg.shortname_grouping:
-                name = objh.umasep_shortname_grouper(name)
+            if cfg.shortname_grouping:
+                name = objh.shortname_grouper(name, cfg.shortname_grouping)
 
 
             logger.debug("\n")

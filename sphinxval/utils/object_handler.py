@@ -5,6 +5,7 @@ import datetime
 from astropy import units as u
 import logging
 import pandas as pd
+import re
 
 __author__ = "Katie Whitman"
 __maintainer__ = "Katie Whitman"
@@ -18,7 +19,7 @@ __email__ = "kathryn.whitman@nasa.gov"
 #Create logger
 logger = logging.getLogger(__name__)
 
-def build_model_list(all_model, shortname_grouping_boolean):
+def build_model_list(all_model, shortname_grouping):
     """ Identify all of the models represented in the list from the entry in
         ['sep_forecast_submission']['model']['short_name']
         
@@ -38,8 +39,6 @@ def build_model_list(all_model, shortname_grouping_boolean):
         models = all_model[key] #array
         for fcast in models:
             name = fcast.short_name
-            if 'UMASEP' in name and shortname_grouping_boolean:
-                name = umasep_shortname_grouper(name)
             if name == "" or name == None: continue
             if name not in model_names:
                 model_names.append(name)
@@ -274,22 +273,32 @@ def get_threshold_crossing_time(obj, threshold):
     return threshold_crossing_time
 
 
-def umasep_shortname_grouper(shortname):
-    """ UMASEP has different shortnames for which submodules are used 
-    this function shortens them to just whichever energy the prediction is for
+def shortname_grouper(shortname, list_of_shortnames):
+    """ Function to rewrite model shortnames when
+    desired. Uses the config file (shortname_grouping) to determine the proper
+    mapping of actual shortname to the shorter shortname you
+    desire. Set shortname_grouping to none if you don't want to change
+    any shortnames.
+    The list of shortnames from the config file takes the form:
+    list_of_shortnames = {
+    pattern_string: replacement_shortname,
+    pattern_string: replacement_shortname
+    }
+    Which can be as long as you desire.
+    The pattern strings contain the pattern in each shortname that you are searching for,
+    for example 'UMASEP-10 .*' or 'UMASEP-100 .*' will match to any UMASEP-10 or UMASEP-100
+    submodule respectively. The replacement_shortname is the string you want to be the
+    new shortname 
+    
     """
-    if '100' in shortname:
-        logger.info('This loop should be hit ' + str(shortname))
-        shortname = 'UMASEP-100'
-        logger.info('post rename ' + str(shortname))
-    elif '500' in shortname:
-        shortname = 'UMASEP-500'
-    elif '30' in shortname:
-        shortname = 'UMASEP-30'
-    elif '10' in shortname and not '100' in shortname:
-        logger.info('This loop should also be hit 3 times ' + str(shortname))
-        shortname = 'UMASEP-10'
-        logger.info('post rename ' + str(shortname))
-    elif '50' in shortname and not '500' in shortname:
-        shortname = 'UMASEP-50'
-    return shortname
+    for patterns in range(len(list_of_shortnames)):
+       
+        logger.debug(list_of_shortnames[patterns][0], shortname)
+        temp = re.match(list_of_shortnames[patterns][0], shortname)
+        # logger.debug(str(temp)) # Most of the time this is None, only useful if there is a model name you are replacing
+        if temp:
+            return list_of_shortnames[patterns][1]
+            break
+        else:
+            pass
+    return shortname    
