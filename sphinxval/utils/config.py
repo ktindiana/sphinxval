@@ -9,6 +9,9 @@ outpath = './output'
 referencepath = './reference'
 reportpath = './reports'
 logpath = './logs'
+baseurlpath = None
+#baseurlpath = 'https://web-dev.ccmc.smce.nasa.gov:8001/sphinx'
+
 
 #Advanced Warning Time
 awt_cut = 96

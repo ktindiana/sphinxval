@@ -32,6 +32,8 @@ __email__ = "kathryn.whitman@nasa.gov"
 
 #Create logger
 logger = logging.getLogger(__name__)
+mpl_logger = logging.getLogger("matplotlib")
+mpl_logger.setLevel(logging.WARNING)
 
 ######### DATAFRAMES CONTAINING OBSERVATIONS AND PREDICTIONS ######
 

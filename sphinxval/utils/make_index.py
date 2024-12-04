@@ -1,5 +1,7 @@
 import os
 
+from . import config
+
 def add_banner(banner_text):
     html = ''
     html += '    <div class="banner">\n'
@@ -10,8 +12,8 @@ def add_banner(banner_text):
 def add_banner_style():
     html = '' 
     html += '        .banner {\n'
-    html += '            background-color: #0000ff;\n'
-    html += '            color: white;\n'
+    html += '            background-color: #E6982B;\n'
+    html += '            color: black;\n'
     html += '            padding: 15px 20px;\n'
     html += '            text-align: center;\n'
     html += '            font-size: 24px;\n'
@@ -33,7 +35,7 @@ def add_body_style():
 def add_header_style():
     html = ''
     html += '        .header {\n'
-    html += '            background-color: #4CAF50;\n'
+    html += '            background-color: #E6982B;\n'
     html += '            color: white;\n'
     html += '            padding: 10px 0;\n'
     html += '            text-align: center;\n'
@@ -93,7 +95,10 @@ def make_index(directory, title='SPHINX Validation Report Repository', banner_te
     html += '    <div class="content">\n'
     html += '        <div class="links">\n'
     for file in files:
-        file = os.path.abspath(os.path.join(directory, file))
+        if config.baseurlpath is None:
+            file = os.path.abspath(os.path.normpath(os.path.join(directory, file)))
+        else:
+            file = os.path.normpath(os.path.join(config.baseurlpath, directory, file))
         html += '            <a href="' + file + '">' + os.path.basename(file) + '</a><br>\n'
     html += '        </div>\n'
     html += '    </div>\n'

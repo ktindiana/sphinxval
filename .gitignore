@@ -18,6 +18,11 @@ reports/*
 validation_reports/*
 htmlcov/*
 logs/*
+**/venv/*
+tests/output/
+tests/logs/
+
+
 
 venv/*
 
