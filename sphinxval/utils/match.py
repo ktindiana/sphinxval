@@ -2233,6 +2233,7 @@ def setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_o
             sphinx.last_input_time = fcast.last_input_time()
 
             name = fcast.short_name
+            # logger.debug(str(cfg.shortname_grouping))
             if cfg.shortname_grouping:
                 name = objh.shortname_grouper(name, cfg.shortname_grouping)
 
@@ -2247,8 +2248,11 @@ def setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_o
 
 
             #Note if the model uses eruptions as triggers for 2nd matching step
+            # logger.debug(str(name))
+           
             if not pd.isnull(sphinx.last_eruption_time):
                 matched_sphinx[name]['uses_eruptions'] = True
+                
 
             #Check that forecast prediction window is after last trigger/input
             fcast.valid_forecast(verbose=True)

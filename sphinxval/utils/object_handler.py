@@ -293,7 +293,7 @@ def shortname_grouper(shortname, list_of_shortnames):
     """
     for patterns in range(len(list_of_shortnames)):
        
-        logger.debug(list_of_shortnames[patterns][0], shortname)
+        # logger.debug(str(list_of_shortnames[patterns][0]) + ' ' + str(shortname))
         temp = re.match(list_of_shortnames[patterns][0], shortname)
         # logger.debug(str(temp)) # Most of the time this is None, only useful if there is a model name you are replacing
         if temp:

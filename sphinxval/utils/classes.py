@@ -493,6 +493,7 @@ class Forecast():
         #energy channel. Will be a list if present.
         self.all_thresholds = None
         self.short_name = None
+        self.original_short_name = None
         self.issue_time = pd.NaT
         self.valid = None #indicates whether prediction window starts
                           #at the same time or after triggers/inputs
