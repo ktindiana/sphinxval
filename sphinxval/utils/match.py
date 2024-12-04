@@ -2232,8 +2232,14 @@ def setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_o
             
             sphinx.last_input_time = fcast.last_input_time()
 
+            name = fcast.short_name
+            # logger.debug(str(cfg.shortname_grouping))
+            if cfg.shortname_grouping:
+                name = objh.shortname_grouper(name, cfg.shortname_grouping)
+
+
             logger.debug("\n")
-            logger.debug(fcast.short_name)
+            logger.debug(name)
             logger.debug(fcast.source)
             logger.debug("Issue time: " + str(fcast.issue_time))
             logger.debug("Last trigger time: " + str(sphinx.last_trigger_time))
@@ -2242,8 +2248,11 @@ def setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_o
 
 
             #Note if the model uses eruptions as triggers for 2nd matching step
+            # logger.debug(str(name))
+           
             if not pd.isnull(sphinx.last_eruption_time):
-                matched_sphinx[fcast.short_name]['uses_eruptions'] = True
+                matched_sphinx[name]['uses_eruptions'] = True
+                
 
             #Check that forecast prediction window is after last trigger/input
             fcast.valid_forecast(verbose=True)
@@ -2401,12 +2410,12 @@ def setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_o
                         sphinx.inputs_before_sep_end[thresh_key][i]))
                         
 
-            matched_sphinx[fcast.short_name][energy_key].append(sphinx)
+            matched_sphinx[name][energy_key].append(sphinx)
             logger.debug("Model: " + sphinx.prediction.short_name)
             logger.debug("Forecast energy channel: " + str(sphinx.prediction.energy_channel))
             logger.debug("Prediction Thresholds: " + str(all_fcast_thresholds))
             logger.debug("Observed Thresholds: " + str(sphinx.thresholds))
-            logger.debug("Forecast index (position in matched_sphinx): " + str(len(matched_sphinx[fcast.short_name][energy_key]) - 1))
+            logger.debug("Forecast index (position in matched_sphinx): " + str(len(matched_sphinx[name][energy_key]) - 1))
 
 
         setup_end_time = datetime.datetime.now()

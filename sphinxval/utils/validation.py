@@ -173,7 +173,8 @@ def initialize_sphinx_dict():
             "Inputs before SEP End": [],
             "Time Difference between Inputs and SEP End": [],
             "Prediction Window Overlap with Observed SEP Event": [],
-            "Ongoing SEP Event": []
+            "Ongoing SEP Event": [],
+            "Original Model Short Name": []
             
             }
 
@@ -520,6 +521,7 @@ def fill_sphinx_dict_row(sphinx, dict, energy_key, thresh_key, profname_dict):
         dict["Ongoing SEP Event"].append(str(sphinx.observed_ongoing_events[thresh_key]))
     except:
         dict["Ongoing SEP Event"].append(None)
+    dict["Original Model Short Name"].append(sphinx.prediction.original_short_name)
 
 
 

@@ -174,6 +174,7 @@ def mock_df_populate(dict):
     dict["All Thresholds in Prediction"].append([config_tests.mm_pred_threshold])
     dict["All Threshold Crossing Times"].append([np.datetime64('NaT')])
     dict["Eruption in Range"].append([True])
+    dict["Original Model Short Name"].append("Test_model_resume_old")
 
     return dict
 
