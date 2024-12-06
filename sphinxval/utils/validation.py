@@ -57,7 +57,7 @@ def initialize_sphinx_dict():
             "Prediction Threshold Key": [],
             "Forecast Source": [],
             "Forecast Path": [],
-            "Evaluation Status": []
+            "Evaluation Status": [],
             "Forecast Issue Time":[],
             "Prediction Window Start": [],
             "Prediction Window End": [],

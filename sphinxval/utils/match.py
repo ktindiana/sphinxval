@@ -2238,6 +2238,12 @@ def setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_o
                 logger.info(f"MATCH SETUP PROGRESS: Set up {ii} out of {n_tot} forecasts.")
             ii += 1
 
+            #Check if shortname needs to be revised
+            name = fcast.short_name
+            # logger.debug(str(cfg.shortname_grouping))
+            if cfg.shortname_grouping:
+                name = objh.shortname_grouper(name, cfg.shortname_grouping)
+
             #Check that forecast is valid and set status
             fcast.valid_forecast(verbose=True)
 
@@ -2269,10 +2275,6 @@ def setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_o
             
             sphinx.last_input_time = fcast.last_input_time()
 
-            name = fcast.short_name
-            # logger.debug(str(cfg.shortname_grouping))
-            if cfg.shortname_grouping:
-                name = objh.shortname_grouper(name, cfg.shortname_grouping)
 
 
             logger.debug("\n")

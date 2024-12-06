@@ -64,11 +64,11 @@ def make_ccmc_zulu_time(dt):
     
     """
     if dt is None:
-        return None
+        return pd.NaT
     if dt is pd.NaT:
         return pd.NaT
     if dt == 0:
-        return 0
+        return pd.NaT
 
     zdt = zulu.create(dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second)
     stzdt = str(zdt)
@@ -91,13 +91,13 @@ def zulu_to_time(zt):
     """
     #Time e.g. 2014-01-08T05:05:00Z or 2012-07-12T22:25Z
     if zt == '':
-        return ''
+        return pd.NaT
     if zt is None:
-        return None
+        return pd.NaT
     if zt is pd.NaT:
         return pd.NaT
     if zt == 0:
-        return 0
+        return pd.NaT
         
     if 'Z' not in zt or 'T' not in zt:
         logger.warning(f"Time '{zt}' not in proper format. Returning None.")
