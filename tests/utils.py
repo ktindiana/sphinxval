@@ -78,11 +78,11 @@ def utility_match_sphinx(all_energy_channels, model_names, obs_objs, model_objs)
 
     utility_setup_logging()
 
-    matched_sphinx, all_observed_thresholds, observed_sep_events =\
+    evaluated_sphinx, not_evaluated_sphinx, all_observed_thresholds, observed_sep_events =\
         match.match_all_forecasts(all_energy_channels, model_names,
             obs_objs, model_objs)
 
-    return matched_sphinx, all_observed_thresholds, observed_sep_events
+    return evaluated_sphinx, all_observed_thresholds, observed_sep_events
     
 def utility_get_verbosity():
     """
