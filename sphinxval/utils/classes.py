@@ -1155,7 +1155,7 @@ class Forecast():
             msg = "Issue time not available"
             self.invalid_reason += msg + ";"
             if verbose:
-                logger.warning("Invalid forecast. " + msg)
+                logger.warning("Invalid forecast. " + msg + " " + self.source)
 
 
         if pd.isnull(last_trigger_time) and pd.isnull(last_input_time):
@@ -1163,7 +1163,7 @@ class Forecast():
             msg = "Trigger and input timing data not available"
             self.invalid_reason += msg + ";"
             if verbose:
-                logger.warning("Invalid forecast. " + msg)
+                logger.warning("Invalid forecast. " + msg + f", last trigger time: {last_trigger_time}, last input time: {last_input_time} " + self.source)
 
 
         if not pd.isnull(last_trigger_time):
@@ -1173,7 +1173,7 @@ class Forecast():
                 self.invalid_reason += msg + ";"
                 if verbose:
                     logger.warning("Invalid forecast. "
-                          "Issue time (" + str(self.issue_time) + ") must start after last trigger (" + str(last_trigger_time) + ").")
+                          "Issue time (" + str(self.issue_time) + ") must start after last trigger (" + str(last_trigger_time) + ") " + self.source)
 
 
         if not pd.isnull(last_input_time):
@@ -1183,7 +1183,7 @@ class Forecast():
                 self.invalid_reason += msg  + ";"
                 if verbose:
                     logger.warning("Invalid forecast. "
-                          "Issue time (" + str(self.issue_time) + ") must start after last input time ("+ str(last_input_time) + ").")
+                          "Issue time (" + str(self.issue_time) + ") must start after last input time ("+ str(last_input_time) + ") " + self.source)
 
 
         if pd.isnull(self.prediction_window_start) or pd.isnull(self.prediction_window_end):
@@ -1191,14 +1191,14 @@ class Forecast():
             msg = "Prediction window is not defined"
             self.invalid_reason += msg + ";"
             if verbose:
-                logger.warning("Invalid forecast. Prediction window start and/or end time are null.")
+                logger.warning(f"Invalid forecast. Prediction window start and/or end time are null. {self.prediction_window_start} to {self.prediction_window_end} " + self.source)
         else:
             if self.prediction_window_start > self.prediction_window_end:
                 self.valid = False
                 msg = "Prediction window end before prediction window start"
                 self.invalid_reason += msg + ";"
                 if verbose:
-                    logger.warning("Invalid forecast. Prediction window start time (" + self.prediction_window_start.strftime('%Y-%m-%dT%H:%M:%SZ') + ") is AFTER prediction window end time (" + self.prediction_window_end.strftime('%Y-%m-%dT%H:%M:%SZ') + ").")
+                    logger.warning("Invalid forecast. Prediction window start time (" + self.prediction_window_start.strftime('%Y-%m-%dT%H:%M:%SZ') + ") is AFTER prediction window end time (" + self.prediction_window_end.strftime('%Y-%m-%dT%H:%M:%SZ') + ") " + self.source)
 
 
         if not pd.isnull(self.issue_time) and not pd.isnull(self.prediction_window_start):
@@ -1212,7 +1212,7 @@ class Forecast():
                         + self.issue_time.strftime('%Y-%m-%dT%H:%M:%SZ')
                         + f") is more than {cfg.max_warning_hours} before prediction window start time ("
                         + self.prediction_window_start.strftime('%Y-%m-%dT%H:%M:%SZ')
-                        + ").")
+                        + ") " + self.source)
                               
         if self.valid is True:
             self.invalid_reason = "Forecast is valid"
@@ -2293,14 +2293,15 @@ class SPHINX:
                 return predicted, match_status
         
         #Thresholds must match
-        if pred_threshold != obs_threshold:
-            logger.warning("No Matching Threshold!!! " + self.prediction.short_name + ", "
-                        + self.prediction.source + ", " + str(self.energy_channel) +
-                        ", Predicted Threshold: " + str(pred_threshold) +
-                        ", Observed Threshold: " + str(obs_threshold))
-            predicted = None
-            match_status = "No Matching Threshold"
-            return predicted, match_status
+        if not pd.isnull(obs_threshold['threshold']):
+            if pred_threshold != obs_threshold:
+                logger.warning("No Matching Threshold!!! " + self.prediction.short_name + ", "
+                            + self.prediction.source + ", " + str(self.energy_channel) +
+                            ", Predicted Threshold: " + str(pred_threshold) +
+                            ", Observed Threshold: " + str(obs_threshold))
+                predicted = None
+                match_status = "No Matching Threshold"
+                return predicted, match_status
 
 
         return predicted, match_status

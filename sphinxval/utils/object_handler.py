@@ -226,6 +226,31 @@ def identify_all_thresholds(all_obj):
 
     return all_thresholds
 
+
+def remove_invalid_forecasts(model_objs, all_energy_channels):
+    """ Check if forecasts read into sphinx are valid. If not valid,
+        remove from model_objs array and capture.
+    """
+    
+    removed = []
+    
+    for energy_key in all_energy_channels:
+        ncasts = len(model_objs[energy_key])
+        for i in range(ncasts-1,-1,-1):
+            fcast = model_objs[energy_key][i]
+            fcast.valid_forecast(verbose=True)
+
+            #If the forecast is not valid, skip and save sphinx object in
+            #not evaluated dataframe
+            if fcast.valid == False:
+                removed.append(model_objs[energy_key][i])
+                model_objs[energy_key].pop(i)
+                logger.warning("REMOVED FROM ANALYSIS: Forecast not valid: "
+                    + fcast.source + ", " + fcast.invalid_reason)
+                continue
+
+    return model_objs, removed
+
     
 def initialize_sphinx(fcast):
     """ Set up new sphinx object for a single Forecast object.

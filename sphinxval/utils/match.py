@@ -2366,7 +2366,8 @@ def setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_o
             #threshold associated with them
             if len(all_fcast_thresholds) == 0:
                 #Check that forecast predicts one of the above
-                if fcast.peak_intensity or fcast.peak_intensity_max or fcast.sep_profile:
+                if not pd.isnull(fcast.peak_intensity.intensity) or not pd.isnull(fcast.peak_intensity_max.intensity) or not pd.isnull(fcast.sep_profile):
+                    logger.info(f"Peak intensity: {fcast.peak_intensity.intensity}, Peak intensity max: {fcast.peak_intensity_max.intensity}, SEP profile: {fcast.sep_profile}")
                     all_fcast_thresholds = observed_thresholds[energy_key]
                     logger.warning("SUBSTITUTED THRESHOLDS: No thresholds were present within "
                         "the prediction: " + fcast.source + " for energy channel " + energy_key +

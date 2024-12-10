@@ -67,9 +67,12 @@ def validate(data_list, model_list, top=None, Resume=None):
     #Unique identifier - issue time, triggers, prediction window - ignore for now
     #Use last prediction window for model or energy_channel to include new
     #obs_objs and model_objs organized by energy channel
-    all_energy_channels, obs_objs, model_objs =\
+    all_energy_channels, obs_objs, model_objs, removed_model_objs =\
         vjson.load_objects_from_json(data_list, model_list)
     logger.info("Loaded all JSON files into Observation and Forecast Objects.")
+
+    #Exclude invalid forecasts first
+    model_objs, removed_invalid = objh.remove_invalid_forecasts(model_objs, all_energy_channels)
 
     #Check for duplicates in the set of forecasts and remove any
     logger.info("Checking for and removing duplicate forecasts from the input Model List.")
@@ -108,6 +111,8 @@ def validate(data_list, model_list, top=None, Resume=None):
 
 
     #Add the excluded duplicates to not_evaluated_sphinx
+    not_evaluated_sphinx = duplicates.add_to_not_evaluated(not_evaluated_sphinx, removed_model_objs)
+    not_evaluated_sphinx = duplicates.add_to_not_evaluated(not_evaluated_sphinx, removed_invalid)
     not_evaluated_sphinx = duplicates.add_to_not_evaluated(not_evaluated_sphinx, removed_fcast, "Duplicate input forecast")
     if Resume is not None:
         not_evaluated_sphinx = duplicates.add_to_not_evaluated(not_evaluated_sphinx, removed_resume, "Duplicate forecast already present in the resume dataframe")

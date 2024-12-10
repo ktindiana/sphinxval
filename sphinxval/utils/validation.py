@@ -566,12 +566,19 @@ def fill_sphinx_df(evaluated_sphinx, model_names, all_energy_channels,
     #Loop through the forecasts for each model and fill in quantity_dict
     #as appropriate
     for model in model_names:
-        for ek in all_energy_channels:
+        internal_energy_channels = [key for key in evaluated_sphinx[model].keys() if 'eruption' not in key]
+        for ek in internal_energy_channels:
             logger.debug("---Model: " + model + ", Energy Channel: " + ek)
             for sphinx in evaluated_sphinx[model][ek]:
                 logger.debug(sphinx.prediction.source)
-                for tk in all_obs_thresholds[ek]:
-                    fill_sphinx_dict_row(sphinx, dict, ek, tk, profname_dict)
+                
+                try:
+                    for tk in all_obs_thresholds[ek]:
+                        fill_sphinx_dict_row(sphinx, dict, ek, tk, profname_dict)
+                except:
+                    #In the case a new energy channel with added to
+                    #not_evaluated_sphinx
+                    fill_sphinx_dict_row(sphinx, dict, ek, None, profname_dict)
                 
     
     df = pd.DataFrame(dict)
