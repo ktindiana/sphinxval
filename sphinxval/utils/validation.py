@@ -3587,7 +3587,7 @@ def validation_explanation():
     logger.info("============================")
     logger.info("--SEP Event: Forecast is associated with an observed SEP event")
     logger.info("--No SEP Event: Forecast is associated with an observed clear period.")
-    logger.info("--Unmatched: The forecast was initially associated to an observed SEP event but a different prediction was found to be a better match. This forecast has been unmatched and is now associated with an observed clear period.")
+    logger.info("--Unmatched: The forecast was initially associated to an observed SEP event but a different prediction was found to be a better match. This forecast has been unmatched and is now associated with an observed clear period. Only relevant for forecasts that use flare or CME triggers.")
     logger.info("--Ongoing SEP Event: The observed environment was already enhanced for the forecasted period. The forecast cannot be evaluated.")
     logger.info("--Trigger/Input after Observed Phenomenon: The forecast used input information later than the observed phenomenon, i.e. threshold crossing, peak flux, etc. This cannot be considered a forecast for the particular phenomenon.")
     logger.info("--Eruption Out of Range: The forecast overlaps with an observed SEP event, but used a flare or CME trigger with timing indicating that it is not likely physically connected to that SEP event. This forecast is associated with an observed clear period.")
