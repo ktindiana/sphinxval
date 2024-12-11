@@ -380,8 +380,8 @@ def load_objects_from_json(data_list, model_list):
         logger.debug('CHANGING SHORT NAME: Renamed short name ' + str(short_name))
 
 
-        overlap, fcast_energy_channels = energy_channel_overlap(json, short_name, all_energy_channels)
-        if not overlap:
+        channel_overlap, fcast_energy_channels = energy_channel_overlap(json, short_name, all_energy_channels)
+        if not channel_overlap:
             logger.warning("REMOVED FROM ANALYSIS: No overlap between forecasted "
                 "and observed energy channels for "
                 f"{json['filename']}, {fcast_energy_channels}")
@@ -393,6 +393,11 @@ def load_objects_from_json(data_list, model_list):
 
 
         for channel in all_energy_channels:
+            #Check if observed energy channel is an energy channel predicted
+            #in the forecast json
+            if channel not in fcast_energy_channels:
+                continue
+            
             key = objh.energy_channel_to_key(channel)
             obj, is_good = forecast_object_from_json(json, channel)
             #At this point, may not be a good object if the forecast needed to use
