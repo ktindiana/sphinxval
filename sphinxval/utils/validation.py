@@ -3585,28 +3585,28 @@ def validation_explanation():
     logger.info("============================")
     logger.info("Explanation of Match Status:")
     logger.info("============================")
-    logger.info("--SEP Event--: Forecast is associated with an observed SEP event")
-    logger.info("--No SEP Event--: Forecast is associated with an observed clear period.")
-    logger.info("--Unmatched--: The forecast was initially associated to an observed SEP event but a different prediction was found to be a better match. This forecast is associated with an observed clear period.")
-    logger.info("--Ongoing SEP Event--: The observed environment was already enhanced for the forecasted period. The forecast cannot be evaluated.")
-    logger.info("--Trigger/Input after Observed Phenomenon--: The forecast used input information later than the observed phenomenon, i.e. threshold crossing, peak flux, etc. This cannot be considered a forecast for the particular phenomenon.")
-    logger.info("--Eruption Out of Range--: The forecast overlaps with an observed SEP event, but used a flare or CME trigger with timing indicating that it is not likely physically connected to that SEP event. This forecast is associated with an observed clear period.")
-    logger.info("--No Matching Threshold--: The energy channel and threshold combination used in the forecast was not present in the prepared observations. These forecasts are not evaluated.")
+    logger.info("--SEP Event: Forecast is associated with an observed SEP event")
+    logger.info("--No SEP Event: Forecast is associated with an observed clear period.")
+    logger.info("--Unmatched: The forecast was initially associated to an observed SEP event but a different prediction was found to be a better match. This forecast is associated with an observed clear period.")
+    logger.info("--Ongoing SEP Event: The observed environment was already enhanced for the forecasted period. The forecast cannot be evaluated.")
+    logger.info("--Trigger/Input after Observed Phenomenon: The forecast used input information later than the observed phenomenon, i.e. threshold crossing, peak flux, etc. This cannot be considered a forecast for the particular phenomenon.")
+    logger.info("--Eruption Out of Range: The forecast overlaps with an observed SEP event, but used a flare or CME trigger with timing indicating that it is not likely physically connected to that SEP event. This forecast is associated with an observed clear period.")
+    logger.info("--No Matching Threshold: The energy channel and threshold combination used in the forecast was not present in the prepared observations. These forecasts are not evaluated.")
     logger.info("")
     logger.info("Selections applied to calculate metrics:")
     logger.info("========================================")
-    logger.info("--All Clear--: Forecasts with \"Ongoing SEP Event\" match status are not included in All Clear metrics.")
-    logger.info("--Probability--: Forecasts with \"Ongoing SEP Event\" match status are not included in Probability metrics.")
-    logger.info("--Peak Intensity (Onset Peak)--: Only forecasts with \"SEP Event\" match status are included in Peak Intensity metrics. For models that use the peak_intensity field to indicate SEP onset peak, this results in metrics that are derived from the subset of SEP events that were both predicted and observed.")
-    logger.info("--Peak Intensity Max (Max Flux)--: Only forecasts with \"SEP Event\" match status are included in Peak Intensity Max (Max Flux) metrics. Max flux can always be specified, so these metrics include all predictions for observed SEP events.")
-    logger.info("--Fluence--: Only forecasts with \"SEP Event\" match status are included in Fluence metrics.")
-    logger.info("--Fluence Spectrum--: Only forecasts with \"SEP Event\" match status are included in Fluence Spectrum metrics.")
-    logger.info("--Start Time--: Only forecasts with \"SEP Event\" match status are included in Start Time metrics. Forecasts must predict the occurrence of an SEP event, so the metrics are derived from the subset of SEP events that were both predicted and observed.")
-    logger.info("--End Time--: Only forecasts with \"SEP Event\" match status are included in End Time metrics. Forecasts must predict the occurrence of an SEP event, so the metrics are derived from the subset of SEP events that were both predicted and observed.")
-    logger.info("--SEP Time Profile--: Only forecasts with \"SEP Event\" match status are included in SEP Time Profile metrics. This comprises the set of all observed SEP events. Predicted and observed time profiles are compared during the time period when the observed flux is above threshold.")
-    logger.info("--Max Flux in Prediction Window--: All forecasts are compared to observed max flux in the forecasted prediction window, regardless of match status.")
-    logger.info("--Advanced Warning Time--: Only forecasts with \"SEP Event\" match status are included in Advanced Warning Time metrics. Forecasts must predict the occurrence of an SEP event to give advanced warning, so the metrics are derived from the subset of SEP events that were both predicted and observed.")
-    logger.info("--Last Data Time to Issue Time--: Calculated for all forecasts regardless of match status.")
+    logger.info("--All Clear: Forecasts with \"Ongoing SEP Event\" match status are not included in All Clear metrics.")
+    logger.info("--Probability: Forecasts with \"Ongoing SEP Event\" match status are not included in Probability metrics.")
+    logger.info("--Peak Intensity (Onset Peak): Only forecasts with \"SEP Event\" match status are included in Peak Intensity metrics. For models that use the peak_intensity field to indicate SEP onset peak, this results in metrics that are derived from the subset of SEP events that were both predicted and observed.")
+    logger.info("--Peak Intensity Max (Max Flux): Only forecasts with \"SEP Event\" match status are included in Peak Intensity Max (Max Flux) metrics. Max flux can always be specified, so these metrics include all predictions for observed SEP events.")
+    logger.info("--Fluence: Only forecasts with \"SEP Event\" match status are included in Fluence metrics.")
+    logger.info("--Fluence Spectrum: Only forecasts with \"SEP Event\" match status are included in Fluence Spectrum metrics.")
+    logger.info("--Start Time: Only forecasts with \"SEP Event\" match status are included in Start Time metrics. Forecasts must predict the occurrence of an SEP event, so the metrics are derived from the subset of SEP events that were both predicted and observed.")
+    logger.info("--End Time: Only forecasts with \"SEP Event\" match status are included in End Time metrics. Forecasts must predict the occurrence of an SEP event, so the metrics are derived from the subset of SEP events that were both predicted and observed.")
+    logger.info("--SEP Time Profile: Only forecasts with \"SEP Event\" match status are included in SEP Time Profile metrics. This comprises the set of all observed SEP events. Predicted and observed time profiles are compared during the time period when the observed flux is above threshold.")
+    logger.info("--Max Flux in Prediction Window: All forecasts are compared to observed max flux in the forecasted prediction window, regardless of match status.")
+    logger.info("--Advanced Warning Time: Only forecasts with \"SEP Event\" match status are included in Advanced Warning Time metrics. Forecasts must predict the occurrence of an SEP event to give advanced warning, so the metrics are derived from the subset of SEP events that were both predicted and observed.")
+    logger.info("--Last Data Time to Issue Time: Calculated for all forecasts regardless of match status.")
     logger.info("============================")
     logger.info("END VALIDATION EXPLANATION")
     logger.info("============================")
@@ -3719,15 +3719,15 @@ def intuitive_validation(evaluated_sphinx, not_evaluated_sphinx, model_names,
     write_df(df_not, "SPHINX_removed_dataframe")
     logger.debug("Completed writing SPHINX_removed_dataframe to file.")
 
-    #Record explanatory information to the log
-    validation_explanation()
-
     validation_type = ["All", "First", "Last", "Max", "Mean"]
     for type in validation_type:
         logger.info("-----------Starting validation of " + type +" forecasts-------------")
         calculate_intuitive_metrics(df, model_names, all_energy_channels,
                 all_observed_thresholds, type)
- 
+
+    #Record explanatory information to the log
+    validation_explanation()
+    
     logger.info("intuitive_validation: Validation process complete.")
 
     return df   
