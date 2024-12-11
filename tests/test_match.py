@@ -136,7 +136,7 @@ class LoadMatch(unittest.TestCase):
             forecast_objects[self.energy_key].append(forecasts[i])
         self.model_names = ['unit_test']
         evaluated_sphinx = {}
-        evaluated_sphinx, not_evaluated_sphinx, observed_sep_events = match.setup_match_all_forecasts(self.all_energy_channels,
+        evaluated_sphinx, removed_sphinx, observed_sep_events = match.setup_match_all_forecasts(self.all_energy_channels,
                                                             self.observation_objects,
                                                             self.observation_values,
                                                             forecast_objects, 
@@ -151,7 +151,7 @@ class LoadMatch(unittest.TestCase):
         forecast_objects = {self.energy_key : [forecast]}
         self.model_names = ['unit_test']
         evaluated_sphinx = {}
-        evaluated_sphinx, not_evaluated_sphinx, observed_sep_events = match.setup_match_all_forecasts(self.all_energy_channels,
+        evaluated_sphinx, removed_sphinx, observed_sep_events = match.setup_match_all_forecasts(self.all_energy_channels,
                                                             self.observation_objects,
                                                             self.observation_values,
                                                             forecast_objects, 
@@ -1924,7 +1924,7 @@ class TestMatchAllForecasts(LoadMatch):
             for fcast_json in forecast_jsons:
                 forecast_object = utility_load_forecast(fcast_json, self.energy_channel)
                 forecast_objects[energy_key].append(forecast_object)
-        evaluated_sphinx, not_evaluated_sphinx, all_obs_thresholds, observed_sep_events = match.match_all_forecasts(self.all_energy_channels, model_names, self.observation_objects, forecast_objects)
+        evaluated_sphinx, removed_sphinx, all_obs_thresholds, observed_sep_events = match.match_all_forecasts(self.all_energy_channels, model_names, self.observation_objects, forecast_objects)
         return evaluated_sphinx, all_obs_thresholds, observed_sep_events
     
     @make_docstring_printable

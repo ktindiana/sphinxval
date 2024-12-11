@@ -104,22 +104,22 @@ def validate(data_list, model_list, top=None, Resume=None):
     #unique SEP events that were present inside of the forecast prediction
     #windows (observed_sep_events).
     logger.info("Starting matching process.")
-    evaluated_sphinx, not_evaluated_sphinx, all_observed_thresholds, observed_sep_events =\
+    evaluated_sphinx, removed_sphinx, all_observed_thresholds, observed_sep_events =\
         match.match_all_forecasts(all_energy_channels, model_names,
             obs_objs, model_objs)
     logger.info("Completed matching process and starting intuitive validation.")
 
 
-    #Add the excluded duplicates to not_evaluated_sphinx
-    not_evaluated_sphinx = duplicates.add_to_not_evaluated(not_evaluated_sphinx, removed_model_objs)
-    not_evaluated_sphinx = duplicates.add_to_not_evaluated(not_evaluated_sphinx, removed_invalid)
-    not_evaluated_sphinx = duplicates.add_to_not_evaluated(not_evaluated_sphinx, removed_fcast, "Duplicate input forecast")
+    #Add the excluded duplicates to removed_sphinx
+    removed_sphinx = duplicates.add_to_not_evaluated(removed_sphinx, removed_model_objs)
+    removed_sphinx = duplicates.add_to_not_evaluated(removed_sphinx, removed_invalid)
+    removed_sphinx = duplicates.add_to_not_evaluated(removed_sphinx, removed_fcast, "Duplicate input forecast")
     if Resume is not None:
-        not_evaluated_sphinx = duplicates.add_to_not_evaluated(not_evaluated_sphinx, removed_resume, "Duplicate forecast already present in the resume dataframe")
+        removed_sphinx = duplicates.add_to_not_evaluated(removed_sphinx, removed_resume, "Duplicate forecast already present in the resume dataframe")
 
 
     #Perform intuitive validation
-    sphinx_df = valid.intuitive_validation(evaluated_sphinx, not_evaluated_sphinx, model_names,
+    sphinx_df = valid.intuitive_validation(evaluated_sphinx, removed_sphinx, model_names,
         all_energy_channels, all_observed_thresholds, observed_sep_events, profname_dict, r_df=r_df)
     logger.info("Completed validation.")
 

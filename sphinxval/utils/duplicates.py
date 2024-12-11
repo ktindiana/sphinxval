@@ -452,19 +452,19 @@ def remove_sphinx_duplicates(df, reason='Duplicate in sphinx dataframe'):
 
 
 
-def add_to_not_evaluated(not_evaluated_sphinx, duplicates, reason=''):
-    """ Add duplicate entries to the not_evaluated_sphinx array. 
+def add_to_not_evaluated(removed_sphinx, duplicates, reason=''):
+    """ Add duplicate entries to the removed_sphinx array. 
     
         Input:
         
-            :not_evaluated_sphinx: (array) array of sphinx objects organized
+            :removed_sphinx: (array) array of sphinx objects organized
                 by model and energy channel
             :duplicates: (array) array of duplicate forcast objects
             :reason: (string) message to add to sphinx.not_evaluated
             
         Output:
         
-            :not_evaluated_sphinx: (array) with duplicates added as sphinx
+            :removed_sphinx: (array) with duplicates added as sphinx
                 objects
     
     """
@@ -481,10 +481,10 @@ def add_to_not_evaluated(not_evaluated_sphinx, duplicates, reason=''):
             sphinx.not_evaluated = reason
         
         #For forecasts with energy channels not prepared in the observations
-        if energy_key not in not_evaluated_sphinx[fcast.short_name].keys():
-            not_evaluated_sphinx[fcast.short_name].update({energy_key:[]})
-            logger.debug(f"APPENDING not_evaluated_sphinx: Adding energy channel to not_evaluated_sphinx: {energy_key}")
+        if energy_key not in removed_sphinx[fcast.short_name].keys():
+            removed_sphinx[fcast.short_name].update({energy_key:[]})
+            logger.debug(f"APPENDING removed_sphinx: Adding energy channel to removed_sphinx: {energy_key}")
         
-        not_evaluated_sphinx[fcast.short_name][energy_key].append(sphinx)
+        removed_sphinx[fcast.short_name][energy_key].append(sphinx)
         
-    return not_evaluated_sphinx
+    return removed_sphinx

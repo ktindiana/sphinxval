@@ -577,7 +577,7 @@ def fill_sphinx_df(evaluated_sphinx, model_names, all_energy_channels,
                         fill_sphinx_dict_row(sphinx, dict, ek, tk, profname_dict)
                 except:
                     #In the case a new energy channel with added to
-                    #not_evaluated_sphinx
+                    #removed_sphinx
                     fill_sphinx_dict_row(sphinx, dict, ek, None, profname_dict)
                 
     
@@ -3613,7 +3613,7 @@ def validation_explanation():
     logger.info("")
     
 
-def intuitive_validation(evaluated_sphinx, not_evaluated_sphinx, model_names,
+def intuitive_validation(evaluated_sphinx, removed_sphinx, model_names,
     all_energy_channels, all_observed_thresholds, observed_sep_events,
     profname_dict, r_df=None):
     """ In the intuitive_validation subroutine, forecasts are validated in a
@@ -3646,7 +3646,7 @@ def intuitive_validation(evaluated_sphinx, not_evaluated_sphinx, model_names,
             the forecast prediction window, and the observed values that are 
             appropriately matched up to the forecast given the timing of the 
             triggers/inputs and observed phenomena
-        :not_evaluated_sphinx: (array of SPHINX objects) SPHINX objects that are
+        :removed_sphinx: (array of SPHINX objects) SPHINX objects that are
             not evaluated by SPHINX
         :model_names: (str array) array of the models whose predictions were
             read into the code
@@ -3685,14 +3685,14 @@ def intuitive_validation(evaluated_sphinx, not_evaluated_sphinx, model_names,
     logger.info("Completed filling evaluated_sphinx dataframe. ")
 
 
-    logger.info("Filling not evaluated SPHINX dataframe with information from not evaluated sphinx objects.")
-    #NOT EVALUATED SPHINX OBJECTS: Fill dataframe for not_evaluated_sphinx
-    df_not = fill_sphinx_df(not_evaluated_sphinx, model_names, all_energy_channels,
+    logger.info("Filling removed SPHINX dataframe with information from not evaluated sphinx objects.")
+    #NOT EVALUATED SPHINX OBJECTS: Fill dataframe for removed_sphinx
+    df_not = fill_sphinx_df(removed_sphinx, model_names, all_energy_channels,
             all_observed_thresholds, profname_dict)
     
     #Add the duplicates discarded from df
     df_not = pd.concat([df_not,duplicate_df])
-    logger.info("Completed filling not_evaluated_sphinx dataframe. ")
+    logger.info("Completed filling removed_sphinx dataframe. ")
 
 
     ### RESUME WILL APPEND DF TO PREVIOUS DF
@@ -3703,7 +3703,7 @@ def intuitive_validation(evaluated_sphinx, not_evaluated_sphinx, model_names,
         df, duplicate_df = duplicates.remove_sphinx_duplicates(df,"Duplicate in resume dataframe")
         #Add the duplicates discarded from df
         df_not = pd.concat([df_not,duplicate_df])
-        logger.debug("RESUME: Completed concatenation and removed any duplicates. Writing SPHINX_dataframe to file.")
+        logger.debug("RESUME: Completed concatenation and removed any duplicates. Writing SPHINX_evaluated dataframe to file.")
 
         model_names = resume.identify_unique(df, 'Model')
         all_energy_channels = resume.identify_unique(df, 'Energy Channel Key')
@@ -3712,12 +3712,12 @@ def intuitive_validation(evaluated_sphinx, not_evaluated_sphinx, model_names,
 
 
     #Write SPHINX dataframe to file
-    write_df(df, "SPHINX_dataframe")
-    logger.debug("Completed writing SPHINX_dataframe to file.")
+    write_df(df, "SPHINX_evaluated")
+    logger.debug("Completed writing SPHINX_evaluated dataframe to file.")
 
     #Write NOT EVALUATED SPHINX dataframe to file
-    write_df(df_not, "SPHINX_removed_dataframe")
-    logger.debug("Completed writing SPHINX_removed_dataframe to file.")
+    write_df(df_not, "SPHINX_removed")
+    logger.debug("Completed writing SPHINX_removed dataframe to file.")
 
     validation_type = ["All", "First", "Last", "Max", "Mean"]
     for type in validation_type:
