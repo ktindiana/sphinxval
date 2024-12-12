@@ -2246,6 +2246,7 @@ def setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_o
 
             #Check that forecast is valid and set status
             fcast.valid_forecast(verbose=True)
+            logger.debug(f"Model: {fcast.short_name}, Valid: {fcast.valid}, Reason: {fcast.invalid_reason}")
 
             #One SPHINX object contains all matching information and
             #predicted and observed values (and all thresholds)

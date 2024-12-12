@@ -286,7 +286,7 @@ def energy_channel_overlap(json, short_name, all_energy_channels):
 
         if compare_channel in fcast_energy_channels:
             overlap = True
-            
+  
     return overlap, fcast_energy_channels
 
     
@@ -396,7 +396,13 @@ def load_objects_from_json(data_list, model_list):
             #Check if observed energy channel is an energy channel predicted
             #in the forecast json
             if channel not in fcast_energy_channels:
-                continue
+                if cfg.do_mismatch and cfg.mm_model in short_name:
+                        if channel == cfg.mm_obs_energy_channel:
+                            pred_channel = cfg.mm_pred_energy_channel
+                            if pred_channel not in fcast_energy_channels:
+                                continue
+                else:
+                    continue
             
             key = objh.energy_channel_to_key(channel)
             obj, is_good = forecast_object_from_json(json, channel)
@@ -409,8 +415,10 @@ def load_objects_from_json(data_list, model_list):
                 logger.debug("Created FORECAST object from json " + str(obj.source)  + ", " + key)
                 logger.debug("Prediction window start: " + str(obj.prediction_window_start))
             else:
-                model_objs[key].append(obj) #invalid, will be removed in next step
-                continue
+                if not cfg.do_mismatch or cfg.mm_model not in short_name:
+                    logger.debug(f"{fcast.source} is invalid. Will be removed in next step.")
+                    model_objs[key].append(obj) #invalid, will be removed in next step
+                    continue
 
 
             #If mismatched observation and prediction energy channels
@@ -429,7 +437,10 @@ def load_objects_from_json(data_list, model_list):
                         if not pd.isnull(obj.prediction_window_start):
                             model_objs[cfg.mm_energy_key].append(obj)
                             logger.debug("Adding " + obj.source + " to dictionary under key " + key)
-
+                        else:
+                            logger.debug(f"MISMATCHED {fcast.source} is invalid. Will be removed in next step.")
+                            model_objs[cfg.mm_energy_key].append(obj) #invalid, will be removed in next step
+                            continue
 
 
 
