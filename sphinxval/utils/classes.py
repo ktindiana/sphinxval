@@ -491,7 +491,7 @@ class Forecast():
         self.energy_channel = energy_channel #dict
         #all thresholds applied in forecasted quantities for this
         #energy channel. Will be a list if present.
-        self.all_thresholds = None
+        self.all_thresholds = []
         self.short_name = None
         self.original_short_name = None
         self.issue_time = pd.NaT

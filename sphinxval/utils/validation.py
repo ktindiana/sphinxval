@@ -573,6 +573,7 @@ def fill_sphinx_df(evaluated_sphinx, model_names, all_energy_channels,
                 logger.debug(sphinx.prediction.source)
                 
                 try:
+                    #for tk in sphinx.prediction.all_thresholds:
                     for tk in all_obs_thresholds[ek]:
                         fill_sphinx_dict_row(sphinx, dict, ek, tk, profname_dict)
                 except:

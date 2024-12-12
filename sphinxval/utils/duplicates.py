@@ -480,10 +480,16 @@ def add_to_not_evaluated(removed_sphinx, duplicates, reason=''):
         else:
             sphinx.not_evaluated = reason
         
+        #If all model entries were filtered out before matching step, may not be
+        #in removed_sphinx. Add.
+        if fcast.short_name not in removed_sphinx.keys():
+            removed_sphinx.update({fcast.short_name:{'uses_eruptions':False}})
+            logger.info(f"APPENDING removed_sphinx: Adding model name to removed_sphinx: {fcast.short_name}")
+        
         #For forecasts with energy channels not prepared in the observations
         if energy_key not in removed_sphinx[fcast.short_name].keys():
             removed_sphinx[fcast.short_name].update({energy_key:[]})
-            logger.debug(f"APPENDING removed_sphinx: Adding energy channel to removed_sphinx: {energy_key}")
+            logger.info(f"APPENDING removed_sphinx: Adding energy channel to removed_sphinx: {energy_key}")
         
         removed_sphinx[fcast.short_name][energy_key].append(sphinx)
         
