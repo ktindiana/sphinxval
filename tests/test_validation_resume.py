@@ -56,6 +56,7 @@ def mock_df_populate(dict):
     dict["Energy Channel Key"].append("min.10.0.max.-1.0.units.MeV")
     dict["Threshold Key"].append("threshold.1.0.units.1 / (cm2 s sr)")
     dict["Mismatch Allowed"].append(False)
+    dict['Evaluation Status'].append('Forecast is evaluated')
     dict["Prediction Energy Channel Key"].append("min.10.0.max.-1.0.units.MeV")
     dict["Prediction Threshold Key"].append("threshold.1.0.units.1 / (cm2 s sr)")
     dict["Forecast Source"].append("/home/m_sphinx/data/forecasts/enlil2.9e/2022/SEPMOD.20220402_000000.20220402_174512.20220402_172002/json/SEPMOD.2022-04-02T000000Z.2022-04-02T174804Z.json")
@@ -222,14 +223,14 @@ class Test_Resume(unittest.TestCase):
 
         self.pred_thresh_key = {self.pred_energy_key: [config_tests.mm_pred_tk]}
         
-        self.sphinx, self.obs_thresholds, self.obs_sep_events = utils.utility_match_sphinx(self.all_energy_channels, self.model_names, observation_objects, forecast_objects)
+        self.sphinx, self.not_eval_sphinx, self.obs_thresholds, self.obs_sep_events = utils.utility_match_sphinx(self.all_energy_channels, self.model_names, observation_objects, forecast_objects)
         self.profname_dict = None
 
         
         
         self.validation_type = ["All", "First", "Last", "Max", "Mean"]
 
-        self.dataframe = validate.fill_sphinx_df(self.sphinx, self.model_names, self.all_energy_channels, \
+        self.dataframe = validate.fill_sphinx_df(self.sphinx,  \
             self.obs_thresholds, self.profname_dict)
        
         for keywords in self.dataframe:

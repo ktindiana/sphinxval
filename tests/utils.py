@@ -82,7 +82,7 @@ def utility_match_sphinx(all_energy_channels, model_names, obs_objs, model_objs)
         match.match_all_forecasts(all_energy_channels, model_names,
             obs_objs, model_objs)
 
-    return evaluated_sphinx, all_observed_thresholds, observed_sep_events
+    return evaluated_sphinx, not_evaluated_sphinx, all_observed_thresholds, observed_sep_events
     
 def utility_get_verbosity():
     """
@@ -282,7 +282,8 @@ def attributes_of_sphinx_obj(keyword, sphinx_obj, energy_channel_key, threshold_
         return str(getattr(sphinx_obj.prediction, depth_prediction_string[keyword], None))
 
     depth_top = {
-        'Mismatch Allowed': 'mismatch'
+        'Mismatch Allowed': 'mismatch',
+        'Evaluation Status': 'not_evaluated'
     }
     if keyword in depth_top:
         return getattr(sphinx_obj, depth_top[keyword], None)

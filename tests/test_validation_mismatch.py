@@ -95,7 +95,7 @@ class Test_AllFields_Mismatch(unittest.TestCase):
         forecast_objects = {config_tests.mm_pred_ek: [], config_tests.mm_energy_key: []}
         
         self.all_energy_channels, observation_objects, forecast_objects = utils.utility_load_objects(observation_json, forecast_json)
-        self.sphinx, self.obs_thresholds, self.obs_sep_events = utils.utility_match_sphinx(self.all_energy_channels, self.model_names, observation_objects, forecast_objects)
+        self.sphinx, self.not_eval_sphinx, self.obs_thresholds, self.obs_sep_events = utils.utility_match_sphinx(self.all_energy_channels, self.model_names, observation_objects, forecast_objects)
         
 
         # Keeping this block but commenting out since it's useful for bugfixing
@@ -115,34 +115,43 @@ class Test_AllFields_Mismatch(unittest.TestCase):
         
         self.validation_type = ["All", "First", "Last", "Max", "Mean"]
 
-        self.dataframe = validate.fill_sphinx_df(self.sphinx, self.model_names, self.all_energy_channels, \
+        self.dataframe = validate.fill_sphinx_df(self.sphinx,  \
             self.obs_thresholds, self.profname_dict)
-       
+        self.not_eval_dataframe = validate.fill_sphinx_df(self.not_eval_sphinx, \
+            self.obs_thresholds, self.profname_dict)
+        validate.write_df(self.dataframe, "SPHINX_dataframe")
+        validate.write_df(self.not_eval_dataframe, "not_eval_SPHINX")
+        
         for keywords in self.dataframe:
            
             logger.debug(len(self.sphinx['Test_model_0'][self.all_energy_channels[1]]))
             temp = utils.attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[1]][0],\
                  config_tests.mm_energy_key, self.obs_thresholds)#, self.pred_energy_key)
-            logger.debug('this is what should be equal - dataframe, temp, keywords')
-            logger.debug(self.dataframe[keywords][2])
-            logger.debug(temp)
-            logger.debug(keywords)
+            # logger.debug('this is what should be equal - dataframe, temp, keywords')
+            # logger.debug(self.dataframe[keywords][2])
+            # logger.debug(temp)
+            # logger.debug(keywords)
+            logger.debug(str(len(self.dataframe[keywords])))
             if 'SEP Fluence Spectrum' in keywords and "Units" not in keywords:
                 try:
                     
-                    for energies in range(len(self.dataframe[keywords][2])):
-                        self.assertEqual(self.dataframe[keywords][2][energies]['energy_min'], temp[energies]['energy_min'], 'Error is in keyword ' + keywords + ' energy_min')
-                        self.assertEqual(self.dataframe[keywords][2][energies]['energy_max'], temp[energies]['energy_max'], 'Error is in keyword ' + keywords + ' energy_max')
-                        self.assertEqual(self.dataframe[keywords][2][energies]['fluence'], temp[energies]['fluence'], 'Error is in keyword ' + keywords + ' fluence')
+                    for energies in range(len(self.dataframe[keywords][0])):
+                        self.assertEqual(self.dataframe[keywords][0][energies]['energy_min'], temp[energies]['energy_min'], 'Error is in keyword ' + keywords + ' energy_min')
+                        self.assertEqual(self.dataframe[keywords][0][energies]['energy_max'], temp[energies]['energy_max'], 'Error is in keyword ' + keywords + ' energy_max')
+                        self.assertEqual(self.dataframe[keywords][0][energies]['fluence'], temp[energies]['fluence'], 'Error is in keyword ' + keywords + ' fluence')
                 except:
                     
-                    self.assertTrue(pd.isna(self.dataframe[keywords][2]))
+                    self.assertTrue(pd.isna(self.dataframe[keywords][0]))
             elif keywords == 'All Threshold Crossing Times': 
                 pass
-            elif pd.isna(temp) and pd.isna(self.dataframe[keywords][2]):
-                self.assertTrue(pd.isna(self.dataframe[keywords][2]))
+            elif pd.isna(temp) and pd.isna(self.dataframe[keywords][0]):
+                self.assertTrue(pd.isna(self.dataframe[keywords][0]))
             else:
-                self.assertEqual(self.dataframe[keywords][2], temp, 'Error is in keyword ' + keywords)
+                logger.debug('this is what should be equal - dataframe, temp, keywords')
+                logger.debug(self.dataframe[keywords][0])
+                logger.debug(temp)
+                logger.debug(keywords)
+                self.assertEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
 
 
     def step_2(self):
