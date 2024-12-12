@@ -2276,7 +2276,7 @@ def setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_o
             sphinx.last_input_time = fcast.last_input_time()
 
 
-
+            #Note if the model uses eruptions as triggers for 2nd matching step
             logger.debug("\n")
             logger.debug(name)
             logger.debug(fcast.source)
@@ -2285,9 +2285,6 @@ def setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_o
             logger.debug("Last eruption time: " + str(sphinx.last_eruption_time))
             logger.debug("Last input time: " + str(sphinx.last_input_time))
 
-
-            #Note if the model uses eruptions as triggers for 2nd matching step
-            # logger.debug(str(name))
            
             if not pd.isnull(sphinx.last_eruption_time):
                 evaluated_sphinx[name]['uses_eruptions'] = True
@@ -2368,7 +2365,7 @@ def setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_o
                 #Check that forecast predicts one of the above
                 if not pd.isnull(fcast.peak_intensity.intensity) or not pd.isnull(fcast.peak_intensity_max.intensity) or not pd.isnull(fcast.sep_profile):
                     logger.info(f"Peak intensity: {fcast.peak_intensity.intensity}, Peak intensity max: {fcast.peak_intensity_max.intensity}, SEP profile: {fcast.sep_profile}")
-                    all_fcast_thresholds = observed_thresholds[energy_key]
+                    all_fcast_thresholds = observed_thresholds[energy_key] ###CONSIDER HERE
                     logger.warning("SUBSTITUTED THRESHOLDS: No thresholds were present within "
                         "the prediction: " + fcast.source + " for energy channel " + energy_key +
                         ". Continued analysis using thresholds applied to the prepared observations.")
@@ -2475,7 +2472,7 @@ def setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_o
 
             #No thresholds matched between observations and forecast
             if not sphinx.thresholds:
-                sphinx.not_evaluated = "No matching thresholds in observations"
+                sphinx.not_evaluated = f"No matching thresholds in observations for {sphinx.prediction.all_thresholds}"
                 #No thresholds were found to match between the forecast and the observations
                 removed_sphinx[name][energy_key].append(sphinx)
                 logger.warning("REMOVED FROM ANALYSIS: Observations did not contain forecast thresholds: "

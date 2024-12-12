@@ -555,8 +555,7 @@ def write_df(df, name, verbose=True):
             logger.debug('Wrote ' + filepath)
 
 
-def fill_sphinx_df(evaluated_sphinx, model_names, all_energy_channels,
-    all_obs_thresholds, profname_dict):
+def fill_sphinx_df(evaluated_sphinx, all_obs_thresholds, profname_dict):
     """ Fill in a dictionary with the all clear predictions and observations
         organized by model and energy channel.
     """
@@ -565,7 +564,7 @@ def fill_sphinx_df(evaluated_sphinx, model_names, all_energy_channels,
 
     #Loop through the forecasts for each model and fill in quantity_dict
     #as appropriate
-    for model in model_names:
+    for model in evaluated_sphinx.keys():
         internal_energy_channels = [key for key in evaluated_sphinx[model].keys() if 'eruption' not in key]
         for ek in internal_energy_channels:
             logger.debug("---Model: " + model + ", Energy Channel: " + ek)
@@ -573,7 +572,6 @@ def fill_sphinx_df(evaluated_sphinx, model_names, all_energy_channels,
                 logger.debug(sphinx.prediction.source)
                 
                 try:
-                    #for tk in sphinx.prediction.all_thresholds:
                     for tk in all_obs_thresholds[ek]:
                         fill_sphinx_dict_row(sphinx, dict, ek, tk, profname_dict)
                 except:
@@ -3678,8 +3676,7 @@ def intuitive_validation(evaluated_sphinx, removed_sphinx, model_names,
 
 
     #EVALUATED SPHINX OBJECTS: Fill dataframe for evaluated_sphinx
-    df = fill_sphinx_df(evaluated_sphinx, model_names, all_energy_channels,
-            all_observed_thresholds, profname_dict)
+    df = fill_sphinx_df(evaluated_sphinx, all_observed_thresholds, profname_dict)
     
     #Check for duplicated forecasts and remove
     df, duplicate_df = duplicates.remove_sphinx_duplicates(df)
@@ -3688,8 +3685,7 @@ def intuitive_validation(evaluated_sphinx, removed_sphinx, model_names,
 
     logger.info("Filling removed SPHINX dataframe with information from not evaluated sphinx objects.")
     #NOT EVALUATED SPHINX OBJECTS: Fill dataframe for removed_sphinx
-    df_not = fill_sphinx_df(removed_sphinx, model_names, all_energy_channels,
-            all_observed_thresholds, profname_dict)
+    df_not = fill_sphinx_df(removed_sphinx, all_observed_thresholds, profname_dict)
     
     #Add the duplicates discarded from df
     df_not = pd.concat([df_not,duplicate_df])
