@@ -308,21 +308,9 @@ def pred_and_obs_overlap(fcast, obs):
     pred_win_end = fcast.prediction_window_end
     logger.debug("Prediction window: " + str(pred_win_st) + " to "
         + str(pred_win_end))
-    
-    pred_interval = pd.Interval(pd.Timestamp(pred_win_st),
-        pd.Timestamp(pred_win_end))
-    
-    overlaps_bool = []
-    for i in range(len(obs['observation_window_start'])):
-        obs_interval =\
-            pd.Interval(pd.Timestamp(obs['observation_window_start'][i]),
-                pd.Timestamp(obs['observation_window_end'][i]))
-    
-        if pred_interval.overlaps(obs_interval):
-            overlaps_bool.append(True)
-        else:
-            overlaps_bool.append(False)
-            
+
+    overlaps_bool = ((obs['observation_window_start'] <= pred_win_end) & (obs['observation_window_end'] >= pred_win_st)).tolist()
+
     return overlaps_bool
 
 
@@ -363,6 +351,39 @@ def does_win_overlap(energy_key, fcast, obs_values):
     is_win_overlap = pred_and_obs_overlap(fcast, obs)
     
     return is_win_overlap
+
+
+def check_observations_coverage(sphinx):
+    """ Check that observations cover 100% of forecast prediction window. 
+        
+        Input:
+        
+            :sphinx: (SPHINX object)
+            
+        Output:
+        
+            :is_covered: (bool) True if 100% coverage, False if not
+    
+    """
+    pred_win_st = sphinx.prediction.prediction_window_start
+    pred_win_end = sphinx.prediction.prediction_window_end
+
+    #loop over matched observation objects
+    obs_st = []
+    obs_end = []
+    for obj in sphinx.prediction_observation_windows_overlap:
+        obs_st.append(obj.observation_window_start)
+        obs_end.append(obj.observation_window_end)
+        
+    first_obs =  min(obs_st)
+    last_obs = max(obs_end)
+    
+    is_covered = True
+    if (first_obs > pred_win_st) or (last_obs < pred_win_end):
+        is_covered = False
+        
+    return is_covered
+
 
 
 def observed_time_in_pred_win(fcast, obs_values, obs_key, energy_key):
@@ -817,7 +838,7 @@ def threshold_cross_criteria(sphinx, fcast, obs_values, observation_objs,
             all thresholds
         :observation_objs: (array of Observation objects) all
             observations for a specific energy channel
-        :thresh: (dict) specific threshold for threshold crossing
+        :thresh: (dict) specific forecast threshold for threshold crossing
             
     Ouput:
         
@@ -1146,7 +1167,7 @@ def pred_win_sep_overlap(sphinx, fcast, obs_values, observation_objs,
             all thresholds
         :observation_objs: (array of Observation objects) all
             observations for a specific energy channel
-        :threshold: (dict) {'threshold':10, 'units': Unit("MeV")}
+        :threshold: (dict) forecast {'threshold':10, 'units': Unit("MeV")}
             
     Ouput:
         
@@ -1990,7 +2011,7 @@ def sep_report(all_energy_channels, obs_values, model_names,
 
 
 
-def revise_eruption_matches(matched_sphinx, all_energy_channels, obs_values,
+def revise_eruption_matches(evaluated_sphinx, all_energy_channels, obs_values,
         model_names, observed_sep_events):
     """ It may be that there are multiple flares or CMEs in
         a short time period that generate predictions with
@@ -2012,7 +2033,7 @@ def revise_eruption_matches(matched_sphinx, all_energy_channels, obs_values,
     
     Input:
     
-        :matched_sphinx: (dictionary of SPHINX objects) contains
+        :evaluated_sphinx: (dictionary of SPHINX objects) contains
             sphinx objects organized by model and energy channel
         :all_energy_channels: (array of dict) all energy channels
             found in the observations
@@ -2025,14 +2046,14 @@ def revise_eruption_matches(matched_sphinx, all_energy_channels, obs_values,
             
     Output:
     
-        None, but the objects inside matched_sphinx will be updated.
+        None, but the objects inside evaluated_sphinx will be updated.
         
     """
     #print("\n====== REVISING MATCHES WITH FLARE/CME TRIGGERS ======")
     for model in model_names:
         #if the model doesn't use eruptions as triggers, then this
         #doesn't apply
-        if not matched_sphinx[model]['uses_eruptions']:
+        if not evaluated_sphinx[model]['uses_eruptions']:
             continue
 
         for energy_key in all_energy_channels:
@@ -2055,10 +2076,10 @@ def revise_eruption_matches(matched_sphinx, all_energy_channels, obs_values,
                 #Keys 'matched_observations', 'matched_sep',
                 #'td_eruption_thresh_cross' and
                 #'observed_threshold_crossing_time'
-                #Dataframe indices match the indices in matched_sphinx                
+                #Dataframe indices match the indices in evaluated_sphinx                
                 
                 spx_df =\
-                create_matched_model_array(matched_sphinx[model][energy_key],
+                create_matched_model_array(evaluated_sphinx[model][energy_key],
                 threshold)
                 #Identify the forecasts matched to the same SEP event
                 
@@ -2124,14 +2145,14 @@ def revise_eruption_matches(matched_sphinx, all_energy_channels, obs_values,
                         #Identify forecast being unmatched
                         logger.info("====== UNMATCHING FORECAST FROM SEP EVENT ====")
                         logger.info("Forecast: " +
-                        str(matched_sphinx[model][energy_key][sphx_idx].prediction.source))
+                        str(evaluated_sphinx[model][energy_key][sphx_idx].prediction.source))
                         logger.info("Last Eruption Time: " +
-                        str(matched_sphinx[model][energy_key][sphx_idx].last_eruption_time))
-                        logger.info("Initially matched to SEP Event: " + str(matched_sphinx[model][energy_key][sphx_idx].observed_threshold_crossing[thresh_key].crossing_time))
-                        logger.info("Observation source: " + str(matched_sphinx[model][energy_key][sphx_idx].observed_match_sep_source[thresh_key]))
+                        str(evaluated_sphinx[model][energy_key][sphx_idx].last_eruption_time))
+                        logger.info("Initially matched to SEP Event: " + str(evaluated_sphinx[model][energy_key][sphx_idx].observed_threshold_crossing[thresh_key].crossing_time))
+                        logger.info("Observation source: " + str(evaluated_sphinx[model][energy_key][sphx_idx].observed_match_sep_source[thresh_key]))
 
                         #Unmatch
-                        matched_sphinx[model][energy_key][sphx_idx].unmatch(threshold)
+                        evaluated_sphinx[model][energy_key][sphx_idx].unmatch(threshold)
                         logger.info("-------- UNMATCHED ----------\n")
  
 
@@ -2166,7 +2187,7 @@ def setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_o
             
     Output:
         
-        :matched_sphinx: (dictionary of SPHINX objects) dictionary organized
+        :evaluated_sphinx: (dictionary of SPHINX objects) dictionary organized
             by model name and energy channel of SPHINX objects containing
             forecasts and matched observational values (organized in the
             SPHINX object by threshold)
@@ -2180,14 +2201,17 @@ def setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_o
     #energy channel.
     #Set up dictionary of observed SEP events in the prediction windows
     #organized by model, energy channel, threshold
-    matched_sphinx = {}
+    evaluated_sphinx = {} #forecasts that contribute to metrics
+    removed_sphinx = {} #forecasts that are excluded for various reasons
     observed_sep_events = {} #list of unique observed SEP events
     observed_thresholds = {}
     for model in model_names:
-        matched_sphinx.update({model:{'uses_eruptions':False}})
+        evaluated_sphinx.update({model:{'uses_eruptions':False}})
+        removed_sphinx.update({model:{'uses_eruptions':False}})
         observed_sep_events.update({model:{}})
         for energy_key in all_energy_channels:
-            matched_sphinx[model].update({energy_key:[]})
+            evaluated_sphinx[model].update({energy_key:[]})
+            removed_sphinx[model].update({energy_key:[]})
             observed_sep_events[model].update({energy_key:{}})
             observed_thresholds.update({energy_key:[]})
             #Save all unique observed SEP events organized by energy channel
@@ -2214,10 +2238,30 @@ def setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_o
                 logger.info(f"MATCH SETUP PROGRESS: Set up {ii} out of {n_tot} forecasts.")
             ii += 1
 
+            #Check if shortname needs to be revised
+            name = fcast.short_name
+            # logger.debug(str(cfg.shortname_grouping))
+            if cfg.shortname_grouping:
+                name = objh.shortname_grouper(name, cfg.shortname_grouping)
+
+            #Check that forecast is valid and set status
+            fcast.valid_forecast(verbose=True)
+            logger.debug(f"Model: {fcast.short_name}, Valid: {fcast.valid}, Reason: {fcast.invalid_reason}")
+
             #One SPHINX object contains all matching information and
             #predicted and observed values (and all thresholds)
             sphinx = objh.initialize_sphinx(fcast)
-            
+ 
+            #If the forecast is not valid, skip and save sphinx object in
+            #not evaluated dataframe
+            if fcast.valid == False:
+                sphinx.not_evaluated = fcast.invalid_reason
+                removed_sphinx[name][energy_key].append(sphinx)
+                logger.warning("REMOVED FROM ANALYSIS: Forecast not valid: "
+                    + fcast.source + ", " + fcast.invalid_reason)
+                continue
+ 
+ 
             #If this is a set of predictions and observations that are
             #allowed to have a set of mismatched energy channels and
             #thresholds
@@ -2232,12 +2276,8 @@ def setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_o
             
             sphinx.last_input_time = fcast.last_input_time()
 
-            name = fcast.short_name
-            # logger.debug(str(cfg.shortname_grouping))
-            if cfg.shortname_grouping:
-                name = objh.shortname_grouper(name, cfg.shortname_grouping)
 
-
+            #Note if the model uses eruptions as triggers for 2nd matching step
             logger.debug("\n")
             logger.debug(name)
             logger.debug(fcast.source)
@@ -2246,21 +2286,10 @@ def setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_o
             logger.debug("Last eruption time: " + str(sphinx.last_eruption_time))
             logger.debug("Last input time: " + str(sphinx.last_input_time))
 
-
-            #Note if the model uses eruptions as triggers for 2nd matching step
-            # logger.debug(str(name))
            
             if not pd.isnull(sphinx.last_eruption_time):
-                matched_sphinx[name]['uses_eruptions'] = True
-                
-
-            #Check that forecast prediction window is after last trigger/input
-            fcast.valid_forecast(verbose=True)
-            if fcast.valid == False:
-                logger.warning("FORECAST NOT VALID: Removing " + fcast.source
-                    + " from validation analysis.")
-                continue
-                
+                evaluated_sphinx[name]['uses_eruptions'] = True
+                removed_sphinx[name]['uses_eruptions'] = True
 
             ###### PREDICTION AND OBSERVATION WINDOWS OVERLAP? #####
             #Do prediction and observation windows overlap?
@@ -2268,7 +2297,17 @@ def setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_o
             is_win_overlap = does_win_overlap(energy_key, fcast, obs_values)
             overlap_idx = [ix for ix in range(len(is_win_overlap)) if is_win_overlap[ix] == True]
             sphinx.overlapping_indices = overlap_idx
-            logger.debug("Prediction and Observation windows overlap (if any): ")
+
+            #If no observations were found to overlap with the forecast, save in
+            #not evaluated dataframe and continue
+            if not overlap_idx:
+                sphinx.not_evaluated = "No observations during forecast prediction window"
+                removed_sphinx[name][energy_key].append(sphinx)
+                logger.warning("REMOVED FROM ANALYSIS: " + fcast.source
+                    + ", No observations overlapped with forecast prediction window.")
+                continue
+
+            logger.debug("Prediction and Observation windows overlap: ")
             if overlap_idx:
                 for ix in range(len(overlap_idx)):
                     sphinx.is_win_overlap.append(is_win_overlap[overlap_idx[ix]])
@@ -2281,6 +2320,16 @@ def setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_o
                     str(sphinx.prediction_observation_windows_overlap[ix].source))
                     logger.debug("  " +
                     str(sphinx.observed_sep_profiles[ix]))
+
+            #Check that observations cover 100% of forecast prediction window
+            is_covered = check_observations_coverage(sphinx)
+            if not is_covered:
+                sphinx.not_evaluated = "Observations do not fully cover prediction window"
+                removed_sphinx[name][energy_key].append(sphinx)
+                logger.warning("REMOVED FROM ANALYSIS: Observations do not cover full prediction window: "
+                    + fcast.source)
+                continue
+
 
             ###### ONSET PEAK CRITERIA #####
             onset_peak_criteria(sphinx, fcast, obs_values, observation_objs, energy_key)
@@ -2314,10 +2363,22 @@ def setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_o
             #peak_intensity_max, and/or sep_profile. All other fields should have a
             #threshold associated with them
             if len(all_fcast_thresholds) == 0:
-                all_fcast_thresholds = observed_thresholds[energy_key]
-                logger.warning("SUBSTITUTED THRESHOLDS: No thresholds were present within "
-                    "the prediction: " + fcast.source + " for energy channel " + energy_key +
-                    ". Continued analysis using thresholds applied to the prepared observations.")
+                #Check that forecast predicts one of the above
+                if not pd.isnull(fcast.peak_intensity.intensity) or not pd.isnull(fcast.peak_intensity_max.intensity) or not pd.isnull(fcast.sep_profile):
+                    logger.info(f"Peak intensity: {fcast.peak_intensity.intensity}, Peak intensity max: {fcast.peak_intensity_max.intensity}, SEP profile: {fcast.sep_profile}")
+                    all_fcast_thresholds = observed_thresholds[energy_key] ###CONSIDER HERE
+                    logger.warning("SUBSTITUTED THRESHOLDS: No thresholds were present within "
+                        "the prediction: " + fcast.source + " for energy channel " + energy_key +
+                        ". Continued analysis using thresholds applied to the prepared observations.")
+                
+                else:
+                    sphinx.not_evaluated = "No thresholds provided in forecast"
+                    #No thresholds were found to match between the forecast and the observations
+                    removed_sphinx[name][energy_key].append(sphinx)
+                    logger.warning("REMOVED FROM ANALYSIS: Forecast did not provide thresholds: "
+                        + fcast.source)
+                    continue
+
 
             observed_peak_flux = None
             observed_peak_flux_max = None            
@@ -2408,14 +2469,25 @@ def setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_o
                     #None if no SEP event
                     sphinx.trigger_input_end[thresh_key].append( last_before_end(sphinx.triggers_before_sep_end[thresh_key][i],
                         sphinx.inputs_before_sep_end[thresh_key][i]))
-                        
 
-            matched_sphinx[name][energy_key].append(sphinx)
-            logger.debug("Model: " + sphinx.prediction.short_name)
+
+            #No thresholds matched between observations and forecast
+            if not sphinx.thresholds:
+                sphinx.not_evaluated = f"No matching thresholds in observations for {sphinx.prediction.all_thresholds}"
+                #No thresholds were found to match between the forecast and the observations
+                removed_sphinx[name][energy_key].append(sphinx)
+                logger.warning("REMOVED FROM ANALYSIS: Observations did not contain forecast thresholds: "
+                    + fcast.source)
+                continue
+
+            
+            sphinx.not_evaluated = "Forecast is evaluated"
+            evaluated_sphinx[name][energy_key].append(sphinx)
+            logger.debug("Model: " + name + "(, Original name: " + sphinx.prediction.short_name + ")")
             logger.debug("Forecast energy channel: " + str(sphinx.prediction.energy_channel))
             logger.debug("Prediction Thresholds: " + str(all_fcast_thresholds))
             logger.debug("Observed Thresholds: " + str(sphinx.thresholds))
-            logger.debug("Forecast index (position in matched_sphinx): " + str(len(matched_sphinx[name][energy_key]) - 1))
+            logger.debug("Forecast index (position in evaluated_sphinx): " + str(len(evaluated_sphinx[name][energy_key]) - 1))
 
 
         setup_end_time = datetime.datetime.now()
@@ -2425,16 +2497,21 @@ def setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_o
         logger.info(f"MATCH SETUP PROGRESS: Completed {ii} matches in {match_td:0.3f} seconds at a rate of {rate:0.1f} forecasts/second.")
 
     total_sphinx = 0
+    total_discard_sphinx = 0
     for model in model_names:
         for energy_key in all_energy_channels:
-            logger.info("STATS: SPHINX objects created for " + model + ", " + energy_key
-                        + ": " + str(len(matched_sphinx[model][energy_key])))
-            total_sphinx += len(matched_sphinx[model][energy_key])
+            logger.info("STATS: SPHINX evaluated for " + model + ", " + energy_key
+                        + ": " + str(len(evaluated_sphinx[model][energy_key])))
+            total_sphinx += len(evaluated_sphinx[model][energy_key])
+            logger.info("STATS: SPHINX NOT evaluated for " + model + ", " + energy_key
+                        + ": " + str(len(removed_sphinx[model][energy_key])))
+            total_discard_sphinx += len(removed_sphinx[model][energy_key])
             
-    logger.info("STATS: TOTAL SPHINX OBJECTS: " + str(total_sphinx))
-
+    logger.info("STATS: TOTAL SPHINX OBJECTS EVALUATED IN SETUP: " + str(total_sphinx))
+    logger.info("STATS: TOTAL SPHINX OBJECTS DISCARDED IN SETUP: " + str(total_discard_sphinx))
  
-    return matched_sphinx, observed_sep_events
+    return evaluated_sphinx, removed_sphinx, observed_sep_events
+
 
 
 def match_all_forecasts(all_energy_channels, model_names, obs_objs,
@@ -2461,7 +2538,7 @@ def match_all_forecasts(all_energy_channels, model_names, obs_objs,
             
     Output:
         
-        :matched_sphinx: (dictionary of SPHINX objects) dictionary organized
+        :evaluated_sphinx: (dictionary of SPHINX objects) dictionary organized
             by model name and energy channel of SPHINX objects containing
             forecasts and matched observational values (organized in the
             SPHINX object by threshold)
@@ -2489,7 +2566,7 @@ def match_all_forecasts(all_energy_channels, model_names, obs_objs,
 
     logger.info("Starting matching process. Setting up dictionary for observed SEP events to go into a list for each model.")
 
-    matched_sphinx, observed_sep_events = setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_objs, model_names)
+    evaluated_sphinx, removed_sphinx, observed_sep_events = setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_objs, model_names)
     
     for model in model_names:
         logger.info("MATCHING STARTING FOR: " + model)
@@ -2497,20 +2574,20 @@ def match_all_forecasts(all_energy_channels, model_names, obs_objs,
         for energy_key in all_energy_channels:
             observation_objs = obs_objs[energy_key] #Observation objects
             logger.info("MATCHING STARTING FOR: " + energy_key)
-            n_tot = len(matched_sphinx[model][energy_key])
+            n_tot = len(evaluated_sphinx[model][energy_key])
             match_start_time = datetime.datetime.now()
  
-            for ii in range(len(matched_sphinx[model][energy_key])):
+            for ii in range(len(evaluated_sphinx[model][energy_key])):
                 #Report progress
                 if ii % 1000 == 0 and ii != 0:
                     logger.info(f"MATCH PROGRESS: Matched {ii} out of {n_tot} forecasts for {model} and {energy_key}.")
  
-                sphinx = matched_sphinx[model][energy_key][ii]
+                sphinx = evaluated_sphinx[model][energy_key][ii]
 
                 for fcast_thresh in sphinx.thresholds:
                     #already accounts for mismatch and whether observations
                     #have same thresholds; sorting done in setup
-                    #A mismatched prediction threshold will be save in the
+                    #A mismatched prediction threshold will be saved in the
                     #sphinx.thresholds array under the corresponding observed
                     #threshold
                     
@@ -2521,7 +2598,7 @@ def match_all_forecasts(all_energy_channels, model_names, obs_objs,
                         #associated with the observations that overlap with the forecast
                         #prediction windows. All necessary arrays are the same length
                         #as sphinx.overlapping_indices and correspond to the observation
-                        #objects that those indices in the observation dictionary.
+                        #objects at those indices in the observation dictionary.
                        
                         obs_idx = sphinx.overlapping_indices[i]
  
@@ -2593,13 +2670,13 @@ def match_all_forecasts(all_energy_channels, model_names, obs_objs,
                 #observation values to a dictionary organized by energy channel
                 msg = sphinx.match_report_streamlined()
                 logger.debug(msg)
-                matched_sphinx[model][energy_key][ii] = sphinx
+                evaluated_sphinx[model][energy_key][ii] = sphinx
 
                 logger.debug("Model: " + sphinx.prediction.short_name)
                 logger.debug("Forecast energy channel: " + str(sphinx.prediction.energy_channel))
                 logger.debug("Predicted Thresholds: " + str(sphinx.prediction.identify_all_thresholds()))
                 logger.debug("Observed Thresholds: " + str(sphinx.thresholds))
-                logger.debug("Forecast index (position in matched_sphinx): " + str(ii))
+                logger.debug("Forecast index (position in evaluated_sphinx): " + str(ii))
 
             match_end_time = datetime.datetime.now()
             match_td = (match_end_time - match_start_time).total_seconds() + 1e-6
@@ -2618,12 +2695,12 @@ def match_all_forecasts(all_energy_channels, model_names, obs_objs,
     #In the case where the same model has forecasts derived from
     #multiple eruptions matched to the same SEP event, find the
     #best match and unmatch the other forecasts.
-    revise_eruption_matches(matched_sphinx, all_energy_channels,
+    revise_eruption_matches(evaluated_sphinx, all_energy_channels,
         obs_values, model_names, observed_sep_events)
 
     logger.info("The revision process is complete. All forecast-to-observation "
         "matches have been finalized.")
 
-    return matched_sphinx, all_obs_thresholds, observed_sep_events
+    return evaluated_sphinx, removed_sphinx, all_obs_thresholds, observed_sep_events
 
 

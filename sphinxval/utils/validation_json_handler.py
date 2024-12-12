@@ -64,11 +64,11 @@ def make_ccmc_zulu_time(dt):
     
     """
     if dt is None:
-        return None
+        return pd.NaT
     if dt is pd.NaT:
         return pd.NaT
     if dt == 0:
-        return 0
+        return pd.NaT
 
     zdt = zulu.create(dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second)
     stzdt = str(zdt)
@@ -91,13 +91,13 @@ def zulu_to_time(zt):
     """
     #Time e.g. 2014-01-08T05:05:00Z or 2012-07-12T22:25Z
     if zt == '':
-        return ''
+        return pd.NaT
     if zt is None:
-        return None
+        return pd.NaT
     if zt is pd.NaT:
         return pd.NaT
     if zt == 0:
-        return 0
+        return pd.NaT
         
     if 'Z' not in zt or 'T' not in zt:
         logger.warning(f"Time '{zt}' not in proper format. Returning None.")
@@ -152,6 +152,7 @@ def read_list_of_jsons(filename):
             json_files.append(json_fname)
     return json_files
 
+
 def read_json_list(json_files, verbose=True):
     """Read all of the json files in to a list containing each json entry.
     """
@@ -165,6 +166,41 @@ def read_json_list(json_files, verbose=True):
         json_info.update({'filename':json_fname})
         all_json.append(json_info)
     return all_json
+
+
+def identify_all_energy_channels_per_json(json, kind):
+    """ Identify all the energy channels in a single json file.
+        
+        INPUTS:
+        
+            :json: a single json file
+            :kind: (string) observation or forecast
+    
+        OUTPUT:
+        
+            :energy_channels: (list) list of energy channel dictionaries
+    
+    """
+    if kind == 'observation':
+        key1 = 'sep_observation_submission'
+        key2 = 'observations'
+    elif kind == 'forecast':
+        key1 = 'sep_forecast_submission'
+        key2 = 'forecasts'
+    else:
+        raise Exception(f"kind={kind} invalid.  Must be 'observation' or 'forecast'")
+
+    json_energy_channels = []
+
+    if key1 not in json.keys():
+        return []
+    
+    obs = json[key1][key2]
+    for block in obs:
+        energy_channel = block['energy_channel']
+        json_energy_channels.append(energy_channel)
+    
+    return json_energy_channels
 
 
 def identify_all_energy_channels(all_json, kind):
@@ -181,22 +217,11 @@ def identify_all_energy_channels(all_json, kind):
             energy channels present in all_jsons
             
     """
-    if kind == 'observation':
-        key1 = 'sep_observation_submission'
-        key2 = 'observations'
-    elif kind == 'forecast':
-        key1 = 'sep_forecast_submission'
-        key2 = 'forecasts'
-    else:
-        raise Exception(f"kind={kind} invalid.  Must be 'observation' or 'forecast'")
     
     all_energy_channels = []
     for entry in all_json:
-        if key1 not in entry: continue
-        
-        obs = entry[key1][key2]
-        for block in obs:
-            energy_channel = block['energy_channel']
+        energy_channels = identify_all_energy_channels_per_json(entry, kind)
+        for energy_channel in energy_channels:
             if energy_channel not in all_energy_channels:
                 all_energy_channels.append(energy_channel)
             
@@ -216,28 +241,56 @@ def observation_object_from_json(obs_json, energy_channel):
 def forecast_object_from_json(fcast_json, energy_channel):
     """ Create a Forecast object from json file.
     """
-            
+    key = objh.energy_channel_to_key(energy_channel)
+    
     fcast = cl.Forecast(energy_channel)
     is_good_fcast = fcast.add_forecasts_from_dict(fcast_json)
     if not is_good_fcast:
-        logger.warning("Note there was an issue with the forecast block.")
+        logger.warning(f"Note there was an issue with the forecast block. {fcast_json['filename']}, {key}")
     #If forecast not loaded because no forecast for the requested energy channel, return
-    if pd.isnull(fcast.prediction_window_start):
+    if pd.isnull(fcast.short_name):
         return fcast, is_good_fcast
     
     is_good_trig = fcast.add_triggers_from_dict(fcast_json)
     if not is_good_trig:
-        logger.warning("Note that there was an issue with the trigger block.")
+        logger.warning(f"Note that there was an issue with the trigger block. {fcast_json['filename']}, {key}")
     
     is_good_input = fcast.add_inputs_from_dict(fcast_json)
     if not is_good_input:
-        logger.warning("Note that there was an issue with the input block.")
+        logger.warning(f"Note that there was an issue with the input block. {fcast_json['filename']}, {key}")
 
     fcast.check_energy_channel_format()
     
     is_good = (is_good_fcast and is_good_trig and is_good_input)
     
     return fcast, is_good
+
+
+def energy_channel_overlap(json, short_name, all_energy_channels):
+    """ Are the observed energy channels present in the forecast json?
+        Including mismatch.
+        
+    """
+
+    #Check if forecast json contains predictiobs for any of the
+    #observed energy channels
+    fcast_energy_channels = identify_all_energy_channels_per_json(json, "forecast")
+
+    overlap = False
+    for channel in all_energy_channels:
+        compare_channel = channel
+        if cfg.do_mismatch:
+            if cfg.mm_model in short_name:
+                if channel == cfg.mm_obs_energy_channel:
+                    compare_channel = cfg.mm_pred_energy_channel
+
+        if compare_channel in fcast_energy_channels:
+            overlap = True
+  
+    return overlap, fcast_energy_channels
+
+    
+
 
 def load_objects_from_json(data_list, model_list):
     """ Read in a list of observations (data_list) and
@@ -317,28 +370,56 @@ def load_objects_from_json(data_list, model_list):
             
 
     #Load json objects
+    removed_model_objs = []
     for json in model_jsons:
         short_name = json["sep_forecast_submission"]["model"]["short_name"]
 
-        #put shortname 'fix' here
-        # logger.debug('Before renaming: ' + str(short_name))
+        logger.debug('CHANGING SHORT NAME: Original short name: ' + str(short_name))
         if cfg.shortname_grouping:
             short_name = objh.shortname_grouper(short_name, cfg.shortname_grouping)
-        # logger.debug('out of rename function ' + str(short_name))
+        logger.debug('CHANGING SHORT NAME: Renamed short name ' + str(short_name))
+
+
+        channel_overlap, fcast_energy_channels = energy_channel_overlap(json, short_name, all_energy_channels)
+        if not channel_overlap:
+            logger.warning("REMOVED FROM ANALYSIS: No overlap between forecasted "
+                "and observed energy channels for "
+                f"{json['filename']}, {fcast_energy_channels}")
+            fcast, is_good = forecast_object_from_json(json, fcast_energy_channels[0])
+            fcast.valid = False
+            fcast.invalid_reason = f"Predicted energy channels not present in observations, {fcast_energy_channels}"
+            removed_model_objs.append(fcast)
+            continue
+
+
         for channel in all_energy_channels:
+            #Check if observed energy channel is an energy channel predicted
+            #in the forecast json
+            if channel not in fcast_energy_channels:
+                if cfg.do_mismatch and cfg.mm_model in short_name:
+                        if channel == cfg.mm_obs_energy_channel:
+                            pred_channel = cfg.mm_pred_energy_channel
+                            if pred_channel not in fcast_energy_channels:
+                                continue
+                else:
+                    continue
+            
             key = objh.energy_channel_to_key(channel)
             obj, is_good = forecast_object_from_json(json, channel)
             #At this point, may not be a good object if the forecast needed to use
             #a mismatched energy channel. Check that first before determine
             #outcome of object.
             #If the object is good, include here
-            if not pd.isnull(obj.prediction_window_start):
+            if not pd.isnull(obj.prediction_window_start) and not pd.isnull(obj.prediction_window_end):
                 model_objs[key].append(obj)
                 logger.debug("Created FORECAST object from json " + str(obj.source)  + ", " + key)
                 logger.debug("Prediction window start: " + str(obj.prediction_window_start))
- 
-            if not is_good:
-                logger.warning("Note issue with creating FORECAST object from json " + str(obj.source)  + ", " + key)
+            else:
+                if not cfg.do_mismatch or cfg.mm_model not in short_name:
+                    logger.debug(f"{fcast.source} is invalid. Will be removed in next step.")
+                    model_objs[key].append(obj) #invalid, will be removed in next step
+                    continue
+
 
             #If mismatched observation and prediction energy channels
             #enabled, then find the correct prediction energy channel
@@ -356,7 +437,10 @@ def load_objects_from_json(data_list, model_list):
                         if not pd.isnull(obj.prediction_window_start):
                             model_objs[cfg.mm_energy_key].append(obj)
                             logger.debug("Adding " + obj.source + " to dictionary under key " + key)
-
+                        else:
+                            logger.debug(f"MISMATCHED {fcast.source} is invalid. Will be removed in next step.")
+                            model_objs[cfg.mm_energy_key].append(obj) #invalid, will be removed in next step
+                            continue
 
 
 
@@ -374,7 +458,7 @@ def load_objects_from_json(data_list, model_list):
         logger.info("STATS: Observation objects created for : " + channel + ", " + str(len(obs_objs[channel])))
         logger.info("STATS: Forecast objects created for : " + channel + ", " + str(len(model_objs[channel])))
 
-    return all_energy_channels, obs_objs, model_objs
+    return all_energy_channels, obs_objs, model_objs, removed_model_objs
 
 
 ######## SUBROUTINES TO AID LOADING CLASS OBJECTS ##################
@@ -426,6 +510,9 @@ def check_forecast_json(full_json, energy_channel):
                 #Is okay, forecasts will not have all energy channels
                 #tested in this block. Tests every energy channel in
                 #the prepared observations.
+                #If a forecast contains ONLY an energy channel that is not
+                #in the observations, then it will be initialized with all
+                #null values for all tested energy channels.
                 
         else:
             logger.warning("\'forecast\' block not "

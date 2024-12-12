@@ -13,13 +13,35 @@ baseurlpath = None
 #baseurlpath = 'https://web-dev.ccmc.smce.nasa.gov:8001/sphinx'
 
 
-#Advanced Warning Time
+######SHORTNAME#####
+# Set to a list of items if you want to group a model's submodules to share
+# the same shortname (example: 'UMASEP-10 WCP' -> 'UMASEP-10')
+# shortname_grouping = False
+shortname_grouping = [
+    ('UMASEP-10 .*', 'UMASEP-10'),
+    ('UMASEP-100 .*', 'UMASEP-100'),
+    ('UMASEP-30 .*', 'UMASEP-30'),
+    ('UMASEP-50 .*', 'UMASEP-50'),
+    ('UMASEP-500 .*', 'UMASEP-500')
+]
+
+#Advanced Warning Time after observed event
 awt_cut = 96
 #when assessing advanced warning time, exclude forecasts that are issued
 #more than awt_cut hours after an event. This is to exclude
 #historical forecasts that might record issue times significantly
 #after an event. Allow forecasts for up to a certain period of time
 #after an event starts.
+
+#Max time between issue time and prediction window start
+max_warning_hours = 84
+#Current models typically have the capability to issue a prediction
+#for up to 72 hours in the future. Set max_warning_hours to be
+#larger than the largest valid forecast horizon (issue time to prediction
+#window start time) out of all the input models. If encounter a longer
+#forecast horizon, will exclude as an erroneous forecast. Used in
+#classes.py Forecast.valid_forecast().
+
 
 #Peak Flux
 peak_flux_cut = 8e-1
@@ -37,7 +59,7 @@ peak_flux_cut = 8e-1
 #predicted energy channels and thresholds, but not exactly the same.
 #Only one excepted case allowed in current version.
 #Set do_mismatch = True to allow comparison of mismatched energy channels and thresholds
-do_mismatch = False
+do_mismatch = True
 
 #mm stands for "mismatch"
 #WRITE UNITS IN SAME FORMAT AS REQUESTED FOR SEP SCOREBOARDS
@@ -60,18 +82,6 @@ t2_units = vunits.convert_string_to_units("MeV^-1*s^-1*cm^-2*sr^-1")
 mm_model = "UNSPELL" #Model short name contains this string
 mm_pred_energy_channel = {"min": 5, "max": -1, "units": e_units}
 mm_pred_threshold = {"threshold": 5, "threshold_units": t_units}
-
-######SHORTNAME#####
-# Set to a list of items if you want to group a model's submodules to share
-# the same shortname (example: 'UMASEP-10 WCP' -> 'UMASEP-10')
-# shortname_grouping = False
-shortname_grouping = [
-    ('UMASEP-10 .*', 'UMASEP-10'),
-    ('UMASEP-100 .*', 'UMASEP-100'),
-    ('UMASEP-30 .*', 'UMASEP-30'),
-    ('UMASEP-50 .*', 'UMASEP-50'),
-    ('UMASEP-500 .*', 'UMASEP-500')
-]
 
 ######SET OBSERVATION INFO#######
 #mm_obs_energy_channel = {"min": 25, "max": 40.9, "units": e_units}
