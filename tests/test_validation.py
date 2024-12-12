@@ -992,7 +992,7 @@ class TestAllClear0(unittest.TestCase):
         forecast_json = './tests/files/forecasts/validation/all_clear/pred_all_clear_false.json'
         forecast = utils.utility_load_forecast(forecast_json, self.energy_channel)
         forecast_objects = {self.energy_key: [forecast]}
-        self.sphinx, self.obs_thresholds, self.obs_sep_events = utils.utility_match_sphinx(self.all_energy_channels,\
+        self.sphinx, self.not_eval_sphinx, self.obs_thresholds, self.obs_sep_events = utils.utility_match_sphinx(self.all_energy_channels,\
              self.model_names, observation_objects, forecast_objects)
         self.profname_dict = None
         self.DoResume = False
@@ -1004,7 +1004,7 @@ class TestAllClear0(unittest.TestCase):
         
     def step_1(self):
        
-        self.dataframe = validate.fill_sphinx_df(self.sphinx, self.model_names, self.all_energy_channels, \
+        self.dataframe = validate.fill_sphinx_df(self.sphinx,  \
             self.obs_thresholds, self.profname_dict)
         for keywords in self.dataframe:            
             temp = utils.attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[0]][0],\
@@ -1082,7 +1082,7 @@ class TestAllClear1(unittest.TestCase):
         forecast_json = './tests/files/forecasts/validation/all_clear/pred_all_clear_true.json'
         forecast = utils.utility_load_forecast(forecast_json, self.energy_channel)
         forecast_objects = {self.energy_key: [forecast]}
-        self.sphinx, self.obs_thresholds, self.obs_sep_events = utils.utility_match_sphinx(self.all_energy_channels,\
+        self.sphinx, self.not_eval_sphinx, self.obs_thresholds, self.obs_sep_events = utils.utility_match_sphinx(self.all_energy_channels,\
              self.model_names, observation_objects, forecast_objects)
         self.profname_dict = None
         self.DoResume = False
@@ -1094,7 +1094,7 @@ class TestAllClear1(unittest.TestCase):
         
     def step_1(self):
         
-        self.dataframe = validate.fill_sphinx_df(self.sphinx, self.model_names, self.all_energy_channels, \
+        self.dataframe = validate.fill_sphinx_df(self.sphinx,  \
             self.obs_thresholds, self.profname_dict)
         for keywords in self.dataframe:
             # temp = self.sphinx['Test_model_0'][self.energy_key].prediction.short_name\
@@ -1165,7 +1165,7 @@ class TestAllClearGarbage(unittest.TestCase):
             forecast_json = './tests/files/forecasts/validation/all_clear/pred_all_clear_garbage.json'
             forecast = utils.utility_load_forecast(forecast_json, self.energy_channel)
             forecast_objects = {self.energy_key: [forecast]}
-            self.sphinx, self.obs_thresholds, self.obs_sep_events = utils.utility_match_sphinx(self.all_energy_channels,\
+            self.sphinx, self.not_eval_sphinx, self.obs_thresholds, self.obs_sep_events = utils.utility_match_sphinx(self.all_energy_channels,\
                 self.model_names, observation_objects, forecast_objects)
 
 
@@ -1192,7 +1192,7 @@ class TestPeakIntensity0(unittest.TestCase):
         forecast_json = './tests/files/forecasts/validation/onset_peak/pred_all_clear_false.json'
         forecast = utils.utility_load_forecast(forecast_json, self.energy_channel)
         forecast_objects = {self.energy_key: [forecast]}
-        self.sphinx, self.obs_thresholds, self.obs_sep_events = utils.utility_match_sphinx(self.all_energy_channels,\
+        self.sphinx, self.not_eval_sphinx, self.obs_thresholds, self.obs_sep_events = utils.utility_match_sphinx(self.all_energy_channels,\
              self.model_names, observation_objects, forecast_objects)
         self.profname_dict = None
         self.DoResume = False
@@ -1204,7 +1204,7 @@ class TestPeakIntensity0(unittest.TestCase):
         
     def step_1(self):
         
-        self.dataframe = validate.fill_sphinx_df(self.sphinx, self.model_names, self.all_energy_channels, \
+        self.dataframe = validate.fill_sphinx_df(self.sphinx,  \
             self.obs_thresholds, self.profname_dict)
         for keywords in self.dataframe:
             # temp = self.sphinx['Test_model_0'][self.energy_key].prediction.short_name\
@@ -1285,7 +1285,7 @@ class TestPeakIntensityMult(unittest.TestCase):
         for jsons in forecast_json:
             forecast = utils.utility_load_forecast(jsons, self.energy_channel)
             forecast_objects[self.energy_key].append(forecast)
-        self.sphinx, self.obs_thresholds, self.obs_sep_events = utils.utility_match_sphinx(self.all_energy_channels, self.model_names, observation_objects, forecast_objects)
+        self.sphinx, self.not_eval_sphinx, self.obs_thresholds, self.obs_sep_events = utils.utility_match_sphinx(self.all_energy_channels, self.model_names, observation_objects, forecast_objects)
         self.profname_dict = None
         self.DoResume = False
         
@@ -1295,7 +1295,7 @@ class TestPeakIntensityMult(unittest.TestCase):
         self.validation_type = ['All']
         
     def step_1(self):
-        self.dataframe = validate.fill_sphinx_df(self.sphinx, self.model_names, self.all_energy_channels, \
+        self.dataframe = validate.fill_sphinx_df(self.sphinx,  \
             self.obs_thresholds, self.profname_dict)
        
         for keywords in self.dataframe:
@@ -1394,7 +1394,7 @@ class TestPeakIntensityMax0(unittest.TestCase):
         forecast_json = './tests/files/forecasts/validation/max_peak/pred_all_clear_false.json'
         forecast = utils.utility_load_forecast(forecast_json, self.energy_channel)
         forecast_objects = {self.energy_key: [forecast]}
-        self.sphinx, self.obs_thresholds, self.obs_sep_events = utils.utility_match_sphinx(self.all_energy_channels,\
+        self.sphinx, self.not_eval_sphinx, self.obs_thresholds, self.obs_sep_events = utils.utility_match_sphinx(self.all_energy_channels,\
              self.model_names, observation_objects, forecast_objects)
         self.profname_dict = None
         self.DoResume = False
@@ -1405,7 +1405,7 @@ class TestPeakIntensityMax0(unittest.TestCase):
         self.validation_type = ['All']
         
     def step_1(self):
-        self.dataframe = validate.fill_sphinx_df(self.sphinx, self.model_names, self.all_energy_channels, \
+        self.dataframe = validate.fill_sphinx_df(self.sphinx,  \
             self.obs_thresholds, self.profname_dict)
         for keywords in self.dataframe:
         
@@ -1480,7 +1480,7 @@ class TestPeakIntensityMaxMult(unittest.TestCase):
         for jsons in forecast_json:
             forecast = utils.utility_load_forecast(jsons, self.energy_channel)
             forecast_objects[self.energy_key].append(forecast)
-        self.sphinx, self.obs_thresholds, self.obs_sep_events = utils.utility_match_sphinx(self.all_energy_channels, self.model_names, observation_objects, forecast_objects)
+        self.sphinx, self.not_eval_sphinx, self.obs_thresholds, self.obs_sep_events = utils.utility_match_sphinx(self.all_energy_channels, self.model_names, observation_objects, forecast_objects)
         self.profname_dict = None
         self.DoResume = False
         
@@ -1499,7 +1499,7 @@ class TestPeakIntensityMaxMult(unittest.TestCase):
         Observed all clear is False
         Forecast all clear is False
         """
-        self.dataframe = validate.fill_sphinx_df(self.sphinx, self.model_names, self.all_energy_channels, \
+        self.dataframe = validate.fill_sphinx_df(self.sphinx,  \
             self.obs_thresholds, self.profname_dict)
        
         for keywords in self.dataframe:
@@ -1589,7 +1589,7 @@ class TestProbability0(unittest.TestCase):
         forecast_json = './tests/files/forecasts/validation/probability/pred_probability_all_clear_false.json'
         forecast = utils.utility_load_forecast(forecast_json, self.energy_channel)
         forecast_objects = {self.energy_key: [forecast]}
-        self.sphinx, self.obs_thresholds, self.obs_sep_events = utils.utility_match_sphinx(self.all_energy_channels,\
+        self.sphinx, self.not_eval_sphinx, self.obs_thresholds, self.obs_sep_events = utils.utility_match_sphinx(self.all_energy_channels,\
              self.model_names, observation_objects, forecast_objects)
         self.profname_dict = None
         self.DoResume = False
@@ -1609,7 +1609,7 @@ class TestProbability0(unittest.TestCase):
         Observed all clear is False
         Forecast all clear is False
         """
-        self.dataframe = validate.fill_sphinx_df(self.sphinx, self.model_names, self.all_energy_channels, \
+        self.dataframe = validate.fill_sphinx_df(self.sphinx,  \
             self.obs_thresholds, self.profname_dict)
         for keywords in self.dataframe:
             # temp = self.sphinx['Test_model_0'][self.energy_key].prediction.short_name\
@@ -1694,7 +1694,7 @@ class TestProbabilityMult(unittest.TestCase):
         for jsons in forecast_json:
             forecast = utils.utility_load_forecast(jsons, self.energy_channel)
             forecast_objects[self.energy_key].append(forecast)
-        self.sphinx, self.obs_thresholds, self.obs_sep_events = utils.utility_match_sphinx(self.all_energy_channels, self.model_names, observation_objects, forecast_objects)
+        self.sphinx, self.not_eval_sphinx, self.obs_thresholds, self.obs_sep_events = utils.utility_match_sphinx(self.all_energy_channels, self.model_names, observation_objects, forecast_objects)
         self.profname_dict = None
         self.DoResume = False
         
@@ -1713,7 +1713,7 @@ class TestProbabilityMult(unittest.TestCase):
         Observed all clear is False
         Forecast all clear is False
         """
-        self.dataframe = validate.fill_sphinx_df(self.sphinx, self.model_names, self.all_energy_channels, \
+        self.dataframe = validate.fill_sphinx_df(self.sphinx,  \
             self.obs_thresholds, self.profname_dict)
        
         for keywords in self.dataframe:
@@ -1806,7 +1806,7 @@ class TestShortNameChanger(unittest.TestCase):
         forecast_json = './tests/files/forecasts/validation/max_peak/pred_all_clear_false.json'
         forecast = utils.utility_load_forecast(forecast_json, self.energy_channel)
         forecast_objects = {self.energy_key: [forecast]}
-        self.sphinx, self.obs_thresholds, self.obs_sep_events = utils.utility_match_sphinx(self.all_energy_channels,\
+        self.sphinx, self.not_eval_sphinx, self.obs_thresholds, self.obs_sep_events = utils.utility_match_sphinx(self.all_energy_channels,\
              self.model_names, observation_objects, forecast_objects)
         self.profname_dict = None
         self.DoResume = False
@@ -1817,7 +1817,7 @@ class TestShortNameChanger(unittest.TestCase):
         self.validation_type = ['All']
         
     def step_1(self):
-        self.dataframe = validate.fill_sphinx_df(self.sphinx, self.model_names, self.all_energy_channels, \
+        self.dataframe = validate.fill_sphinx_df(self.sphinx,  \
             self.obs_thresholds, self.profname_dict)
         for keywords in self.dataframe:
             temp = utils.attributes_of_sphinx_obj(keywords, self.sphinx['new_shortname_for_testing'][self.all_energy_channels[0]][0],\
@@ -1894,7 +1894,7 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
         for jsons in forecast_json:
             forecast = utils.utility_load_forecast(jsons, self.energy_channel)
             forecast_objects[self.energy_key].append(forecast)
-        self.sphinx, self.obs_thresholds, self.obs_sep_events = utils.utility_match_sphinx(self.all_energy_channels, self.model_names, observation_objects, forecast_objects)
+        self.sphinx, self.not_eval_sphinx, self.obs_thresholds, self.obs_sep_events = utils.utility_match_sphinx(self.all_energy_channels, self.model_names, observation_objects, forecast_objects)
         self.profname_dict = None
         self.DoResume = False
         
@@ -1902,7 +1902,7 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
             'peak_intensity_time', 'probability', 'start_time', 'threshold_crossing', 'time_profile']
         self.validation_type = ["All", "First", "Last", "Max", "Mean"]
 
-        self.dataframe = validate.fill_sphinx_df(self.sphinx, self.model_names, self.all_energy_channels, \
+        self.dataframe = validate.fill_sphinx_df(self.sphinx,  \
             self.obs_thresholds, self.profname_dict)
        
         for keywords in self.dataframe:

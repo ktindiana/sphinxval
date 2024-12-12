@@ -782,9 +782,9 @@ def report(output_dir, relative_path_plots, sphinx_dataframe=None): ### ADD OPTI
  
     # obtain sphinx dataframe
     if sphinx_dataframe is None: 
-        sphinx_dataframe_location = os.path.join(output_dir__, 'SPHINX_dataframe.pkl')
+        sphinx_dataframe_location = os.path.join(output_dir__, 'SPHINX_evaluated.pkl')
         logger.info('    No SPHINX dataframe supplied to reporting module. Using SPHINX dataframe saved at location ' + sphinx_dataframe_location)
-        sphinx_dataframe = pd.read_pickle(os.path.join(output_dir__, 'SPHINX_dataframe.pkl'))
+        sphinx_dataframe = pd.read_pickle(os.path.join(output_dir__, 'SPHINX_evaluated.pkl'))
 
     # grab all models
     models = list(set(sphinx_dataframe['Model']))
