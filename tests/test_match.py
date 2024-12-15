@@ -135,7 +135,6 @@ class LoadMatch(unittest.TestCase):
         for i in range(0, len(forecasts)):
             forecast_objects[self.energy_key].append(forecasts[i])
         self.model_names = ['unit_test']
-        evaluated_sphinx = {}
         evaluated_sphinx, removed_sphinx, observed_sep_events = match.setup_match_all_forecasts(self.all_energy_channels,
                                                             self.observation_objects,
                                                             self.observation_values,
@@ -150,7 +149,6 @@ class LoadMatch(unittest.TestCase):
         sphinx = objh.initialize_sphinx(forecast)
         forecast_objects = {self.energy_key : [forecast]}
         self.model_names = ['unit_test']
-        evaluated_sphinx = {}
         evaluated_sphinx, removed_sphinx, observed_sep_events = match.setup_match_all_forecasts(self.all_energy_channels,
                                                             self.observation_objects,
                                                             self.observation_values,
