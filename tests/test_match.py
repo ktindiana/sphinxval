@@ -758,11 +758,6 @@ class TestForecastValidity(LoadMatch):
         forecast_json = './tests/files/forecasts/forecast_validity/forecast_validity_4.json'
         self.utility_print_docstring(this)
         self.assertRaises(KeyError, utility_load_forecast, forecast_json, self.energy_channel)
-        '''
-        forecast = utility_load_forecast(forecast_json, self.energy_channel)
-        forecast.valid_forecast()
-        self.assertEqual(forecast.valid, False)
-        '''
  
     @make_docstring_printable
     def test_forecast_validity_5(this, self):
@@ -773,9 +768,8 @@ class TestForecastValidity(LoadMatch):
         forecast_json = './tests/files/forecasts/forecast_validity/forecast_validity_5.json'
         self.utility_print_docstring(this)
         forecast = utility_load_forecast(forecast_json, self.energy_channel)
-        print(forecast.issue_time)
-        self.assertRaises(TypeError, forecast.valid_forecast)
-        #self.assertEqual(forecast.valid, False)
+        forecast.valid_forecast() 
+        self.assertEqual(forecast.valid, False)
 
 
 # sphinx.py --> match.match_all_forecasts --> match.match_all_clear
