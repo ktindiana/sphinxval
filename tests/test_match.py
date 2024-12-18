@@ -135,7 +135,6 @@ class LoadMatch(unittest.TestCase):
         for i in range(0, len(forecasts)):
             forecast_objects[self.energy_key].append(forecasts[i])
         self.model_names = ['unit_test']
-        evaluated_sphinx = {}
         evaluated_sphinx, removed_sphinx, observed_sep_events = match.setup_match_all_forecasts(self.all_energy_channels,
                                                             self.observation_objects,
                                                             self.observation_values,
@@ -150,14 +149,17 @@ class LoadMatch(unittest.TestCase):
         sphinx = objh.initialize_sphinx(forecast)
         forecast_objects = {self.energy_key : [forecast]}
         self.model_names = ['unit_test']
-        evaluated_sphinx = {}
         evaluated_sphinx, removed_sphinx, observed_sep_events = match.setup_match_all_forecasts(self.all_energy_channels,
                                                             self.observation_objects,
                                                             self.observation_values,
                                                             forecast_objects, 
-                                                            self.model_names)
-        sphinx = evaluated_sphinx['unit_test'][self.energy_key][0]
+                                                            self.model_names) 
+        try:
+            sphinx = removed_sphinx['unit_test'][self.energy_key][0]
+        except:
+            sphinx = evaluated_sphinx['unit_test'][self.energy_key][0]
         return sphinx, observed_sep_events
+        # return sphinx, observed_sep_events
     
     def utility_print_docstring(self, function):
         if self.verbosity == 2:
@@ -319,7 +321,7 @@ class TestMatchObservedOnsetPeak(LoadMatch):
         The forecast/observation pair has the following attributes:
            -- Prediction window overlaps with observation window
                 prediction window start:  2000-01-01T00:36:00Z
-                prediction window end:    2000-01-01T01:30:00Z
+                prediction window end:    2000-01-01T01:00:00Z
                 observation window start: 2000-01-01T00:00:00Z
                 observation window end:   2000-01-01T01:00:00Z
            -- The last eruption occurred between 24 hours and 8 minutes prior to threshold crossing
@@ -367,7 +369,7 @@ class TestMatchObservedOnsetPeak(LoadMatch):
         The forecast/observation pair has the following attributes:
            -- Prediction window overlaps with observation window
                 prediction window start:  2000-01-01T00:36:00Z
-                prediction window end:    2000-01-01T01:30:00Z
+                prediction window end:    2000-01-01T01:00:00Z
                 observation window start: 2000-01-01T00:00:00Z
                 observation window end:   2000-01-01T01:00:00Z
            -- The last eruption occurred after the onset peak time
@@ -391,7 +393,7 @@ class TestMatchObservedOnsetPeak(LoadMatch):
         The forecast/observation pair has the following attributes:
            -- Prediction window overlaps with observation window
                 prediction window start:  2000-01-01T00:36:00Z
-                prediction window end:    2000-01-01T01:30:00Z
+                prediction window end:    2000-01-01T01:00:00Z
                 observation window start: 2000-01-01T00:00:00Z
                 observation window end:   2000-01-01T01:00:00Z
            -- The input occurred after the onset peak time
@@ -580,7 +582,7 @@ class TestMatchObservedMaxFlux(LoadMatch):
         The forecast/observation pair has the following attributes:
            -- Prediction window overlaps with observation window
                 prediction window start:  2000-01-01T00:36:00Z
-                prediction window end:    2000-01-01T01:30:00Z
+                prediction window end:    2000-01-01T01:00:00Z
                 observation window start: 2000-01-01T00:00:00Z
                 observation window end:   2000-01-01T01:00:00Z
            -- The last eruption occurred between 24 hours and 8 minutes prior to threshold crossing
@@ -628,7 +630,7 @@ class TestMatchObservedMaxFlux(LoadMatch):
         The forecast/observation pair has the following attributes:
            -- Prediction window overlaps with observation window
                 prediction window start:  2000-01-01T00:36:00Z
-                prediction window end:    2000-01-01T01:30:00Z
+                prediction window end:    2000-01-01T01:00:00Z
                 observation window start: 2000-01-01T00:00:00Z
                 observation window end:   2000-01-01T01:00:00Z
            -- The last eruption occurred after the onset peak time
@@ -652,7 +654,7 @@ class TestMatchObservedMaxFlux(LoadMatch):
         The forecast/observation pair has the following attributes:
            -- Prediction window overlaps with observation window
                 prediction window start:  2000-01-01T00:36:00Z
-                prediction window end:    2000-01-01T01:30:00Z
+                prediction window end:    2000-01-01T01:00:00Z
                 observation window start: 2000-01-01T00:00:00Z
                 observation window end:   2000-01-01T01:00:00Z
            -- The trigger occurred after the onset peak time
@@ -754,11 +756,6 @@ class TestForecastValidity(LoadMatch):
         forecast_json = './tests/files/forecasts/forecast_validity/forecast_validity_4.json'
         self.utility_print_docstring(this)
         self.assertRaises(KeyError, utility_load_forecast, forecast_json, self.energy_channel)
-        '''
-        forecast = utility_load_forecast(forecast_json, self.energy_channel)
-        forecast.valid_forecast()
-        self.assertEqual(forecast.valid, False)
-        '''
  
     @make_docstring_printable
     def test_forecast_validity_5(this, self):
@@ -769,8 +766,8 @@ class TestForecastValidity(LoadMatch):
         forecast_json = './tests/files/forecasts/forecast_validity/forecast_validity_5.json'
         self.utility_print_docstring(this)
         forecast = utility_load_forecast(forecast_json, self.energy_channel)
-        self.assertRaises(TypeError, forecast.valid_forecast)
-        #self.assertEqual(forecast.valid, False)
+        forecast.valid_forecast() 
+        self.assertEqual(forecast.valid, False)
 
 
 # sphinx.py --> match.match_all_forecasts --> match.match_all_clear
@@ -791,6 +788,8 @@ class TestMatchAllClear(LoadMatch):
             print('===== PRINT INPUTS =====')
             print('sphinx.observed_all_clear.all_clear_boolean =', sphinx.observed_all_clear.all_clear_boolean)
             print('sphinx.all_clear_match_status =', sphinx.all_clear_match_status)
+
+            print(sphinx.is_eruption_in_range.keys())
             print('is_eruption_in_range =', sphinx.is_eruption_in_range[forecast_threshold_key][i])
             print('is_win_overlap =', sphinx.is_win_overlap[i], '(always True)')
             print('observed_ongoing_events =', sphinx.observed_ongoing_events[forecast_threshold_key][i])
@@ -866,7 +865,7 @@ class TestMatchAllClear(LoadMatch):
         The forecast/observation pair has the following attributes:
            -- Prediction window overlaps with observation window
                 prediction window start:  2000-01-01T00:30:00Z
-                prediction window end:    2000-01-01T01:30:00Z
+                prediction window end:    2000-01-01T01:00:00Z
                 observation window start: 2000-01-01T00:00:00Z
                 observation window end:   2000-01-01T01:00:00Z
            -- No ongoing SEP event at start of prediction window
@@ -1957,6 +1956,11 @@ class TestMatchAllForecasts(LoadMatch):
         self.assertEqual(sphinx.sep_match_status[self.threshold_key], 'SEP Event')
         self.assertEqual(sphinx.end_time_match_status[self.threshold_key], 'SEP Event')
 
+    # 2024-12-14: 
+    # An update to SPHINX has made this test intractible in its current form. 
+    # SPHINX now removes forecasts that have thresholds that do not have corresponding thresholds in the observation file.
+    # This test will be ignored for now, until a new suite of tests that check for removal is implemented.
+    '''
     @make_docstring_printable
     def test_match_all_forecasts_2(this, self):
         """
@@ -1983,6 +1987,7 @@ class TestMatchAllForecasts(LoadMatch):
         evaluated_sphinx, all_obs_thresholds, observed_sep_events = self.utility_test_match_all_forecasts(this, forecast_jsons)
         sphinx = evaluated_sphinx['unit_test'][self.energy_key][0]
         self.assertEqual(sphinx.all_clear_match_status, 'No Matching Threshold')
+    '''
 
     '''
     @tag('skip_setup')
