@@ -181,8 +181,9 @@ def add_collapsible_segment_nest(header_list, text_list, depth=0):
             result.append((depth, header_list[i], text_list[i]))
     return result
 
-def build_info_string_header(value, limit_message):
+def build_info_string_header(value, limit_message, selections_filename):
     info_string = 'Instruments and observed values used in validation.<br>'
+    info_string += 'Extracted from: ' + os.path.abspath(selections_filename) + '<br>\n'
     info_string += 'N = ' + str(value) + '<br>\n'
     info_string += limit_message
     return info_string
@@ -287,7 +288,7 @@ def build_all_clear_skill_scores_section(filename, model, sphinx_dataframe, appe
         subset_list = ['Prediction Window Start', 'Prediction Window End']
         subset_list = append_subset_list(selections_filename, subset_list, 'Prediction Window End', 'Units')
         info_string_, n_events, limit_message = build_info_events_table(selections_filename, sphinx_dataframe, subset_list, {})
-        info_string = build_info_string_header(sum(contingency_table_values), limit_message)
+        info_string = build_info_string_header(sum(contingency_table_values), limit_message, selections_filename)
         info_string += info_string_
         skill_score_table_values = data.iloc[i, skill_score_start_index:]
         skill_score_table_string = build_skill_score_table(skill_score_table_labels, skill_score_table_values)
@@ -358,6 +359,20 @@ def build_plot_string_list(data, current_index):
                 plot_file_string_list.append(plot_file_string)
     return plot_string_list, plot_file_string_list
 
+def plot_subsection(plot_string_list): 
+    plot_counter = 1
+    last_plot_type = ''
+    text = ''
+    for j in range(0, len(plot_string_list)):
+        plot_type = get_plot_type(plot_string_list[j])
+        if plot_type != last_plot_type:
+            plot_counter = 1
+        else:
+            plot_counter += 1
+        text += add_collapsible_segment('Plot: ' + plot_type + ' ' + str(plot_counter), plot_string_list[j])
+        last_plot_type = plot_type + ''
+    return text
+
 def append_subset_list(selections_filename, subset_list, include_after, exclusion_pattern=None):
     # HACKY
     a = open(selections_filename.replace('pkl', 'csv'), 'r')
@@ -408,23 +423,12 @@ def build_section_awt(filename, model, sphinx_dataframe, metric_label_start, sec
             if os.path.exists(selections_filename):            
                 subset_list = append_subset_list(selections_filename, subset_list, 'Prediction Window End', 'Units')
                 info_string_, n_events, limit_message = build_info_events_table(selections_filename, sphinx_dataframe, subset_list, rename_dict)
-                info_string = build_info_string_header(n_events, limit_message)
+                info_string = build_info_string_header(n_events, limit_message, selections_filename)
                 info_string += info_string_
                 text += add_collapsible_segment('Validation Info - ' + awt_string, info_string)
         text += add_collapsible_segment('Metrics', metrics_string)
-        plot_counter = 1
-        last_plot_type = ''
-        for j in range(0, len(plot_string_list)):
-            plot_type = get_plot_type(plot_string_list[j])
-            if plot_type != last_plot_type:
-                plot_counter = 1
-            else:
-                plot_counter += 1
-            text += add_collapsible_segment('Plot: ' + plot_type + ' ' + str(plot_counter), plot_string_list[j])
-            last_plot_type = plot_type + ''
-            
+        text += plot_subsection(plot_string_list)
         text += add_collapsible_segment_end()
-        
     text += add_collapsible_segment_end()
     return text
 
@@ -444,7 +448,7 @@ def build_section(filename, model, sphinx_dataframe, metric_label_start, section
         subset_list = ['Prediction Window Start', 'Prediction Window End']
         subset_list = append_subset_list(selections_filename, subset_list, 'Prediction Window End', 'Units')
         info_string_, n_events, limit_message = build_info_events_table(selections_filename, sphinx_dataframe, subset_list, rename_dict)
-        info_string = build_info_string_header(n_events, limit_message)
+        info_string = build_info_string_header(n_events, limit_message, selections_filename)
         info_string += info_string_
         metrics_string = metrics_description_string + '' 
         metrics_string_, plot_string_list, plot_file_string_list = build_metrics_table(data, i, metric_index_start, skip_label_list)
@@ -453,16 +457,7 @@ def build_section(filename, model, sphinx_dataframe, metric_label_start, section
         text += add_collapsible_segment('Thresholds Applied', threshold_string)
         text += add_collapsible_segment('Validation Info', info_string)
         text += add_collapsible_segment('Metrics', metrics_string)
-        plot_counter = 1
-        last_plot_type = ''
-        for j in range(0, len(plot_string_list)):
-            plot_type = get_plot_type(plot_string_list[j])
-            if plot_type != last_plot_type:
-                plot_counter = 1
-            else:
-                plot_counter += 1
-            text += add_collapsible_segment('Plot: ' + plot_type + ' ' + str(plot_counter), plot_string_list[j])
-            last_plot_type = plot_type + ''
+        text += plot_subsection(plot_string_list)
         text += add_collapsible_segment_end()
     text += add_collapsible_segment_end()
     return text
