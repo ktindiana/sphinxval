@@ -100,9 +100,13 @@ def zulu_to_time(zt):
         return pd.NaT
         
     if 'Z' not in zt or 'T' not in zt:
-        logger.warning(f"Time '{zt}' not in proper format. Returning None.")
-        return None
-    
+        logger.warning(f"Time '{zt}' not in proper format. Returning pd.NaT.")
+        return pd.NaT
+
+    if '/' in zt:
+        logger.warning(f"Time '{zt}' not in proper format. Returning pd.NaT.")
+        return pd.NaT
+
     strzt = zt.split('T')
     strzt[1] = strzt[1].strip('Z')
     n = strzt[1].split(':')
@@ -385,10 +389,10 @@ def load_objects_from_json(data_list, model_list):
             logger.warning("REMOVED FROM ANALYSIS: No overlap between forecasted "
                 "and observed energy channels for "
                 f"{json['filename']}, {fcast_energy_channels}")
-            fcast, is_good = forecast_object_from_json(json, fcast_energy_channels[0])
-            fcast.valid = False
-            fcast.invalid_reason = f"Predicted energy channels not present in observations, {fcast_energy_channels}"
-            removed_model_objs.append(fcast)
+            obj, is_good = forecast_object_from_json(json, fcast_energy_channels[0])
+            obj.valid = False
+            obj.invalid_reason = f"Predicted energy channels not present in observations, {fcast_energy_channels}"
+            removed_model_objs.append(obj)
             continue
 
 
@@ -416,7 +420,7 @@ def load_objects_from_json(data_list, model_list):
                 logger.debug("Prediction window start: " + str(obj.prediction_window_start))
             else:
                 if not cfg.do_mismatch or cfg.mm_model not in short_name:
-                    logger.debug(f"{fcast.source} is invalid. Will be removed in next step.")
+                    logger.debug(f"{obj.source} is invalid. Will be removed in next step.")
                     model_objs[key].append(obj) #invalid, will be removed in next step
                     continue
 
@@ -438,7 +442,7 @@ def load_objects_from_json(data_list, model_list):
                             model_objs[cfg.mm_energy_key].append(obj)
                             logger.debug("Adding " + obj.source + " to dictionary under key " + key)
                         else:
-                            logger.debug(f"MISMATCHED {fcast.source} is invalid. Will be removed in next step.")
+                            logger.debug(f"MISMATCHED {obj.source} is invalid. Will be removed in next step.")
                             model_objs[cfg.mm_energy_key].append(obj) #invalid, will be removed in next step
                             continue
 
