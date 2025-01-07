@@ -117,6 +117,7 @@ def mock_df_populate(dict):
     dict["All Clear Match Status"].append("SEP Event")
     dict["Predicted SEP Probability"].append(None)
     dict["Probability Match Status"].append("SEP Event")
+    dict["Predicted SEP All Clear Probability Threshold"].append(None)
     dict["Predicted SEP Threshold Crossing Time"].append(np.datetime64('NaT'))
     dict["Threshold Crossing Time Match Status"].append("SEP Event")
     dict["Predicted SEP Start Time"].append(np.datetime64("NaT") )
