@@ -81,6 +81,7 @@ def utility_match_sphinx(all_energy_channels, model_names, obs_objs, model_objs)
     evaluated_sphinx, not_evaluated_sphinx, all_observed_thresholds, observed_sep_events =\
         match.match_all_forecasts(all_energy_channels, model_names,
             obs_objs, model_objs)
+            
 
     return evaluated_sphinx, not_evaluated_sphinx, all_observed_thresholds, observed_sep_events
     
@@ -459,6 +460,8 @@ def attributes_of_sphinx_obj(keyword, sphinx_obj, energy_channel_key, threshold_
         return getattr(sphinx_obj, 'return_predicted_all_clear', None)()[0]
     elif keyword == "All Clear Match Status":
         return getattr(sphinx_obj, 'return_predicted_all_clear', None)()[1]
+    elif keyword == 'Predicted SEP All Clear Probability Threshold':
+        return getattr(sphinx_obj.prediction.all_clear, 'probability_threshold', None)
     elif 'Fluence' in keyword:
         if 'Spectrum' in keyword:
             temp = 'return_predicted_fluence_spectrum'
@@ -505,6 +508,7 @@ def attributes_of_sphinx_obj(keyword, sphinx_obj, energy_channel_key, threshold_
             if pd.isnull(attribute[0]): return str(attribute[0])
             else:
                 attribute = str([str(datetime.strptime(str(attribute[0]), '%Y-%m-%d %H:%M:%S') )])
+    
         return attribute
 
 
