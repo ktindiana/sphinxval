@@ -350,7 +350,6 @@ def attributes_of_sphinx_obj(keyword, sphinx_obj, energy_channel_key, threshold_
 
     depth_top_prediction_threshold = {
         'Predicted SEP Probability': 'return_predicted_probability',
-        'Predicted SEP All Clear Probability Threshold': 'probability_threshold',
         'Probability Match Status': 'return_predicted_probability',
         'Predicted SEP Threshold Crossing Time' : 'return_predicted_threshold_crossing_time',
         'Threshold Crossing Time Match Status': 'return_predicted_threshold_crossing_time',
