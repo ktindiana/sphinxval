@@ -1608,7 +1608,7 @@ def match_sep_quantities(sphinx, observation_obj, thresh, is_win_overlap,
     #If ongoing SEP event at start of prediction window, no match
     if is_sep_ongoing:
         sep_status = False
-        prob.probability_value = None #ongoing event
+        prob.probability_value = np.nan #ongoing event
         sphinx.observed_probability[thresh_key] = prob
         sphinx.observed_probability_source[thresh_key] =\
             observation_obj.source

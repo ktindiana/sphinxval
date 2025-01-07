@@ -114,6 +114,7 @@ def initialize_sphinx_dict():
             
             #PREDICTIONS
             "Predicted SEP All Clear": [],
+            "Predicted SEP All Clear Probability Threshold": [],
             "All Clear Match Status": [],
             "Predicted SEP Probability": [],
             "Probability Match Status": [],
@@ -269,6 +270,8 @@ def fill_sphinx_dict_row(sphinx, dict, energy_key, thresh_key, profname_dict):
         pred_energy_key = objh.energy_channel_to_key(config.mm_pred_energy_channel)
         pred_thresh_key = objh.threshold_to_key(config.mm_pred_threshold)
    
+   #Extract predicted values associated only with the desired energy channel
+   #and threshold combination
     pred_all_clear, ac_match_status = sphinx.return_predicted_all_clear()
     pred_prob, prob_match_status = sphinx.return_predicted_probability(thresh_key)
     pred_thresh_cross, tc_match_status =\
@@ -413,6 +416,7 @@ def fill_sphinx_dict_row(sphinx, dict, energy_key, thresh_key, profname_dict):
 
     #PREDICTION INFORMATION
     dict["Predicted SEP All Clear"].append(pred_all_clear)
+    dict["Predicted SEP All Clear Probability Threshold"].append(sphinx.prediction.all_clear.probability_threshold)
     dict["All Clear Match Status"].append(ac_match_status)
     dict["Predicted SEP Probability"].append(pred_prob)
     dict["Probability Match Status"].append(prob_match_status)
