@@ -1045,24 +1045,26 @@ def deoverlap_all_clear(filename, date_range_st = None, date_range_end=None,
         
     """
     
-    df = pd.read_csv(filename)
+    df = pd.read_csv(filename, parse_dates=['Prediction Window Start', 'Prediction Window End'])
     if df.empty:
         return
-        
+
+    df['Observed SEP All Clear'] = df['Observed SEP All Clear'].astype(bool)
+    df['Predicted SEP All Clear'] = df['Predicted SEP All Clear'].astype(bool)
+
+    df = df.sort_values('Prediction Window Start')
+
     model = df["Model"].iloc[0]
     energy_key = df["Energy Channel Key"].iloc[0]
     thresh_key = df["Threshold Key"].iloc[0]
     pred_energy_key = df["Prediction Energy Channel Key"].iloc[0]
     pred_thresh_key = df["Prediction Threshold Key"].iloc[0]
-
-    df['Prediction Window Start'] = pd.to_datetime(df['Prediction Window Start'])
-    df['Prediction Window End'] = pd.to_datetime(df['Prediction Window End'])
     
-    df = df.sort_values('Prediction Window Start')
-    
-    first_date = df['Prediction Window Start'][0]
-    last_date = df['Prediction Window End'][len(df['Prediction Window End'])-1]
+    first_date = df['Prediction Window Start'].iloc[0]
+    last_date = df['Prediction Window End'].iloc[len(df['Prediction Window End'])-1]
 
+    print(f"First date in predictions: {first_date}")
+    print(f"Last date in predictions: {last_date}")
 
     #CREATE DATE RANGE IF NOT INPUT
     #If date cadence or window isn't provided, set to 24 hours
@@ -1090,9 +1092,12 @@ def deoverlap_all_clear(filename, date_range_st = None, date_range_end=None,
             'Observed SEP Threshold Crossing Time': [],
             'Observed SEP All Clear': [],
             'Predicted SEP All Clear': [],
-            'Number of Forecasts': []}
+            'Number of Forecasts': [],
+            'Number of SEP Forecasts': [],
+            'First Prediction Window': [],
+            'Last Prediction Window': []}
 
-    #SEP EVENTS
+    ######################SEP EVENTS
     #Identify all the SEP events in the observations and calculate hits and
     #misses
     sep_events = resume.identify_unique(df,'Observed SEP Threshold Crossing Time')
@@ -1112,6 +1117,9 @@ def deoverlap_all_clear(filename, date_range_st = None, date_range_end=None,
         sep_sub = df.loc[df['Observed SEP Threshold Crossing Time'] == sep]
         if sep_sub.empty: continue
         
+        pred_win_first = sep_sub['Prediction Window Start'].iloc[0]
+        pred_win_last = sep_sub['Prediction Window Start'].iloc[len(sep_sub['Prediction Window Start'])-1]
+        
         hit = all_clear_any(sep_sub, False, False) #Was there a hit?
         miss = all_clear_all(sep_sub, False, True) #Did the model miss completely?
         
@@ -1122,13 +1130,16 @@ def deoverlap_all_clear(filename, date_range_st = None, date_range_end=None,
         dict['Observed SEP Threshold Crossing Time'].append(sep)
         dict['Observed SEP All Clear'].append(False)
         dict['Number of Forecasts'].append(len(sep_sub))
+        dict['Number of SEP Forecasts'].append(len(sep_sub))
+        dict['First Prediction Window'].append(pred_win_first)
+        dict['Last Prediction Window'].append(pred_win_last)
         if hit:
             n_caught += 1
-            sep_caught_str += str(sep)
+            sep_caught_str += str(sep) + ';'
             dict['Predicted SEP All Clear'].append(False)
         if miss:
             n_miss += 1
-            sep_miss_str += str(sep)
+            sep_miss_str += str(sep) + ';'
             dict['Predicted SEP All Clear'].append(True)
 
         #Remove the forecasts associated with the SEP event from the main df
@@ -1136,7 +1147,8 @@ def deoverlap_all_clear(filename, date_range_st = None, date_range_end=None,
         df = df.loc[df['Observed SEP Threshold Crossing Time'] != sep]
 
 
-    #REMAINING FORECASTS
+
+    ####################REMAINING FORECASTS
     for start, end in zip(date_range_st,date_range_end):
         
         sub = df.loc[(df['Prediction Window End'] > start) & (df['Prediction Window Start'] < end)]
@@ -1154,7 +1166,12 @@ def deoverlap_all_clear(filename, date_range_st = None, date_range_end=None,
 
         #Forecasts that end after the date of interest and overlap more
         #than the next date are included
-        check_post = ((sub['Prediction Window End'] - end) <= (end - sub['Prediction Window Start'])) & (sub['Prediction Window End'] > end)
+        check_post = ((sub['Prediction Window End'] - end) < (end - sub['Prediction Window Start'])) & (sub['Prediction Window End'] > end)
+        
+        #Forecasts with prediction window extending beyond both sides of
+        #the date range; if prediction window much larger than td,
+        #then won't get any matches
+#        check_overlap = ((sub['Prediction Window Start'] < start) & (sub['Prediction Window End'] > end)) & ((end-start) > (start - sub['Prediction Window Start'])) & ((end-start) > (sub['Prediction Window End']-end))
         
         keep = check_in | check_pre | check_post
         
@@ -1162,6 +1179,9 @@ def deoverlap_all_clear(filename, date_range_st = None, date_range_end=None,
         if sub.empty:
             print(f"No forecasts for {start} to {end}. Continuing.")
             continue
+
+        pred_win_first = sub['Prediction Window Start'].iloc[0]
+        pred_win_last = sub['Prediction Window Start'].iloc[len(sub['Prediction Window End'])-1]
 
         #Hits and Misses should already have been accounted for
         #Hit - check all observed not clear
@@ -1177,13 +1197,23 @@ def deoverlap_all_clear(filename, date_range_st = None, date_range_end=None,
 
         print(f"{start} - {end}: Hit: {hit}, Miss: {miss}, False Alarm: {fa}, Correct Negative: {cn}")
         
-
+        #If an SEP event has already been recorded for this date range
+        #and the rest of the forecasts are correct negatives, then only
+        #want to keep the result for the SEP event. No need to record
+        #a correct negative as well.
+        if start in dict['Start Date'] and cn:
+            idx = dict['Start Date'].index(start)
+            dict['Number of Forecasts'][idx] = dict['Number of Forecasts'][idx] + len(sub)
+            continue
+        
         #May get multiple answers in a given time period
         dict['Start Date'].append(start)
         dict['End Date'].append(end)
         dict['Observed SEP Threshold Crossing Time'].append(pd.NaT)
         dict['Number of Forecasts'].append(len(sub))
-
+        dict['Number of SEP Forecasts'].append(0)
+        dict['First Prediction Window'].append(pred_win_first)
+        dict['Last Prediction Window'].append(pred_win_last)
 #        if hit:
 #            dict['Observed SEP All Clear'].append(False)
 #            dict['Predicted SEP All Clear'].append(False)
@@ -1195,13 +1225,18 @@ def deoverlap_all_clear(filename, date_range_st = None, date_range_end=None,
         if fa:
             dict['Observed SEP All Clear'].append(True)
             dict['Predicted SEP All Clear'].append(False)
-        if cn:
+        elif cn:
             dict['Observed SEP All Clear'].append(True)
             dict['Predicted SEP All Clear'].append(True)
+        else:
+            dict['Observed SEP All Clear'].append(None)
+            dict['Predicted SEP All Clear'].append(None)
+            #print(sub)
 
 
     #Deoverlapped dataframe
     df_do = pd.DataFrame(dict)
+    df_do = df_do.sort_values('Start Date')
     fnameout = filename.replace('.csv','_deoverlap.csv')
     df_do.to_csv(fnameout)
     print(f"Wrote out {fnameout}.")
