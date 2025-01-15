@@ -79,9 +79,13 @@ t2_units = vunits.convert_string_to_units("MeV^-1*s^-1*cm^-2*sr^-1")
 #mm_pred_energy_channel = {"min": 28.2, "max": 50.1, "units": e_units}
 #mm_pred_threshold = {"threshold": 0.1, "threshold_units": t_units}
 
-mm_model = "UNSPELL" #Model short name contains this string
-mm_pred_energy_channel = {"min": 5, "max": -1, "units": e_units}
-mm_pred_threshold = {"threshold": 5, "threshold_units": t_units}
+#mm_model = "UNSPELL" #Model short name contains this string
+#mm_pred_energy_channel = {"min": 5, "max": -1, "units": e_units}
+#mm_pred_threshold = {"threshold": 5, "threshold_units": t_units}
+
+mm_model = "SEPMOD" #Model short name contains this string
+mm_pred_energy_channel = {"min": 10, "max": -1, "units": e_units}
+mm_pred_threshold = {"threshold": 0.001, "threshold_units": t_units}
 
 ######SET OBSERVATION INFO#######
 #mm_obs_energy_channel = {"min": 25, "max": 40.9, "units": e_units}
@@ -102,6 +106,9 @@ mm_thresh_key = mm_obs_tk + "_" + mm_pred_tk
 #organize observation and model objects.
 #The observed threshold key, mm_obs_tk, will be used in
 #organizing observed and predicted values by threshold.
+######## END MISMATCH ############
+
+
 
 # METRICS TO BE REPORTED AS A PERCENTAGE
 in_percent = ["Mean Percent Error (MPE)",

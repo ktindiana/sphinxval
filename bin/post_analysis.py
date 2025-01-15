@@ -78,9 +78,8 @@ if mf_filename != '':
     pa.export_max_flux_incorrect(mf_filename, threshold, doplot=True)
 
 #Make summary box plots
-if quantity == '':
-    sys.exit("Enter a quantity.")
-df = pa.read_in_metrics(path, quantity, include, exclude)
-pa.make_box_plots(df, path, quantity, anonymous, highlight, scoreboard,
+if quantity != '':
+    df = pa.read_in_metrics(path, quantity, include, exclude)
+    pa.make_box_plots(df, path, quantity, anonymous, highlight, scoreboard,
         saveplot, showplot)
 
