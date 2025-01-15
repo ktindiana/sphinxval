@@ -38,7 +38,9 @@ parser.add_argument("--short_name", type=str, default="",
                     help="New short name.")
 parser.add_argument("--append_short_name", type=str, default="",
                     help="String to add to end of current short name. Include a space or underscore or other separator.")
-
+parser.add_argument("--add_pi_trigger", type=str, default="",
+                    help="Add particle_intensity trigger block. "
+                    "Specify \"observatory=observatory;time=YYYY-MM-DD HH:MM:SS\" where time is the last_data_time of the measurements. Set time=issue to use the issue time as the last_data_time.")
 
 args = parser.parse_args()
 
@@ -58,6 +60,7 @@ data_list.extend(args.data)
 issue_time = args.issue_time
 short_name = args.short_name
 app_short_name = args.append_short_name
+add_pi_trigger = args.add_pi_trigger
 
 def maybe_stop():
     if not args.dontstop:
@@ -112,6 +115,46 @@ def append_short_name(kind, json_in, app_short_name):
 
 
 
+def add_pi_trigger_block(kind, json_in, add_pi_trigger):
+    """ Add a particle_intensity trigger block and set the
+        last_data_time to time.
+        
+        add_pi_trigger (str) in format:
+            "observatory=observatory;time=time"
+        
+        observatory (str) specifies which observatory provided
+        the particle intensities.
+        
+        Set time to "issue" in order to use the issue time of
+        the forecast as the last_data_time.
+        
+    """
+    observatory = ""
+    time = ""
+    try:
+        trigger = add_pi_trigger.strip().split(";")
+        observatory = trigger[0].split("=")[1]
+        time = trigger[1].split("=")[1]
+    except:
+        sys.exit(f"Please specify add_pi_trigger in the correct format (see help). You specified {add_pi_trigger}.")
+    
+    if kind == "forecast":
+        key = "sep_forecast_submission"
+    if kind == "observations":
+        key = "sep_observation_submission"
+        
+    if time == "issue":
+        time = json_in[key]['issue_time']
+    
+    #Try to add to existing trigger block
+    try:
+        json_in[key]['triggers'].append( {"particle_intensity":{"observatory":observatory, "last_data_time":time}})
+    #If doesn't exist, make trigger block
+    except:
+        json_in[key].update({"triggers": [{"particle_intensity":{"observatory":observatory, "last_data_time":time}}]})
+
+    return json_in
+
 
 def update_jsons(kind, json_list, issue_time, short_name, app_short_name):
 
@@ -143,6 +186,9 @@ def update_jsons(kind, json_list, issue_time, short_name, app_short_name):
                     
                 if app_short_name != "":
                     json_in = append_short_name(kind, json_in, app_short_name)
+
+                if add_pi_trigger != "":
+                    add_pi_trigger_block(kind, json_in, add_pi_trigger)
 
             vjson.write_json(json_in,json_fname)
     

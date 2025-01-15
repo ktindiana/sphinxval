@@ -61,11 +61,18 @@ def initialize_forecast_dict():
             "Flare Integrated Intensity": [],
             "Flare NOAA AR": [],
             
-            "Predicted SEP All Clear": [],
+            "Predicted SEP All Clear": [], #add threshold and units everywhere
+            "Predicted SEP All Clear Threshold": [],
+            "Predicted SEP All Clear Threshold Units": [],
+            "Predicted SEP All Clear Probability Threshold": [],
             "Predicted SEP Probability": [],
             "Predicted SEP Threshold Crossing Time": [],
+            "Predicted SEP Threshold Crossing Threshold": [],
+            "Predicted SEP Threshold Crossing Threshold Units": [],
             "Predicted SEP Start Time":[],
             "Predicted SEP End Time": [],
+            "Predicted SEP Event Length Threshold": [],
+            "Predicted SEP Event Length Threshold Units": [],
             "Predicted SEP Fluence": [],
             "Predicted SEP Fluence Units": [],
             "Predicted SEP Fluence Spectrum": [],
@@ -160,9 +167,13 @@ def fill_forecast_dict_row(index, prediction, dict):
 
     #Threshold crossings
     pred_thresh_cross = repr(sorted([tc.crossing_time for tc in prediction.threshold_crossings]))
-
+    pred_thresh_cross_thresh = repr(sorted([tc.threshold for tc in prediction.threshold_crossings]))
+    pred_thresh_cross_thresh_units = repr(sorted([tc.threshold_units for tc in prediction.threshold_crossings]))
+    
     #Start times
     pred_start_time = repr(sorted([ev.start_time for ev in prediction.event_lengths]))
+    pred_ev_length_thresh = repr(sorted([ev.threshold for ev in prediction.event_lengths]))
+    pred_ev_length_thresh_units = repr(sorted([ev.threshold_units for ev in prediction.event_lengths]))
 
     #End times
     pred_end_time = repr(sorted([ev.end_time for ev in prediction.event_lengths]))
@@ -227,9 +238,16 @@ def fill_forecast_dict_row(index, prediction, dict):
 
     #PREDICTION INFORMATION
     dict["Predicted SEP All Clear"].append(prediction.all_clear.all_clear_boolean)
+    dict["Predicted SEP All Clear Threshold"].append(prediction.all_clear.threshold)
+    dict["Predicted SEP All Clear Threshold Units"].append(prediction.all_clear.threshold_units)
+    dict["Predicted SEP All Clear Probability Threshold"].append(prediction.all_clear.probability_threshold)
     dict["Predicted SEP Probability"].append(pred_prob)
     dict["Predicted SEP Threshold Crossing Time"].append(pred_thresh_cross)
+    dict["Predicted SEP Threshold Crossing Threshold"].append(pred_thresh_cross_thresh)
+    dict["Predicted SEP Threshold Crossing Threshold Units"].append(pred_thresh_cross_thresh_units)
     dict["Predicted SEP Start Time"].append(pred_start_time)
+    dict["Predicted SEP Event Length Threshold"].append(pred_ev_length_thresh)
+    dict["Predicted SEP Event Length Threshold Units"].append(pred_ev_length_thresh_units)
     dict["Predicted SEP End Time"].append(pred_end_time)
     dict["Predicted Point Intensity"].append(pred_point_intensity)
     dict["Predicted Point Intensity Units"].append(pred_pti_units)
@@ -274,17 +292,29 @@ def identify_forecast_duplicates(df):
             "Number of Flares", "Flare Latitude", "Flare Longitude", "Flare Start Time",
             "Flare Peak Time", "Flare End Time", "Flare Last Data Time", "Flare Intensity",
             "Flare Integrated Intensity", "Flare NOAA AR",
-            "Predicted SEP All Clear", "Predicted SEP Probability",
+            "Predicted SEP All Clear",
+            "Predicted SEP All Clear Threshold",
+            "Predicted SEP All Clear Threshold Units",
+            "Predicted SEP All Clear Probability Threshold",
+            "Predicted SEP Probability",
             "Predicted SEP Threshold Crossing Time",
+            "Predicted SEP Threshold Crossing Threshold",
+            "Predicted SEP Threshold Crossing Threshold Units",
             "Predicted SEP Start Time",
+            "Predicted SEP Event Length Threshold",
+            "Predicted SEP Event Length Threshold Units",
             "Predicted SEP End Time",
-            "Predicted SEP Fluence",
-            "Predicted SEP Peak Intensity (Onset Peak)",
-            "Predicted SEP Peak Intensity Max (Max Flux)",
+            "Predicted SEP Fluence", "Predicted SEP Fluence Units",
+            "Predicted SEP Fluence Spectrum", "Predicted SEP Fluence Spectrum Units",
+            "Predicted SEP Peak Intensity (Onset Peak)", "Predicted SEP Peak Intensity (Onset Peak) Units",
+            "Predicted SEP Peak Intensity (Onset Peak) Time",
+            "Predicted SEP Peak Intensity Max (Max Flux)", "Predicted SEP Peak Intensity Max (Max Flux) Units",
+            "Predicted SEP Peak Intensity Max (Max Flux) Time",
             "Predicted Point Intensity", "Predicted Time Profile"]]
     
+
     #Create a hash for each row of the dataframe
-    hash = pd.util.hash_pandas_object(sub, index=False)
+    hash = pd.util.hash_pandas_object(sub, index=False)    
     duplicates = hash.duplicated(keep='first')
     dup = pd.DataFrame(duplicates)
     
@@ -321,6 +351,8 @@ def remove_forecast_duplicates(all_energy_channels, model_objs):
     
     """
     
+    removed = []
+    
     for energy_key in all_energy_channels:
         df = fill_forecast_df(model_objs[energy_key])
 
@@ -329,9 +361,10 @@ def remove_forecast_duplicates(all_energy_channels, model_objs):
 
         for i in sorted(dup_indices, reverse=True):
             logger.warning(f"DUPLICATE INPUT FORECAST: Removing duplicated forecast for energy channel {energy_key},  {model_objs[energy_key][i].source}")
+            removed.append(model_objs[energy_key][i])
             model_objs[energy_key].pop(i)
         
-    return model_objs
+    return model_objs, removed
 
 
 
@@ -351,6 +384,8 @@ def remove_resume_duplicates(r_df, model_objs):
     
     """
     
+    removed = []
+    
     for energy_key in model_objs.keys():
         df = fill_forecast_df(model_objs[energy_key])
 
@@ -359,13 +394,14 @@ def remove_resume_duplicates(r_df, model_objs):
         
         for i in sorted(dup_indices, reverse=True):
             logger.warning(f"DUPLICATE RESUME FORECAST: Removing duplicated forecast already present in the resume SPHINX_dataframe for energy channel {energy_key}, {model_objs[energy_key][i].source}")
+            removed.append(model_objs[energy_key][i])
             model_objs[energy_key].pop(i)
 
 
-    return model_objs
+    return model_objs, removed
 
 
-def remove_sphinx_duplicates(df):
+def remove_sphinx_duplicates(df, reason='Duplicate in sphinx dataframe'):
     """ Check the SPHINX dataframe for duplicate entries. Issue warning
         and remove repeated forecasts, combined with observatory information.
         
@@ -375,6 +411,7 @@ def remove_sphinx_duplicates(df):
         Output:
         
             :df: (dataframe) with unique entries
+            :reason: (string) "Evaluation Status" will be set to reason
         
     """
     #Extract key rows from the df that uniquely identify a forecast
@@ -386,7 +423,8 @@ def remove_sphinx_duplicates(df):
             "Number of Flares", "Flare Latitude", "Flare Longitude", "Flare Start Time",
             "Flare Peak Time", "Flare End Time", "Flare Last Data Time", "Flare Intensity",
             "Flare Integrated Intensity", "Flare NOAA AR", "Observatory", "Observed SEP All Clear",
-            "Predicted SEP All Clear", "All Clear Match Status", "Predicted SEP Probability",
+            "Predicted SEP All Clear", "Predicted SEP All Clear Probability Threshold",
+            "All Clear Match Status", "Predicted SEP Probability",
             "Probability Match Status", "Predicted SEP Threshold Crossing Time",
             "Threshold Crossing Time Match Status", "Predicted SEP Start Time",
             "Start Time Match Status", "Predicted SEP End Time", "End Time Match Status",
@@ -408,5 +446,52 @@ def remove_sphinx_duplicates(df):
     
     #Keep only the entries that are marked as False for duplicates
     unique_df = df.loc[(dup[0] == False)]
+    duplicate_df = df.loc[(dup[0] == True)]
+    duplicate_df = duplicate_df.assign(**{"Evaluation Status": reason})
     
-    return unique_df
+    return unique_df, duplicate_df
+
+
+
+def add_to_not_evaluated(removed_sphinx, duplicates, reason=''):
+    """ Add duplicate entries to the removed_sphinx array. 
+    
+        Input:
+        
+            :removed_sphinx: (array) array of sphinx objects organized
+                by model and energy channel
+            :duplicates: (array) array of duplicate forcast objects
+            :reason: (string) message to add to sphinx.not_evaluated
+            
+        Output:
+        
+            :removed_sphinx: (array) with duplicates added as sphinx
+                objects
+    
+    """
+
+    for fcast in duplicates:
+        energy_channel = fcast.energy_channel
+        energy_key = objh.energy_channel_to_key(fcast.energy_channel)
+        
+        sphinx = objh.initialize_sphinx(fcast)
+        
+        if not reason:
+            sphinx.not_evaluated = fcast.invalid_reason
+        else:
+            sphinx.not_evaluated = reason
+        
+        #If all model entries were filtered out before matching step, may not be
+        #in removed_sphinx. Add.
+        if fcast.short_name not in removed_sphinx.keys():
+            removed_sphinx.update({fcast.short_name:{'uses_eruptions':False}})
+            logger.info(f"APPENDING removed_sphinx: Adding model name to removed_sphinx: {fcast.short_name}")
+        
+        #For forecasts with energy channels not prepared in the observations
+        if energy_key not in removed_sphinx[fcast.short_name].keys():
+            removed_sphinx[fcast.short_name].update({energy_key:[]})
+            logger.info(f"APPENDING removed_sphinx: Adding energy channel to removed_sphinx: {energy_key}")
+        
+        removed_sphinx[fcast.short_name][energy_key].append(sphinx)
+        
+    return removed_sphinx

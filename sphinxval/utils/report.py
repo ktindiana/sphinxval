@@ -181,8 +181,9 @@ def add_collapsible_segment_nest(header_list, text_list, depth=0):
             result.append((depth, header_list[i], text_list[i]))
     return result
 
-def build_info_string_header(value, limit_message):
+def build_info_string_header(value, limit_message, selections_filename):
     info_string = 'Instruments and observed values used in validation.<br>'
+    info_string += 'Extracted from: ' + os.path.abspath(selections_filename) + '<br>\n'
     info_string += 'N = ' + str(value) + '<br>\n'
     info_string += limit_message
     return info_string
@@ -221,7 +222,9 @@ def build_info_events_table(filename, sphinx_dataframe, subset_list, subset_repl
     subset.insert(0, 'Observatory', 'dummy')
     selection_index = list(data.index)
     subset['Observatory'] = sphinx_dataframe.loc[selection_index, 'Observatory'].to_list()
-    subset = subset.rename(columns=subset_replacement_dict)
+    subset['Observed SEP Start Time'] = sphinx_dataframe.loc[selection_index, 'Observed SEP Start Time'].to_list()
+    subset['Observed SEP End Time'] = sphinx_dataframe.loc[selection_index, 'Observed SEP End Time'].to_list()
+    #subset = subset.rename(columns=subset_replacement_dict)
     if len(subset) > selections_limit:
         subset = subset.iloc[:selections_limit]
         limit_message = 'This list has been truncated to the first ' + str(selections_limit) + ' entries. See ' + filename + ' for full list.\n'
@@ -229,7 +232,7 @@ def build_info_events_table(filename, sphinx_dataframe, subset_list, subset_repl
         limit_message = ''
     output = '\n' + subset.to_markdown(index=False) + '\n'
     n_events = len(data)
-    return output, n_events, limit_message
+    return output, n_events, limit_message, subset
 
 def build_threshold_string(data, k):
     energy_threshold_data = data.iloc[k]['Energy Channel']
@@ -286,8 +289,8 @@ def build_all_clear_skill_scores_section(filename, model, sphinx_dataframe, appe
         selections_filename = os.path.join(output_dir__, 'all_clear_selections_' + model + '_' + data.iloc[i]['Energy Channel'] + '_threshold_' + obs_threshold.rstrip(' pfu') + mismatch_allowed_string + appendage + '.pkl')
         subset_list = ['Prediction Window Start', 'Prediction Window End']
         subset_list = append_subset_list(selections_filename, subset_list, 'Prediction Window End', 'Units')
-        info_string_, n_events, limit_message = build_info_events_table(selections_filename, sphinx_dataframe, subset_list, {})
-        info_string = build_info_string_header(sum(contingency_table_values), limit_message)
+        info_string_, n_events, limit_message, subset = build_info_events_table(selections_filename, sphinx_dataframe, subset_list, {})
+        info_string = build_info_string_header(sum(contingency_table_values), limit_message, selections_filename)
         info_string += info_string_
         skill_score_table_values = data.iloc[i, skill_score_start_index:]
         skill_score_table_string = build_skill_score_table(skill_score_table_labels, skill_score_table_values)
@@ -358,6 +361,26 @@ def build_plot_string_list(data, current_index):
                 plot_file_string_list.append(plot_file_string)
     return plot_string_list, plot_file_string_list
 
+def plot_subsection(plot_string_list, subset=None): 
+    plot_counter = 1
+    last_plot_type = ''
+    text = ''
+    for j in range(0, len(plot_string_list)):
+        plot_type = get_plot_type(plot_string_list[j])
+        if plot_type != last_plot_type:
+            plot_counter = 1
+        else:
+            plot_counter += 1
+
+        if plot_type == 'Time Profile':
+            appendage = ' for event observed ' + subset['Observed SEP Start Time'].iloc[0].isoformat()  + ' -- ' + subset['Observed SEP End Time'].iloc[0].isoformat()
+        else:
+            appendage = ''
+
+        text += add_collapsible_segment('Plot: ' + plot_type + ' ' + str(plot_counter) + appendage, plot_string_list[j])
+        last_plot_type = plot_type + ''
+    return text
+
 def append_subset_list(selections_filename, subset_list, include_after, exclusion_pattern=None):
     # HACKY
     a = open(selections_filename.replace('pkl', 'csv'), 'r')
@@ -407,24 +430,13 @@ def build_section_awt(filename, model, sphinx_dataframe, metric_label_start, sec
             subset_list = ['Prediction Window Start', 'Prediction Window End']
             if os.path.exists(selections_filename):            
                 subset_list = append_subset_list(selections_filename, subset_list, 'Prediction Window End', 'Units')
-                info_string_, n_events, limit_message = build_info_events_table(selections_filename, sphinx_dataframe, subset_list, rename_dict)
-                info_string = build_info_string_header(n_events, limit_message)
+                info_string_, n_events, limit_message, subset = build_info_events_table(selections_filename, sphinx_dataframe, subset_list, rename_dict)
+                info_string = build_info_string_header(n_events, limit_message, selections_filename)
                 info_string += info_string_
                 text += add_collapsible_segment('Validation Info - ' + awt_string, info_string)
         text += add_collapsible_segment('Metrics', metrics_string)
-        plot_counter = 1
-        last_plot_type = ''
-        for j in range(0, len(plot_string_list)):
-            plot_type = get_plot_type(plot_string_list[j])
-            if plot_type != last_plot_type:
-                plot_counter = 1
-            else:
-                plot_counter += 1
-            text += add_collapsible_segment('Plot: ' + plot_type + ' ' + str(plot_counter), plot_string_list[j])
-            last_plot_type = plot_type + ''
-            
+        text += plot_subsection(plot_string_list)
         text += add_collapsible_segment_end()
-        
     text += add_collapsible_segment_end()
     return text
 
@@ -443,8 +455,8 @@ def build_section(filename, model, sphinx_dataframe, metric_label_start, section
         selections_filename = os.path.join(output_dir__, section_tag + '_selections_' + model + '_' + data.iloc[i]['Energy Channel'] + '_threshold_' + obs_threshold.rstrip(' pfu') + mismatch_allowed_string + appendage + '.pkl')
         subset_list = ['Prediction Window Start', 'Prediction Window End']
         subset_list = append_subset_list(selections_filename, subset_list, 'Prediction Window End', 'Units')
-        info_string_, n_events, limit_message = build_info_events_table(selections_filename, sphinx_dataframe, subset_list, rename_dict)
-        info_string = build_info_string_header(n_events, limit_message)
+        info_string_, n_events, limit_message, subset = build_info_events_table(selections_filename, sphinx_dataframe, subset_list, rename_dict)
+        info_string = build_info_string_header(n_events, limit_message, selections_filename)
         info_string += info_string_
         metrics_string = metrics_description_string + '' 
         metrics_string_, plot_string_list, plot_file_string_list = build_metrics_table(data, i, metric_index_start, skip_label_list)
@@ -453,16 +465,7 @@ def build_section(filename, model, sphinx_dataframe, metric_label_start, section
         text += add_collapsible_segment('Thresholds Applied', threshold_string)
         text += add_collapsible_segment('Validation Info', info_string)
         text += add_collapsible_segment('Metrics', metrics_string)
-        plot_counter = 1
-        last_plot_type = ''
-        for j in range(0, len(plot_string_list)):
-            plot_type = get_plot_type(plot_string_list[j])
-            if plot_type != last_plot_type:
-                plot_counter = 1
-            else:
-                plot_counter += 1
-            text += add_collapsible_segment('Plot: ' + plot_type + ' ' + str(plot_counter), plot_string_list[j])
-            last_plot_type = plot_type + ''
+        text += plot_subsection(plot_string_list, subset)
         text += add_collapsible_segment_end()
     text += add_collapsible_segment_end()
     return text
@@ -782,9 +785,9 @@ def report(output_dir, relative_path_plots, sphinx_dataframe=None): ### ADD OPTI
  
     # obtain sphinx dataframe
     if sphinx_dataframe is None: 
-        sphinx_dataframe_location = os.path.join(output_dir__, 'SPHINX_dataframe.pkl')
+        sphinx_dataframe_location = os.path.join(output_dir__, 'SPHINX_evaluated.pkl')
         logger.info('    No SPHINX dataframe supplied to reporting module. Using SPHINX dataframe saved at location ' + sphinx_dataframe_location)
-        sphinx_dataframe = pd.read_pickle(os.path.join(output_dir__, 'SPHINX_dataframe.pkl'))
+        sphinx_dataframe = pd.read_pickle(os.path.join(output_dir__, 'SPHINX_evaluated.pkl'))
 
     # grab all models
     models = list(set(sphinx_dataframe['Model']))

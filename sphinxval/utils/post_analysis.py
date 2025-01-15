@@ -8,6 +8,8 @@ import sys
 from . import plotting_tools as plt_tools
 from . import time_profile as profile
 from . import resume
+from . import validation
+from . import metrics
 import pickle
 import pandas as pd
 import matplotlib as plt
@@ -911,3 +913,346 @@ def make_box_plots(df, path, quantity, anonymous, highlight, scoreboard,
                     save=figname, uselog=False, showplot=showplot, \
                     closeplot=False, saveplot=saveplot)
 
+
+
+def all_clear_any(df, obs, pred):
+    """ Returns True if any of the entries where the observed
+        condition is obs have a prediction condition pred.
+        
+        e.g. Hits
+        obs = False
+        pred = False
+        
+        if any entries in df that have observed all clear = False and 
+        predicted all clear = False, then will return True that this
+        set of forecasts was a "Hit"
+
+        e.g. False Alarms
+        obs = True
+        pred = False
+        
+        if all entries in df that have observed all clear = True and 
+        predicted all clear = False, then will return True that this
+        set of forecasts was a "False Alarm"        
+        
+        
+        INPUT:
+        
+            :df: (dataframe) contains all clear observed and predicted outcomes
+                for each forecast
+            :obs: (bool) desired observational condition
+            :pred: (bool) desired predicted condition
+            
+        Output:
+        
+            :condition: (bool) True if condition is met, False is condition not met
+        
+    """
+
+    sub = df.loc[(df['Observed SEP All Clear'] == obs)]
+    
+    #If no observations meet the condition
+    if sub.empty:
+        return None
+        
+    sub = sub.loc[(sub['Predicted SEP All Clear'] == pred)]
+    
+    #If no predictions meet the condition
+    if sub.empty:
+        return False
+    #if any of the predictions meet the condition
+    else:
+        return True
+            
+
+
+def all_clear_all(df, obs, pred):
+    """ Returns True if all of the entries where the observed
+        condition is obs have a prediction condition pred.
+        
+        e.g. Misses
+        obs = False
+        pred = True
+        
+        if all entries in df that have observed all clear = False and 
+        predicted all clear = True, then will return True that this
+        set of forecasts was a "Miss"
+
+        e.g. Correct Negatives
+        obs = True
+        pred = True
+        
+        if all entries in df have observed all clear = True and 
+        predicted all clear = True, then will return True that this
+        set of forecasts was a "Correct Negative"        
+        
+        
+        INPUT:
+        
+            :df: (dataframe) contains all clear observed and predicted outcomes
+                for each forecast
+            :obs: (bool) desired observational condition
+            :pred: (bool) desired predicted condition
+            
+        Output:
+        
+            :condition: (bool) True if condition is met, False is condition not met
+        
+    """
+
+    sub = df.loc[(df['Observed SEP All Clear'] == obs)]
+    
+    #If no observations meet the condition
+    if sub.empty:
+        return None
+        
+    sub_pred = sub.loc[(sub['Predicted SEP All Clear'] == pred)]
+    
+    if len(sub) == len(sub_pred):
+        return True
+    else:
+        return False
+
+
+
+def deoverlap_all_clear(filename, date_range_st = None, date_range_end=None,
+    td=pd.NaT):
+    """ For models that produce continuous forecasts on a set cadence 
+        with overlapping prediction windows, deoverlap by getting a 
+        single answer for a given period of time.
+        
+        For example, for each 24 hour period, assign a single hit, 
+        miss, correct negative, or false alarm according to the 
+        forecasts within that 24 hour period.
+        
+        INPUT:
+        
+            :filename: (string) filename of the all_clear_selections_model.pkl
+                file output by SPHINX.
+            :date_range_st: (pd date_range series) start of time periods of interest. May include a continuous time period or a set of specific time
+                periods, e.g. a challenge set
+                If not specified, will default to continuous time periods between
+                start and end time of forecasts in input file.
+            :date_range_end: (pd date_range series) end of time periods of interest. 
+            :td: (datetime timedelta) if date_range_st not specified, will create
+                continuous time periods with td. If date_range_st specified, but 
+                date_range_end not specified, will create time periods of
+                date_range_st + td. Default td = 24 hours.
+                
+        OUTPUT:
+        
+            Rederived contingency table and metrics
+        
+    """
+    
+    df = pd.read_csv(filename, parse_dates=['Prediction Window Start', 'Prediction Window End'])
+    if df.empty:
+        return
+
+    df['Observed SEP All Clear'] = df['Observed SEP All Clear'].astype(bool)
+    df['Predicted SEP All Clear'] = df['Predicted SEP All Clear'].astype(bool)
+
+    df = df.sort_values('Prediction Window Start')
+
+    model = df["Model"].iloc[0]
+    energy_key = df["Energy Channel Key"].iloc[0]
+    thresh_key = df["Threshold Key"].iloc[0]
+    pred_energy_key = df["Prediction Energy Channel Key"].iloc[0]
+    pred_thresh_key = df["Prediction Threshold Key"].iloc[0]
+    
+    first_date = df['Prediction Window Start'].iloc[0]
+    last_date = df['Prediction Window End'].iloc[len(df['Prediction Window End'])-1]
+
+    print(f"First date in predictions: {first_date}")
+    print(f"Last date in predictions: {last_date}")
+
+    #CREATE DATE RANGE IF NOT INPUT
+    #If date cadence or window isn't provided, set to 24 hours
+    if pd.isnull(td):
+        td = datetime.timedelta(hours=24)
+
+    #If start times provided, but not end times, then apply td
+    if not pd.isnull(date_range_st) and pd.isnull(date_range_end):
+        date_range_end = date_range_st + td
+
+    #If no date range provided, then create a continuous date range
+    #between the first and last date in the provided forecasts
+    if pd.isnull(date_range_st):
+        #Specify date range covered by prediction windows
+        start_date = pd.Timestamp(year=first_date.year, month=first_date.month, day=first_date.day)
+        end_date = pd.Timestamp(year=last_date.year, month=last_date.month, day=last_date.day)
+            
+        #Create a range of daily time stamps from the start date to the end date
+        date_range_st = pd.date_range(start=start_date, end=end_date-td, freq=td)
+        date_range_end = date_range_st + td
+
+
+    #Group forecasts and get a single value of all clear for each date range
+    dict = {'Start Date': [], 'End Date': [],
+            'Observed SEP Threshold Crossing Time': [],
+            'Observed SEP All Clear': [],
+            'Predicted SEP All Clear': [],
+            'Number of Forecasts': [],
+            'Number of SEP Forecasts': [],
+            'First Prediction Window': [],
+            'Last Prediction Window': []}
+
+    ######################SEP EVENTS
+    #Identify all the SEP events in the observations and calculate hits and
+    #misses
+    sep_events = resume.identify_unique(df,'Observed SEP Threshold Crossing Time')
+
+    #Pull out all forecasts for each SEP event
+    n_caught = 0
+    sep_caught_str = ''
+    n_miss = 0
+    sep_miss_str = ''
+    for sep in sep_events:
+        #Check if the sep event is within the date range of interes
+        check = (sep >= date_range_st) & (sep < date_range_end)
+        if not check.any: continue
+        st_date = date_range_st[check][0]
+        end_date = date_range_end[check][0]
+
+        sep_sub = df.loc[df['Observed SEP Threshold Crossing Time'] == sep]
+        if sep_sub.empty: continue
+        
+        pred_win_first = sep_sub['Prediction Window Start'].iloc[0]
+        pred_win_last = sep_sub['Prediction Window Start'].iloc[len(sep_sub['Prediction Window Start'])-1]
+        
+        hit = all_clear_any(sep_sub, False, False) #Was there a hit?
+        miss = all_clear_all(sep_sub, False, True) #Did the model miss completely?
+        
+        print(f"SEP Event: {sep}, Model Hit?: {hit}, Model Miss?: {miss}")
+
+        dict['Start Date'].append(st_date)
+        dict['End Date'].append(end_date)
+        dict['Observed SEP Threshold Crossing Time'].append(sep)
+        dict['Observed SEP All Clear'].append(False)
+        dict['Number of Forecasts'].append(len(sep_sub))
+        dict['Number of SEP Forecasts'].append(len(sep_sub))
+        dict['First Prediction Window'].append(pred_win_first)
+        dict['Last Prediction Window'].append(pred_win_last)
+        if hit:
+            n_caught += 1
+            sep_caught_str += str(sep) + ';'
+            dict['Predicted SEP All Clear'].append(False)
+        if miss:
+            n_miss += 1
+            sep_miss_str += str(sep) + ';'
+            dict['Predicted SEP All Clear'].append(True)
+
+        #Remove the forecasts associated with the SEP event from the main df
+        #so don't evaluate a second time in the next loop
+        df = df.loc[df['Observed SEP Threshold Crossing Time'] != sep]
+
+
+
+    ####################REMAINING FORECASTS
+    for start, end in zip(date_range_st,date_range_end):
+        
+        sub = df.loc[(df['Prediction Window End'] > start) & (df['Prediction Window Start'] < end)]
+
+        if sub.empty:
+            print(f"No forecasts for {start} to {end}. Continuing.")
+            continue
+
+        #Prediction window within the date range
+        check_in = (sub['Prediction Window Start'] >= start) & (sub['Prediction Window End'] <= end)
+        
+        #Forecasts that start before the date range of interest and overlap
+        #more than the previous date are included
+        check_pre = ((sub['Prediction Window End'] - start) > (start - sub['Prediction Window Start'])) & (sub['Prediction Window Start'] < start)
+
+        #Forecasts that end after the date of interest and overlap more
+        #than the next date are included
+        check_post = ((sub['Prediction Window End'] - end) < (end - sub['Prediction Window Start'])) & (sub['Prediction Window End'] > end)
+        
+        #Forecasts with prediction window extending beyond both sides of
+        #the date range; if prediction window much larger than td,
+        #then won't get any matches
+#        check_overlap = ((sub['Prediction Window Start'] < start) & (sub['Prediction Window End'] > end)) & ((end-start) > (start - sub['Prediction Window Start'])) & ((end-start) > (sub['Prediction Window End']-end))
+        
+        keep = check_in | check_pre | check_post
+        
+        sub = sub.loc[keep]
+        if sub.empty:
+            print(f"No forecasts for {start} to {end}. Continuing.")
+            continue
+
+        pred_win_first = sub['Prediction Window Start'].iloc[0]
+        pred_win_last = sub['Prediction Window Start'].iloc[len(sub['Prediction Window End'])-1]
+
+        #Hits and Misses should already have been accounted for
+        #Hit - check all observed not clear
+        hit = all_clear_any(sub, False, False)
+        #Miss  - check all observed not clear
+        miss = all_clear_all(sub, False, True)
+
+
+        #False Alarm  - check all observed clear
+        fa = all_clear_any(sub, True, False)
+        #Correct Negative  - check all observed clear
+        cn = all_clear_all(sub, True, True)
+
+        print(f"{start} - {end}: Hit: {hit}, Miss: {miss}, False Alarm: {fa}, Correct Negative: {cn}")
+        
+        #If an SEP event has already been recorded for this date range
+        #and the rest of the forecasts are correct negatives, then only
+        #want to keep the result for the SEP event. No need to record
+        #a correct negative as well.
+        if start in dict['Start Date'] and cn:
+            idx = dict['Start Date'].index(start)
+            dict['Number of Forecasts'][idx] = dict['Number of Forecasts'][idx] + len(sub)
+            continue
+        
+        #May get multiple answers in a given time period
+        dict['Start Date'].append(start)
+        dict['End Date'].append(end)
+        dict['Observed SEP Threshold Crossing Time'].append(pd.NaT)
+        dict['Number of Forecasts'].append(len(sub))
+        dict['Number of SEP Forecasts'].append(0)
+        dict['First Prediction Window'].append(pred_win_first)
+        dict['Last Prediction Window'].append(pred_win_last)
+#        if hit:
+#            dict['Observed SEP All Clear'].append(False)
+#            dict['Predicted SEP All Clear'].append(False)
+#        if miss:
+#            dict['Observed SEP All Clear'].append(False)
+#            dict['Predicted SEP All Clear'].append(True)
+
+
+        if fa:
+            dict['Observed SEP All Clear'].append(True)
+            dict['Predicted SEP All Clear'].append(False)
+        elif cn:
+            dict['Observed SEP All Clear'].append(True)
+            dict['Predicted SEP All Clear'].append(True)
+        else:
+            dict['Observed SEP All Clear'].append(None)
+            dict['Predicted SEP All Clear'].append(None)
+            #print(sub)
+
+
+    #Deoverlapped dataframe
+    df_do = pd.DataFrame(dict)
+    df_do = df_do.sort_values('Start Date')
+    fnameout = filename.replace('.csv','_deoverlap.csv')
+    df_do.to_csv(fnameout)
+    print(f"Wrote out {fnameout}.")
+
+    #Calculate metrics
+    all_clear_dict = validation.initialize_all_clear_dict()
+    scores = metrics.calc_contingency_all_clear(df_do,
+        'Observed SEP All Clear', 'Predicted SEP All Clear')
+
+    
+    validation.fill_all_clear_dict(all_clear_dict, model, energy_key, thresh_key,
+        pred_energy_key, pred_thresh_key, scores, n_caught, sep_caught_str, n_miss,
+        sep_miss_str)
+        
+    all_clear_metrics_df = pd.DataFrame(all_clear_dict)
+    if not all_clear_metrics_df.empty:
+        fout = fnameout.replace('selections','metrics')
+        all_clear_metrics_df.to_csv(fout)
+        print(f"Wrote out {fout}.")

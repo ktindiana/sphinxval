@@ -67,13 +67,16 @@ def validate(data_list, model_list, top=None, Resume=None):
     #Unique identifier - issue time, triggers, prediction window - ignore for now
     #Use last prediction window for model or energy_channel to include new
     #obs_objs and model_objs organized by energy channel
-    all_energy_channels, obs_objs, model_objs =\
+    all_energy_channels, obs_objs, model_objs, removed_model_objs =\
         vjson.load_objects_from_json(data_list, model_list)
     logger.info("Loaded all JSON files into Observation and Forecast Objects.")
 
+    #Exclude invalid forecasts first
+    model_objs, removed_invalid = objh.remove_invalid_forecasts(model_objs, all_energy_channels)
+
     #Check for duplicates in the set of forecasts and remove any
     logger.info("Checking for and removing duplicate forecasts from the input Model List.")
-    model_objs = duplicates.remove_forecast_duplicates(all_energy_channels, model_objs)
+    model_objs, removed_fcast = duplicates.remove_forecast_duplicates(all_energy_channels, model_objs)
 
     #Dictionary containing the location of all the .txt files
     #in the subdirectories below top.
@@ -91,24 +94,32 @@ def validate(data_list, model_list, top=None, Resume=None):
     #Compare the newly read in forecasts to the resume dataframe and remove
     #any duplicates from the new forecasts
     if Resume is not None:
-        model_objs = duplicates.remove_resume_duplicates(r_df, model_objs)
+        model_objs, removed_resume = duplicates.remove_resume_duplicates(r_df, model_objs)
     ################
     
     
     #Dictionary of SPHINX objects containing all matching criteria
-    #and matched observed values for each forecast (matched_sphinx) as well as
+    #and matched observed values for each forecast (evaluated_sphinx) as well as
     #a dictionary organized by model, energy channel, and threshold with the
     #unique SEP events that were present inside of the forecast prediction
     #windows (observed_sep_events).
     logger.info("Starting matching process.")
-    matched_sphinx, all_observed_thresholds, observed_sep_events =\
+    evaluated_sphinx, removed_sphinx, all_observed_thresholds, observed_sep_events =\
         match.match_all_forecasts(all_energy_channels, model_names,
             obs_objs, model_objs)
     logger.info("Completed matching process and starting intuitive validation.")
 
 
+    #Add the excluded duplicates to removed_sphinx
+    removed_sphinx = duplicates.add_to_not_evaluated(removed_sphinx, removed_model_objs)
+    removed_sphinx = duplicates.add_to_not_evaluated(removed_sphinx, removed_invalid)
+    removed_sphinx = duplicates.add_to_not_evaluated(removed_sphinx, removed_fcast, "Duplicate input forecast")
+    if Resume is not None:
+        removed_sphinx = duplicates.add_to_not_evaluated(removed_sphinx, removed_resume, "Duplicate forecast already present in the resume dataframe")
+
+
     #Perform intuitive validation
-    sphinx_df = valid.intuitive_validation(matched_sphinx, model_names,
+    sphinx_df = valid.intuitive_validation(evaluated_sphinx, removed_sphinx, model_names,
         all_energy_channels, all_observed_thresholds, observed_sep_events, profname_dict, r_df=r_df)
     logger.info("Completed validation.")
 

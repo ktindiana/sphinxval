@@ -57,6 +57,7 @@ def initialize_sphinx_dict():
             "Prediction Threshold Key": [],
             "Forecast Source": [],
             "Forecast Path": [],
+            "Evaluation Status": [],
             "Forecast Issue Time":[],
             "Prediction Window Start": [],
             "Prediction Window End": [],
@@ -113,6 +114,7 @@ def initialize_sphinx_dict():
             
             #PREDICTIONS
             "Predicted SEP All Clear": [],
+            "Predicted SEP All Clear Probability Threshold": [],
             "All Clear Match Status": [],
             "Predicted SEP Probability": [],
             "Probability Match Status": [],
@@ -198,7 +200,7 @@ def fill_sphinx_dict_row(sphinx, dict, energy_key, thresh_key, profname_dict):
             TopDirectory was specified at run time. Contains location of all txt
             files in the subdirectories of interest, including the locations of
             time profiles specified in the sep_profile field.
-
+    
     Output:
     
         None; dict filled by reference
@@ -268,6 +270,8 @@ def fill_sphinx_dict_row(sphinx, dict, energy_key, thresh_key, profname_dict):
         pred_energy_key = objh.energy_channel_to_key(config.mm_pred_energy_channel)
         pred_thresh_key = objh.threshold_to_key(config.mm_pred_threshold)
    
+   #Extract predicted values associated only with the desired energy channel
+   #and threshold combination
     pred_all_clear, ac_match_status = sphinx.return_predicted_all_clear()
     pred_prob, prob_match_status = sphinx.return_predicted_probability(thresh_key)
     pred_thresh_cross, tc_match_status =\
@@ -315,6 +319,8 @@ def fill_sphinx_dict_row(sphinx, dict, energy_key, thresh_key, profname_dict):
     dict["Prediction Threshold Key"].append(pred_thresh_key)
     dict["Forecast Source"].append(sphinx.prediction.source)
     dict["Forecast Path"].append(sphinx.prediction.path)
+     #FORECAST EVALUATED? Explanatory status
+    dict["Evaluation Status"].append(sphinx.not_evaluated)
     dict["Forecast Issue Time"].append(sphinx.prediction.issue_time)
     dict["Prediction Window Start"].append(sphinx.prediction.prediction_window_start)
     dict["Prediction Window End"].append(sphinx.prediction.prediction_window_end)
@@ -410,6 +416,7 @@ def fill_sphinx_dict_row(sphinx, dict, energy_key, thresh_key, profname_dict):
 
     #PREDICTION INFORMATION
     dict["Predicted SEP All Clear"].append(pred_all_clear)
+    dict["Predicted SEP All Clear Probability Threshold"].append(sphinx.prediction.all_clear.probability_threshold)
     dict["All Clear Match Status"].append(ac_match_status)
     dict["Predicted SEP Probability"].append(pred_prob)
     dict["Probability Match Status"].append(prob_match_status)
@@ -521,7 +528,9 @@ def fill_sphinx_dict_row(sphinx, dict, energy_key, thresh_key, profname_dict):
         dict["Ongoing SEP Event"].append(str(sphinx.observed_ongoing_events[thresh_key]))
     except:
         dict["Ongoing SEP Event"].append(None)
+
     dict["Original Model Short Name"].append(sphinx.prediction.original_short_name)
+
 
 
 
@@ -550,8 +559,7 @@ def write_df(df, name, verbose=True):
             logger.debug('Wrote ' + filepath)
 
 
-def fill_sphinx_df(matched_sphinx, model_names, all_energy_channels,
-    all_obs_thresholds, profname_dict):
+def fill_sphinx_df(evaluated_sphinx, all_obs_thresholds, profname_dict):
     """ Fill in a dictionary with the all clear predictions and observations
         organized by model and energy channel.
     """
@@ -560,20 +568,25 @@ def fill_sphinx_df(matched_sphinx, model_names, all_energy_channels,
 
     #Loop through the forecasts for each model and fill in quantity_dict
     #as appropriate
-    for model in model_names:
-        for ek in all_energy_channels:
+    for model in evaluated_sphinx.keys():
+        internal_energy_channels = [key for key in evaluated_sphinx[model].keys() if 'eruption' not in key]
+        for ek in internal_energy_channels:
             logger.debug("---Model: " + model + ", Energy Channel: " + ek)
-            for sphinx in matched_sphinx[model][ek]:
-                for tk in all_obs_thresholds[ek]:
-                    fill_sphinx_dict_row(sphinx, dict, ek, tk, profname_dict)
+            for sphinx in evaluated_sphinx[model][ek]:
+                logger.debug(sphinx.prediction.source)
+                
+                try:
+                    for tk in all_obs_thresholds[ek]:
+                        fill_sphinx_dict_row(sphinx, dict, ek, tk, profname_dict)
+                except:
+                    #In the case a new energy channel with added to
+                    #removed_sphinx
+                    fill_sphinx_dict_row(sphinx, dict, ek, None, profname_dict)
                 
     
     df = pd.DataFrame(dict)
     #Sort by prediction window start so in time order for AWT, etc
     df = df.sort_values(by=["Model","Energy Channel Key","Threshold Key","Prediction Window Start", "Forecast Issue Time"],ascending=[True, True, True, True, True])
-    
-    #Check for duplicated forecasts and remove
-    df = duplicates.remove_sphinx_duplicates(df)
     
     return df
 
@@ -3564,10 +3577,48 @@ def calculate_intuitive_metrics(df, model_names, all_energy_channels,
     logger.info("Wrote out all metrics.")
 
 
+def validation_explanation():
+    """ State the selections applied to calculate metrics for each
+        quantity. 
+        
+    """
+    logger.info("")
+    logger.info("============================")
+    logger.info("VALIDATION EXPLANATION")
+    logger.info("============================")
+    logger.info("Explanation of Match Status:")
+    logger.info("============================")
+    logger.info("--SEP Event: Forecast is associated with an observed SEP event")
+    logger.info("--No SEP Event: Forecast is associated with an observed clear period.")
+    logger.info("--Unmatched: The forecast was initially associated to an observed SEP event but a different prediction was found to be a better match. This forecast has been unmatched and is now associated with an observed clear period. Only relevant for forecasts that use flare or CME triggers.")
+    logger.info("--Ongoing SEP Event: The observed environment was already enhanced for the forecasted period. The forecast cannot be evaluated.")
+    logger.info("--Trigger/Input after Observed Phenomenon: The forecast used input information later than the observed phenomenon, i.e. threshold crossing, peak flux, etc. This cannot be considered a forecast for the particular phenomenon.")
+    logger.info("--Eruption Out of Range: The forecast overlaps with an observed SEP event, but used a flare or CME trigger with timing indicating that it is not likely physically connected to that SEP event. This forecast is associated with an observed clear period.")
+    logger.info("--No Matching Threshold: The energy channel and threshold combination used in the forecast was not present in the prepared observations. These forecasts are not evaluated.")
+    logger.info("")
+    logger.info("Selections applied to calculate metrics:")
+    logger.info("========================================")
+    logger.info("--All Clear: Forecasts with \"Ongoing SEP Event\" match status are not included in All Clear metrics.")
+    logger.info("--Probability: Forecasts with \"Ongoing SEP Event\" match status are not included in Probability metrics.")
+    logger.info("--Peak Intensity (Onset Peak): Only forecasts with \"SEP Event\" match status are included in Peak Intensity metrics. For models that use the peak_intensity field to indicate SEP onset peak, this results in metrics that are derived from the subset of SEP events that were both predicted and observed.")
+    logger.info("--Peak Intensity Max (Max Flux): Only forecasts with \"SEP Event\" match status are included in Peak Intensity Max (Max Flux) metrics. Metrics are derived from all predictions associated with observed SEP events.")
+    logger.info("--Fluence: Only forecasts with \"SEP Event\" match status are included in Fluence metrics.")
+    logger.info("--Fluence Spectrum: Only forecasts with \"SEP Event\" match status are included in Fluence Spectrum metrics.")
+    logger.info("--Start Time: Only forecasts with \"SEP Event\" match status are included in Start Time metrics. Forecasts must predict the occurrence of an SEP event, so the metrics are derived from the subset of SEP events that were both predicted and observed.")
+    logger.info("--End Time: Only forecasts with \"SEP Event\" match status are included in End Time metrics. Forecasts must predict the occurrence of an SEP event, so the metrics are derived from the subset of SEP events that were both predicted and observed.")
+    logger.info("--SEP Time Profile: Only forecasts with \"SEP Event\" match status are included in SEP Time Profile metrics. Metrics are derived from all predictions associated with observed SEP events. Predicted and observed time profiles are compared during the time period when the observed flux is above threshold.")
+    logger.info("--Max Flux in Prediction Window: All forecasts are compared to observed max flux in the forecasted prediction window, regardless of match status. Metrics are derived from all forecasts.")
+    logger.info("--Advanced Warning Time: Only forecasts with \"SEP Event\" match status are included in Advanced Warning Time metrics. Forecasts must predict the occurrence of an SEP event to give advanced warning, so the metrics are derived from the subset of SEP events that were both predicted and observed.")
+    logger.info("--Last Data Time to Issue Time: Calculated for all forecasts regardless of match status. Metrics are derived from all forecasts.")
+    logger.info("============================")
+    logger.info("END VALIDATION EXPLANATION")
+    logger.info("============================")
+    logger.info("")
+    
 
-
-def intuitive_validation(matched_sphinx, model_names, all_energy_channels,
-    all_observed_thresholds, observed_sep_events, profname_dict, r_df=None):
+def intuitive_validation(evaluated_sphinx, removed_sphinx, model_names,
+    all_energy_channels, all_observed_thresholds, observed_sep_events,
+    profname_dict, r_df=None):
     """ In the intuitive_validation subroutine, forecasts are validated in a
         way similar to which people would interpret forecasts.
     
@@ -3593,11 +3644,13 @@ def intuitive_validation(matched_sphinx, model_names, all_energy_channels,
         
     Input:
     
-        :matched_sphinx: (SPHINX object) contains a Forecast object,
-            Observation objects that are inside the forecast prediction
-            window, and the observed values that are appropriately matched up
-            to the forecast given the timing of the triggers/inputs and
-            observed phenomena
+        :evaluated_sphinx: (array of SPHINX objects) SHPINX objects which 
+            contain a Forecast object and Observation objects that are inside 
+            the forecast prediction window, and the observed values that are 
+            appropriately matched up to the forecast given the timing of the 
+            triggers/inputs and observed phenomena
+        :removed_sphinx: (array of SPHINX objects) SPHINX objects that are
+            not evaluated by SPHINX
         :model_names: (str array) array of the models whose predictions were
             read into the code
         :all_observed_thresholds: (dict) dictionary organized by energy
@@ -3607,8 +3660,8 @@ def intuitive_validation(matched_sphinx, model_names, all_energy_channels,
         :observed_sep_events: (dict) dictionary organized by model name,
             energy channel, and threshold containing all unique observed SEP
             events that fell inside a forecast prediction window
-        :resume: (string) boolean to indicate whether the user wants to resume
-            building on a previous run of SPHINX
+        :profname_dict: (array) Dictionary containing the location of all the .txt files
+            in the subdirectories below top.
         :r_df: (pandas dataframe) dataframe created from a previous run of
             SPHINX. Newly input predictions will be appended.
     
@@ -3623,11 +3676,24 @@ def intuitive_validation(matched_sphinx, model_names, all_energy_channels,
     
     #For each model and predicted quantity, create dataframe of paired up values
     #so can calculate metrics
-    logger.info("Filling dataframe with information from matched sphinx objects.")
+    logger.info("Filling SPHINX dataframe with information from matched sphinx objects.")
 
-    df = fill_sphinx_df(matched_sphinx, model_names, all_energy_channels,
-            all_observed_thresholds, profname_dict)
-    logger.debug("Completed filling dataframe. ")
+
+    #EVALUATED SPHINX OBJECTS: Fill dataframe for evaluated_sphinx
+    df = fill_sphinx_df(evaluated_sphinx, all_observed_thresholds, profname_dict)
+    
+    #Check for duplicated forecasts and remove
+    df, duplicate_df = duplicates.remove_sphinx_duplicates(df)
+    logger.info("Completed filling evaluated_sphinx dataframe. ")
+
+
+    logger.info("Filling removed SPHINX dataframe with information from not evaluated sphinx objects.")
+    #NOT EVALUATED SPHINX OBJECTS: Fill dataframe for removed_sphinx
+    df_not = fill_sphinx_df(removed_sphinx, all_observed_thresholds, profname_dict)
+    
+    #Add the duplicates discarded from df
+    df_not = pd.concat([df_not,duplicate_df])
+    logger.info("Completed filling removed_sphinx dataframe. ")
 
 
     ### RESUME WILL APPEND DF TO PREVIOUS DF
@@ -3635,24 +3701,34 @@ def intuitive_validation(matched_sphinx, model_names, all_energy_channels,
         logger.info("RESUME: Resuming from a previous run. Concatenating current and previous forecasts, ensuring that any duplicates are removed. ")
  
         df = pd.concat([r_df, df], ignore_index=True)
-        df = duplicates.remove_sphinx_duplicates(df)
-        logger.debug("RESUME: Completed concatenation and removed any duplicates. Writing SPHINX_dataframe to file.")
+        df, duplicate_df = duplicates.remove_sphinx_duplicates(df,"Duplicate in resume dataframe")
+        #Add the duplicates discarded from df
+        df_not = pd.concat([df_not,duplicate_df])
+        logger.debug("RESUME: Completed concatenation and removed any duplicates. Writing SPHINX_evaluated dataframe to file.")
 
         model_names = resume.identify_unique(df, 'Model')
         all_energy_channels = resume.identify_unique(df, 'Energy Channel Key')
         all_observed_thresholds = resume.identify_thresholds_per_energy_channel(df)
     ### RESUME COMPLETED
 
-    #Write dataframe to file
-    write_df(df, "SPHINX_dataframe")
-    logger.debug("Completed writing SPHINX_dataframe to file.")
- 
+
+    #Write SPHINX dataframe to file
+    write_df(df, "SPHINX_evaluated")
+    logger.debug("Completed writing SPHINX_evaluated dataframe to file.")
+
+    #Write NOT EVALUATED SPHINX dataframe to file
+    write_df(df_not, "SPHINX_removed")
+    logger.debug("Completed writing SPHINX_removed dataframe to file.")
+
     validation_type = ["All", "First", "Last", "Max", "Mean"]
     for type in validation_type:
         logger.info("-----------Starting validation of " + type +" forecasts-------------")
         calculate_intuitive_metrics(df, model_names, all_energy_channels,
                 all_observed_thresholds, type)
- 
+
+    #Record explanatory information to the log
+    validation_explanation()
+    
     logger.info("intuitive_validation: Validation process complete.")
 
     return df   
