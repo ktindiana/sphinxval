@@ -179,7 +179,7 @@ class Particle_Intensity:
         self.observatory = observatory
         self.instrument = instrument
         self.last_data_time = last_data_time
-        self.ongoing_events = ongoing_events
+        self.ongoing_events = ongoing_events #array of dict
         
         return
         
