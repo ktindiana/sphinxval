@@ -7,6 +7,8 @@ import sys
 parser = argparse.ArgumentParser()
 parser.add_argument("--AllClearOutcomes", type=str, default='', \
         help=("pkl file containing all_clear_selections*.pkl"))
+parser.add_argument("--DeoverlapAllClear", type=str, default='', \
+        help=("pkl file containing all_clear_selections*.csv"))
 parser.add_argument("--MaxFluxOutcomes", type=str, default='', \
         help=("pkl file containing max_flux_in_pred_win_selections*.pkl"))
 parser.add_argument("--Threshold", type=float, default=10., \
@@ -50,6 +52,7 @@ parser.add_argument("--showplot",
 
 args = parser.parse_args()
 acfa_filename = args.AllClearOutcomes
+deoverlap_filename = args.DeoverlapAllClear
 mf_filename = args.MaxFluxOutcomes
 threshold = args.Threshold
 path = args.Path
@@ -68,13 +71,15 @@ include = include.strip().split(",")
 if acfa_filename != '':
     pa.export_all_clear_incorrect(acfa_filename, threshold, doplot=True)
 
+if deoverlap_filename != '':
+    pa.deoverlap_all_clear(deoverlap_filename)
+
 if mf_filename != '':
     pa.export_max_flux_incorrect(mf_filename, threshold, doplot=True)
 
 #Make summary box plots
-if quantity == '':
-    sys.exit("Enter a quantity.")
-df = pa.read_in_metrics(path, quantity, include, exclude)
-pa.make_box_plots(df, path, quantity, anonymous, highlight, scoreboard,
+if quantity != '':
+    df = pa.read_in_metrics(path, quantity, include, exclude)
+    pa.make_box_plots(df, path, quantity, anonymous, highlight, scoreboard,
         saveplot, showplot)
 
