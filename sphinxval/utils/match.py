@@ -2411,6 +2411,20 @@ def setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_o
                 sphinx.add_threshold(fcast_thresh)
                 thresh_key = objh.threshold_to_key(fcast_thresh)
 
+                #ongoing_events block in forecast
+                #Check if forecast reporting an SEP event is ongoing.
+                #Do not credit/penalized forecasts that simply relay
+                #the information that the environment is enhanced.
+                #In case of mismatch, check against the original f_thresh
+                report_ongoing = False
+                if sphinx.prediction.particle_intensities:
+                    for pi in sphinx.prediction.particle_intensities:
+                        if pi.ongoing_events:
+                            for ongoing_ev in pi.ongoing_events:
+                                if ongoing_ev['threshold'] == f_thresh['threshold']:
+                                    report_ongoing = True
+
+
                 ###### PREDICTION WINDOW OVERLAP WITH OBSERVED ####
                 ############### SEP EVENT #########################
                 pred_win_sep_overlap(sphinx, fcast, obs_values, observation_objs,
@@ -2478,6 +2492,15 @@ def setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_o
                 removed_sphinx[name][energy_key].append(sphinx)
                 logger.warning("REMOVED FROM ANALYSIS: Observations did not contain forecast thresholds: "
                     + fcast.source)
+                continue
+
+
+            #Forecast reported an ongoing event in this energy channel
+            if report_ongoing:
+                sphinx.not_evaluated = ("Forecast reporting ongoing event")
+                                #No thresholds were found to match between the forecast and the observations
+                removed_sphinx[name][energy_key].append(sphinx)
+                logger.warning(f"REMOVED FROM ANALYSIS: Forecast reporting ongoing event and is not evaluated: {fcast.source}")
                 continue
 
             
