@@ -211,7 +211,6 @@ def compile_all_obs(all_energy_channels, obs_objs):
     return obs_match
 
 
-
 def create_matched_model_array(objs, threshold):
     """ Takes all of the sphinx objects and creates a pandas
     dataframe containing the key pieces of information needed
@@ -257,7 +256,7 @@ def create_matched_model_array(objs, threshold):
             match_sep = obj.observed_match_sep_source[thresh_key]
             obs_thresh_cross = obj.observed_threshold_crossing[thresh_key].crossing_time
             td = obj.time_difference_eruptions_threshold_crossing[thresh_key]
-        
+ 
             matched_obs.append(obs_arr)
             matched_sep_source.append(match_sep)
             observed_thresh_cross.append(obs_thresh_cross)
@@ -2011,6 +2010,193 @@ def sep_report(all_energy_channels, obs_values, model_names,
 
 
 
+def preferred_flare(flares):
+    """ From a list of flares, choose the one most likely to be
+        associated with an SEP event. Apply educated guesses until 
+        known observed flare+CME+SEP associations are incorporated.
+        
+        flare class >= M1
+        flare longitude >= 20 degrees W
+        
+        If given the choice, the flare with the properties described
+        here are more likely to be associated with a SEP event.
+        Does not rule out that a flare with different properties can
+        be the correct one.
+        
+        INPUT:
+        
+            :flares: (list of Flare objects) 
+            
+        OUTPUT:
+        
+            :best: (Flare object)
+            
+    """
+
+    best = None
+    
+    M = 10**-4
+    west_lon = 20
+    
+    #Check if one of the flares has a higher likelihood than the others
+    best_flares = []
+    for flare in flares:
+        if pd.isnull(flare.intensity) or pd.isnull(flare.lon):
+            continue
+        if flare.intensity >= M and flare.lon >= west_lon:
+            best_flares.append(flare)
+    
+    #-----flares satisfy both criteria-------
+    #If only one flare found to satisfy the conditions, return
+    if len(best_flares) == 1:
+        return best_flares[0]
+        
+    #If multiple flares satified conditions, then choose largest intensity
+    if len(best_flares) > 1:
+        max_intensity = 0
+        for flare in best_flares:
+            if flare.intensity > max_intensity:
+                max_intensity = flare.intensity
+                best = flare
+                
+    #If a best flare identified, return
+    if not pd.isnull(best):
+        return best
+
+
+    #-----flares do not satisfy both criteria-------
+    #Choose the flare with intensity > M1.0
+    if not best_flares:
+        for flare in flares:
+            if pd.isnull(flare.intensity): continue
+            if flare.intensity >= M:
+                best_flares.append(flare)
+ 
+    #If only one flare found to satisfy the conditions, return
+    if len(best_flares) == 1:
+        return best_flares[0]
+
+    #If multiple flares satified conditions, then choose the Western-most
+    if len(best_flares) > 1:
+        max_lon = -180
+        for flare in best_flares:
+            if pd.isnull(flare.lon): continue
+            if flare.lon > max_lon:
+                max_lon = flare.lon
+                best = flare
+
+    #If a best flare identified, return
+    if not pd.isnull(best):
+        return best
+
+
+    #-----flares do not satisfy intensity criteria-------
+    #Both flares below M1.0, then choose the flare with lon >= 20
+    if not best_flares:
+        for flare in flares:
+            if pd.isnull(flare.lon): continue
+            if flare.lon >= west_lon:
+                best_flares.append(flare)
+ 
+    #If only one flare found to satisfy the conditions, return
+    if len(best_flares) == 1:
+        return best_flares[0]
+
+
+    #If a single flare hasn't been identified by now, best to
+    #use the timing logic already implemented in revise_eruption_matches.
+    #return a null values
+    return best
+
+
+    
+def preferred_cme(CMEs):
+    """ From a list of CMEs, choose the one most likely to be
+        associated with an SEP event. Apply educated guesses until 
+        known observed flare+CME+SEP associations are incorporated.
+        
+        Referencing Clayton Allison's analysis of CMEs on the
+        SEP Scoreboards, find that CMEs with the following 
+        characteristics are more likely to be associated with SEP events.
+        
+        CME speed >= 600 km/s
+        CME width >= 35 degrees
+
+        If given the choice, the CME with the properties described
+        here are more likely to be associated with a SEP event.
+        Does not rule out that a CME with different properties can
+        be the correct one.
+        
+        INPUT:
+        
+            :CMEs: (list of CME objects) 
+            
+        OUTPUT:
+        
+            :best: (CME object)
+            
+    """
+    best = None
+    target_speed = 600
+    target_width = 35
+    
+    #-----CMEs satisfy speed and width criteria -------
+    best_cmes = []
+    for cme in CMEs:
+        if pd.isnull(cme.speed) or pd.isnull(cme.half_width):
+            continue
+        if cme.speed >= target_speed and cme.half_width >= target_width:
+            best_cmes.append(cme)
+            
+    #If only one CME identified, return
+    if len(best_cmes) == 1:
+        return best_cmes[0]
+        
+    #if multiple CMEs identified, choose the fastest
+    if len(best_cmes) > 1:
+        max_speed = 0
+        for cme in best_cmes:
+            if cme.speed > max_speed:
+                max_speed = cme.speed
+                best = cme
+
+    #Return fastest CME
+    if not pd.isnull(best):
+        return best
+
+
+    #-----CMEs satisfy only speed criteria -------
+    best_cmes = []
+    for cme in CMEs:
+        if pd.isnull(cme.speed): continue
+        if cme.speed >= target_speed:
+            best_cmes.append(cme)
+            
+    #If only one CME identified, return
+    if len(best_cmes) == 1:
+        return best_cmes[0]
+        
+    #if multiple CMEs identified, choose the fastest
+    if len(best_cmes) > 1:
+        max_speed = 0
+        for cme in best_cmes:
+            if cme.speed > max_speed:
+                max_speed = cme.speed
+                best = cme
+
+    #Return fastest CME
+    if not pd.isnull(best):
+        return best
+
+
+    #If haven't identified a best CME by now, best to use the
+    #timing criteria implemented in revise_eruption_matches.
+    #Return null
+    return best
+
+
+
+
 def revise_eruption_matches(evaluated_sphinx, all_energy_channels, obs_values,
         model_names, observed_sep_events):
     """ It may be that there are multiple flares or CMEs in
@@ -2058,8 +2244,6 @@ def revise_eruption_matches(evaluated_sphinx, all_energy_channels, obs_values,
 
         for energy_key in all_energy_channels:
             for threshold in obs_values[energy_key]['thresholds']:
-                #print("Checking whether to revise matching for " + model
-                #+ ", " + str(energy_key) + ", " + str(threshold))
                 #Pull out all the observed SEP events inside of the
                 #model prediction windows for a given energy channel
                 #and threshold. Want to identify if multiple predictions
@@ -2084,6 +2268,19 @@ def revise_eruption_matches(evaluated_sphinx, all_energy_channels, obs_values,
                 #Identify the forecasts matched to the same SEP event
                 
                 for sep in obs_sep:
+                    sub = spx_df.loc[(df['observed_threshold_crossing_time'] == sep)]
+                    #If only one match or no forecasts associated with the SEP,
+                    #nothing to do
+                    if sub.empty or len(sub) == 1: continue
+                
+                    
+                    
+                    
+                    
+                    
+                    
+                
+                
                     obs_thresh_cross =\
                         spx_df['observed_threshold_crossing_time'].tolist()
 
