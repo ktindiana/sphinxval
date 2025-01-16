@@ -256,18 +256,12 @@ def forecast_object_from_json(fcast_json, energy_channel):
         return fcast, is_good_fcast
     
     is_good_trig = fcast.add_triggers_from_dict(fcast_json)
-    if not is_good_trig:
-        logger.warning(f"Note that there was an issue with the trigger block. {fcast_json['filename']}, {key}")
     
     is_good_input = fcast.add_inputs_from_dict(fcast_json)
-    if not is_good_input:
-        logger.warning(f"Note that there was an issue with the input block. {fcast_json['filename']}, {key}")
 
     fcast.check_energy_channel_format()
     
-    is_good = (is_good_fcast and is_good_trig and is_good_input)
-    
-    return fcast, is_good
+    return fcast, is_good_fcast
 
 
 def energy_channel_overlap(json, short_name, all_energy_channels):
