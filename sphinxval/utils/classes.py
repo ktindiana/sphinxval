@@ -7,6 +7,7 @@ from . import units_handler as vunits
 from . import object_handler as objh
 from . import config as cfg
 import datetime
+import os
 import pandas as pd
 import numpy as np
 import logging
@@ -825,16 +826,16 @@ class Forecast():
         
         # Fix SEP profile
         if 'sep_profile' in dataD:
-            self.fix_sep_profile(year='{:04d}'.format(self.prediction_window_start.year), 
-                                 month='{:02d}'.format(self.prediction_window_start.month), 
-                                 energy='{:02d}'.format(self.energy_channel['min']))
+            self.fix_sep_profile(year='{:04d}'.format(int(self.prediction_window_start.year)), 
+                                 month='{:02d}'.format(int(self.prediction_window_start.month)), 
+                                 energy='{:02d}'.format(int(self.energy_channel['min'])))
 
         return is_good
 
     def fix_sep_profile(self, year='', month='', energy=''):
         # Check if the sep_profile exists in the current directory
         json_directory = os.path.abspath(os.path.dirname(self.source))
-        if not os.path.exists(os.path.join(json_directory, self.sep_profile):
+        if not os.path.exists(os.path.join(json_directory, self.sep_profile)):
             # If sep_profile is not in the same directory as the json, check if the configuration file contains information about where to find it
             sep_profile_directory = cfg.sep_profile_path_relative_to_json.get(self.short_name, None)
             if sep_profile_directory is not None:

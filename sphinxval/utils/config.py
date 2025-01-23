@@ -3,8 +3,8 @@ from . import object_handler as objh
 import os
 import git
 
-datapath = './data'
-modelpath = './model'
+datapath = './data/observations'
+modelpath = './data/forecasts'
 outpath = './output'
 referencepath = './reference'
 reportpath = './reports'
