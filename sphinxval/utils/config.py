@@ -25,6 +25,17 @@ shortname_grouping = [
     ('UMASEP-500 .*', 'UMASEP-500')
 ]
 
+# SEP Profile Path Appendages
+# Modifies SEP profile paths for models that produce time profiles.
+# Models that do not predict SEP time profiles are unaffected.
+# Paths are relative to the directory where the forecast JSON is stored.
+sep_profile_path_relative_to_json = {
+    'SAWS_ASPECS' : '../../../Profile/{year}/{month}/',
+    'iPATH' : '../../../{energy}MeV/{year}/{month}/',
+    'SEPMOD' : './',
+}
+
+
 #Advanced Warning Time after observed event
 awt_cut = 96
 #when assessing advanced warning time, exclude forecasts that are issued
