@@ -829,7 +829,6 @@ class Forecast():
             self.fix_sep_profile(year='{:04d}'.format(int(self.prediction_window_start.year)), 
                                  month='{:02d}'.format(int(self.prediction_window_start.month)), 
                                  energy='{:02d}'.format(int(self.energy_channel['min'])))
-
         return is_good
 
     def fix_sep_profile(self, year='', month='', energy=''):
@@ -839,8 +838,10 @@ class Forecast():
             # If sep_profile is not in the same directory as the json, check if the configuration file contains information about where to find it
             sep_profile_directory = cfg.sep_profile_path_relative_to_json.get(self.short_name, None)
             if sep_profile_directory is not None:
-                sep_profile_directory = sep_profile_directory.replace('{year}', year).replace('{month}', month).replace('{energy}', energy)
-                self.sep_profile = os.path.join(json_directory, cfg.sep_profile_path_relative_to_json.get(self.short_name, None), self.sep_profile)
+                sep_profile_directory = sep_profile_directory.replace('{year}', year)
+                sep_profile_directory = sep_profile_directory.replace('{month}', month)
+                sep_profile_directory = sep_profile_directory.replace('{energy}', energy)
+                self.sep_profile = os.path.abspath(os.path.join(json_directory, sep_profile_directory, self.sep_profile))
             else:
                 self.sep_profile = None
 
