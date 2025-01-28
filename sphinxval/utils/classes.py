@@ -7,6 +7,7 @@ from . import units_handler as vunits
 from . import object_handler as objh
 from . import config as cfg
 import datetime
+import os
 import pandas as pd
 import numpy as np
 import logging
@@ -735,7 +736,6 @@ class Forecast():
             self.point_intensity = Flux_Intensity('point_intensity', intensity, units,
                 uncertainty, uncertainty_low, uncertainty_high, time)
 
-
         #Load (Onset) Peak Intensity
         intensity, units, uncertainty, uncertainty_low, uncertainty_high,\
             time = vjson.dict_to_flux_intensity('peak_intensity', dataD)
@@ -823,10 +823,27 @@ class Forecast():
                     else:
                         self.probabilities.append(Probability(probability_value,
                             uncertainty, threshold, threshold_units))
-                    
+        
+        # Fix SEP profile
+        if 'sep_profile' in dataD:
+            self.fix_sep_profile(year='{:04d}'.format(int(self.prediction_window_start.year)), 
+                                 month='{:02d}'.format(int(self.prediction_window_start.month)), 
+                                 energy='{:02d}'.format(int(self.energy_channel['min'])))
         return is_good
 
-
+    def fix_sep_profile(self, year='', month='', energy=''):
+        # Check if the sep_profile exists in the current directory
+        json_directory = os.path.abspath(os.path.dirname(self.source))
+        if not os.path.exists(os.path.join(json_directory, self.sep_profile)):
+            # If sep_profile is not in the same directory as the json, check if the configuration file contains information about where to find it
+            sep_profile_directory = cfg.sep_profile_path_relative_to_json.get(self.short_name, None)
+            if sep_profile_directory is not None:
+                sep_profile_directory = sep_profile_directory.replace('{year}', year)
+                sep_profile_directory = sep_profile_directory.replace('{month}', month)
+                sep_profile_directory = sep_profile_directory.replace('{energy}', energy)
+                self.sep_profile = os.path.abspath(os.path.join(json_directory, sep_profile_directory, self.sep_profile))
+            else:
+                self.sep_profile = None
 
     def identify_all_thresholds(self):
         """ Find all the thresholds applied to a given energy channel.
