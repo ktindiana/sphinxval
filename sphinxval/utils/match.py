@@ -279,26 +279,36 @@ def create_matched_model_array(objs, threshold):
             #likely to be associated with a SEP event
             #If no best choice from parameters, take the last flare, cme
             if len(cmes) > 1:
-                cme = preferred_cme(cmes)
-                if pd.isnull(cme): #no best option, take last
+                cme = preferred_cme(cmes) #may return multiple
+                if len(cme) > 1:
+                    cme = last_cme(cme) #last of preferred CMEs
+                elif len(cme) == 1:
+                    cme = cme[0]
+
+                if pd.isnull(cme) or not cme: #no best option, take last of all CMEs
                     cme = last_cme(cmes)
-                if pd.isnull(cme):
-                    cmes = [None]
-                else:
-                    cmes = [cme]
+
+                cmes = [cme]
                 
             if len(flares) > 1:
-                flare = preferred_flare(flares)
+                flare = preferred_flare(flares) #may return multiple
+                if len(flare) > 1:
+                    flare = last_flare(flare) #last of preferred flares
+                    if len(flare) > 1:
+                        flare = last_flare(flare)
+                    elif len(flare) == 1:
+                        flare = flare[0]
+
                 if pd.isnull(flare): #no best option, take last
                     flare = last_flare(flares)
-                if pd.isnull(flare):
-                    flares = [None]
-                else:
-                    flares = [flare]
+ 
+                flares = [flare]
+
 
             if not cmes: cmes = [None]
             if not flares: flares = [None]
 
+#            logger.info(f"cmes: {cmes}, flares: {flares}")
             matched_obs.append(obs_arr)
             matched_sep_source.append(match_sep)
             observed_thresh_cross.append(obs_thresh_cross)
@@ -2077,11 +2087,11 @@ def preferred_flare(flares):
             
         OUTPUT:
         
-            :best: (Flare object)
+            :best: (list of Flare object) 1 or more preferred flares
             
     """
 
-    best = None
+    best = []
     
     M = 10**-4
     west_lon = 20
@@ -2097,14 +2107,21 @@ def preferred_flare(flares):
     #-----flares satisfy both criteria-------
     #If only one flare found to satisfy the conditions, return
     if len(best_flares) == 1:
-        return best_flares[0]
+        return best_flares
         
     #If multiple flares satified conditions, then choose the latest
     if len(best_flares) > 1:
-        best = last_flare(best_flares)
+        last = last_flare(best_flares)
+        #Check if other strong flares are within an hour
+        td_diff = 1 #hour
+        for flare in best_flares:
+            diff = (flare.start_time - last.start_time).total_seconds()/3600
+            if abs(diff) <= td_diff:
+                best.append(flare)
+        
                 
     #If a best flare identified, return
-    if not pd.isnull(best):
+    if best:
         return best
 
 
@@ -2118,25 +2135,25 @@ def preferred_flare(flares):
  
     #If only one flare found to satisfy the conditions, return
     if len(best_flares) == 1:
-        return best_flares[0]
+        return best_flares
 
     #If multiple flares satified conditions, then choose the latest
     if len(best_flares) > 1:
-        best = last_flare(best_flares)
+        last = last_flare(best_flares)
+        #Check if other strong flares are within an hour
+        td_diff = 1 #hour
+        for flare in best_flares:
+            if not pd.isnull(flare.start_time):
+                diff = (flare.start_time - last.start_time).total_seconds()/3600
+            elif not pd.isnull(flare.last_data_time):
+                diff = (flare.last_data_time - last.last_data_time).total_seconds()/3600
 
-    #If a best flare identified, return
-    if not pd.isnull(best):
-        return best
+            if abs(diff) <= td_diff:
+                best.append(flare)
 
+    #If a single flare hasn't been identified by now,
+    #revise_eruption_matches will choose the last flare.
 
-    #-----flares do not satisfy intensity criteria-------
-    #Both flares below M1.0, then choose the latest flare
-    if not best_flares:
-        best = last_flare(flares)
-
-    #If a single flare hasn't been identified by now, best to
-    #use the timing logic already implemented in revise_eruption_matches.
-    #return a null values
     return best
 
 
@@ -2164,10 +2181,10 @@ def preferred_cme(CMEs):
             
         OUTPUT:
         
-            :best: (CME object)
+            :best: (list of CME object) preferred CMEs
             
     """
-    best = None
+    best = []
     target_speed = 600
     target_width = 35
     
@@ -2181,14 +2198,32 @@ def preferred_cme(CMEs):
             
     #If only one CME identified, return
     if len(best_cmes) == 1:
-        return best_cmes[0]
-        
+        return best_cmes
+    
+    #If every single CME is preferred, return empty so that either
+    #the last CME will be taken later on in the revision step.
+    #Or, if there are flare inputs, can select based off of flare.
+    if len(best_cmes) == len(CMEs):
+        return []
+    
     #if multiple CMEs identified, choose the latest in time (closest to SEP)
+    td_diff = 1 #hour
     if len(best_cmes) > 1:
-        best = last_cme(best_cmes)
+        last = last_cme(best_cmes)
+        #Identify CMEs within an hour of best to account for refits
+        for cme in best_cmes:
+            if not pd.isnull(cme.start_time):
+                diff = (cme.start_time - last.start_time).total_seconds()/3600
+                if abs(diff) <= td_diff:
+                    best.append(cme)
+            elif not pd.isnull(cme.liftoff_time):
+                diff = (cme.liftoff_time - last.liftoff_time).total_seconds()/3600
+                if abs(diff) <= td_diff:
+                    best.append(cme)
+
 
     #Return fastest CME
-    if not pd.isnull(best):
+    if best:
         return best
 
 
@@ -2201,24 +2236,34 @@ def preferred_cme(CMEs):
             
     #If only one CME identified, return
     if len(best_cmes) == 1:
-        return best_cmes[0]
+        return best_cmes
         
     #if multiple CMEs identified, choose the fastest
+    fast = None
     if len(best_cmes) > 1:
         max_speed = 0
         for cme in best_cmes:
             if cme.speed > max_speed:
                 max_speed = cme.speed
-                best = cme
+                fast = cme
 
-    #Return fastest CME
-    if not pd.isnull(best):
-        return best
+        #Return fastest CME
+        if not pd.isnull(fast):
+            #Identify CMEs within an hour of best to account for refits
+            for cme in best_cmes:
+                if not pd.isnull(fast.start_time):
+                    diff = (cme.start_time - fast.start_time).total_seconds()/3600
+                    if abs(diff) <= td_diff:
+                        best.append(cme)
+                elif not pd.isnull(fast.liftoff_time):
+                    diff = (cme.liftoff_time - fast.liftoff_time).total_seconds()/3600
+                    if abs(diff) <= td_diff:
+                        best.append(cme)
 
 
     #If haven't identified a best CME by now, best to use the
     #timing criteria implemented in revise_eruption_matches.
-    #Return null
+    
     return best
 
 
@@ -2261,6 +2306,14 @@ def last_flare(flares):
                 last = flare.start_time
                 last_flare = flare
 
+        elif not pd.isnull(flare.last_data_time):
+            if pd.isnull(last):
+                last = flare.last_data_time
+                last_flare = flare
+            elif flare.last_data_time > last:
+                last = flare.last_data_time
+                last_flare = flare
+    
     return last_flare
  
 
@@ -2351,7 +2404,9 @@ def revise_eruption_matches(evaluated_sphinx, all_energy_channels, obs_values,
 
                     #If only one value for the time difference between the last eruption
                     #and the SEP threshold crossing time, then only one trigger used
-                    if len(unique_td) <= 1: continue
+                    if len(unique_td) <= 1:
+                        logger.info("All forecasts triggered by same eruption.  No unmatching.")
+                        continue
  
                     #If eruption times are very close to each other, this could indicate
                     #e.g. refit of parameters. Want to keep all forecasts when parameters
@@ -2374,10 +2429,16 @@ def revise_eruption_matches(evaluated_sphinx, all_energy_channels, obs_values,
 
                     cme_speed = [cme.speed for cme in cmes]
                     cme_width = [cme.half_width for cme in cmes]
-                    td_cme = [(cme.start_time-sep).total_seconds()/3600. for cme in cmes]
+                    td_cme = [(cme.start_time-sep).total_seconds()/3600. for cme in cmes if not pd.isnull(cme.start_time)]
+                    if not td_cme:
+                         td_cme = [(cme.liftoff_time-sep).total_seconds()/3600. for cme in cmes if not pd.isnull(cme.liftoff_time)]
+
                     cme_match_status = ['SEP Event']*len(cme_speed)
                     flare_intensity = [flare.intensity for flare in flares]
-                    td_flare = [(flare.start_time-sep).total_seconds()/3600. for flare in flares]
+                    td_flare = [(flare.start_time-sep).total_seconds()/3600. for flare in flares if not pd.isnull(flare.start_time)]
+                    if not td_flare:
+                        td_flare = [(flare.last_data_time-sep).total_seconds()/3600. for flare in flares if not pd.isnull(flare.last_data_time)]
+
                     flare_match_status = ['SEP Event']*len(flare_intensity)
                     if cmes:
                         logger.info(f"{len(cmes)} CMEs associated with forecasts.")
@@ -2385,62 +2446,39 @@ def revise_eruption_matches(evaluated_sphinx, all_energy_channels, obs_values,
                         logger.info(f"{len(flares)} flares associated with forecasts.")
                     
                     #Choose best cme and flare
-                    pref_cme = None
+                    pref_cme = []
                     if len(cmes) > 1:
                         pref_cme = preferred_cme(cmes)
-                        if pd.isnull(pref_cme): #no best option, take last
-                            pref_cme = last_cme(cmes)
                             
-                    pref_flare = None
+                    pref_flare = []
                     if len(flares) > 1:
                         pref_flare = preferred_flare(flares)
-                        if pd.isnull(pref_flare): #no best option, take last
-                            pref_flare = last_flare(flares)
 
+                    logger.info(f"Found {len(pref_cme)} preferred CMEs and {len(pref_flare)} preferred flares.")
                     #Dataframe that will contain the forecasts to unmatch
                     unmatch_sub = pd.DataFrame()
  
                     #If both a preferred CME and a preferred flare are found,
                     #defer to the CME
-                    td_diff = 1
-                    if not pd.isnull(pref_cme):
-                        #Check if the other CMEs are within 1 hour of the preferred
-                        #choice as these would most likely be refits of the same CME.
-                        td_pref_cme = (pref_cme.start_time - sep).total_seconds()/(60*60)
-                        unmatch_sub = sub.loc[(sub['td_eruption_thresh_cross'] < td_pref_cme-td_diff) |
-                                (sub['td_eruption_thresh_cross'] > td_pref_cme+td_diff)]
-                        for ii in range(len(td_cme)):
-                            if (td_cme[ii] < td_pref_cme-td_diff) or (td_cme[ii]> td_pref_cme+td_diff):
+                    if pref_cme:
+                        unmatch_sub = sub[~sub['CME Triggers'].isin(pref_cme)]
+                        for ii in range(len(cmes)):
+                            if cmes[ii] not in pref_cme:
                                 cme_match_status[ii] = 'Unmatched'
-                                if not pd.isnull(pref_flare): #Defer to CME
-                                    flare_match_status[ii] = 'Unmatched'
-
-                    elif not pd.isnull(pref_flare):
-                        #Check if the other flares are within 1 hour of the preferred
-                        #choice as these would most likely be refits of the same flare.
-                        td_pref_flare = (pref_flare.start_time - sep).total_seconds()/(60*60)
-                        unmatch_sub = sub.loc[(sub['td_eruption_thresh_cross'] < td_pref_flare-td_diff)
-                                    | (sub['td_eruption_thresh_cross'] > td_pref_flare+td_diff)]
-                        for ii in range(len(td_flare)):
-                            if (td_flare[ii] < td_pref_flare-td_diff) or (td_flare[ii]> td_pref_flare+td_diff):
+                                if flares: #Defer to CME
+                                    flare_match_status[ii] = 'Defer to CME'
+ 
+                    elif pref_flare:
+                        unmatch_sub = sub[~sub['Flare Triggers'].isin(pref_flare)]
+                        for ii in range(len(flares)):
+                            if flares[ii] not in pref_flare:
                                 flare_match_status[ii] = 'Unmatched'
-                    
-                    logger.info(f"Unmatching {len(unmatch_sub)} forecasts.")
-
-                    if cme_speed:
-                        logger.info("Match Status,  CME Speed,  Width,  Time to SEP Threshold Crossing,  Forecast")
-                    for ii in range(len(cme_speed)):
-                        logger.info(f"{cme_match_status[ii]},  {cme_speed[ii]},  {cme_width[ii]},  {td_cme[ii]},  {os.path.basename(evaluated_sphinx[model][energy_key][sphinx_index[ii]].prediction.source)}")
-                    logger.info("")
-                    if flare_intensity:
-                        logger.info("Match Status,  Flare Intensity,  Time to SEP Threshold Crossing,  Forecast")
-                    for ii in range(len(flare_intensity)):
-                        logger.info(f"{flare_match_status[ii]},  {flare_intensity[ii]},  {td_flare[ii]},  {os.path.basename(evaluated_sphinx[model][energy_key][sphinx_index[ii]].prediction.source)}")
-
+                                if cmes:
+                                    cme_match_status[ii] = 'Defer to Flare'
 
 
                     #IF there are NO best choices for trigger, take the last eruption
-                    if pd.isnull(pref_flare) and pd.isnull(pref_cme):
+                    if not pref_flare and not pref_cme:
                         #If eruptions near an SEP event are within a few hours of each other
                         #cannot really say which is the correct one to associate with the
                         #SEP event, so keep all. e.g. March 7, 2012
@@ -2457,9 +2495,34 @@ def revise_eruption_matches(evaluated_sphinx, all_energy_channels, obs_values,
                         logger.info(f"No preferred flare or CME. Best eruption from timing {best_eruption}")
                         unmatch_sub = sub.loc[(sub['td_eruption_thresh_cross'] < best_eruption-td_diff)
                                     | (sub['td_eruption_thresh_cross'] > best_eruption+td_diff)]
-                        logger.info(f"Unmatching {len(unmatch_sub)} forecasts associated with other eruptions.")
+
+
+                        unmatch_cmes = unmatch_sub['CME Triggers'].to_list()
+                        for ii in range(len(cmes)):
+                            if cmes[ii] in unmatch_cmes:
+                                cme_match_status[ii] = 'Unmatched'
+
+                        unmatch_flares = unmatch_sub['Flare Triggers'].to_list()
+                        for ii in range(len(flares)):
+                            if flares[ii] in unmatch_flares:
+                                flare_match_status[ii] = 'Unmatched'
+
+
 
                     if unmatch_sub.empty: continue
+
+                    logger.info(f"Unmatching {len(unmatch_sub)} forecasts.")
+
+                    if cme_speed:
+                        logger.info("Match Status,  CME Speed,  Width,  Time to SEP Threshold Crossing,  Forecast")
+                    for ii in range(len(cme_speed)):
+                        logger.info(f"{cme_match_status[ii]},  {cme_speed[ii]},  {cme_width[ii]},  {td_cme[ii]},  {os.path.basename(evaluated_sphinx[model][energy_key][sphinx_index[ii]].prediction.source)}")
+                    logger.info("")
+                    if flare_intensity:
+                        logger.info("Match Status,  Flare Intensity,  Time to SEP Threshold Crossing,  Forecast")
+                    for ii in range(len(flare_intensity)):
+                        logger.info(f"{flare_match_status[ii]},  {flare_intensity[ii]},  {td_flare[ii]},  {os.path.basename(evaluated_sphinx[model][energy_key][sphinx_index[ii]].prediction.source)}")
+
 
                     sphinx_index = unmatch_sub['sphinx_index'].to_list()
                     for sphx_idx in sphinx_index:

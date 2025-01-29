@@ -979,13 +979,11 @@ class Forecast():
                 last_data_time = flare.last_data_time
                 
                 #Find the last flare time that is available
-                #Give preference to the peak as it is more useful
-                #for timing wrt to an SEP onset and most likely closest
-                #to CME release time
-                if not pd.isnull(peak_time):
-                    check_time = peak_time
-                elif not pd.isnull(start_time):
+                #Give preference to the start time as it is easier to reference
+                if not pd.isnull(start_time):
                     check_time = start_time
+                elif not pd.isnull(peak_time):
+                    check_time = peak_time
                 elif not pd.isnull(end_time):
                     check_time = end_time
 
