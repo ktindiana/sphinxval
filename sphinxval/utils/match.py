@@ -242,7 +242,9 @@ def create_matched_model_array(objs, threshold):
     #Extract information into arrays to make a pandas dataframe
     #for each threshold and save into a dictionary with the
     #key that matches the index of the associated threshold
-    sphinx_index = []
+    sphinx_index = [] #holds the location of each sphinx object in the objs list
+                      #so can revise the values in the original object if a
+                      #forecast needs to be unmatched
     matched_obs = [] #matched Observation objects
     td_eruption_thresh_cross = [] #array of all obs in prediction window
     matched_sep_source = [] #filenames of the final matched observation file
@@ -254,10 +256,9 @@ def create_matched_model_array(objs, threshold):
     #Loop over SPHINX objects and extract observed matched threshold crossing
     #time and time difference between eruption used by model and
     #threshold crossing time
-    i = 0
-    for obj in objs:
+    for i, obj in enumerate[objs]:
         sphinx_index.append(i)
-        i += 1
+
         try:
             obs_arr = obj.prediction_observation_windows_overlap
             match_sep = obj.observed_match_sep_source[thresh_key]
@@ -2069,14 +2070,20 @@ def sep_report(all_energy_channels, obs_values, model_names,
 
 
 def preferred_flare(flares):
-    """ From a list of flares, choose the one most likely to be
-        associated with an SEP event. Apply educated guesses until 
+    """ From a list of flares, choose the most likely flare to be
+        associated with an SEP event. All most likely flares within 
+        1 hour of the identified best will be returned. This accounts
+        for possible refits/revisions of parameters for the same flare
+        or that cannot determine the source of an SEP event if multiple
+        large flares occur in quick succession.
+        
+        Apply educated guesses until 
         known observed flare+CME+SEP associations are incorporated.
         
         flare class >= M1
         flare longitude >= 20 degrees W
         
-        If given the choice, the flare with the properties described
+        If given the choice, the flares with the properties described
         here are more likely to be associated with a SEP event.
         Does not rule out that a flare with different properties can
         be the correct one.
@@ -2087,7 +2094,7 @@ def preferred_flare(flares):
             
         OUTPUT:
         
-            :best: (list of Flare object) 1 or more preferred flares
+            :best: (list of Flare objects) 1 or more preferred flares
             
     """
 
@@ -2160,7 +2167,13 @@ def preferred_flare(flares):
     
 def preferred_cme(CMEs):
     """ From a list of CMEs, choose the one most likely to be
-        associated with an SEP event. Apply educated guesses until 
+        associated with an SEP event. All most likely CMEs within 
+        1 hour of the identified best will be returned. This accounts
+        for possible refits/revisions of parameters for the same CME
+        or that cannot determine the source of an SEP event if multiple
+        fast CMEs occur in quick succession.
+        
+        Apply educated guesses until 
         known observed flare+CME+SEP associations are incorporated.
         
         Referencing Clayton Allison's analysis of CMEs on the
@@ -2181,7 +2194,7 @@ def preferred_cme(CMEs):
             
         OUTPUT:
         
-            :best: (list of CME object) preferred CMEs
+            :best: (list of CME objects) 1 or more preferred CMEs
             
     """
     best = []
