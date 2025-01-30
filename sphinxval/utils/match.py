@@ -2151,7 +2151,7 @@ def preferred_flare(flares):
             if abs(diff) <= td_diff:
                 best.append(flare)
 
-    #If a single flare hasn't been identified by now,
+    #If haven't identified a best flare (or best flares) by now,
     #revise_eruption_matches will choose the last flare.
 
     return best
@@ -2261,7 +2261,7 @@ def preferred_cme(CMEs):
                         best.append(cme)
 
 
-    #If haven't identified a best CME by now, best to use the
+    #If haven't identified a best CME (or CMEs) by now, best to use the
     #timing criteria implemented in revise_eruption_matches.
     
     return best
