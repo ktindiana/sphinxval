@@ -3,6 +3,7 @@ from . import object_handler as objh
 from . import config as cfg
 from . import classes as cl
 from . import time_profile as profile
+from . import resume
 import sys
 import os.path
 import pandas as pd
@@ -211,7 +212,6 @@ def compile_all_obs(all_energy_channels, obs_objs):
     return obs_match
 
 
-
 def create_matched_model_array(objs, threshold):
     """ Takes all of the sphinx objects and creates a pandas
     dataframe containing the key pieces of information needed
@@ -242,43 +242,101 @@ def create_matched_model_array(objs, threshold):
     #Extract information into arrays to make a pandas dataframe
     #for each threshold and save into a dictionary with the
     #key that matches the index of the associated threshold
+    sphinx_index = [] #holds the location of each sphinx object in the objs list
+                      #so can revise the values in the original object if a
+                      #forecast needs to be unmatched
     matched_obs = [] #matched Observation objects
     td_eruption_thresh_cross = [] #array of all obs in prediction window
     matched_sep_source = [] #filenames of the final matched observation file
     observed_thresh_cross = [] #single final matched value
+    prediction_cmes = [] #CMEs used to trigger each forecast
+    prediction_flares = [] #Flares used to trigger each forecast
     thresh_key = objh.threshold_to_key(threshold)
     
     #Loop over SPHINX objects and extract observed matched threshold crossing
     #time and time difference between eruption used by model and
     #threshold crossing time
-    for obj in objs:
+    for i, obj in enumerate[objs]:
+        sphinx_index.append(i)
+
         try:
             obs_arr = obj.prediction_observation_windows_overlap
             match_sep = obj.observed_match_sep_source[thresh_key]
             obs_thresh_cross = obj.observed_threshold_crossing[thresh_key].crossing_time
-            td = obj.time_difference_eruptions_threshold_crossing[thresh_key]
-        
+            all_td = obj.time_difference_eruptions_threshold_crossing[thresh_key] #array in float hours
+            
+            #Pull out the eruption time difference information for the
+            #observation that was identified to contain an SEP event
+            td = np.nan
+            if not pd.isnull(match_sep):
+                for kk in range(len(obs_arr)):
+                    if obs_arr[kk].source == match_sep:
+                        td = all_td[kk]
+            
+            cmes = obj.prediction.cmes
+            flares = obj.prediction.flares
+            
+            #If multiple triggers, store only the one that is most
+            #likely to be associated with a SEP event
+            #If no best choice from parameters, take the last flare, cme
+            if len(cmes) > 1:
+                cme = preferred_cme(cmes) #may return multiple
+                if len(cme) > 1:
+                    cme = last_cme(cme) #last of preferred CMEs
+                elif len(cme) == 1:
+                    cme = cme[0]
+
+                if pd.isnull(cme) or not cme: #no best option, take last of all CMEs
+                    cme = last_cme(cmes)
+
+                cmes = [cme]
+                
+            if len(flares) > 1:
+                flare = preferred_flare(flares) #may return multiple
+                if len(flare) > 1:
+                    flare = last_flare(flare) #last of preferred flares
+                    if len(flare) > 1:
+                        flare = last_flare(flare)
+                    elif len(flare) == 1:
+                        flare = flare[0]
+
+                if pd.isnull(flare): #no best option, take last
+                    flare = last_flare(flares)
+ 
+                flares = [flare]
+
+
+            if not cmes: cmes = [None]
+            if not flares: flares = [None]
+
+#            logger.info(f"cmes: {cmes}, flares: {flares}")
             matched_obs.append(obs_arr)
             matched_sep_source.append(match_sep)
             observed_thresh_cross.append(obs_thresh_cross)
             td_eruption_thresh_cross.append(td)
+            prediction_cmes.append(cmes[0])
+            prediction_flares.append(flares[0])
             
-        except: # FOR WHAT EXCEPTION? THIS IS A DANGEROUS PRACTICE-- LS-code-comment
-                #This exception occurs if the above dictionaries don't contain the
+        except: #This exception occurs if the above dictionaries don't contain the
                 #queried threshold
             matched_obs.append([None])
             matched_sep_source.append(None)
             observed_thresh_cross.append(pd.NaT)
-            td_eruption_thresh_cross.append([pd.NaT])
+            td_eruption_thresh_cross.append(np.nan)
+            prediction_cmes.append(None)
+            prediction_flares.append(None)
 
         
     #All arrays are now filled with values only associated
     #with the desired energy channel and threshold
     #Put into a pandas dataframe
-    pd_dict = {'matched_observations': matched_obs,
+    pd_dict = {'sphinx_index': sphinx_index,
+               'matched_observations': matched_obs,
                'matched_sep': matched_sep_source,
                'td_eruption_thresh_cross': td_eruption_thresh_cross,
-               'observed_threshold_crossing_time': observed_thresh_cross
+               'observed_threshold_crossing_time': observed_thresh_cross,
+               'CME Triggers': prediction_cmes,
+               'Flare Triggers': prediction_flares
     }
     df = pd.DataFrame(data=pd_dict)        
     return df
@@ -2011,6 +2069,268 @@ def sep_report(all_energy_channels, obs_values, model_names,
 
 
 
+def preferred_flare(flares):
+    """ From a list of flares, choose the most likely flare to be
+        associated with an SEP event. All most likely flares within 
+        1 hour of the identified best will be returned. This accounts
+        for possible refits/revisions of parameters for the same flare
+        or that cannot determine the source of an SEP event if multiple
+        large flares occur in quick succession.
+        
+        Apply educated guesses until 
+        known observed flare+CME+SEP associations are incorporated.
+        
+        flare class >= M1
+        flare longitude >= 20 degrees W
+        
+        If given the choice, the flares with the properties described
+        here are more likely to be associated with a SEP event.
+        Does not rule out that a flare with different properties can
+        be the correct one.
+        
+        INPUT:
+        
+            :flares: (list of Flare objects) 
+            
+        OUTPUT:
+        
+            :best: (list of Flare objects) 1 or more preferred flares
+            
+    """
+
+    best = []
+    
+    M = 10**-4
+    west_lon = 20
+    
+    #Check if one of the flares has a higher likelihood than the others
+    best_flares = []
+    for flare in flares:
+        if pd.isnull(flare.intensity) or pd.isnull(flare.lon):
+            continue
+        if flare.intensity >= M and flare.lon >= west_lon:
+            best_flares.append(flare)
+    
+    #-----flares satisfy both criteria-------
+    #If only one flare found to satisfy the conditions, return
+    if len(best_flares) == 1:
+        return best_flares
+        
+    #If multiple flares satified conditions, then choose the latest
+    if len(best_flares) > 1:
+        last = last_flare(best_flares)
+        #Check if other strong flares are within an hour
+        td_diff = 1 #hour
+        for flare in best_flares:
+            diff = (flare.start_time - last.start_time).total_seconds()/3600
+            if abs(diff) <= td_diff:
+                best.append(flare)
+        
+                
+    #If a best flare identified, return
+    if best:
+        return best
+
+
+    #-----flares do not satisfy both criteria-------
+    #Choose the flare with intensity > M1.0
+    if not best_flares:
+        for flare in flares:
+            if pd.isnull(flare.intensity): continue
+            if flare.intensity >= M:
+                best_flares.append(flare)
+ 
+    #If only one flare found to satisfy the conditions, return
+    if len(best_flares) == 1:
+        return best_flares
+
+    #If multiple flares satified conditions, then choose the latest
+    if len(best_flares) > 1:
+        last = last_flare(best_flares)
+        #Check if other strong flares are within an hour
+        td_diff = 1 #hour
+        for flare in best_flares:
+            if not pd.isnull(flare.start_time):
+                diff = (flare.start_time - last.start_time).total_seconds()/3600
+            elif not pd.isnull(flare.last_data_time):
+                diff = (flare.last_data_time - last.last_data_time).total_seconds()/3600
+
+            if abs(diff) <= td_diff:
+                best.append(flare)
+
+    #If haven't identified a best flare (or best flares) by now,
+    #revise_eruption_matches will choose the last flare.
+
+    return best
+
+
+    
+def preferred_cme(CMEs):
+    """ From a list of CMEs, choose the one most likely to be
+        associated with an SEP event. All most likely CMEs within 
+        1 hour of the identified best will be returned. This accounts
+        for possible refits/revisions of parameters for the same CME
+        or that cannot determine the source of an SEP event if multiple
+        fast CMEs occur in quick succession.
+        
+        Apply educated guesses until 
+        known observed flare+CME+SEP associations are incorporated.
+        
+        Referencing Clayton Allison's analysis of CMEs on the
+        SEP Scoreboards, find that CMEs with the following 
+        characteristics are more likely to be associated with SEP events.
+        
+        CME speed >= 600 km/s
+        CME width >= 35 degrees
+
+        If given the choice, the CME with the properties described
+        here are more likely to be associated with a SEP event.
+        Does not rule out that a CME with different properties can
+        be the correct one.
+        
+        INPUT:
+        
+            :CMEs: (list of CME objects) 
+            
+        OUTPUT:
+        
+            :best: (list of CME objects) 1 or more preferred CMEs
+            
+    """
+    best = []
+    target_speed = 600
+    target_width = 35
+    
+    #-----CMEs satisfy speed and width criteria -------
+    best_cmes = []
+    for cme in CMEs:
+        if pd.isnull(cme.speed) or pd.isnull(cme.half_width):
+            continue
+        if cme.speed >= target_speed and cme.half_width >= target_width:
+            best_cmes.append(cme)
+            
+    #If only one CME identified, return
+    if len(best_cmes) == 1:
+        return best_cmes
+    
+    #If every single CME is preferred, return empty so that either
+    #the last CME will be taken later on in the revision step.
+    #Or, if there are flare inputs, can select based off of flare.
+    if len(best_cmes) == len(CMEs):
+        return []
+    
+    #if multiple CMEs identified, choose the latest in time (closest to SEP)
+    td_diff = 1 #hour
+    if len(best_cmes) > 1:
+        last = last_cme(best_cmes)
+        #Identify CMEs within an hour of best to account for refits
+        for cme in best_cmes:
+            if not pd.isnull(cme.start_time):
+                diff = (cme.start_time - last.start_time).total_seconds()/3600
+                if abs(diff) <= td_diff:
+                    best.append(cme)
+            elif not pd.isnull(cme.liftoff_time):
+                diff = (cme.liftoff_time - last.liftoff_time).total_seconds()/3600
+                if abs(diff) <= td_diff:
+                    best.append(cme)
+
+
+    #Return fastest CME
+    if best:
+        return best
+
+
+    #-----CMEs satisfy only speed criteria, narrow CME -------
+    best_cmes = []
+    for cme in CMEs:
+        if pd.isnull(cme.speed): continue
+        if cme.speed >= target_speed:
+            best_cmes.append(cme)
+            
+    #If only one CME identified, return
+    if len(best_cmes) == 1:
+        return best_cmes
+        
+    #if multiple CMEs identified, choose the fastest
+    fast = None
+    if len(best_cmes) > 1:
+        max_speed = 0
+        for cme in best_cmes:
+            if cme.speed > max_speed:
+                max_speed = cme.speed
+                fast = cme
+
+        #Return fastest CME
+        if not pd.isnull(fast):
+            #Identify CMEs within an hour of best to account for refits
+            for cme in best_cmes:
+                if not pd.isnull(fast.start_time):
+                    diff = (cme.start_time - fast.start_time).total_seconds()/3600
+                    if abs(diff) <= td_diff:
+                        best.append(cme)
+                elif not pd.isnull(fast.liftoff_time):
+                    diff = (cme.liftoff_time - fast.liftoff_time).total_seconds()/3600
+                    if abs(diff) <= td_diff:
+                        best.append(cme)
+
+
+    #If haven't identified a best CME (or CMEs) by now, best to use the
+    #timing criteria implemented in revise_eruption_matches.
+    
+    return best
+
+
+def last_cme(cmes):
+    """ Identify the last CME to erupt. """
+    
+    last_cme = None
+    last = pd.NaT
+    for cme in cmes:
+        if not pd.isnull(cme.start_time):
+            if pd.isnull(last):
+                last = cme.start_time
+                last_cme = cme
+            elif cme.start_time > last:
+                last = cme.start_time
+                last_cme = cme
+        
+        if not pd.isnull(cme.liftoff_time):
+            if pd.isnull(last):
+                last = cme.liftoff_time
+                last_cme = cme
+            elif cme.liftoff_time > last:
+                last = cme.liftoff_time
+                last_cme = cme
+        
+    return last_cme
+
+
+def last_flare(flares):
+    """ Identify the last flare to erupt. """
+    
+    last_flare = None
+    last = pd.NaT
+    for flare in flares:
+        if not pd.isnull(flare.start_time):
+            if pd.isnull(last):
+                last = flare.start_time
+                last_flare = flare
+            elif flare.start_time > last:
+                last = flare.start_time
+                last_flare = flare
+
+        elif not pd.isnull(flare.last_data_time):
+            if pd.isnull(last):
+                last = flare.last_data_time
+                last_flare = flare
+            elif flare.last_data_time > last:
+                last = flare.last_data_time
+                last_flare = flare
+    
+    return last_flare
+ 
+
+
 def revise_eruption_matches(evaluated_sphinx, all_energy_channels, obs_values,
         model_names, observed_sep_events):
     """ It may be that there are multiple flares or CMEs in
@@ -2058,16 +2378,13 @@ def revise_eruption_matches(evaluated_sphinx, all_energy_channels, obs_values,
 
         for energy_key in all_energy_channels:
             for threshold in obs_values[energy_key]['thresholds']:
-                #print("Checking whether to revise matching for " + model
-                #+ ", " + str(energy_key) + ", " + str(threshold))
                 #Pull out all the observed SEP events inside of the
                 #model prediction windows for a given energy channel
                 #and threshold. Want to identify if multiple predictions
                 #using different eruptions as triggers were matched to the
                 #same SEP event.
                 thresh_key = objh.threshold_to_key(threshold)
-                obs_sep =\
-                    observed_sep_events[model][energy_key][thresh_key]
+                obs_sep = observed_sep_events[model][energy_key][thresh_key]
                 if not obs_sep: continue
 
                 #Create a dataframe containing info from all forecasts for a
@@ -2078,71 +2395,151 @@ def revise_eruption_matches(evaluated_sphinx, all_energy_channels, obs_values,
                 #'observed_threshold_crossing_time'
                 #Dataframe indices match the indices in evaluated_sphinx                
                 
-                spx_df =\
-                create_matched_model_array(evaluated_sphinx[model][energy_key],
+                spx_df = create_matched_model_array(evaluated_sphinx[model][energy_key],
                 threshold)
                 #Identify the forecasts matched to the same SEP event
-                
                 for sep in obs_sep:
-                    obs_thresh_cross =\
-                        spx_df['observed_threshold_crossing_time'].tolist()
+                    #For model, energy channel, threshold, extract all matches associated
+                    #with each SEP event
+                    sub = spx_df.loc[(spx_df['observed_threshold_crossing_time'] == sep)]
+                    #If only one match or no forecasts associated with the SEP,
+                    #nothing to do
+                    if sub.empty or len(sub) == 1: continue
 
-                    idx_event = [ix for ix in range(len(obs_thresh_cross)) if obs_thresh_cross[ix] == pd.Timestamp(sep)]
-                    #If no or only one match, nothing to do
-                    if len(idx_event) == 0 or len(idx_event) == 1: continue
-                
-                    #Time differences are saved in order of the observation
-                    #files that fell inside the predictions windows. Identify
-                    #the correct entry by comparing with filename of the
-                    #matched sep observations
-                    sep_source = spx_df['matched_sep'].take(idx_event).tolist()
-                    matched_obs = spx_df['matched_observations'].take(idx_event).tolist()
-                    
-                    #Time difference between eruptions and threshold crossing
-                    #Negative values are before threshold crossings (in hours)
-                    td_eruptions_array =\
-                    spx_df['td_eruption_thresh_cross'].take(idx_event).tolist()
+                    logger.info(f"----Begin {model}, {energy_key}, {thresh_key} unmatch for SEP event {sep}----")
+                    logger.info(f"{len(sub)} forecasts associated with {sep}")
 
-                    td_eruptions = []
-                    for j in range(len(idx_event)):
-                        if sep_source[j] is None: # CANNOT REACH THIS CODE AS None IS ONLY ASSIGNED TO OBSERVATIONS THAT THROW AN AMBIGUOUS EXCEPTION IN create_matched_model_array() -- LS-code-comment
-                            td_eruptions.append(np.nan)
-                            continue
-                        
-                        obs_idx = [ix for ix in range(len(matched_obs[j])) if matched_obs[j][ix].source == sep_source[j]]
-                        td_eruptions.append(td_eruptions_array[j][obs_idx[0]])
+                    #If multiple forecasts for the same model are matched to the SEP
+                    #event, check if they use different eruptions (in hours)
+                    unique_td = resume.identify_unique(sub,'td_eruption_thresh_cross')
+                    #Possible to have NaN values, remove
+                    unique_td = [td for td in unique_td if not pd.isnull(td)]
 
-                    
-                    #Need to find which eruption is the closest
-                    #to the SEP event and unmatch all the other forecasts
-                    #Since all the time differences are necessarily negative,
-                    #the max time will be the one closest to the SEP event
-                    #and the preferable match
-                    best_eruption = np.nanmax(td_eruptions)
-
-                    # If all td_eruptions  were None, then best_eruption will be a nan
-                    # In this case no unmatching is necessary
-                    if np.isnan(best_eruption): # CANNOT REACH THIS CODE AS None IS ONLY ASSIGNED TO OBSERVATIONS THAT THROW AN AMBIGUOUS EXCEPTION IN create_matched_model_array() -- LS-code-comment
+                    #If only one value for the time difference between the last eruption
+                    #and the SEP threshold crossing time, then only one trigger used
+                    if len(unique_td) <= 1:
+                        logger.info("All forecasts triggered by same eruption.  No unmatching.")
                         continue
+ 
+                    #If eruption times are very close to each other, this could indicate
+                    #e.g. refit of parameters. Want to keep all forecasts when parameters
+                    #change just slightly.
+                    td_diff = 1 #hour
+                    sub_time = sub.loc[(sub['td_eruption_thresh_cross'] >= (unique_td[0]-td_diff)) &
+                            (sub['td_eruption_thresh_cross'] <= (unique_td[0]+td_diff))]
+                    if sub_time.empty: #No need to do unmatching
+                        logger.info("Eruptions are within 1 hour of each other.  No unmatching.")
+                        continue
+                    
+                    #Have different eruptions, so identify the preferred eruptions
+                    #to be matched to this SEP event by looking at the triggers
+                    cmes = sub['CME Triggers'].to_list()
+                    flares = sub['Flare Triggers'].to_list()
+                    sphinx_index = sub['sphinx_index'].to_list()
+                    
+                    cmes = [cme for cme in cmes if not pd.isnull(cme)]
+                    flares = [flare for flare in flares if not pd.isnull(flare)]
 
-                    #If all the time differences are the same, then the
-                    #same eruption was used in the forecasts and nothing
-                    #to do
-                    same_idx = [ix for ix in range(len(td_eruptions)) if td_eruptions[ix] == best_eruption]
-                    if len(same_idx) == len(td_eruptions): continue
+                    cme_speed = [cme.speed for cme in cmes]
+                    cme_width = [cme.half_width for cme in cmes]
+                    td_cme = [(cme.start_time-sep).total_seconds()/3600. for cme in cmes if not pd.isnull(cme.start_time)]
+                    if not td_cme:
+                         td_cme = [(cme.liftoff_time-sep).total_seconds()/3600. for cme in cmes if not pd.isnull(cme.liftoff_time)]
 
-                    #The eruptions and forecasts to unmatch
-                    #Get back to the indices associated with the sphinx objects
-                    # Note that if td_eruptions[ix] is nan the index will never be added
-                    #If eruptions near an SEP event are within a few hours of each other
-                    #cannot really say which is the correct one to associate with the
-                    #SEP event, so keep both. e.g. March 7, 2012, e.g. slight change
-                    #in CME start time when CME refit
-                    adj_idx = [ix for ix in range(len(td_eruptions)) if td_eruptions[ix] < (best_eruption - 3.0)]
-                    for ix in adj_idx:
-                        sphx_idx = idx_event[ix]
+                    cme_match_status = ['SEP Event']*len(cme_speed)
+                    flare_intensity = [flare.intensity for flare in flares]
+                    td_flare = [(flare.start_time-sep).total_seconds()/3600. for flare in flares if not pd.isnull(flare.start_time)]
+                    if not td_flare:
+                        td_flare = [(flare.last_data_time-sep).total_seconds()/3600. for flare in flares if not pd.isnull(flare.last_data_time)]
 
-                        #Identify forecast being unmatched
+                    flare_match_status = ['SEP Event']*len(flare_intensity)
+                    if cmes:
+                        logger.info(f"{len(cmes)} CMEs associated with forecasts.")
+                    if flares:
+                        logger.info(f"{len(flares)} flares associated with forecasts.")
+                    
+                    #Choose best cme and flare
+                    pref_cme = []
+                    if len(cmes) > 1:
+                        pref_cme = preferred_cme(cmes)
+                            
+                    pref_flare = []
+                    if len(flares) > 1:
+                        pref_flare = preferred_flare(flares)
+
+                    logger.info(f"Found {len(pref_cme)} preferred CMEs and {len(pref_flare)} preferred flares.")
+                    #Dataframe that will contain the forecasts to unmatch
+                    unmatch_sub = pd.DataFrame()
+ 
+                    #If both a preferred CME and a preferred flare are found,
+                    #defer to the CME
+                    if pref_cme:
+                        unmatch_sub = sub[~sub['CME Triggers'].isin(pref_cme)]
+                        for ii in range(len(cmes)):
+                            if cmes[ii] not in pref_cme:
+                                cme_match_status[ii] = 'Unmatched'
+                                if flares: #Defer to CME
+                                    flare_match_status[ii] = 'Defer to CME'
+ 
+                    elif pref_flare:
+                        unmatch_sub = sub[~sub['Flare Triggers'].isin(pref_flare)]
+                        for ii in range(len(flares)):
+                            if flares[ii] not in pref_flare:
+                                flare_match_status[ii] = 'Unmatched'
+                                if cmes:
+                                    cme_match_status[ii] = 'Defer to Flare'
+
+
+                    #IF there are NO best choices for trigger, take the last eruption
+                    if not pref_flare and not pref_cme:
+                        #If eruptions near an SEP event are within a few hours of each other
+                        #cannot really say which is the correct one to associate with the
+                        #SEP event, so keep all. e.g. March 7, 2012
+                        td_diff = 3 #hour
+                        sub_time = sub.loc[(sub['td_eruption_thresh_cross'] >= unique_td[0]-td_diff) &
+                                (sub['td_eruption_thresh_cross'] <= unique_td[0]+td_diff)]
+                        if sub_time.empty: #No need to do unmatching
+                            logger.info("Eruptions within 3 hours of each other.  No unmatching.")
+                            continue
+                    
+                        #If there are eruptions separated enough to discriminate in time
+                        #Eruption time before threshold crossing are necessarily negative
+                        best_eruption = max(unique_td)
+                        logger.info(f"No preferred flare or CME. Best eruption from timing {best_eruption}")
+                        unmatch_sub = sub.loc[(sub['td_eruption_thresh_cross'] < best_eruption-td_diff)
+                                    | (sub['td_eruption_thresh_cross'] > best_eruption+td_diff)]
+
+
+                        unmatch_cmes = unmatch_sub['CME Triggers'].to_list()
+                        for ii in range(len(cmes)):
+                            if cmes[ii] in unmatch_cmes:
+                                cme_match_status[ii] = 'Unmatched'
+
+                        unmatch_flares = unmatch_sub['Flare Triggers'].to_list()
+                        for ii in range(len(flares)):
+                            if flares[ii] in unmatch_flares:
+                                flare_match_status[ii] = 'Unmatched'
+
+
+
+                    if unmatch_sub.empty: continue
+
+                    logger.info(f"Unmatching {len(unmatch_sub)} forecasts.")
+
+                    if cme_speed:
+                        logger.info("Match Status,  CME Speed,  Width,  Time to SEP Threshold Crossing,  Forecast")
+                    for ii in range(len(cme_speed)):
+                        logger.info(f"{cme_match_status[ii]},  {cme_speed[ii]},  {cme_width[ii]},  {td_cme[ii]},  {os.path.basename(evaluated_sphinx[model][energy_key][sphinx_index[ii]].prediction.source)}")
+                    logger.info("")
+                    if flare_intensity:
+                        logger.info("Match Status,  Flare Intensity,  Time to SEP Threshold Crossing,  Forecast")
+                    for ii in range(len(flare_intensity)):
+                        logger.info(f"{flare_match_status[ii]},  {flare_intensity[ii]},  {td_flare[ii]},  {os.path.basename(evaluated_sphinx[model][energy_key][sphinx_index[ii]].prediction.source)}")
+
+
+                    sphinx_index = unmatch_sub['sphinx_index'].to_list()
+                    for sphx_idx in sphinx_index:
+                         #Identify forecast being unmatched
                         logger.info("====== UNMATCHING FORECAST FROM SEP EVENT ====")
                         logger.info("Forecast: " +
                         str(evaluated_sphinx[model][energy_key][sphx_idx].prediction.source))
@@ -2155,6 +2552,7 @@ def revise_eruption_matches(evaluated_sphinx, all_energy_channels, obs_values,
                         evaluated_sphinx[model][energy_key][sphx_idx].unmatch(threshold)
                         logger.info("-------- UNMATCHED ----------\n")
  
+
 
 #################################
 ####ALL MATCHING CRITERIA #######
