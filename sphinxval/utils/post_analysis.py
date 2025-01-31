@@ -1042,6 +1042,9 @@ def deoverlap_all_clear(filename, date_range_st = None, date_range_end=None,
         OUTPUT:
         
             Rederived contingency table and metrics
+            :df_do: (dataframe) deoverlapped all clear values
+            :all_clear_metrics_df: (dateframe) contains metrics derived
+                from the deoverlapped results
         
     """
     
@@ -1256,3 +1259,117 @@ def deoverlap_all_clear(filename, date_range_st = None, date_range_end=None,
         fout = fnameout.replace('selections','metrics')
         all_clear_metrics_df.to_csv(fout)
         print(f"Wrote out {fout}.")
+
+    return df_do, all_clear_metrics_df
+
+
+
+
+def all_clear_grid(csv_path, models, dates_file, energy_min, energy_max,
+    threshold, deoverlap_models=[]):
+    """ For a list of models, reads in all_clear_selections files output
+        by sphinx and checks whether the model predicted a hit/miss or
+        false alarm/correct negative for a set of dates, stored in df_dates.
+        
+        df_dates is expected to consist of two columns, labeled 
+        "SEP Events" and "Non-Events".
+        
+        This subroutine can use either the original all_clear_selections
+        files or by calling the deoverlap_all_clear subroutine and using
+        the deoverlapped results.
+        
+        INPUT:
+        
+            :csv_path: (string) path the all_clear_selections csv files.
+            :models: (list) list of models to be included in the grid; 
+                model names must exactly match the short_name field in 
+                the forecast jsons or SPHINX output files.
+            :dates: (string) csv file containing list of dates that want to use to 
+                generate grids with a column titled "SEP Events" and a second 
+                column titled "Non-Events". 
+            :energy_min: (float) low edge of energy channel of interest
+            :energy_max: (float) high edge of energy channel of interest (-1)
+                for infinity (>10 MeV -> energy_min = 10, energy_max = -1)
+            :threshold: (float) threshold applied for SEP event definition
+                (e.g. >10 MeV exceeds 10 pfu -> threshold = 10)
+            :deoverlap_models: (list) list of models that need to be
+                deoverlapped first; model names must exactly match the 
+                short_name field in the forecast jsons or SPHINX output files.
+                
+        OUTPUT:
+        
+            Write out two csv files containing desired grid with 
+            dates on one axis, models on other axis, and outcomes
+            as the entries. "No Data" entries indicate a forecast
+            was not provided for a given date.
+         
+    """
+    
+    #Find date range that fully spans SEP event and non-event periods for
+    #models that need to be deoverlapped.
+    print(f"all_clear_grid: Reading in dates file {dates_file}.")
+    df_dates = pd.read_csv(dates_file)
+    df_dates['SEP Events'] = pd.to_datetime(df_dates['SEP Events'])
+    df_dates['Non-Events'] = pd.to_datetime(df_dates['Non-Events'])
+    
+    #Find first and last date out of all the dates
+    max_date = df_dates.max().max()
+    min_date = df_dates.min().min()
+    
+    if deoverlap_models:
+        print(f"all_clear_grid: Models will be deoverlapped between {min_date} and {max_date}.")
+
+    sep_results = {"SEP Events": df_dates["SEP Events"].to_list()}
+    nonsep_results = {"Non-Events": df_dates["Non-Events"].to_list()}
+    for model in models:
+        #Store Hit/Miss/No Data
+        sep_outcomes = []
+        #Store False Alarm/Correct Negative/No Data
+        nonsep_outcomes = []
+    
+        fname = os.path.join(csv_path,
+            f"all_clear_selections_{model}_min.{energy_min}.max.{energy_max}.units.MeV_threshold_{threshold}.csv")
+
+        if not os.path.isfile(fname):
+            print(f"all_clear_grid: File does not exist. Check model and csv_path. {fname}. Skipping model.")
+            continue
+
+        print(f"all_clear_grid: Reading in file {fname}.")
+        
+        if model in deoverlap_models:
+            df_ac, ac_metrics = deoverlap_all_clear(fname,
+                date_range_st = min_date, date_range_end=max_date)
+        else:
+            df_ac = pd.read_csv(fname)
+            df_ac['Observed SEP Threshold Crossing Time'] = pd.to_datetime(df_ac['Observed SEP Threshold Crossing Time'])
+        
+        #SEP EVENTS
+        #For each SEP event, get Hit/Miss/No Data
+        for ix, date in df_dates['SEP Events'].items():
+            outcome = ''
+            try: #Date may not be present in predicted SEPs
+            
+                #Get results for a single SEP event
+                sub = df_ac[df_ac['Observed SEP Threshold Crossing'] == date]
+                #Desire only one forecast per event, but if there are
+                #multiple, then can use Hit = any Hit, Miss = all Miss
+                #"Observed SEP All Clear" will be False (because an observed
+                #SEP event means False all clear)
+                #If "Predicted SEP All Clear" is equal to the "observed SEP All Clear"
+                #field, then the model got it right -> Hit, and vice versa
+                compare = sub['Observed SEP All Clear'] == sub['Predicted SEP All Clear']
+                #Hits, any False, False columns which give a true in compare
+                if compare.any():
+                    outcome = 'Hit'
+                else:
+                    outcome = 'Miss'
+                    
+            except:
+                outcome = 'No Data'
+
+            sep_outcomes.append(outcome)
+            
+        #NON-EVENTS
+        #For each non-event, get False Alarm/Correct Negative/No Data
+        #Here we need to extract the appropriate columns
+        #For non-events, only one date 
