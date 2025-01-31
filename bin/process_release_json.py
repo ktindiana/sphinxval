@@ -27,6 +27,8 @@ parser.add_argument("--ModelList",
         help="File contining a list of prediction json files.")
 parser.add_argument("--model", nargs="*",  default=[],
                     help="Command-line list of prediction jsons files")
+parser.add_argument("--newpath",  type=str, default='',
+                    help="Path to save modified json files")
 parser.add_argument("--dontstop", action="store_true", default=False,
                     help="Don't stop checking jsons on ERROR")
 
@@ -76,27 +78,43 @@ def update_prediction_window(json_in):
     if last_data_time == None:
         print("Could not update prediction window. No last data time.")
         return json_in
-
     
     last_data_time = vjson.zulu_to_time(last_data_time)
-    new_start = last_data_time + datetime.timedelta(minutes=20)
-    new_end = last_data_time + datetime.timedelta(minutes=100)
-    
-    new_start = vjson.make_ccmc_zulu_time(new_start)
-    new_end = vjson.make_ccmc_zulu_time(new_end)
     
     #REleASE makes forecasts for two blocks
+    #REleASE prediction window rules from last work
+    #All Clear = True --> present to present + 20min
+    #All Clear = False --> present to present + 20 hours
     n = len(json_in['sep_forecast_submission']['forecasts'])
     for i in range(n):
+        ac = json_in['sep_forecast_submission']['forecasts'][i]['all_clear']['all_clear_boolean']
+        #All Clear true
+        if ac is True:
+            new_start = last_data_time
+            new_end = last_data_time + datetime.timedelta(minutes=20)
+        #All Clear false
+        if ac is False:
+            new_start = last_data_time
+            new_end = last_data_time + datetime.timedelta(hours=20)
+        #If somehow all clear is None, default to 20 min prediction window
+        if ac is None:
+            new_start = last_data_time
+            new_end = last_data_time + datetime.timedelta(minutes=20)
+        
+        #Convert to zulu format
+        new_start = vjson.make_ccmc_zulu_time(new_start)
+        new_end = vjson.make_ccmc_zulu_time(new_end)
+        
         json_in['sep_forecast_submission']['forecasts'][i]['prediction_window']['start_time'] = new_start
         json_in['sep_forecast_submission']['forecasts'][i]['prediction_window']['end_time'] = new_end
+
 
     return json_in
 
 
 
 
-def update_jsons(json_list):
+def update_jsons(json_list, newpath):
 
     for json_fname in json_list:
         # Check if the file exists
@@ -107,12 +125,12 @@ def update_jsons(json_list):
         # Try to read the file into a json object
         try:
             with open(json_fname,'r') as f:
-                
                 json_in = json.load(f)
                 
-                json_in = update_prediction_window(json_in)
-
-            vjson.write_json(json_in,json_fname)
+            json_in = update_prediction_window(json_in)
+            only_json_name = os.path.basename(json_fname)
+            newfname = os.path.join(newpath,only_json_name)
+            vjson.write_json(json_in,newfname)
     
         except Exception as e:
             print("ERROR", json_fname, "Could not update json:", e)
@@ -129,5 +147,10 @@ def update_jsons(json_list):
         
     
 if model_list:
+    if args.newpath == '':
+        sys.exit("Must specify newpath.")
+    if not os.path.isdir(args.newpath):
+        os.makedirs(args.newpath)
+        
     print("=== Updating forecast jsons ===")
-    update_jsons(model_list)
+    update_jsons(model_list, args.newpath)
