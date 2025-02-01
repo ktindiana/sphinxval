@@ -256,7 +256,7 @@ def create_matched_model_array(objs, threshold):
     #Loop over SPHINX objects and extract observed matched threshold crossing
     #time and time difference between eruption used by model and
     #threshold crossing time
-    for i, obj in enumerate[objs]:
+    for i, obj in enumerate(objs):
         sphinx_index.append(i)
 
         try:
