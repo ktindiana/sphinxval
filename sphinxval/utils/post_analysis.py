@@ -25,6 +25,7 @@ import matplotlib.pylab as plt
 scoreboard_models = ["ASPECS", "iPATH", "MagPy", "SEPMOD",
                     "SEPSTER", "SPRINTS", "UMASEP"]
 
+
 #If not empty, add metrics to the contingency metrics analysis
 add_contingency = {}
 #e.g.
@@ -1285,8 +1286,9 @@ def all_clear_grid(csv_path, models, dates_file, energy_min, energy_max,
                 model names must exactly match the short_name field in 
                 the forecast jsons or SPHINX output files.
             :dates: (string) csv file containing list of dates that want to use to 
-                generate grids with a column titled "SEP Events" and a second 
-                column titled "Non-Events". 
+                generate grids with a column titled "SEP Events" with the 
+                SEP start times and columns titled "Non-Event Start" 
+                and "Non-Event End". 
             :energy_min: (float) low edge of energy channel of interest
             :energy_max: (float) high edge of energy channel of interest (-1)
                 for infinity (>10 MeV -> energy_min = 10, energy_max = -1)
@@ -1310,8 +1312,9 @@ def all_clear_grid(csv_path, models, dates_file, energy_min, energy_max,
     print(f"all_clear_grid: Reading in dates file {dates_file}.")
     df_dates = pd.read_csv(dates_file)
     df_dates['SEP Events'] = pd.to_datetime(df_dates['SEP Events'])
-    df_dates['Non-Events'] = pd.to_datetime(df_dates['Non-Events'])
-    
+    df_dates['Non-Event Start'] = pd.to_datetime(df_dates['Non-Event Start'])
+    df_dates['Non-Event End'] = pd.to_datetime(df_dates['Non-Event End'])
+
     #Find first and last date out of all the dates
     max_date = df_dates.max().max()
     min_date = df_dates.min().min()
@@ -1320,7 +1323,8 @@ def all_clear_grid(csv_path, models, dates_file, energy_min, energy_max,
         print(f"all_clear_grid: Models will be deoverlapped between {min_date} and {max_date}.")
 
     sep_results = {"SEP Events": df_dates["SEP Events"].to_list()}
-    nonsep_results = {"Non-Events": df_dates["Non-Events"].to_list()}
+    nonsep_results = {"Non-Event Start": df_dates["Non-Event Start"].to_list(),
+        "Non-Event End": df_dates["Non-Event End"].to_list()}
     for model in models:
         #Store Hit/Miss/No Data
         sep_outcomes = []
@@ -1342,34 +1346,66 @@ def all_clear_grid(csv_path, models, dates_file, energy_min, energy_max,
         else:
             df_ac = pd.read_csv(fname)
             df_ac['Observed SEP Threshold Crossing Time'] = pd.to_datetime(df_ac['Observed SEP Threshold Crossing Time'])
-        
-        #SEP EVENTS
-        #For each SEP event, get Hit/Miss/No Data
-        for ix, date in df_dates['SEP Events'].items():
-            outcome = ''
-            try: #Date may not be present in predicted SEPs
-            
-                #Get results for a single SEP event
-                sub = df_ac[df_ac['Observed SEP Threshold Crossing'] == date]
-                #Desire only one forecast per event, but if there are
-                #multiple, then can use Hit = any Hit, Miss = all Miss
-                #"Observed SEP All Clear" will be False (because an observed
-                #SEP event means False all clear)
-                #If "Predicted SEP All Clear" is equal to the "observed SEP All Clear"
-                #field, then the model got it right -> Hit, and vice versa
-                compare = sub['Observed SEP All Clear'] == sub['Predicted SEP All Clear']
-                #Hits, any False, False columns which give a true in compare
-                if compare.any():
-                    outcome = 'Hit'
-                else:
-                    outcome = 'Miss'
-                    
-            except:
-                outcome = 'No Data'
+ 
+        #Date columns indicating SEP range
+        key_st = 'Prediction Window Start'
+        key_end = 'Prediction Window End'
+        #Deoverlapped dataframe organized differently than original
+        #all_clear_selections files.
+        if model in deoverlap_models:
+            key_st = 'Start Date'
+            key_end = 'End Date'
 
+        #Go through SEP Events and Non-Events and record results
+        for sep, non_st, non_end in df_dates.itertuples(index=False):
+
+            #SEP EVENTS
+            #For each SEP event, get Hit/Miss/No Data
+            sep_outcome = None
+            if not pd.isnull(sep):
+                #Get results for a single SEP event
+                sub = df_ac[df_ac['Observed SEP Threshold Crossing'] == sep]
+                print(f"{model} forecasts associated with {sep}")
+                print(sub[[key_st, key_end, 'Observed SEP All Clear', 'Predicted SEP All Clear']])
+                
+                if sub.empty:
+                    sep_outcome = 'No Data'
+                else:
+                    #Desire only one forecast per event, but if there are
+                    #multiple, then can use Hit = any Hit, Miss = all Miss
+                    #"Observed SEP All Clear" will be False (because an observed
+                    #SEP event means False all clear)
+                    #If "Predicted SEP All Clear" is equal to the "observed SEP All Clear"
+                    #field, then the model got it right -> Hit, and vice versa
+                    compare = sub['Observed SEP All Clear'] == sub['Predicted SEP All Clear']
+                    #Hits, any False, False columns which give a true in compare
+                    if compare.any():
+                        sep_outcome = 'Hit'
+                    else:
+                        sep_outcome = 'Miss'
+                    
             sep_outcomes.append(outcome)
             
-        #NON-EVENTS
-        #For each non-event, get False Alarm/Correct Negative/No Data
-        #Here we need to extract the appropriate columns
-        #For non-events, only one date 
+            #NON-EVENTS
+            #For each non-event, get False Alarm/Correct Negative/No Data
+            #Here we need to extract the appropriate columns
+            #All forecasts with prediction windows that start at the
+            #Non-Event Start dates and all predictions with start timess all the
+            #way through to the End date
+            #This will work best if the non-event time periods are not directly
+            #adjacent (within 24 hours) to SEP time periods.
+            nosep_outcome = None
+            if not pd.isnull(non_st):
+                sub = df_ac[(df_ac[key_st] >= non_st) & (df_ac[key_st] < non_end)]
+                print(f"{model} forecasts associated with {sep}")
+                print(sub[[key_st, key_end, 'Observed SEP All Clear', 'Predicted SEP All Clear']])
+
+                if sub.empty:
+                    nosep_outcome = 'No Data'
+                else:
+                     compare = sub['Observed SEP All Clear'] == sub['Predicted SEP All Clear']
+                    #Hits, any True, False columns will give a False in compare
+                    if compare.all():
+                        nosep_outcome = 'Correct Negative'
+                    else:
+                        nosep_outcome = 'False Alarm'
