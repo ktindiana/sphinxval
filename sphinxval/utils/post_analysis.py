@@ -1310,10 +1310,12 @@ def all_clear_grid(csv_path, models, dates_file, energy_min, energy_max,
     #Find date range that fully spans SEP event and non-event periods for
     #models that need to be deoverlapped.
     print(f"all_clear_grid: Reading in dates file {dates_file}.")
-    df_dates = pd.read_csv(dates_file)
-    df_dates['SEP Events'] = pd.to_datetime(df_dates['SEP Events'])
-    df_dates['Non-Event Start'] = pd.to_datetime(df_dates['Non-Event Start'])
-    df_dates['Non-Event End'] = pd.to_datetime(df_dates['Non-Event End'])
+    df_dates = pd.read_csv(dates_file, parse_dates=['SEP Events','Non-Event Start','Non-Event End'])
+
+    sep_results = {"SEP Events": df_dates["SEP Events"].to_list()}
+    nonsep_results = {"Non-Event Start": df_dates["Non-Event Start"].to_list(),
+        "Non-Event End": df_dates["Non-Event End"].to_list()}
+    all_clear_dict = validation.initialize_all_clear_dict()
 
     #Find first and last date out of all the dates
     max_date = df_dates.max().max()
@@ -1322,17 +1324,26 @@ def all_clear_grid(csv_path, models, dates_file, energy_min, energy_max,
     if deoverlap_models:
         print(f"all_clear_grid: Models will be deoverlapped between {min_date} and {max_date}.")
 
-    sep_results = {"SEP Events": df_dates["SEP Events"].to_list()}
-    nonsep_results = {"Non-Event Start": df_dates["Non-Event Start"].to_list(),
-        "Non-Event End": df_dates["Non-Event End"].to_list()}
+    energy_key = f"min.{float(energy_min):.1f}.max.{float(energy_max):.1f}.units.MeV"
+    print(energy_key)
+    thresh_key = f"threshold_{float(threshold):.1f}"
+    print(thresh_key)
+
     for model in models:
         #Store Hit/Miss/No Data
         sep_outcomes = []
         #Store False Alarm/Correct Negative/No Data
         nonsep_outcomes = []
-    
+        #Calculate skill scores for chosen time periods
+        hit = 0
+        miss = 0
+        fa = 0
+        cn = 0
+        sep_caught_str = ''
+        sep_miss_str = ''
+        
         fname = os.path.join(csv_path,
-            f"all_clear_selections_{model}_min.{energy_min}.max.{energy_max}.units.MeV_threshold_{threshold}.csv")
+            f"all_clear_selections_{model}_{energy_key}_{thresh_key}.csv")
 
         if not os.path.isfile(fname):
             print(f"all_clear_grid: File does not exist. Check model and csv_path. {fname}. Skipping model.")
@@ -1344,9 +1355,8 @@ def all_clear_grid(csv_path, models, dates_file, energy_min, energy_max,
             df_ac, ac_metrics = deoverlap_all_clear(fname,
                 date_range_st = min_date, date_range_end=max_date)
         else:
-            df_ac = pd.read_csv(fname)
-            df_ac['Observed SEP Threshold Crossing Time'] = pd.to_datetime(df_ac['Observed SEP Threshold Crossing Time'])
- 
+            df_ac = pd.read_csv(fname, parse_dates=['Observed SEP Threshold Crossing Time','Prediction Window Start','Prediction Window End'])
+
         #Date columns indicating SEP range
         key_st = 'Prediction Window Start'
         key_end = 'Prediction Window End'
@@ -1364,7 +1374,7 @@ def all_clear_grid(csv_path, models, dates_file, energy_min, energy_max,
             sep_outcome = None
             if not pd.isnull(sep):
                 #Get results for a single SEP event
-                sub = df_ac[df_ac['Observed SEP Threshold Crossing'] == sep]
+                sub = df_ac[df_ac['Observed SEP Threshold Crossing Time'] == sep]
                 print(f"{model} forecasts associated with {sep}")
                 print(sub[[key_st, key_end, 'Observed SEP All Clear', 'Predicted SEP All Clear']])
                 
@@ -1381,10 +1391,14 @@ def all_clear_grid(csv_path, models, dates_file, energy_min, energy_max,
                     #Hits, any False, False columns which give a true in compare
                     if compare.any():
                         sep_outcome = 'Hit'
+                        hit += 1
+                        sep_caught_str += str(sep) + ';'
                     else:
                         sep_outcome = 'Miss'
-                    
-            sep_outcomes.append(outcome)
+                        miss += 1
+                        sep_miss_str += str(sep) + ';'
+
+            sep_outcomes.append(sep_outcome)
             
             #NON-EVENTS
             #For each non-event, get False Alarm/Correct Negative/No Data
@@ -1392,20 +1406,45 @@ def all_clear_grid(csv_path, models, dates_file, energy_min, energy_max,
             #All forecasts with prediction windows that start at the
             #Non-Event Start dates and all predictions with start timess all the
             #way through to the End date
-            #This will work best if the non-event time periods are not directly
-            #adjacent (within 24 hours) to SEP time periods.
-            nosep_outcome = None
+            nonsep_outcome = None
             if not pd.isnull(non_st):
                 sub = df_ac[(df_ac[key_st] >= non_st) & (df_ac[key_st] < non_end)]
-                print(f"{model} forecasts associated with {sep}")
+                sub = sub[sub['Observed SEP All Clear']==True]
+                #Remove any forecasts in sub that are associated to a SEP
+                #event (Observed SEP All Clear False), because those should
+                #not be considered to be part of the non-event time period
+                sub = sub[sub['Observed SEP All Clear']==True]
+                print(f"{model} forecasts associated with {non_st} to {non_end}")
                 print(sub[[key_st, key_end, 'Observed SEP All Clear', 'Predicted SEP All Clear']])
-
+                
                 if sub.empty:
-                    nosep_outcome = 'No Data'
+                    nonsep_outcome = 'No Data'
                 else:
-                     compare = sub['Observed SEP All Clear'] == sub['Predicted SEP All Clear']
+                    compare = sub['Observed SEP All Clear'] == sub['Predicted SEP All Clear']
                     #Hits, any True, False columns will give a False in compare
                     if compare.all():
-                        nosep_outcome = 'Correct Negative'
+                        nonsep_outcome = 'CN'
+                        cn += 1
                     else:
-                        nosep_outcome = 'False Alarm'
+                        nonsep_outcome = 'FA'
+                        fa += 1
+
+            nonsep_outcomes.append(nonsep_outcome)
+
+        scores = metrics.contingency_scores(hit, miss, fa, cn)
+        validation.fill_all_clear_dict(all_clear_dict, model, energy_key, thresh_key,
+            energy_key, thresh_key, scores, hit, sep_caught_str,
+            miss, sep_miss_str)
+        
+        sep_results.update({model: sep_outcomes})
+        nonsep_results.update({model: nonsep_outcomes})
+
+    
+    df_sep = pd.DataFrame(sep_results)
+    df_sep.to_csv(os.path.join(csv_path,'all_clear_grid_SEP.csv'))
+    
+    df_nosep = pd.DataFrame(nonsep_results)
+    df_nosep.to_csv(os.path.join(csv_path,'all_clear_grid_NonEvent.csv'))
+
+    df_scores = pd.DataFrame(all_clear_dict)
+    df_scores.to_csv(os.path.join(csv_path,'all_clear_grid_metrics.csv'))
