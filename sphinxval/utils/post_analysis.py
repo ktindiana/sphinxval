@@ -1242,7 +1242,7 @@ def deoverlap_all_clear(filename, date_range_st = None, date_range_end=None,
     df_do = pd.DataFrame(dict)
     df_do = df_do.sort_values('Start Date')
     fnameout = filename.replace('.csv','_deoverlap.csv')
-    df_do.to_csv(fnameout)
+    df_do.to_csv(fnameout, index=False)
     print(f"Wrote out {fnameout}.")
 
     #Calculate metrics
@@ -1258,7 +1258,7 @@ def deoverlap_all_clear(filename, date_range_st = None, date_range_end=None,
     all_clear_metrics_df = pd.DataFrame(all_clear_dict)
     if not all_clear_metrics_df.empty:
         fout = fnameout.replace('selections','metrics')
-        all_clear_metrics_df.to_csv(fout)
+        all_clear_metrics_df.to_csv(fout, index=False)
         print(f"Wrote out {fout}.")
 
     return df_do, all_clear_metrics_df
@@ -1345,6 +1345,11 @@ def all_clear_grid(csv_path, models, dates_file, energy_min, energy_max,
         fname = os.path.join(csv_path,
             f"all_clear_selections_{model}_{energy_key}_{thresh_key}.csv")
 
+        if 'UNSPELL' in model:
+            if energy_min == 10:
+                fname = os.path.join(csv_path,
+                "all_clear_selections_UNSPELL flare_min.10.0.max.-1.0.units.MeV_min.5.0.max.-1.0.units.MeV_threshold_10.0_mm.csv")
+        
         if not os.path.isfile(fname):
             print(f"all_clear_grid: File does not exist. Check model and csv_path. {fname}. Skipping model.")
             continue
@@ -1441,10 +1446,19 @@ def all_clear_grid(csv_path, models, dates_file, energy_min, energy_max,
 
     
     df_sep = pd.DataFrame(sep_results)
-    df_sep.to_csv(os.path.join(csv_path,'all_clear_grid_SEP.csv'))
-    
-    df_nosep = pd.DataFrame(nonsep_results)
-    df_nosep.to_csv(os.path.join(csv_path,'all_clear_grid_NonEvent.csv'))
+    df_sep_drop = df_sep.drop(columns=['SEP Events'], axis=1)
+    df_sep['Total Hits'] = df_sep_drop.apply(lambda x: x.str.contains('Hit')).sum(axis=1)
+    df_sep['Total Misses'] = df_sep_drop.apply(lambda x: x.str.contains('Miss')).sum(axis=1)
+    df_sep['Total No Data'] = df_sep_drop.apply(lambda x: x.str.contains('No Data')).sum(axis=1)
+    df_sep.to_csv(os.path.join(csv_path,'all_clear_grid_SEP.csv'), index=False)
+
+    df_nonsep = pd.DataFrame(nonsep_results)
+    df_nonsep_drop = df_nonsep.drop(columns=['Non-Event Start', 'Non-Event End'], axis=1)
+    df_nonsep['Total Correct Negatives'] = df_nonsep_drop.apply(lambda x: x.str.contains('CN')).sum(axis=1)
+    df_nonsep['Total False Alarms'] = df_nonsep_drop.apply(lambda x: x.str.contains('FA')).sum(axis=1)
+    df_nonsep['Total No Data'] = df_nonsep_drop.apply(lambda x: x.str.contains('No Data')).sum(axis=1)
+    df_nonsep.to_csv(os.path.join(csv_path,'all_clear_grid_NonEvent.csv'), index=False)
+
 
     df_scores = pd.DataFrame(all_clear_dict)
-    df_scores.to_csv(os.path.join(csv_path,'all_clear_grid_metrics.csv'))
+    df_scores.to_csv(os.path.join(csv_path,'all_clear_grid_metrics.csv'), index=False)
