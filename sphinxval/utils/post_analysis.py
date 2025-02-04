@@ -1337,7 +1337,7 @@ def all_clear_grid(csv_path, models, energy_min, energy_max, threshold,
     df_sep['Total Misses'] = df_sep_drop.apply(lambda x: x.str.contains('Miss')).sum(axis=1)
     df_sep['Total No Data'] = df_sep_drop.apply(lambda x: x.str.contains('No Data')).sum(axis=1)
     if write_grid:
-        df_sep.to_csv(os.path.join(csv_path,'all_clear_grid_SEP.csv'), index=False)
+        df_sep.to_csv(os.path.join(csv_path,f"all_clear_grid_SEP_{energy_key}_{thresh_key}.csv"), index=False)
 
     df_nonsep = pd.DataFrame(nonsep_results)
     df_nonsep_drop = df_nonsep.drop(columns=['Non-Event Start', 'Non-Event End'], axis=1)
@@ -1345,10 +1345,10 @@ def all_clear_grid(csv_path, models, energy_min, energy_max, threshold,
     df_nonsep['Total False Alarms'] = df_nonsep_drop.apply(lambda x: x.str.contains('FA')).sum(axis=1)
     df_nonsep['Total No Data'] = df_nonsep_drop.apply(lambda x: x.str.contains('No Data')).sum(axis=1)
     if write_grid:
-        df_nonsep.to_csv(os.path.join(csv_path,'all_clear_grid_NonEvent.csv'), index=False)
+        df_nonsep.to_csv(os.path.join(csv_path,f"all_clear_grid_NonEvent_{energy_key}_{thresh_key}.csv"), index=False)
 
     df_scores = pd.DataFrame(all_clear_dict)
-    df_scores.to_csv(os.path.join(csv_path,'all_clear_grid_metrics.csv'), index=False)
+    df_scores.to_csv(os.path.join(csv_path,f"all_clear_grid_metrics_{energy_key}_{thresh_key}.csv"), index=False)
 
 
 
