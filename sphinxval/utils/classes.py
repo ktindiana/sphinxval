@@ -1003,7 +1003,7 @@ class Forecast():
                 
                 #In the case where only flare last_data_time is
                 #provided, use that for the eruption information
-                if last_flare_time is None and last_flare_data_time is not None:
+                if pd.isnull(last_flare_time) and not pd.isnull(last_flare_data_time):
                     last_flare_time = last_flare_data_time
 
         #Find the latest particle intensity data used by the model

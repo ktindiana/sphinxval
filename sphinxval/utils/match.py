@@ -480,7 +480,7 @@ def observed_time_in_pred_win(fcast, obs_values, obs_key, energy_key):
     #Check if a time is contained inside of the
     #prediction window; returns False if pd.NaT
     contains_obs_time = (obs_df[obs_key] >= pd.Timestamp(pred_win_st)) \
-        & (obs_df[obs_key] < pd.Timestamp(pred_win_end))
+        & (obs_df[obs_key] <= pd.Timestamp(pred_win_end))
  
     return list(contains_obs_time)
 
@@ -531,7 +531,7 @@ def observed_time_in_pred_win_thresh(fcast, obs_values, obs_key,
     #Check if a threshold crossing is contained inside of the
     #prediction window; returns False if pd.NaT
     contains_obs_time = (obs[obs_key] >= pd.Timestamp(pred_win_st)) \
-        & (obs[obs_key] < pd.Timestamp(pred_win_end))
+        & (obs[obs_key] <= pd.Timestamp(pred_win_end))
  
     return list(contains_obs_time), list(obs[obs_key])
 
@@ -1255,9 +1255,9 @@ def pred_win_sep_overlap(sphinx, fcast, obs_values, observation_objs,
     #that are fully contained within the observed SEP event, and span the
     #observed SEP end.
     overlap_start = (obs['start_time'] >= pd.Timestamp(pred_win_st))\
-        & (obs['start_time'] < pd.Timestamp(pred_win_end))
+        & (obs['start_time'] <= pd.Timestamp(pred_win_end))
     overlap_end = (obs['end_time'] >= pd.Timestamp(pred_win_st))\
-        & (obs['start_time'] < pd.Timestamp(pred_win_end))
+        & (obs['start_time'] <= pd.Timestamp(pred_win_end))
 
     is_overlap = overlap_start | overlap_end
     is_overlap = list(is_overlap)
@@ -2072,7 +2072,7 @@ def sep_report(all_energy_channels, obs_values, model_names,
 def preferred_flare(flares):
     """ From a list of flares, choose the most likely flare to be
         associated with an SEP event. All most likely flares within 
-        1 hour of the identified best will be returned. This accounts
+        2 hours of the identified best will be returned. This accounts
         for possible refits/revisions of parameters for the same flare
         or that cannot determine the source of an SEP event if multiple
         large flares occur in quick succession.
@@ -2100,15 +2100,18 @@ def preferred_flare(flares):
 
     best = []
     
-    M = 10**-4
+    X = 10**-4
+    M = 10**-5
     west_lon = 20
-    
+ 
     #Check if one of the flares has a higher likelihood than the others
+    #Check first for western X-class flares.
     best_flares = []
+    td_diff = 1.5 #hour
     for flare in flares:
         if pd.isnull(flare.intensity) or pd.isnull(flare.lon):
             continue
-        if flare.intensity >= M and flare.lon >= west_lon:
+        if flare.intensity >= X and flare.lon >= west_lon:
             best_flares.append(flare)
     
     #-----flares satisfy both criteria-------
@@ -2119,10 +2122,45 @@ def preferred_flare(flares):
     #If multiple flares satified conditions, then choose the latest
     if len(best_flares) > 1:
         last = last_flare(best_flares)
-        #Check if other strong flares are within an hour
-        td_diff = 1 #hour
+        #Check if other strong flares are close together
         for flare in best_flares:
-            diff = (flare.start_time - last.start_time).total_seconds()/3600
+            if not pd.isnull(flare.start_time):
+                diff = (flare.start_time - last.start_time).total_seconds()/3600
+            elif not pd.isnull(flare.last_data_time):
+                diff = (flare.last_data_time - last.last_data_time).total_seconds()/3600
+
+            if abs(diff) <= td_diff:
+                best.append(flare)
+        
+                
+    #If a best flare identified, return
+    if best:
+        return best
+ 
+    #If no X-class western flares, then check for X-class flares
+    best_flares = []
+    td_diff = 1.5 #hour
+    for flare in flares:
+        if pd.isnull(flare.intensity):
+            continue
+        if flare.intensity >= X:
+            best_flares.append(flare)
+    
+    #-----flares satisfy both criteria-------
+    #If only one flare found to satisfy the conditions, return
+    if len(best_flares) == 1:
+        return best_flares
+        
+    #If multiple flares satified conditions, then choose the latest
+    if len(best_flares) > 1:
+        last = last_flare(best_flares)
+        #Check if other strong flares are close together
+        for flare in best_flares:
+            if not pd.isnull(flare.start_time):
+                diff = (flare.start_time - last.start_time).total_seconds()/3600
+            elif not pd.isnull(flare.last_data_time):
+                diff = (flare.last_data_time - last.last_data_time).total_seconds()/3600
+
             if abs(diff) <= td_diff:
                 best.append(flare)
         
@@ -2132,7 +2170,7 @@ def preferred_flare(flares):
         return best
 
 
-    #-----flares do not satisfy both criteria-------
+    #-----No X flares, so check for M-class flares-------
     #Choose the flare with intensity > M1.0
     if not best_flares:
         for flare in flares:
@@ -2147,8 +2185,7 @@ def preferred_flare(flares):
     #If multiple flares satified conditions, then choose the latest
     if len(best_flares) > 1:
         last = last_flare(best_flares)
-        #Check if other strong flares are within an hour
-        td_diff = 1 #hour
+        #Check if other strong flares are close together
         for flare in best_flares:
             if not pd.isnull(flare.start_time):
                 diff = (flare.start_time - last.start_time).total_seconds()/3600
@@ -2168,7 +2205,7 @@ def preferred_flare(flares):
 def preferred_cme(CMEs):
     """ From a list of CMEs, choose the one most likely to be
         associated with an SEP event. All most likely CMEs within 
-        1 hour of the identified best will be returned. This accounts
+        2 hours of the identified best will be returned. This accounts
         for possible refits/revisions of parameters for the same CME
         or that cannot determine the source of an SEP event if multiple
         fast CMEs occur in quick succession.
@@ -2220,7 +2257,7 @@ def preferred_cme(CMEs):
         return []
     
     #if multiple CMEs identified, choose the latest in time (closest to SEP)
-    td_diff = 1 #hour
+    td_diff = 1.5 #hour
     if len(best_cmes) > 1:
         last = last_cme(best_cmes)
         #Identify CMEs within an hour of best to account for refits
@@ -2262,7 +2299,7 @@ def preferred_cme(CMEs):
 
         #Return fastest CME
         if not pd.isnull(fast):
-            #Identify CMEs within an hour of best to account for refits
+            #Identify CMEs close to best to account for refits
             for cme in best_cmes:
                 if not pd.isnull(fast.start_time):
                     diff = (cme.start_time - fast.start_time).total_seconds()/3600
@@ -2448,6 +2485,7 @@ def revise_eruption_matches(evaluated_sphinx, all_energy_channels, obs_values,
 
                     cme_match_status = ['SEP Event']*len(cme_speed)
                     flare_intensity = [flare.intensity for flare in flares]
+                    flare_lon = [flare.lon for flare in flares]
                     td_flare = [(flare.start_time-sep).total_seconds()/3600. for flare in flares if not pd.isnull(flare.start_time)]
                     if not td_flare:
                         td_flare = [(flare.last_data_time-sep).total_seconds()/3600. for flare in flares if not pd.isnull(flare.last_data_time)]
@@ -2532,9 +2570,9 @@ def revise_eruption_matches(evaluated_sphinx, all_energy_channels, obs_values,
                         logger.info(f"{cme_match_status[ii]},  {cme_speed[ii]},  {cme_width[ii]},  {td_cme[ii]},  {os.path.basename(evaluated_sphinx[model][energy_key][sphinx_index[ii]].prediction.source)}")
                     logger.info("")
                     if flare_intensity:
-                        logger.info("Match Status,  Flare Intensity,  Time to SEP Threshold Crossing,  Forecast")
+                        logger.info("Match Status,  Flare Intensity, Flare Longitude, Time to SEP Threshold Crossing,  Forecast")
                     for ii in range(len(flare_intensity)):
-                        logger.info(f"{flare_match_status[ii]},  {flare_intensity[ii]},  {td_flare[ii]},  {os.path.basename(evaluated_sphinx[model][energy_key][sphinx_index[ii]].prediction.source)}")
+                        logger.info(f"{flare_match_status[ii]},  {flare_intensity[ii]},  {flare_lon[ii]},  {td_flare[ii]},  {os.path.basename(evaluated_sphinx[model][energy_key][sphinx_index[ii]].prediction.source)}")
 
 
                     sphinx_index = unmatch_sub['sphinx_index'].to_list()
