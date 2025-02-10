@@ -743,18 +743,19 @@ def dict_to_flare(flareD):
     if 'location' in flareD:
         loc = flareD['location'] #N00E00, S00W00
         if isinstance(loc, str) and loc != "":
-            location = loc
-            if 'E' in location:
-                loc = loc.split('E')
-                lon = -(float(loc[1]))
-            if 'W' in location:
-                loc = loc.split('W')
-                lon = float(loc[1])
-                
-            if 'N' in loc[0]:
-                lon = float(loc[0][1:])
-            if 'S' in loc[0]:
-                lon = -(float(loc[0][1:]))
+            if ('E' in loc or 'W' in loc) and ('N' in loc or 'S' in loc):
+                location = loc
+                if 'E' in location:
+                    loc = loc.split('E')
+                    lon = -(float(loc[1]))
+                if 'W' in location:
+                    loc = loc.split('W')
+                    lon = float(loc[1])
+                    
+                if 'N' in loc[0]:
+                    lat = float(loc[0][1:])
+                if 'S' in loc[0]:
+                    lat = -(float(loc[0][1:]))
                 
     if 'intensity' in flareD:
         intensity = flareD['intensity']
