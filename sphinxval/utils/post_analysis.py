@@ -1448,3 +1448,748 @@ def deoverlap_all_clear(csv_path, model, energy_min, energy_max, threshold,
         nonevent_st=date_range_st, nonevent_end=date_range_end, split=split,
         write_grid=False)
 
+
+def make_histograms():
+    from matplotlib.ticker import MultipleLocator
+    model_names = ['SEPMOD', 'ZEUS+iPATH_CME', 'SEPSTER2D', 'SEPSTER (Parker Spiral)', 'UMASEP-100', 'COMESEP flare+CME ', 'MFLAMPA', 'STAT', 'SFS-Update', 'ADEPT-AFRL 1hr', 'ADEPT-AFRL 6hr',\
+    'SPREAdFAST', 'SEPSAT', 'SAWS-ASPECS CME (SOHO) 50%', 'SAWS-ASPECS CME (SOHO) electrons 50%', 'SAWS-ASPECS flare + CME (SOHO) 50%', 'SAWS-ASPECS flare 50%', 'SAWS-ASPECS flare electrons 50%']
+    # Choosing metrics here for time metrics these will be interpreted as not the log values 
+    metrics_list = ['ALE', 'LE']
+    # list this out as it appears in the _selections files
+    forecast_quantity = ['peak_intensity_max', 'start_time', 'peak_intensity_max_time']
+    forecast_label = {
+        'peak_intensity_max': 'SEP Max Peak Flux',
+        'start_time': 'SEP Start Time',
+        'peak_intensity_max_time': 'SEP Max Peak Flux Time'
+    }
+    observed_dictionary = {
+        'peak_intensity_max': 'Observed SEP Peak Intensity Max (Max Flux)',
+        'start_time': 'Observed SEP Start Time',
+        'peak_intensity_max_time': 'Observed SEP Peak Intensity Max (Max Flux) Time'
+    }
+    forecast_dictionary = {
+        'peak_intensity_max': 'Predicted SEP Peak Intensity Max (Max Flux)',
+        'start_time': 'Predicted SEP Start Time',
+        'peak_intensity_max_time': 'Predicted SEP Peak Intensity Max (Max Flux) Time'
+    }
+    # These 'outliers' are subject to change based on want we decide is best
+    outliers_dictionary = {
+        'peak_intensity_max': 2.0,
+        'start_time': 10.0,
+        'peak_intensity_max_time': 24.0
+    }
+    # setting up a list to be used in the outliers output file as the column names for the dataframe
+    fields_outlier = ['Model', 'Dataset', 'Energy Channel Key', 'Observed SEP Threshold Crossing Time', 'Observed SEP Peak Intensity Max (Max Flux)', \
+        'Observed SEP Peak Intensity Max (Max Flux) Time', 'Predicted SEP Start Time', 'Predicted SEP Peak Intensity Max (Max Flux)', \
+            'Predicted SEP Peak Intensity Max (Max Flux) Time', 'Reason for Outlier', 'Metric Name', 'Metric Calculation', 'Forecast Source']
+    outliers = []
+    event_list_sepval = []
+    event_list_sb = []
+    event_fields = ['Model', 'Dataset', 'Energy Channel Key', 'Observed SEP Threshold Crossing Time', 'Metric Calculation']
+    energy_list = ['10', '100']
+    
+    
+
+    # There's probably a better way to do this but I was short on time to prepare this analysis. Histograms are made looping
+    # over energy, forecast quantity and then lastly by model, which ia all based on the lists and dictionaries above
+    for energy in energy_list:
+        # print(energy)
+        if energy == '10':
+            energy_thresh = 'min.10.0.max.-1.0.units.MeV_threshold_10.0'
+        else:
+            energy_thresh = 'min.100.0.max.-1.0.units.MeV_threshold_1.0'
+        for forecasts in forecast_quantity:
+            # print(forecasts)
+            for names in model_names:
+                if 'UMASEP' in names:
+                    if energy == '10':
+                        names = 'UMASEP-10'
+                    else:
+                        names = 'UMASEP-100'
+                # print(names)
+                if 'SEPSTER' in names or 'UMASEP' in names or 'COMESEP' in names or 'SFS' in names or 'ADEPT' in names:
+                    if '2D' in names:
+                        observed_label = observed_dictionary[forecasts]
+                        predicted_label = forecast_dictionary[forecasts]
+                        file_to_read_in_sepval = './SEPVAL/' + forecasts + '_selections_' + names +' CME_' + energy_thresh + '.csv'
+                        if os.path.isfile(file_to_read_in_sepval):
+                            if forecasts == 'peak_intensity_max':
+                                predicted_label = 'Predicted SEP Peak Intensity (Onset Peak)'
+                            elif forecasts == 'peak_intensity_max_time':
+                                predicted_label = 'Predicted SEP Peak Intensity (Onset Peak) Time'
+                            dataframe_sepval = pd.read_csv(file_to_read_in_sepval)
+                            obs_sepval = dataframe_sepval[observed_label]
+                            pred_sepval = dataframe_sepval[predicted_label]
+                            
+                            
+
+
+                            file_to_read_in_sb = './Scoreboard/' + forecasts + '_selections_' + names + '_' + energy_thresh + '.csv'
+                            if os.path.isfile(file_to_read_in_sb):
+                                dataframe_sb = pd.read_csv(file_to_read_in_sb)
+                                obs_sb = dataframe_sb[observed_label]
+                                pred_sb = dataframe_sb[predicted_label]
+                            else:
+                                obs_sb = []
+                                pred_sb = []
+                        else:
+                            pred_sepval = []
+                            obs_sepval = []
+                            obs_sb = []
+                            pred_sb = []
+                    elif 'UMASEP' in names:
+                        observed_label = observed_dictionary[forecasts]
+                        predicted_label = forecast_dictionary[forecasts]
+                        file_to_read_in_sepval = './SEPVAL/' + forecasts + '_selections_' + names +'_' + energy_thresh + '_First.csv'
+                        if os.path.isfile(file_to_read_in_sepval):
+                            if forecasts == 'peak_intensity_max':
+                                predicted_label = 'Predicted SEP Peak Intensity (Onset Peak)'
+                            elif forecasts == 'peak_intensity_max_time':
+                                predicted_label = 'Predicted SEP Peak Intensity (Onset Peak) Time'
+                            dataframe_sepval = pd.read_csv(file_to_read_in_sepval)
+                            obs_sepval = dataframe_sepval[observed_label]
+                            pred_sepval = dataframe_sepval[predicted_label]
+                            
+                            file_to_read_in_sb = './Scoreboard/' + forecasts + '_selections_' + names + '_'+ energy_thresh + '_First.csv'
+                            if os.path.isfile(file_to_read_in_sb):
+                                dataframe_sb = pd.read_csv(file_to_read_in_sb)
+                                obs_sb = dataframe_sb[observed_label]
+                                pred_sb = dataframe_sb[predicted_label]
+                            else:
+                                obs_sb = []
+                                pred_sb = []
+                        else:
+                            pred_sepval = []
+                            obs_sepval = []
+                            obs_sb = []
+                            pred_sb = []
+                    else:
+                        observed_label = observed_dictionary[forecasts]
+                        predicted_label = forecast_dictionary[forecasts]
+                        file_to_read_in_sepval = './SEPVAL/' + forecasts + '_selections_' + names +'_' + energy_thresh + '.csv'
+                        if os.path.isfile(file_to_read_in_sepval):
+                            if forecasts == 'peak_intensity_max':
+                                predicted_label = 'Predicted SEP Peak Intensity (Onset Peak)'
+                            elif forecasts == 'peak_intensity_max_time':
+                                predicted_label = 'Predicted SEP Peak Intensity (Onset Peak) Time'
+                            dataframe_sepval = pd.read_csv(file_to_read_in_sepval)
+                            obs_sepval = dataframe_sepval[observed_label]
+                            pred_sepval = dataframe_sepval[predicted_label]
+                            
+                            file_to_read_in_sb = './Scoreboard/' + forecasts + '_selections_' + names + '_'+ energy_thresh + '.csv'
+                            if os.path.isfile(file_to_read_in_sb):
+                                dataframe_sb = pd.read_csv(file_to_read_in_sb)
+                                obs_sb = dataframe_sb[observed_label]
+                                pred_sb = dataframe_sb[predicted_label]
+                            else:
+                                obs_sb = []
+                                pred_sb = []
+                        else:
+                            pred_sepval = []
+                            obs_sepval = []
+                            obs_sb = []
+                            pred_sb = []
+                # ".\SEPVAL\peak_intensity_max_selections_COMESEP flare+CME _min.10.0.max.-1.0.units.MeV_threshold_10.0.csv"
+                # "./SEPVAL/peak_intensity_max_selections_COMESEP flare+CME_min.10.0.max.-1.0.units.MeV_threshold_10.0.csv"
+                else:
+                    observed_label = observed_dictionary[forecasts]
+                    predicted_label = forecast_dictionary[forecasts]
+                    file_to_read_in_sepval = './SEPVAL/' + forecasts + '_selections_' + names +'_' + energy_thresh + '.csv'
+                    file_to_read_in_sb = './Scoreboard/' + forecasts + '_selections_' + names + '_' + energy_thresh + '.csv'
+                    if os.path.isfile(file_to_read_in_sepval):
+                        dataframe_sepval = pd.read_csv(file_to_read_in_sepval)
+                        obs_sepval = dataframe_sepval[observed_label]
+                        pred_sepval = dataframe_sepval[predicted_label]
+                        
+            
+                        if os.path.isfile(file_to_read_in_sb):
+                            dataframe_sb = pd.read_csv(file_to_read_in_sb)
+                            obs_sb = dataframe_sb[observed_label]
+                            pred_sb = dataframe_sb[predicted_label]
+                        else:
+                            obs_sb = []
+                            pred_sb = []
+                    else:
+                        # print('No file found')
+                        pred_sepval = []
+                        obs_sepval = []
+                        obs_sb = []
+                        pred_sb = []
+                        # "./SEPVAL/peak_intensity_max_selections_COMESEP flare+CME _min.10.0.max.-1.0.units.MeV_threshold_10.0.csv"
+                        # ".\SEPVAL\peak_intensity_max_selections_COMESEP flare+CME _min.10.0.max.-1.0.units.MeV_threshold_10.0.csv"
+                # print(file_to_read_in_sepval)
+                # print(len(pred_sepval), len(pred_sb), len(obs_sepval), len(obs_sb))
+                if len(pred_sepval) == 0 and len(pred_sb) == 0:
+                    pass
+                else:
+                    
+                    for scores in metrics_list:
+                        
+                        if 'time' in forecasts and scores == 'ALE': 
+                            i = 0
+                            j = 0
+                            metric_label = 'Absolute Error'
+                            # print(pred_sepval)
+                            # print(obs_sepval)
+                            metric_sepval = []
+                            metric_sb = []
+                            metric_sepval_clean = []
+                            metric_sb_clean = []
+                            for i in range(len(pred_sepval)):
+                                foo = np.abs(datetime.fromisoformat(pred_sepval[i]) - datetime.fromisoformat(obs_sepval[i]))
+                                metric_sepval.append(foo.total_seconds()/(60*60)) #convert to hours
+                                metric_sepval_clean.append(foo.total_seconds()/(60*60)) #convert to hours
+                            if len(pred_sb) == 0:
+                                n_sb = 0
+                                pass
+                            else:
+                                for j in range(len(pred_sb)) :
+                                    foo = (np.abs(datetime.fromisoformat(pred_sb[j]) - datetime.fromisoformat(obs_sb[j])))
+                                    metric_sb.append(foo.total_seconds()/(60*60)) #convert to hours
+                                    metric_sb_clean.append(foo.total_seconds()/(60*60)) #convert to hours
+                                    n_sb = len(metric_sb_clean)                            
+
+                            n_sepval = len(metric_sepval_clean)
+                            
+                        elif 'time' in forecasts and scores == 'LE':
+                            i = 0
+                            j = 0
+                            metric_label = 'Error'
+                            # print(pred_sepval)
+                            # print(obs_sepval)
+                            metric_sepval = []
+                            metric_sb = []
+                            metric_sepval_clean = []
+                            metric_sb_clean = []
+
+                            for i in range(len(pred_sepval)):
+                                foo = (datetime.fromisoformat(pred_sepval[i]) - datetime.fromisoformat(obs_sepval[i]))
+                                metric_sepval.append(foo.total_seconds()/(60*60)) #convert to hours
+                                metric_sepval_clean.append(foo.total_seconds()/(60*60)) #convert to hours
+                            if len(pred_sb) != 0:
+
+                                for j in range(len(pred_sb)) :
+                                    foo = (datetime.fromisoformat(pred_sb[j]) - datetime.fromisoformat(obs_sb[j]))
+                                    metric_sb.append(foo.total_seconds()/(60*60)) #convert to hours
+                                    metric_sb_clean.append(foo.total_seconds()/(60*60)) #convert to hours
+                                    n_sb = len(metric_sb_clean)
+                            else:
+                                n_sb = 0
+                                pass
+                            n_sepval = len(metric_sepval_clean)
+                            
+                            
+                        else:
+                            metric_label = scores
+                            obs_sepval_clean, pred_sepval_clean = metrics.remove_zero(obs_sepval, pred_sepval)
+                            metric_sepval_clean = metrics.switch_error_func(scores, obs_sepval_clean, pred_sepval_clean)
+                            metric_sepval = metrics.switch_error_func(scores, obs_sepval, pred_sepval)
+                            try:
+                                if metric_sepval_clean == None:
+                                    metric_sepval_clean = 0
+                            except:
+                                pass
+                            try:
+                                n_sepval = len(metric_sepval_clean)
+                            except:
+                                n_sepval = 0
+                            metric_sb = 0
+                            if len(pred_sb) != 0:
+                                obs_sb_clean, pred_sb_clean = metrics.remove_zero(obs_sb, pred_sb)
+                                metric_sb_clean = metrics.switch_error_func(scores, obs_sb_clean, pred_sb_clean)
+                                metric_sb = metrics.switch_error_func(scores, obs_sb, pred_sb)
+                                n_sb = len(metric_sb_clean)
+                            else:
+                                n_sb = 0 
+                                pass
+
+                        # calculating what's within an order of magnitude
+                        if 'A' in scores:
+                            count = 0
+                            if 'time' not in forecasts:
+                                bins_hist = [0,0.5,1,1.5,2,2.5,3,3.5,4,4.5,5]
+                                bins_cdf = [0,0.5,1,1.5,2,2.5,3,3.5,4,4.5,5]
+                            else:
+                                if type(metric_sb) != int and len(metric_sb_clean) != 0:
+                                    
+                                    bin_max = np.round(np.max([np.max(metric_sepval_clean), np.max(metric_sb_clean)]))
+                                    bin_min = np.round(np.min([np.min(metric_sepval_clean), np.min(metric_sb_clean)]))
+
+
+                                    four_hour_bins = np.arange(-200, 200, 4)
+                                    bins_hist = []
+                                    for x in range(len(four_hour_bins)):
+                                        if four_hour_bins[x] >= 0 and four_hour_bins[x] <= bin_max+4:
+                                            bins_hist.append(four_hour_bins[x])
+                                        else:
+                                            pass
+                                    # bins_hist.append(x in four_hour_bins )
+                                    # bins_hist =  np.arange(0, bin_max, 4)
+
+                                    # bins_hist = np.arange(bin_min, bin_max, 4)
+                                    print(bins_hist)
+                                    bins_cdf = np.arange(bin_min, bin_max, 1)
+
+                                elif len(metric_sepval_clean) != 0:
+                                    
+                                    bin_max = np.round(np.max(metric_sepval_clean))
+                                    bin_min = np.round(np.min(metric_sepval_clean))
+                                    four_hour_bins = np.arange(-200, 200, 4)
+                                    bins_hist = []
+                                    for x in range(len(four_hour_bins)):
+                                        if four_hour_bins[x] >= 0 and four_hour_bins[x] <= bin_max+4:
+                                            bins_hist.append(four_hour_bins[x])
+                                        else:
+                                            pass
+                                    # bins_hist = np.arange(bin_min, bin_max, 4)
+                                    print(bins_hist)
+                                    bins_cdf = np.arange(bin_min, bin_max, 1)
+                                else:
+                                    pass
+                            i = 0
+                            j = 0
+                            # ['Model', 'Dataset', 'Energy Channel Key', 'Observed SEP Threshold Crossing Time', 'Observed SEP Peak Intensity Max (Max Flux)', \
+                            # 'Observed SEP Peak Intensity Max (Max Flux) Time', 'Predicted SEP Start Time', 'Predicted SEP Peak Intensity Max (Max Flux)', \
+                            # 'Predicted SEP Peak Intensity Max (Max Flux) Time', 'Reason for Outlier', 'Metric Name', 'Result', 'Forecast Source']
+                            for i in range(len(metric_sepval)):
+                                if metric_sepval[i] >= outliers_dictionary[forecasts] or metric_sepval[i] <= -outliers_dictionary[forecasts]:
+                                    if 'start' in forecasts:
+                                        outliers.append([dataframe_sepval['Model'][i], 'SEPVAL', energy_thresh, dataframe_sepval['Observed SEP Start Time'][i], None, \
+                                            None, dataframe_sepval['Predicted SEP Start Time'][i], None, \
+                                            None, 'Start Time', metric_label, metric_sepval[i], dataframe_sepval['Forecast Source'][i]])
+                                    elif 'max_time' in forecasts:
+                                        outliers.append([dataframe_sepval['Model'][i], 'SEPVAL', energy_thresh, dataframe_sepval['Observed SEP Threshold Crossing Time'][i], None, \
+                                            dataframe_sepval['Observed SEP Peak Intensity Max (Max Flux) Time'][i], None, None, \
+                                            pred_sepval[i], 'Max Peak Time', metric_label, metric_sepval[i], dataframe_sepval['Forecast Source'][i]])
+                                    else:
+                                        outliers.append([dataframe_sepval['Model'][i], 'SEPVAL', energy_thresh, dataframe_sepval['Observed SEP Threshold Crossing Time'][i], dataframe_sepval['Observed SEP Peak Intensity Max (Max Flux)'][i], \
+                                            None, None, pred_sepval[i],\
+                                            None, 'Max Peak Flux', metric_label, metric_sepval[i], dataframe_sepval['Forecast Source'][i]])
+                            
+                            if type(metric_sb) != int:
+                                for j in range(len(metric_sb)):
+                                    if metric_sb[j] >= outliers_dictionary[forecasts] or metric_sb[j] <= -outliers_dictionary[forecasts]:
+                                        if 'start' in forecasts:
+                                            outliers.append([dataframe_sb['Model'][j], 'Scoreboard', energy_thresh, dataframe_sb['Observed SEP Start Time'][j], None, \
+                                                None, dataframe_sb['Predicted SEP Start Time'][j], None, \
+                                                None, 'Start Time', metric_label, metric_sb[j], dataframe_sb['Forecast Source'][j]])
+                                        elif 'max_time' in forecasts:
+                                            outliers.append([dataframe_sb['Model'][j], 'Scoreboard', energy_thresh, dataframe_sb['Observed SEP Threshold Crossing Time'][j], None, \
+                                                dataframe_sb['Observed SEP Peak Intensity Max (Max Flux) Time'][j], None, None, \
+                                                pred_sb[j], 'Max Peak Time', metric_label, metric_sb[j], dataframe_sb['Forecast Source'][j]])
+                                        else:
+                                            outliers.append([dataframe_sb['Model'][j], 'Scoreboard', energy_thresh, dataframe_sb['Observed SEP Threshold Crossing Time'][j], dataframe_sb['Observed SEP Peak Intensity Max (Max Flux)'][j], \
+                                                None, None, pred_sb[j], \
+                                                None, 'Max Peak Flux', metric_label, metric_sb[j], dataframe_sb['Forecast Source'][j]])      
+                            else:
+                                pass
+                            # # m_sepval = str(count/n_sepval)
+                            # count = 0
+                            # i = 0
+                            # for i in range(n_sb):
+                            #     print(i, range(n_sb))
+                            #     if metric_sb[i] >= 0 and metric_sb[i] <= 1:
+                            #         count += 1  
+                            # # m_sb = str(count/n_sb)
+                        else:
+                            i = 0
+                            j = 0
+                            # ['Model', 'Dataset', 'Energy Channel Key', 'Observed SEP Threshold Crossing Time', 'Observed SEP Peak Intensity Max (Max Flux)', \
+                            # 'Observed SEP Peak Intensity Max (Max Flux) Time', 'Predicted SEP Start Time', 'Predicted SEP Peak Intensity Max (Max Flux)', \
+                            # 'Predicted SEP Peak Intensity Max (Max Flux) Time', 'Reason for Outlier', 'Metric Name', 'Result', 'Forecast Source']
+                            for i in range(len(metric_sepval)):
+                                # if metric_sepval[i] >= outliers_dictionary[forecasts] or metric_sepval[i] <= -outliers_dictionary[forecasts]:
+                                if 'start' in forecasts:
+                                    outliers.append([dataframe_sepval['Model'][i], 'SEPVAL', energy_thresh, dataframe_sepval['Observed SEP Start Time'][i], None, \
+                                        None, dataframe_sepval['Predicted SEP Start Time'][i], None, \
+                                        None, 'Start Time', metric_label, metric_sepval[i], dataframe_sepval['Forecast Source'][i]])
+                                elif 'max_time' in forecasts:
+                                    outliers.append([dataframe_sepval['Model'][i], 'SEPVAL', energy_thresh, dataframe_sepval['Observed SEP Threshold Crossing Time'][i], None, \
+                                        dataframe_sepval['Observed SEP Peak Intensity Max (Max Flux) Time'][i], None, None, \
+                                        pred_sepval[i], 'Max Peak Time', metric_label, metric_sepval[i], dataframe_sepval['Forecast Source'][i]])
+                                else:
+                                    outliers.append([dataframe_sepval['Model'][i], 'SEPVAL', energy_thresh, dataframe_sepval['Observed SEP Threshold Crossing Time'][i], dataframe_sepval['Observed SEP Peak Intensity Max (Max Flux)'][i], \
+                                        None, None, pred_sepval[i],\
+                                        None, 'Max Peak Flux', metric_label, metric_sepval[i], dataframe_sepval['Forecast Source'][i]])
+                            if type(metric_sb) != int:
+                                for j in range(len(metric_sb)):
+                                    # if metric_sb[j] >= outliers_dictionary[forecasts] or metric_sb[j] <= -outliers_dictionary[forecasts]:
+                                    if 'start' in forecasts:
+                                        outliers.append([dataframe_sb['Model'][j], 'Scoreboard', energy_thresh, dataframe_sb['Observed SEP Start Time'][j], None, \
+                                            None, dataframe_sb['Predicted SEP Start Time'][j], None, \
+                                            None, 'Start Time', metric_label, metric_sb[j], dataframe_sb['Forecast Source'][j]])
+                                    elif 'max_time' in forecasts:
+                                        outliers.append([dataframe_sb['Model'][j], 'Scoreboard', energy_thresh, dataframe_sb['Observed SEP Threshold Crossing Time'][j], None, \
+                                            dataframe_sb['Observed SEP Peak Intensity Max (Max Flux) Time'][j], None, None, \
+                                            pred_sb[j], 'Max Peak Time', metric_label, metric_sb[j], dataframe_sb['Forecast Source'][j]])
+                                    else:
+                                        outliers.append([dataframe_sb['Model'][j], 'Scoreboard', energy_thresh, dataframe_sb['Observed SEP Threshold Crossing Time'][j], dataframe_sb['Observed SEP Peak Intensity Max (Max Flux)'][j], \
+                                            None, None, pred_sb[j], \
+                                            None, 'Max Peak Flux', metric_label, metric_sb[j], dataframe_sb['Forecast Source'][j]])      
+                            else:
+                                pass
+                            if 'time' not in forecasts:
+                                bins_hist = [-4,-3.5,-3,-2.5,-2,-1.5,-1,-0.5,0,0.5,1,1.5,2,2.5,3,3.5,4]
+                                bins_cdf = [-4,-3.5,-3,-2.5,-2,-1.5,-1,-0.5,0,0.5,1,1.5,2,2.5,3,3.5,4]
+                            else:
+                                # print(metric_sepval_clean)
+                                # print(len(metric_sb_clean))
+                                # print(len(metric_sb))
+                                if type(metric_sb) != int and len(metric_sb_clean) != 0:
+                                    
+                                    bin_max = np.round(np.max([np.max(metric_sepval_clean), np.max(metric_sb_clean)]))
+                                    bin_min = np.round(np.min([np.min(metric_sepval_clean), np.min(metric_sb_clean)]))
+                                    four_hour_bins = np.arange(-200, 200, 4)
+                                    bins_hist = []
+                                    for x in range(len(four_hour_bins)):
+                                        if four_hour_bins[x] >= bin_min and four_hour_bins[x] <= bin_max+4:
+                                            bins_hist.append(four_hour_bins[x])
+                                        else:
+                                            pass
+                                    
+                                    print(bins_hist)
+                                    bins_cdf = np.arange(bin_min, bin_max, 1)
+                                elif len(metric_sepval_clean) != 0:
+                                    
+                                    bin_max = np.round(np.max(metric_sepval_clean))
+                                    bin_min = np.round(np.min(metric_sepval_clean))
+                                    four_hour_bins = np.arange(-200, 200, 4)
+                                    bins_hist = []
+                                    for x in range(len(four_hour_bins)):
+                                        if four_hour_bins[x] >= bin_min and four_hour_bins[x] <= bin_max+4:
+                                            bins_hist.append(four_hour_bins[x])
+                                        else:
+                                            pass
+                                    
+                                    # bins_hist = np.arange(bin_min, bin_max, 4)
+                                    print(bins_hist)
+                                    bins_cdf = np.arange(bin_min, bin_max, 1)
+                                else:
+                                    pass
+                            if 'peak_intensity' in forecasts and 'time' not in forecasts:
+                                count = 0
+                                count_over = 0
+                                count_under = 0
+                                count_fact_2 = 0
+                                i = 0
+                                for i in range(n_sepval):
+                                    
+                                    if metric_sepval_clean[i] >= -1 and metric_sepval_clean[i] <= 1:
+                                        count += 1
+                                    elif metric_sepval_clean[i] < -1:
+                                        count_under +=1
+                                    elif metric_sepval_clean[i] > 1:
+                                        count_over += 1  
+                                    if metric_sepval_clean[i] >= -np.log10(2) and metric_sepval_clean[i] <= np.log10(2):
+                                        count_fact_2 += 1
+                                    
+                                m_sepval = str(count/n_sepval)
+
+                                # print('Within OOM SEPVAL = ', count, count/n_sepval)
+                                # print('Under = ', count_under, count_under/n_sepval)
+                                # print('Over = ', count_over, count_over/n_sepval)
+                                # print('within a factor of 2', count_fact_2, count_fact_2/n_sepval)
+                                # print(count+count_under+count_over, n_sepval)
+                                if type(metric_sb) != int:
+                                    count = 0
+                                    count_over = 0
+                                    count_under = 0
+                                    count_fact_2 = 0
+                                    i = 0
+                                    for i in range(n_sb):
+                                        if metric_sb_clean[i] >= -1 and metric_sb_clean[i] <= 1:
+                                            count += 1  
+                                        elif metric_sb_clean[i] < -1:
+                                            count_under +=1
+                                        elif metric_sb_clean[i] > 1:
+                                            count_over += 1
+                                        if metric_sb_clean[i] >= -np.log10(2) and metric_sb_clean[i] <= np.log10(2):
+                                            count_fact_2 += 1  
+                                    m_sb = str(count/n_sb)
+
+                                    # print('Within OOM SB = ', count, count/n_sb)
+                                    # print('Under = ', count_under, count_under/n_sb)
+                                    # print('Over = ', count_over, count_over/n_sb)
+                                    # print('within a factor of 2', count_fact_2, count_fact_2/n_sb)
+                                    # print(count+count_under+count_over, n_sb)
+                                else:
+                                    pass                        
+                        if 'peak_intensity' in forecasts and 'time' not in forecasts and scores == 'LE' and '100' not in energy:
+                            i = 0
+                            j = 0
+                            for i in range(len(metric_sepval)):
+                                event_list_sepval.append([dataframe_sepval['Model'][i], 'SEPVAL', energy_thresh, dataframe_sepval['Observed SEP Threshold Crossing Time'][i], metric_sepval[i]])
+                            if type(metric_sb) != int:
+                                for j in range(len(metric_sb)):
+                                    event_list_sb.append([dataframe_sb['Model'][j], 'Scoreboard', energy_thresh, dataframe_sb['Observed SEP Threshold Crossing Time'][j], metric_sb[j]])
+                            else:
+                                pass
+                        # print(metric_sepval_clean)
+                        sepval_hist, _ = np.histogram(metric_sepval_clean, bins = 100) # Easy way to give counts in each bin
+                        
+                        
+                        
+                        
+                        
+                        # Histogram Plots *****************************************************************************************************************
+                        if type(metric_sb) != int:
+                            sb_hist, _ = np.histogram(metric_sb_clean, bins = 100)
+                        else:
+                            pass
+                        # for m in range(length(bins)):
+
+                        # print(sepval_hist, sum(sepval_hist), names, scores)
+                        # print(bins)
+                        # print('Making Histos')
+                        fig0, ax = plt.subplots()
+                        # print('bins', bins_hist)
+                        # plt.bar(sepval_edges[:-1],sepval_hist, alpha=0.5, label = 'SEPVAL N= ' + str(n_sepval) + ', M = ' + m_sepval)
+                        # plt.bar(sb_edges[:-1],sb_hist, alpha=0.5, label = 'Scoreboard N= ' + str(n_sb) + ', M = ' + m_sb)
+                        plt.hist(metric_sepval_clean, bins = bins_hist, alpha=0.5, label = 'SEPVAL N= ' + str(n_sepval))
+                        if type(metric_sb) != int:
+                            plt.hist(metric_sb_clean, bins = bins_hist, alpha=0.5, label = 'Scoreboard N= ' + str(n_sb))
+                            plt.title(names + ' ' + forecast_label[forecasts] + ' ' + metric_label + ' \nDistribution for SEPVAL and Scoreboard')
+                            figname = './plots/' + forecast_label[forecasts] + '_' +names + '_' + metric_label + '_' + energy + '_Scoreboard.png'
+                        else:
+                            plt.title(names + ' ' + forecast_label[forecasts] + ' ' + metric_label + ' \nDistribution for SEPVAL')
+                            figname = './plots/' + forecast_label[forecasts] + '_' +names + '_' + metric_label + '_' + energy + '_SEPVAL.png'
+                        plt.legend()
+                        # if 'A' not in scores or 'time' not in forecasts: # Didn't like this much
+                        #     plt.axvline(-1)
+                        #     plt.axvline(1)
+                        if 'time' in forecasts:
+                            ax.xaxis.set_major_locator(MultipleLocator(8))
+                            ax.xaxis.set_minor_locator(MultipleLocator(4))
+                        plt.xlabel(forecast_label[forecasts] + ' ' + metric_label)
+                        plt.ylabel('Counts')
+                        
+                        plt.savefig(figname)
+                        plt.close()
+
+                        fig1, ax = plt.subplots()
+                        
+                        plt.hist(metric_sepval_clean, bins = bins_hist, alpha=0.5, label = 'SEPVAL N= ' + str(n_sepval))
+                        
+                    
+                        plt.xlabel(forecast_label[forecasts] + ' ' + metric_label)
+                        plt.title(names + ' ' + forecast_label[forecasts] + ' ' + metric_label + ' \nDistribution for SEPVAL')
+                        if 'time' in forecasts:
+                            ax.xaxis.set_major_locator(MultipleLocator(8))
+                            ax.xaxis.set_minor_locator(MultipleLocator(4))
+                        plt.ylabel('Counts')
+                        plt.legend()
+                        figname = './plots/' + forecast_label[forecasts] + '_' +names + '_' + metric_label + '_' + energy + '_SEPVAL.png'
+                        plt.savefig(figname)
+                        plt.close()
+                        
+
+
+
+                        # CDF Plots *****************************************************************************************************************************************
+                        if scores == 'ALE' and 'time' in forecasts:
+                            # print('Making CDF')
+                            fig3 = plt.figure()
+                        
+                            try:
+                                plt.hist(metric_sepval_clean, bins = bins_cdf, alpha=0.5, density=True, cumulative=True, histtype="step", label = 'SEPVAL N= ' + str(n_sepval))
+                            except:
+                                plt.hist(metric_sepval_clean, label = 'SEPVAL N= ' + str(n_sepval))
+                            # print(metric_sb, type(metric_sb))
+                            if type(metric_sb) != int or len(metric_sb) != 0:
+                                # print('We shouldnt be here')
+                                plt.hist(metric_sb_clean, bins = bins_cdf, alpha=0.5, density=True, cumulative=True, histtype="step", label = 'Scoreboard N= ' + str(n_sb))
+                                plt.title(names + ' ' + forecast_label[forecasts] + ' ' + metric_label + ' Cumulative \nDistribution for SEPVAL and Scoreboard')
+                                figname = './plots/' + 'ALE_CDF_' + names + '_' + forecast_label[forecasts] + '_' + energy + '.png'
+                            else:
+                                plt.title(names + ' ' + forecast_label[forecasts] + ' ' + metric_label + ' Cumulative \nDistribution for SEPVAL')
+                                figname = './plots/' + 'ALE_CDF_' + names + '_' + forecast_label[forecasts] + '_' + energy + '.png'
+                            plt.ylabel('Frequency')
+                            plt.xlabel(forecast_label[forecasts] + ' ' + metric_label)
+                            plt.legend(loc = 'lower right')
+                            plt.savefig(figname)
+                            plt.close()
+
+                            fig4 = plt.figure()
+                        
+                            plt.hist(metric_sepval_clean, bins = bins_cdf, alpha=0.5, density=True, cumulative=True, histtype="step", label = 'SEPVAL N= ' + str(n_sepval))
+                            if type(metric_sb) != int or len(metric_sb) != 0:
+                                plt.hist(metric_sb_clean, bins = bins_cdf, alpha=0.5, density=True, cumulative=True, histtype="step", label = 'Scoreboard N= ' + str(n_sb))
+                                plt.title(names + ' ' + forecast_label[forecasts] + ' ' + metric_label + ' Cumulative \nDistribution for SEPVAL and Scoreboard')
+                                figname = './plots/' + 'ALE_CDF_' + names + '_' + forecast_label[forecasts] + '_' + energy + '24hrcut.png'
+                            else:
+                                plt.title(names + ' ' + forecast_label[forecasts] + ' ' + metric_label + ' Cumulative \nDistribution for SEPVAL')
+                                figname = './plots/' + 'ALE_CDF_' + names + '_' + forecast_label[forecasts] + '_' + energy + '24hrcut.png'
+                            plt.ylabel('Frequency')
+                            plt.xlabel(forecast_label[forecasts] + ' ' + metric_label)
+                            plt.xlim(0, 24)
+                            plt.legend(loc = 'lower right')
+                            plt.savefig(figname)
+                            plt.close()
+
+                        # if 'peak' in forecasts and 'time' in forecasts:
+                        #     # print('Making Scatter')
+                        #     # dataframe_sepval = pd.read_csv(file_to_read_in_sepval)
+                        #     obs_start_sepval = dataframe_sepval['Observed SEP Threshold Crossing Time']
+                        #     obs_peak_sepval = dataframe_sepval['Observed SEP Peak Intensity Max (Max Flux) Time']  
+                            
+                        #     i = 0
+                        #     j = 0
+                        #     rise_time_sepval = []
+                        #     rise_time_sb = []
+                        #     for i in range(len(obs_start_sepval)):
+                        #         foo = (datetime.fromisoformat(obs_peak_sepval[i]) - datetime.fromisoformat(obs_start_sepval[i]))
+                        #         rise_time_sepval.append(foo.total_seconds()/(60*60)) #convert to hours
+                        #     fig5 = plt.figure()
+                        #     plt.scatter(rise_time_sepval, metric_sepval, label = 'SEPVAL')
+                        #     if type(metric_sb) != int:
+                        #         # dataframe_sb = pd.read_csv(file_to_read_in_sb)
+                        #         obs_start_sb = dataframe_sb['Observed SEP Threshold Crossing Time']
+                        #         obs_peak_sb = dataframe_sb['Observed SEP Peak Intensity Max (Max Flux) Time']
+                        #         for j in range(len(obs_start_sb)) :
+                        #             foo = (datetime.fromisoformat(obs_peak_sb[j]) - datetime.fromisoformat(obs_start_sb[j]))
+                        #             rise_time_sb.append(foo.total_seconds()/(60*60)) #convert to hours
+                        #         plt.scatter(rise_time_sb, metric_sb, label = 'Scoreboard')
+                        #     else:
+                        #         pass
+
+                            
+                            
+                        #     # plt.axhline(0, linestyle = 'dashed', label = 'Perfect Forecast') # Didn't like how this looked
+                        #     plt.xlabel('Observed Rise Time (hours)')
+                        #     plt.ylabel('Timing Error (' + metric_label +') in Max Peak Flux (hours)')
+                        #     plt.title(names + ' ' + energy)
+                        #     plt.legend(loc = 'upper right')
+                        #     figname = './plots/' + 'error_risetime_' + names + '_' + forecast_label[forecasts] + '_' + metric_label + '_' + energy + '.png'
+                        #     plt.savefig(figname)
+                        #     plt.close()
+
+
+
+                        # if forecasts == 'peak_intensity_max_time':
+                        #     mixed_rise_sepval = []
+                        #     mixed_rise_sb = []
+                        #     i = 0
+                        #     j = 0
+                        #     print('Mixed Rise Plot')
+                        #     for i in range(len(obs_start_sepval)):
+                                
+                        #         foo = (datetime.fromisoformat(pred_sepval[i]) - datetime.fromisoformat(obs_start_sepval[i]))
+                        #         mixed_rise_sepval.append(foo.total_seconds()/(60*60)) #convert to hours
+                        #     fig = plt.figure()
+                        #     plt.scatter(rise_time_sepval, mixed_rise_sepval, label = 'SEPVAL')
+                        #     if type(metric_sb) != int:
+                        #         for j in range(len(obs_start_sb)) :
+                        #             foo = (datetime.fromisoformat(pred_sb[j]) - datetime.fromisoformat(obs_start_sb[j]))
+                        #             mixed_rise_sb.append(foo.total_seconds()/(60*60)) #convert to hours
+                        #         plt.scatter(rise_time_sb, mixed_rise_sb, label = 'Scoreboard')
+                        #     plt.axline((0, 0), slope=1, linestyle = 'dashed', label = 'Perfect Forecast')
+                        #     plt.xlabel('Observed Rise Time (hours)')
+                        #     plt.ylabel('Model Peak Time - Observed Start (hours)')
+                        #     plt.title(names + ' ' + energy)
+                        #     plt.legend(loc = 'upper right')
+                        #     figname = './plots/' + 'mixedrise_' + names + '_' + forecast_label[forecasts] + '_' + energy + '.png'
+                        #     plt.savefig(figname)
+                        #     plt.close()
+    outliers_file = 'outliers_file.csv'
+    output_dataframe = pd.DataFrame(outliers, columns=fields_outlier)
+    output_dataframe.to_csv(outliers_file, sep=',', header = True)
+
+
+
+
+
+
+
+    events_dataframe = pd.DataFrame(event_list_sepval, columns=event_fields)
+    
+
+    
+    fig = plt.figure()
+    for models in model_names:
+        # print(events_dataframe['Model'])
+        print(models)
+        if models == 'SEPSTER2D':
+            models = 'SEPSTER2D CME'
+        
+        # print(events_dataframe.loc[events_dataframe['Model'] == models, ['Observed SEP Threshold Crossing Time']])
+        foo = events_dataframe.loc[events_dataframe['Model'] == models, ['Observed SEP Threshold Crossing Time']]
+        foo = foo.values.tolist()
+        
+        boo = events_dataframe.loc[events_dataframe['Model'] == models, ['Metric Calculation']]
+        boo = boo.values.tolist()
+        x = []
+        y = []
+        it = 0
+        for it in range(len(foo)):
+            try:
+                x.append(datetime.fromisoformat(str(foo[it][0])))
+                y.append(boo[it])
+            except:
+                # date_object = datetime.strptime(date_string, "%Y-%m-%d")
+                month = str(foo[it][0]).rsplit('/')[0]
+                if len(month) == 1:
+                    month = '0'+month
+                day= str(foo[it][0]).rsplit('/')[1]
+                if len(day) == 1:
+                    day = '0' + day
+                year = str(foo[it][0]).rsplit('/')[2].rsplit(' ')[0]
+                hour = str(foo[it][0]).rsplit('/')[2].rsplit(' ')[1].rsplit(':')[0]
+                if len(hour) == 1:
+                    hour = '0' + hour
+                minute = str(foo[it][0]).rsplit('/')[2].rsplit(' ')[1].rsplit(':')[1]
+                if len(minute) == 1:
+                    minute = '0' + minute
+                time = month + '/' + day + '/' + year + ' ' + hour + ':' + minute
+                print(time)
+                x.append(datetime.strptime(time, "%m/%d/%Y %H:%M"))
+                y.append(boo[it])
+
+        plt.scatter(x, y , label= models, marker = 'o')
+    plt.legend()
+    plt.minorticks_on()
+    plt.xlabel('Date of Event')
+    plt.ylabel('Log Error of Max Peak Flux')
+    figname = './plots/' + 'events_grid.png'
+    plt.savefig(figname)
+
+    plt.close()
+    events_dataframe = events_dataframe.sort_values(by=['Observed SEP Threshold Crossing Time'], ascending=False)
+    events_dataframe.to_csv('sepval_test_redo.csv', sep=',', header = True)
+    print(events_dataframe)
+
+
+
+    # Reliability Plot section *************************************************************************************************
+    prob_models = ['MAG4_LOS_FEr', 'MagPy_SHARP_HMI_CEA', 'SAWS-ASPECS flare', 'MAG4_SHARP_HMI', 'GSU All Clear', 'SPRINTS Post Eruptive 0-24 hrs']
+    for model_names in prob_models:
+        file_to_read_in_sb = './Scoreboard/probability_selections_' + model_names + '_min.10.0.max.-1.0.units.MeV_threshold_10.0.csv'
+        dataframe_sepval = pd.read_csv(file_to_read_in_sb)
+        obs_sepval = dataframe_sepval['Observed SEP Probability']
+        pred_sepval = dataframe_sepval['Predicted SEP Probability']
+
+        # from sklearn.datasets import make_classification
+        # from sklearn.model_selection import train_test_split
+        # from sklearn.linear_model import LogisticRegression
+        bins = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+        from sklearn.calibration import calibration_curve, CalibrationDisplay
+
+        fig, ax1 = plt.subplots()
+        prob_true, prob_pred = calibration_curve(obs_sepval, pred_sepval, n_bins = 10)
+        print(prob_true)
+        print(prob_pred)
+        disp = CalibrationDisplay(prob_true, prob_pred, pred_sepval)
+        ax1.plot(prob_pred, prob_true, linestyle = '-', marker = 'o')
+        plt.title(model_names + ' Reliability Diagram')
+        plt.ylim(0, 1)
+        ax1.plot([0, 1], [0, 1], label = 'Perfectly Calibrated', color = 'black', linestyle = 'dashed')
+        plt.legend()
+        ax1.set_ylabel('Observed Relative Frequency')
+        ax1.set_xlabel('Predicted Probability')
+        ax2 = ax1.twinx()
+        ax2.hist(pred_sepval, bins = bins, alpha=0.35, density=False)
+        ax2.set_yscale('log')
+        ax2.set_ylabel('Histogram Count Numbers')
+        
+        plt.savefig(model_names + '_reliability_plot.png')
+
+    return

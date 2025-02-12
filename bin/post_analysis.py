@@ -52,6 +52,8 @@ parser.add_argument("--saveplot",
 parser.add_argument("--showplot",
         help=("Show plots to screen."),
         action="store_true")
+parser.add_argument('--Histogram', action = "store_true",
+        help = 'Make and save set of histograms')
 
 
 args = parser.parse_args()
@@ -66,6 +68,7 @@ highlight = args.Highlight
 scoreboard = args.Scoreboard
 saveplot = args.saveplot
 showplot = args.showplot
+histogram = args.Histogram
 
 exclude = args.Exclude.strip().split(",")
 include = args.Include.strip().split(",")
@@ -92,3 +95,6 @@ if quantity != '':
     pa.make_box_plots(df, path, quantity, anonymous, highlight, scoreboard,
         saveplot, showplot)
 
+
+if histogram != '':
+    pa.make_histograms()
