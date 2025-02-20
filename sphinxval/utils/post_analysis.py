@@ -1468,7 +1468,7 @@ def make_histograms():
     from sklearn.calibration import calibration_curve, CalibrationDisplay
     model_names = ['SEPMOD', 'ZEUS+iPATH_CME', 'SEPSTER2D', 'SEPSTER (Parker Spiral)', 'UMASEP-100', 'COMESEP flare+CME ', 'MFLAMPA', 'STAT', 'SFS-Update', 'ADEPT-AFRL 1hr', 'ADEPT-AFRL 6hr',\
     'SPREAdFAST', 'SEPSAT', 'SAWS-ASPECS CME (SOHO) 50%', 'SAWS-ASPECS CME (SOHO) electrons 50%', 'SAWS-ASPECS flare + CME (SOHO) 50%', 'SAWS-ASPECS flare 50%', 'SAWS-ASPECS flare electrons 50%']
-    # Choosing metrics here for time metrics these will be interpreted as not the log values 
+    # Choosing metrics here (time metrics are interpreted as not the log values)
     metrics_list = ['ALE', 'LE']
     # list this out as it appears in the _selections files
     forecast_quantity = ['peak_intensity_max', 'start_time', 'peak_intensity_max_time']
@@ -1489,7 +1489,9 @@ def make_histograms():
         'peak_intensity_max_time': 'Predicted SEP Peak Intensity Max (Max Flux) Time'
     }
     # These 'outliers' are subject to change based on want we decide is best
-    # Currently lines 1761, 1777, and 1822 are commented out which use these to define outliers (right now the outliers file contains all metrics not just outliers)
+    # Currently the lines using this are commented out which use these to define outliers
+    # (right now the outliers file contains all metrics not just outliers)
+    # if metric_sepval[i] >= outliers_dictionary[forecasts] or metric_sepval[i] <= -outliers_dictionary[forecasts]: are the lines that use this dictionary
     outliers_dictionary = {
         'peak_intensity_max': 2.0,
         'start_time': 10.0,
@@ -1508,7 +1510,7 @@ def make_histograms():
     
 
     # There's probably a better way to do this but I was short on time to prepare this analysis. Histograms are made looping
-    # over energy, forecast quantity and then lastly by model, which ia all based on the lists and dictionaries above
+    # over energy, forecast quantity and then lastly by model, which is all based on the lists and dictionaries above
     for energy in energy_list:
         print(energy)
         if energy == '10':
