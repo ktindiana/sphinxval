@@ -1450,6 +1450,17 @@ def deoverlap_all_clear(csv_path, model, energy_min, energy_max, threshold,
 
 
 def make_histograms():
+    """
+    Code currently expects a folder labeled SEPVAL in the output folder
+    with all of the _selections files in there (if there's one
+    labelled Scoreboard that is optional but will give Scoreboard histograms/plots).
+    Example command to run:
+    py ./bin/post_analysis.py --Histogram --EnergyBin "10,-1"
+    The --Histogram flag gets the post_analysis code to hit this function
+    The --EnergyBin flag is required by post_analysis so it has to be there else the code fails
+    """
+
+
     from matplotlib.ticker import MultipleLocator
     import matplotlib.pyplot as plt
     from datetime import datetime
@@ -1517,7 +1528,7 @@ def make_histograms():
                     if '2D' in names:
                         observed_label = observed_dictionary[forecasts]
                         predicted_label = forecast_dictionary[forecasts]
-                        file_to_read_in_sepval = './SEPVAL/' + forecasts + '_selections_' + names +' CME_' + energy_thresh + '.csv'
+                        file_to_read_in_sepval = './output/SEPVAL/' + forecasts + '_selections_' + names +' CME_' + energy_thresh + '.csv'
                         if os.path.isfile(file_to_read_in_sepval):
                             if forecasts == 'peak_intensity_max':
                                 predicted_label = 'Predicted SEP Peak Intensity (Onset Peak)'
@@ -1530,7 +1541,7 @@ def make_histograms():
                             
 
 
-                            file_to_read_in_sb = './Scoreboard/' + forecasts + '_selections_' + names + '_' + energy_thresh + '.csv'
+                            file_to_read_in_sb = './output/Scoreboard/' + forecasts + '_selections_' + names + '_' + energy_thresh + '.csv'
                             if os.path.isfile(file_to_read_in_sb):
                                 dataframe_sb = pd.read_csv(file_to_read_in_sb)
                                 obs_sb = dataframe_sb[observed_label]
@@ -1546,7 +1557,7 @@ def make_histograms():
                     elif 'UMASEP' in names:
                         observed_label = observed_dictionary[forecasts]
                         predicted_label = forecast_dictionary[forecasts]
-                        file_to_read_in_sepval = './SEPVAL/' + forecasts + '_selections_' + names +'_' + energy_thresh + '_First.csv'
+                        file_to_read_in_sepval = './output/SEPVAL/' + forecasts + '_selections_' + names +'_' + energy_thresh + '_First.csv'
                         if os.path.isfile(file_to_read_in_sepval):
                             if forecasts == 'peak_intensity_max':
                                 predicted_label = 'Predicted SEP Peak Intensity (Onset Peak)'
@@ -1556,7 +1567,7 @@ def make_histograms():
                             obs_sepval = dataframe_sepval[observed_label]
                             pred_sepval = dataframe_sepval[predicted_label]
                             
-                            file_to_read_in_sb = './Scoreboard/' + forecasts + '_selections_' + names + '_'+ energy_thresh + '_First.csv'
+                            file_to_read_in_sb = './output/Scoreboard/' + forecasts + '_selections_' + names + '_'+ energy_thresh + '_First.csv'
                             if os.path.isfile(file_to_read_in_sb):
                                 dataframe_sb = pd.read_csv(file_to_read_in_sb)
                                 obs_sb = dataframe_sb[observed_label]
@@ -1572,7 +1583,7 @@ def make_histograms():
                     else:
                         observed_label = observed_dictionary[forecasts]
                         predicted_label = forecast_dictionary[forecasts]
-                        file_to_read_in_sepval = './SEPVAL/' + forecasts + '_selections_' + names +'_' + energy_thresh + '.csv'
+                        file_to_read_in_sepval = './output/SEPVAL/' + forecasts + '_selections_' + names +'_' + energy_thresh + '.csv'
                         if os.path.isfile(file_to_read_in_sepval):
                             if forecasts == 'peak_intensity_max':
                                 predicted_label = 'Predicted SEP Peak Intensity (Onset Peak)'
@@ -1582,7 +1593,7 @@ def make_histograms():
                             obs_sepval = dataframe_sepval[observed_label]
                             pred_sepval = dataframe_sepval[predicted_label]
                             
-                            file_to_read_in_sb = './Scoreboard/' + forecasts + '_selections_' + names + '_'+ energy_thresh + '.csv'
+                            file_to_read_in_sb = './output/Scoreboard/' + forecasts + '_selections_' + names + '_'+ energy_thresh + '.csv'
                             if os.path.isfile(file_to_read_in_sb):
                                 dataframe_sb = pd.read_csv(file_to_read_in_sb)
                                 obs_sb = dataframe_sb[observed_label]
@@ -1596,12 +1607,12 @@ def make_histograms():
                             obs_sb = []
                             pred_sb = []
                 # ".\SEPVAL\peak_intensity_max_selections_COMESEP flare+CME _min.10.0.max.-1.0.units.MeV_threshold_10.0.csv"
-                # "./SEPVAL/peak_intensity_max_selections_COMESEP flare+CME_min.10.0.max.-1.0.units.MeV_threshold_10.0.csv"
+                # "./output/SEPVAL/peak_intensity_max_selections_COMESEP flare+CME_min.10.0.max.-1.0.units.MeV_threshold_10.0.csv"
                 else:
                     observed_label = observed_dictionary[forecasts]
                     predicted_label = forecast_dictionary[forecasts]
-                    file_to_read_in_sepval = './SEPVAL/' + forecasts + '_selections_' + names +'_' + energy_thresh + '.csv'
-                    file_to_read_in_sb = './Scoreboard/' + forecasts + '_selections_' + names + '_' + energy_thresh + '.csv'
+                    file_to_read_in_sepval = './output/SEPVAL/' + forecasts + '_selections_' + names +'_' + energy_thresh + '.csv'
+                    file_to_read_in_sb = './output/Scoreboard/' + forecasts + '_selections_' + names + '_' + energy_thresh + '.csv'
                     if os.path.isfile(file_to_read_in_sepval):
                         dataframe_sepval = pd.read_csv(file_to_read_in_sepval)
                         obs_sepval = dataframe_sepval[observed_label]
@@ -1621,7 +1632,7 @@ def make_histograms():
                         obs_sepval = []
                         obs_sb = []
                         pred_sb = []
-                        # "./SEPVAL/peak_intensity_max_selections_COMESEP flare+CME _min.10.0.max.-1.0.units.MeV_threshold_10.0.csv"
+                        # "./output/SEPVAL/peak_intensity_max_selections_COMESEP flare+CME _min.10.0.max.-1.0.units.MeV_threshold_10.0.csv"
                         # ".\SEPVAL\peak_intensity_max_selections_COMESEP flare+CME _min.10.0.max.-1.0.units.MeV_threshold_10.0.csv"
                 # print(file_to_read_in_sepval)
                 # print(len(pred_sepval), len(pred_sb), len(obs_sepval), len(obs_sb))
@@ -1920,8 +1931,8 @@ def make_histograms():
                                     # print(count+count_under+count_over, n_sb)
                                 else:
                                     pass                        
-                       
-                        sepval_hist, _ = np.histogram(metric_sepval_clean, bins = 100) # Easy way to give counts in each bin
+                        # Easy way to give counts in each bin but not as useful as above since there's 100 bins here
+                        # sepval_hist, _ = np.histogram(metric_sepval_clean, bins = 100)
                         
                         
                         
@@ -2026,7 +2037,7 @@ def make_histograms():
     # Reliability Plot section *************************************************************************************************
     prob_models = ['MAG4_LOS_FEr', 'MagPy_SHARP_HMI_CEA', 'SAWS-ASPECS flare', 'MAG4_SHARP_HMI', 'GSU All Clear', 'SPRINTS Post Eruptive 0-24 hrs']
     for model_names in prob_models:
-        file_to_read_in_sb = './Scoreboard/probability_selections_' + model_names + '_min.10.0.max.-1.0.units.MeV_threshold_10.0.csv'
+        file_to_read_in_sb = './output/Scoreboard/probability_selections_' + model_names + '_min.10.0.max.-1.0.units.MeV_threshold_10.0.csv'
         dataframe_sepval = pd.read_csv(file_to_read_in_sb)
         obs_sepval = dataframe_sepval['Observed SEP Probability']
         pred_sepval = dataframe_sepval['Predicted SEP Probability']
@@ -2052,6 +2063,7 @@ def make_histograms():
         ax2.set_yscale('log')
         ax2.set_ylabel('Histogram Count Numbers')
         
-        plt.savefig(model_names + '_reliability_plot.png')
+        plt.savefig('./plots/' + model_names + '_reliability_plot.png')
+        plt.close()
 
     return
