@@ -2971,8 +2971,6 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
     #Append sub with the metrics for each observed and predicted time profile match
     errors = {'Ratio': sepratio, 'Error': sepE, 'Absolute Error': sepAE, 'Log Error': sepLE, 'Absolute Log Error': sepALE, 'Absolute Percent Error': sepAPE, 'Mean Accuracy Ratio': sepMAR, 'Root Mean Square Error': sepRMSE, 'Root Mean Square Log Error': sepRMSLE, 'Percent Error': sepPE, 'Symmetric Percent Error': sepSPE, 'Symmetric Absolute Perecent Error': sepSAPE, 'Pearson Correlation Coefficient (linear)': sepRlin, 'Pearson Correlation Coefficient (log)': sepRlog, 'Spearman Correlation Coefficient': sepSlin}
     
-    logger.info(sub['Predicted Time Profile'])
-    logger.info(errors['Ratio'])
     if len(errors['Ratio']) != 0:
         sub = sub.assign(**errors)
     
