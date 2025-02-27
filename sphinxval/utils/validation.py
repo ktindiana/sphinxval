@@ -607,6 +607,8 @@ def initialize_flux_dict():
             "Pearson Correlation Coefficient (Linear)": [],
             "Pearson Correlation Coefficient (Log)": [],
             "Spearman Correlation Coefficient (Linear)": [],
+            "Mean Ratio": [],
+            "Median Ratio": [],
             "Mean Error (ME)": [],
             "Median Error (MedE)": [],
             "Mean Log Error (MLE)": [],
@@ -658,10 +660,13 @@ def initialize_awt_dict():
             "Prediction Threshold": [],
             
             #All Clear Forecasts
+            #Commenting out redundant comparisons to Observed SEP Threshold Crossing Time and
+            #observed SEP Start Time. If there is ever a case where those fields are different
+            #then should uncomment them.
             "Mean AWT for Predicted SEP All Clear to Observed SEP Threshold Crossing Time": [],
             "Median AWT for Predicted SEP All Clear to Observed SEP Threshold Crossing Time": [],
-            "Mean AWT for Predicted SEP All Clear to Observed SEP Start Time": [],
-            "Median AWT for Predicted SEP All Clear to Observed SEP Start Time": [],
+#            "Mean AWT for Predicted SEP All Clear to Observed SEP Start Time": [],
+#            "Median AWT for Predicted SEP All Clear to Observed SEP Start Time": [],
 
 #            #Probability Forecasts - cannot without an explicit threshold
 #            "Mean AWT for Probability to Observed Threshold Crossing Time": [],
@@ -672,14 +677,14 @@ def initialize_awt_dict():
             #Threshold Crossing Time Forecasts
             "Mean AWT for Predicted SEP Threshold Crossing Time to Observed SEP Threshold Crossing Time": [],
             "Median AWT for Predicted SEP Threshold Crossing Time to Observed SEP Threshold Crossing Time": [],
-            "Mean AWT for Predicted SEP Threshold Crossing Time to Observed SEP Start Time": [],
-            "Median AWT for Predicted SEP Threshold Crossing Time to Observed SEP Start Time": [],
+#            "Mean AWT for Predicted SEP Threshold Crossing Time to Observed SEP Start Time": [],
+#            "Median AWT for Predicted SEP Threshold Crossing Time to Observed SEP Start Time": [],
 
             #Start Time Forecasts
             "Mean AWT for Predicted SEP Start Time to Observed SEP Threshold Crossing Time": [],
             "Median AWT for Predicted SEP Start Time to Observed SEP Threshold Crossing Time": [],
-            "Mean AWT for Predicted SEP Start Time to Observed SEP Start Time": [],
-            "Median AWT for Predicted SEP Start Time to Observed SEP Start Time": [],
+#            "Mean AWT for Predicted SEP Start Time to Observed SEP Start Time": [],
+#            "Median AWT for Predicted SEP Start Time to Observed SEP Start Time": [],
  
 #             #Point Intensity Forecasts
 #            "Mean AWT for Predicted Point Intensity to Observed SEP Threshold Crossing Time": [],
@@ -691,24 +696,26 @@ def initialize_awt_dict():
             #Peak Intensity Forecasts
             "Mean AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Threshold Crossing Time": [],
             "Median AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Threshold Crossing Time": [],
-            "Mean AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Start Time": [],
-            "Median AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Start Time": [],
+#            "Mean AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Start Time": [],
+#            "Median AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Start Time": [],
             "Mean AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Peak Intensity (Onset Peak) Time": [],
             "Median AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Peak Intensity (Onset Peak) Time": [],
+ #           "Mean AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Peak Intensity Max (Max Flux) Time": [],
+ #           "Median AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Peak Intensity Max (Max Flux) Time": [],
 
             #Peak Intensity Max Forecasts
             "Mean AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Threshold Crossing Time": [],
             "Median AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Threshold Crossing Time": [],
-            "Mean AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Start Time": [],
-            "Median AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Start Time": [],
+#            "Mean AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Start Time": [],
+#            "Median AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Start Time": [],
             "Mean AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Peak Intensity Max (Max Flux) Time": [],
             "Median AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Peak Intensity Max (Max Flux) Time": [],
 
             #End Time Forecasts
             "Mean AWT for Predicted SEP End Time to Observed SEP Threshold Crossing Time": [],
             "Median AWT for Predicted SEP End Time to Observed SEP Threshold Crossing Time": [],
-            "Mean AWT for Predicted SEP End Time to Observed SEP Start Time": [],
-            "Median AWT for Predicted SEP End Time to Observed SEP Start Time": [],
+#            "Mean AWT for Predicted SEP End Time to Observed SEP Start Time": [],
+#            "Median AWT for Predicted SEP End Time to Observed SEP Start Time": [],
             "Mean AWT for Predicted SEP End Time to Observed SEP End Time": [],
             "Median AWT for Predicted SEP End Time to Observed SEP End Time": []
             }
@@ -792,8 +799,8 @@ def initialize_probability_dict():
 
 def fill_flux_metrics_dict(dict, model, energy_key, thresh_key,
     pred_energy_key, pred_thresh_key, figname,
-    slope, yint, r_lin, r_log, s_lin, ME, MedE, MLE, MedLE, MAE,
-    MedAE, MALE, MedALE, MPE, MAPE, MSPE, SMAPE,
+    slope, yint, r_lin, r_log, s_lin, MRatio, MedRatio, ME, MedE,
+    MLE, MedLE, MAE, MedAE, MALE, MedALE, MPE, MAPE, MSPE, SMAPE,
     MAR, RMSE, RMSLE, MdSA,timeprofplot=None):
     """ Put flux-related metrics into metrics dictionary.
     
@@ -809,6 +816,8 @@ def fill_flux_metrics_dict(dict, model, energy_key, thresh_key,
     dict["Pearson Correlation Coefficient (Linear)"].append(r_lin)
     dict["Pearson Correlation Coefficient (Log)"].append(r_log)
     dict["Spearman Correlation Coefficient (Linear)"].append(s_lin)
+    dict["Mean Ratio"].append(MRatio)
+    dict["Median Ratio"].append(MedRatio)
     dict["Mean Error (ME)"].append(ME)
     dict["Median Error (MedE)"].append(MedE)
     dict["Mean Log Error (MLE)"].append(MLE)
@@ -1565,6 +1574,8 @@ def probability_intuitive_metrics(df, dict, model, energy_key, thresh_key,
 def calc_all_flux_metrics(obs, pred):
     """ Calculate the metrics used for assessing fluxes.
     """
+    MRatio = None
+    MedRatio = None
     ME = None
     MedE = None
     MAE = None
@@ -1582,7 +1593,28 @@ def calc_all_flux_metrics(obs, pred):
     RMSLE = None
     MdSA = None
 
+    sepratio = []
+    sepE = []
+    sepAE = []
+    sepLE = []
+    sepALE = []
+    sepPE = []
+    sepAPE = []
+
     if len(obs) >= 1:
+
+        #Errors for each observation-forecast pair
+        sepratio = metrics.switch_error_func('Ratio',obs,pred)
+        sepE = metrics.switch_error_func('E',obs,pred)
+        sepAE = metrics.switch_error_func('AE',obs,pred)
+        sepLE = metrics.switch_error_func('LE',obs,pred)
+        sepALE = metrics.switch_error_func('ALE',obs,pred)
+        sepPE = metrics.switch_error_func('PE',obs,pred)
+        sepAPE = metrics.switch_error_func('APE',obs,pred)
+
+        #Mean and median errors across all observation-forecast pairs
+        MRatio = statistics.mean(metrics.switch_error_func('Ratio',obs,pred))
+        MedRatio = statistics.median(metrics.switch_error_func('Ratio',obs,pred))
         ME = statistics.mean(metrics.switch_error_func('E',obs,pred))
         MedE = statistics.median(metrics.switch_error_func('E',obs,pred))
         MAE = statistics.mean(metrics.switch_error_func('AE',obs,pred))
@@ -1600,8 +1632,12 @@ def calc_all_flux_metrics(obs, pred):
         RMSLE = metrics.switch_error_func('RMSLE',obs,pred)
         MdSA = metrics.switch_error_func('MdSA',obs,pred)
 
-    return ME, MedE, MAE, MedAE, MLE, MedLE, MALE, MedALE, MPE, MAPE, \
-            MSPE, SMAPE, MAR, RMSE, RMSLE, MdSA
+
+    #Append sub with the metrics for each observed and predicted time profile match
+    errors = {'Ratio': sepratio, 'Error': sepE, 'Absolute Error': sepAE, 'Log Error': sepLE, 'Absolute Log Error': sepALE, 'Percent Error': sepPE, 'Absolute Percent Error': sepAPE}
+
+    return MRatio, MedRatio, ME, MedE, MAE, MedAE, MLE, MedLE, MALE, MedALE,\
+            MPE, MAPE, MSPE, SMAPE, MAR, RMSE, RMSLE, MdSA, errors
 
 
 
@@ -1647,14 +1683,6 @@ def point_intensity_intuitive_metrics(df, dict, model, energy_key, thresh_key,
     pred_energy_key = str(sub.iloc[0]['Prediction Energy Channel Key'])
     pred_thresh_key = str(sub.iloc[0]['Prediction Threshold Key'])
     thresh_fnm = make_thresh_fname(thresh_key)
-    fnm = "point_intensity_selections_" + model + "_" + energy_key.strip() \
-            + "_" + thresh_fnm
-    if mismatch:
-        fnm = fnm + "_mm"
-    if validation_type != "" and validation_type != "All":
-        fnm = fnm + "_" + validation_type
-    write_df(sub, fnm)
-
 
     #Calculate observed values via interpolation in the time profiles
     point_times = sub['Predicted Point Intensity Time'].to_list()
@@ -1744,19 +1772,27 @@ def point_intensity_intuitive_metrics(df, dict, model, energy_key, thresh_key,
         yint = None
         figname = ""
 
-
-    obs, pred = metrics.remove_none(obs,pred)
-    obs, pred = metrics.remove_zero(obs, pred)
-    if not obs or not pred: return
     
-    ME, MedE, MAE, MedAE, MLE, MedLE, MALE, MedALE, MPE, MAPE, MSPE, SMAPE,\
-    MAR, RMSE, RMSLE, MdSA = calc_all_flux_metrics(obs, pred)
+    MRatio, MedRatio, ME, MedE, MAE, MedAE, MLE, MedLE, MALE, MedALE, MPE, MAPE,\
+    MSPE, SMAPE, MAR, RMSE, RMSLE, MdSA, errors = calc_all_flux_metrics(obs, pred)
+
+    #Add error calculation for individual observation-forecast pairs and
+    #write out selections and the metrics associated with each profile match
+    if len(errors['Ratio']) != 0:
+        sub = sub.assign(**errors)
+    fnm = f"point_intensity_selections_{model}_{energy_key.strip()}_{thresh_fnm}"
+    if mismatch:
+        fnm = fnm + "_mm"
+    if validation_type != "" and validation_type != "All":
+        fnm = fnm + "_" + validation_type
+    write_df(sub, fnm)
+
 
     ####METRICS
     fill_flux_metrics_dict(dict, model, energy_key, thresh_key,
         pred_energy_key, pred_thresh_key, figname,
-        slope, yint, r_lin, r_log, s_lin, ME, MedE, MLE, MedLE, MAE,
-        MedAE, MALE, MedALE, MPE, MAPE, MSPE, SMAPE,
+        slope, yint, r_lin, r_log, s_lin, MRatio, MedRatio, ME, MedE, MLE,
+        MedLE, MAE, MedAE, MALE, MedALE, MPE, MAPE, MSPE, SMAPE,
         MAR, RMSE, RMSLE, MdSA, tp_plotnames)
 
 
@@ -1787,10 +1823,11 @@ def peak_intensity_intuitive_metrics(df, dict, model, energy_key, thresh_key,
             'Predicted SEP Peak Intensity (Onset Peak) Units',
             'Peak Intensity Match Status']]
     sub = sub.loc[(sub['Peak Intensity Match Status'] == 'SEP Event')]
-    sub = sub.dropna(subset='Predicted SEP Peak Intensity (Onset Peak)')
-      
+    sub = sub.dropna(subset=['Predicted SEP Peak Intensity (Onset Peak)', 'Observed SEP Peak Intensity (Onset Peak)'])
+
+    #Drop zero and negative values in predicted or observed peak intensity
     if not sub.empty:
-        sub = sub.dropna(subset='Observed SEP Peak Intensity (Onset Peak)')
+        sub = sub.loc[(sub['Predicted SEP Peak Intensity (Onset Peak)'] > 0) & (sub['Observed SEP Peak Intensity (Onset Peak)'] > 0)]
 
     if sub.empty:
         return
@@ -1804,13 +1841,6 @@ def peak_intensity_intuitive_metrics(df, dict, model, energy_key, thresh_key,
     pred_thresh_key = str(sub.iloc[0]['Prediction Threshold Key'])
     
     thresh_fnm = make_thresh_fname(thresh_key)
-    fnm = "peak_intensity_selections_" + model + "_" + energy_key.strip() \
-            + "_" + thresh_fnm
-    if mismatch:
-        fnm = fnm + "_mm"
-    if validation_type != "" and validation_type != "All":
-        fnm = fnm + "_" + validation_type
-    write_df(sub, fnm)
 
     obs = sub['Observed SEP Peak Intensity (Onset Peak)'].to_list()
     pred = sub['Predicted SEP Peak Intensity (Onset Peak)'].to_list()
@@ -1850,15 +1880,25 @@ def peak_intensity_intuitive_metrics(df, dict, model, energy_key, thresh_key,
         figname = ""
 
 
-    ME, MedE, MAE, MedAE, MLE, MedLE, MALE, MedALE, MPE, MAPE, MSPE, SMAPE,\
-    MAR, RMSE, RMSLE, MdSA = calc_all_flux_metrics(obs, pred)
+    MRatio, MedRatio, ME, MedE, MAE, MedAE, MLE, MedLE, MALE, MedALE, MPE, MAPE,\
+    MSPE, SMAPE, MAR, RMSE, RMSLE, MdSA, errors = calc_all_flux_metrics(obs, pred)
 
+    #Add error calculation for individual observation-forecast pairs and
+    #write out selections and the metrics associated with each profile match
+    if len(errors['Ratio']) != 0:
+        sub = sub.assign(**errors)
+    fnm = f"peak_intensity_selections_{model}_{energy_key.strip()}_{thresh_fnm}"
+    if mismatch:
+        fnm = fnm + "_mm"
+    if validation_type != "" and validation_type != "All":
+        fnm = fnm + "_" + validation_type
+    write_df(sub, fnm)
 
     ####METRICS
     fill_flux_metrics_dict(dict, model, energy_key, thresh_key,
         pred_energy_key, pred_thresh_key, figname,
-        slope, yint, r_lin, r_log, s_lin, ME, MedE, MLE, MedLE, MAE,
-        MedAE, MALE, MedALE, MPE, MAPE, MSPE, SMAPE,
+        slope, yint, r_lin, r_log, s_lin, MRatio, MedRatio, ME, MedE, MLE,
+        MedLE, MAE, MedAE, MALE, MedALE, MPE, MAPE, MSPE, SMAPE,
         MAR, RMSE, RMSLE, MdSA)
 
 
@@ -1894,10 +1934,13 @@ def peak_intensity_max_intuitive_metrics(df, dict, model, energy_key,
             'Predicted SEP Peak Intensity Max (Max Flux) Units',
             'Peak Intensity Max Match Status']]
     sub = sub.loc[(sub['Peak Intensity Max Match Status'] == 'SEP Event')]
-    sub = sub.dropna(subset='Predicted SEP Peak Intensity Max (Max Flux)')
+    sub = sub.dropna(subset=['Predicted SEP Peak Intensity Max (Max Flux)', 'Observed SEP Peak Intensity Max (Max Flux)'])
+    
+    #Drop zero and negative values in predicted or observed peak intensity
+    if not sub.empty:
+        sub = sub.loc[(sub['Predicted SEP Peak Intensity Max (Max Flux)'] > 0) & (sub['Observed SEP Peak Intensity Max (Max Flux)'] > 0)]
 
     if not sub.empty:
-        sub = sub.dropna(subset='Observed SEP Peak Intensity Max (Max Flux)')
         sub, doType = extract_flux_forecast_type(sub, thresh_key, peak_key, time_key, validation_type)
 
 
@@ -1920,13 +1963,15 @@ def peak_intensity_max_intuitive_metrics(df, dict, model, energy_key,
             'Predicted SEP Peak Intensity (Onset Peak) Units',
             'Peak Intensity Match Status']]
         sub = sub.loc[(sub['Peak Intensity Match Status'] == 'SEP Event')]
-        sub = sub.dropna(subset='Predicted SEP Peak Intensity (Onset Peak)')
+        sub = sub.dropna(subset=['Predicted SEP Peak Intensity (Onset Peak)', 'Observed SEP Peak Intensity Max (Max Flux)'])
 
+        #Drop zero and negative flux values in predicted or observed peak intensity
         if not sub.empty:
-            sub = sub.dropna(subset='Observed SEP Peak Intensity Max (Max Flux)')
+            sub = sub.loc[(sub['Predicted SEP Peak Intensity (Onset Peak)'] > 0) & (sub['Observed SEP Peak Intensity Max (Max Flux)'] > 0)]
 
         if sub.empty:
             return
+
         peak_key = 'Predicted SEP Peak Intensity (Onset Peak)'
         sub, doType = extract_flux_forecast_type(sub, thresh_key, peak_key, time_key, validation_type)
         if sub.empty:
@@ -1944,22 +1989,10 @@ def peak_intensity_max_intuitive_metrics(df, dict, model, energy_key,
     pred_thresh_key = str(sub.iloc[0]['Prediction Threshold Key'])
 
     thresh_fnm = make_thresh_fname(thresh_key)
-    fnm = "peak_intensity_max_selections_" + model + "_" + energy_key.strip()\
-        + "_" + thresh_fnm
-    if mismatch:
-        fnm = fnm + "_mm"
-    if validation_type != "" and validation_type != "All":
-        fnm = fnm + "_" + validation_type
-    write_df(sub, fnm)
 
     obs = sub['Observed SEP Peak Intensity Max (Max Flux)'].to_list()
     units = sub.iloc[0]['Observed SEP Peak Intensity Max (Max Flux) Units']
     pred = sub[peak_key].to_list()
- 
-    #There may be cases where the maximum flux was predicted to be zero,
-    #particularly by the time profile models. Excluding these cases from the
-    #peak intensity max prediction. They will be caught in the All Clear metrics.
-    obs,pred = metrics.remove_zero(obs,pred)
  
     if len(obs) > 1:
         #PEARSON CORRELATION
@@ -1972,7 +2005,7 @@ def peak_intensity_max_intuitive_metrics(df, dict, model, energy_key,
         slope, yint = np.polyfit(obs_np, pred_np, 1)
 
         #Correlation Plot
-        corr_plot = plt_tools.correlation_plot(obs, pred,
+        corr_plot = plt_tools.correlation_plot(obs,pred,
         "Peak Intensity Max (Max Flux) Correlation", xlabel="Observations",
         ylabel=("Model Predictions (" + str(units) + ")"),
         value="Peak Intensity Max (Max Flux)", use_log = True)
@@ -1995,14 +2028,26 @@ def peak_intensity_max_intuitive_metrics(df, dict, model, energy_key,
         figname = ""
 
 
-    ME, MedE, MAE, MedAE, MLE, MedLE, MALE, MedALE, MPE, MAPE, MSPE, SMAPE,\
-    MAR, RMSE, RMSLE, MdSA = calc_all_flux_metrics(obs, pred)
+    MRatio, MedRatio, ME, MedE, MAE, MedAE, MLE, MedLE, MALE, MedALE, MPE, MAPE,\
+    MSPE, SMAPE, MAR, RMSE, RMSLE, MdSA, errors = calc_all_flux_metrics(obs, pred)
+
+    #Add error calculation for individual observation-forecast pairs and
+    #write out selections and the metrics associated with each profile match
+    if len(errors['Ratio']) != 0:
+        sub = sub.assign(**errors)
+    fnm = f"peak_intensity_max_selections_{model}_{energy_key.strip()}_{thresh_fnm}"
+    if mismatch:
+        fnm = fnm + "_mm"
+    if validation_type != "" and validation_type != "All":
+        fnm = fnm + "_" + validation_type
+    write_df(sub, fnm)
+
 
     ####METRICS
     fill_flux_metrics_dict(dict, model, energy_key, thresh_key,
         pred_energy_key, pred_thresh_key, figname,
-        slope, yint, r_lin, r_log, s_lin, ME, MedE, MLE, MedLE, MAE,
-        MedAE, MALE, MedALE, MPE, MAPE, MSPE, SMAPE,
+        slope, yint, r_lin, r_log, s_lin, MRatio, MedRatio, ME, MedE, MLE,
+        MedLE, MAE, MedAE, MALE, MedALE, MPE, MAPE, MSPE, SMAPE,
         MAR, RMSE, RMSLE, MdSA)
 
 
@@ -2041,11 +2086,11 @@ def max_flux_in_pred_win_metrics(df, dict, model, energy_key,
             'Predicted SEP Peak Intensity Max (Max Flux)',
             'Predicted SEP Peak Intensity Max (Max Flux) Units']]
 
-    sub = sub.dropna(subset='Predicted SEP Peak Intensity Max (Max Flux)')
+    sub = sub.dropna(subset=['Predicted SEP Peak Intensity Max (Max Flux)', 'Observed Max Flux in Prediction Window'])
 
+    #Drop zero and negative values in predicted or observed peak intensity
     if not sub.empty:
-        sub = sub.dropna(subset='Observed Max Flux in Prediction Window')
-
+        sub = sub.loc[(sub['Predicted SEP Peak Intensity Max (Max Flux)'] > 0) & (sub['Observed Max Flux in Prediction Window'] > 0)]
       
     #Models may fill only the Peak Intensity field. It can be ambiguous whether
     #the prediction is intended as onset peak or max flux. If no max flux field
@@ -2065,9 +2110,11 @@ def max_flux_in_pred_win_metrics(df, dict, model, energy_key,
             'Predicted SEP Peak Intensity (Onset Peak)',
             'Predicted SEP Peak Intensity (Onset Peak) Units']]
 
-        sub = sub.dropna(subset='Predicted SEP Peak Intensity (Onset Peak)')
+        sub = sub.dropna(subset=['Predicted SEP Peak Intensity (Onset Peak)', 'Observed Max Flux in Prediction Window'])
+
+        #Drop zero and negative values in predicted or observed peak intensity
         if not sub.empty:
-            sub = sub.dropna(subset='Observed Max Flux in Prediction Window')
+            sub = sub.loc[(sub['Predicted SEP Peak Intensity (Onset Peak)'] > 0) & (sub['Observed Max Flux in Prediction Window'] > 0)]
 
         if sub.empty:
             return
@@ -2084,19 +2131,10 @@ def max_flux_in_pred_win_metrics(df, dict, model, energy_key,
     pred_thresh_key = str(sub.iloc[0]['Prediction Threshold Key'])
 
     thresh_fnm = make_thresh_fname(thresh_key)
-    fnm = "max_flux_in_pred_win_selections_" + model + "_" + energy_key.strip() + "_" + thresh_fnm
-    if mismatch:
-        fnm = fnm + "_mm"
-    write_df(sub, fnm)
 
     obs = sub['Observed Max Flux in Prediction Window']
     units = sub.iloc[0]['Observed Max Flux in Prediction Window Units']
     pred = sub[peak_key]
- 
-    #Some predictions may have zero values, particularly time profile
-    #models. Remove zero values so that the log metrics may be used.
-    obs, pred = metrics.remove_zero(obs,pred)
- 
  
     if len(obs) > 1:
         #PEARSON CORRELATION
@@ -2109,7 +2147,7 @@ def max_flux_in_pred_win_metrics(df, dict, model, energy_key,
         slope, yint = np.polyfit(obs_np, pred_np, 1)
 
         #Correlation Plot
-        corr_plot = plt_tools.correlation_plot(obs, pred,
+        corr_plot = plt_tools.correlation_plot(obs,pred,
         "Max Flux in Prediction Window Correlation", xlabel="Observations",
         ylabel=("Model Predictions (" + str(units) + ")"),
         value="Max Flux in Prediction Window", use_log = True)
@@ -2130,14 +2168,25 @@ def max_flux_in_pred_win_metrics(df, dict, model, energy_key,
         figname = ""
 
 
-    ME, MedE, MAE, MedAE, MLE, MedLE, MALE, MedALE, MPE, MAPE, MSPE, SMAPE,\
-    MAR, RMSE, RMSLE, MdSA = calc_all_flux_metrics(obs, pred)
+    MRatio, MedRatio, ME, MedE, MAE, MedAE, MLE, MedLE, MALE, MedALE, MPE, MAPE,\
+    MSPE, SMAPE, MAR, RMSE, RMSLE, MdSA, errors = calc_all_flux_metrics(obs, pred)
+
+    #Add error calculation for individual observation-forecast pairs and
+    #write out selections and the metrics associated with each profile match
+    if len(errors['Ratio']) != 0:
+        sub = sub.assign(**errors)
+    fnm = f"max_flux_in_pred_win_selections_{model}_{energy_key.strip()}_{thresh_fnm}"
+    if mismatch:
+        fnm = fnm + "_mm"
+    if validation_type != "" and validation_type != "All":
+        fnm = fnm + "_" + validation_type
+    write_df(sub, fnm)
 
     ####METRICS
     fill_flux_metrics_dict(dict, model, energy_key, thresh_key,
         pred_energy_key, pred_thresh_key, figname,
-        slope, yint, r_lin, r_log, s_lin, ME, MedE, MLE, MedLE, MAE,
-        MedAE, MALE, MedALE, MPE, MAPE, MSPE, SMAPE,
+        slope, yint, r_lin, r_log, s_lin, MRatio, MedRatio, ME, MedE, MLE,
+        MedLE, MAE, MedAE, MALE, MedALE, MPE, MAPE, MSPE, SMAPE,
         MAR, RMSE, RMSLE, MdSA)
 
 
@@ -2169,10 +2218,11 @@ def fluence_intuitive_metrics(df, dict, model, energy_key,
             'Predicted SEP Fluence Units',
             'Fluence Match Status']]
     sub = sub.loc[(sub['Fluence Match Status'] == 'SEP Event')]  
-    sub = sub.dropna(subset='Predicted SEP Fluence')
+    sub = sub.dropna(subset=['Predicted SEP Fluence','Observed SEP Fluence'])
 
+    #Drop zero and negative values in predicted or observed peak intensity
     if not sub.empty:
-        sub = sub.dropna(subset='Observed SEP Fluence')
+        sub = sub.loc[(sub['Predicted SEP Fluence'] > 0) & (sub['Observed SEP Fluence'] > 0)]
 
     if sub.empty:
         return
@@ -2186,13 +2236,6 @@ def fluence_intuitive_metrics(df, dict, model, energy_key,
     pred_thresh_key = str(sub.iloc[0]['Prediction Threshold Key'])
 
     thresh_fnm = make_thresh_fname(thresh_key)
-    fnm = "fluence_selections_" + model + "_" + energy_key.strip() + "_" \
-            + thresh_fnm
-    if mismatch:
-        fnm = fnm + "_mm"
-    if validation_type != "" and validation_type != "All":
-        fnm = fnm + "_" + validation_type
-    write_df(sub, fnm)
 
     obs = sub['Observed SEP Fluence'].to_list()
     pred = sub['Predicted SEP Fluence'].to_list()
@@ -2209,7 +2252,7 @@ def fluence_intuitive_metrics(df, dict, model, energy_key,
         slope, yint = np.polyfit(obs_np, pred_np, 1)
 
         #Correlation Plot
-        corr_plot = plt_tools.correlation_plot(obs, pred,
+        corr_plot = plt_tools.correlation_plot(obs,pred,
         "Fluence Correlation", xlabel="Observations",
         ylabel=("Model Predictions (" + str(units) + ")"),
         use_log = True)
@@ -2232,14 +2275,25 @@ def fluence_intuitive_metrics(df, dict, model, energy_key,
         figname = ""
 
 
-    ME, MedE, MAE, MedAE, MLE, MedLE, MALE, MedALE, MPE, MAPE, MSPE, SMAPE,\
-    MAR, RMSE, RMSLE, MdSA = calc_all_flux_metrics(obs, pred)
+    MRatio, MedRatio, ME, MedE, MAE, MedAE, MLE, MedLE, MALE, MedALE, MPE, MAPE,\
+    MSPE, SMAPE, MAR, RMSE, RMSLE, MdSA, errors = calc_all_flux_metrics(obs, pred)
+
+    #Add error calculation for individual observation-forecast pairs and
+    #write out selections and the metrics associated with each profile match
+    if len(errors['Ratio']) != 0:
+        sub = sub.assign(**errors)
+    fnm = f"fluence_selections_{model}_{energy_key.strip()}_{thresh_fnm}"
+    if mismatch:
+        fnm = fnm + "_mm"
+    if validation_type != "" and validation_type != "All":
+        fnm = fnm + "_" + validation_type
+    write_df(sub, fnm)
 
     ####METRICS
     fill_flux_metrics_dict(dict, model, energy_key, thresh_key,
         pred_energy_key, pred_thresh_key, figname,
-        slope, yint, r_lin, r_log, s_lin, ME, MedE, MLE, MedLE, MAE,
-        MedAE, MALE, MedALE, MPE, MAPE, MSPE, SMAPE,
+        slope, yint, r_lin, r_log, s_lin, MRatio, MedRatio, ME, MedE, MLE,
+        MedLE, MAE, MedAE, MALE, MedALE, MPE, MAPE, MSPE, SMAPE,
         MAR, RMSE, RMSLE, MdSA)
 
 
@@ -2701,25 +2755,16 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
             'Predicted Time Profile',
             'Time Profile Match Status']]
     sub = sub.loc[(sub['Time Profile Match Status'] == 'SEP Event')]
-    sub = sub.dropna(subset='Predicted Time Profile')
-
-    if not sub.empty:
-        sub = sub.dropna(subset='Observed Time Profile')
+    sub = sub.dropna(subset=['Predicted Time Profile', 'Observed Time Profile'])
 
     if sub.empty:
         return
         
-    
     mismatch = bool(sub.iloc[0]['Mismatch Allowed'])
     pred_energy_key = str(sub.iloc[0]['Prediction Energy Channel Key'])
     pred_thresh_key = str(sub.iloc[0]['Prediction Threshold Key'])
 
     thresh_fnm = make_thresh_fname(thresh_key)
-    fnm = "time_profile_selections_" + model + "_" + energy_key.strip() \
-            + "_" + thresh_fnm
-    if mismatch:
-        fnm = fnm + "_mm"
-    write_df(sub, fnm)
 
     obs_st = sub['Observed SEP Start Time'].to_list()
     obs_et = sub['Observed SEP End Time'].to_list()
@@ -2732,7 +2777,9 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
     logger.debug("Extracted SEP start and end times")
     logger.debug(obs_st)
     logger.debug(obs_et)
-    
+
+    #For metrics calculations
+    sepratio = []
     sepE = []
     sepAE = []
     sepLE = []
@@ -2748,12 +2795,27 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
     sepRlin = []
     sepRlog= []
     sepSlin = []
-    
 
     tp_plotnames = ""
     figname = ""
     tpfigname = ""
     for i in range(len(obs_profs)):
+        #Variables to calculate a mean metric across an individual time profile
+        E1 = np.nan
+        AE1 = np.nan
+        LE1 = np.nan
+        ALE1 = np.nan
+        MAR1 = np.nan
+        RMSE1 = np.nan
+        MdSA1 = np.nan
+        PE1 = np.nan
+        SPE1 = np.nan
+        SAPE1 = np.nan
+        r_lin = np.nan
+        r_log = np.nan
+        s_lin = np.nan
+        ratio1 = np.nan
+
         logger.debug("Comparing time profile of " + pred_profs[i] + " to observations.")
         all_obs_dates = []
         all_obs_flux = []
@@ -2770,11 +2832,15 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
             all_obs_flux)
         pred_dates, pred_flux = profile.read_single_time_profile(pred_profs[i])
         if not pred_flux:
-            return
+            #Remove row for bad time profile from sub
+            sub = sub[sub['Predicted Time Profile'] != pred_profs[i]]
+            continue
         
         #If all the flux values are zero, then will make the zip lines crash.
-        test = [i for i in range(len(pred_flux)) if pred_flux[i] == 0]
+        test = [ii for ii in range(len(pred_flux)) if pred_flux[ii] == 0]
         if len(test) == len(pred_flux):
+            #Remove row for bad time profile from sub
+            sub = sub[sub['Predicted Time Profile'] != pred_profs[i]]
             continue
         
         #Remove zeros
@@ -2784,6 +2850,8 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
         
         #If predicted time profile is all zeros
         if not pred_flux:
+            #Remove row for bad time profile from sub
+            sub = sub[sub['Predicted Time Profile'] != pred_profs[i]]
             continue
         
         #Interpolate observed time profile onto predicted timestamps
@@ -2820,15 +2888,23 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
         y_label="Particle Intensity",
         date_format="year", showplot=False,
         closeplot=True, saveplot=True, figname=tpfigname)
-        
+ 
         #Check for None and Zero values and remove
-        if not trim_pred_flux or not trim_obs_flux: continue
+        if not trim_pred_flux or not trim_obs_flux:
+            #Remove row for bad time profile from sub
+            sub = sub[sub['Predicted Time Profile'] != pred_profs[i]]
+            continue
+
         obs, pred = metrics.remove_none(trim_obs_flux,trim_pred_flux)
         obs, pred = metrics.remove_zero(obs, pred)
-        if not obs or not pred: continue
+        if not obs or not pred:
+            #Remove row for bad time profile from sub
+            sub = sub[sub['Predicted Time Profile'] != pred_profs[i]]
+            continue
         
-        #Calculate a mean metric across an individual time profile
+
         if len(obs) >= 1 and len(pred) >= 1:
+            ratio1 = statistics.mean(metrics.switch_error_func('Ratio',obs,pred))
             E1 = statistics.mean(metrics.switch_error_func('E',obs,pred))
             AE1 = statistics.mean(metrics.switch_error_func('AE',obs,pred))
             LE1 = statistics.mean(metrics.switch_error_func('LE',obs,pred))
@@ -2842,20 +2918,6 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
             SPE1 = statistics.mean(metrics.switch_error_func('SPE',obs,pred))
             SAPE1 = statistics.mean(metrics.switch_error_func('SAPE',obs,pred))
 
-            sepE.append(E1)
-            sepAE.append(AE1)
-            sepLE.append(LE1)
-            sepALE.append(ALE1)
-            sepAPE.append(APE1)
-            sepMAR.append(MAR1) #Mean Accuracy Ratio
-            sepRMSE.append(RMSE1)
-            sepRMSLE.append(RMSLE1)
-            sepMdSA.append(MdSA1)
-            sepPE.append(PE1)
-            sepSPE.append(SPE1)
-            sepSAPE.append(SAPE1)
-
-
             #In some cases, the predicted time profile can be constant, i.e.
             #all the same value. This will not allow an appropriate calculation
             #of correlation coefficients
@@ -2868,11 +2930,6 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
                 #PEARSON CORRELATION
                 r_lin, r_log = metrics.switch_error_func('r',obs,pred)
                 s_lin = metrics.switch_error_func('spearman',obs,pred)
-                
-                sepRlin.append(r_lin)
-                sepRlog.append(r_log)
-                sepSlin.append(s_lin)
-           
                 
                 #LINEAR REGRESSION
                 obs_np = np.log10(obs)
@@ -2894,7 +2951,40 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
                 corr_plot.savefig(figname, dpi=300, bbox_inches='tight')
                 corr_plot.close()
 
+        sepratio.append(ratio1)
+        sepE.append(E1)
+        sepAE.append(AE1)
+        sepLE.append(LE1)
+        sepALE.append(ALE1)
+        sepAPE.append(APE1)
+        sepMAR.append(MAR1) #Mean Accuracy Ratio
+        sepRMSE.append(RMSE1)
+        sepRMSLE.append(RMSLE1)
+        sepMdSA.append(MdSA1)
+        sepPE.append(PE1)
+        sepSPE.append(SPE1)
+        sepSAPE.append(SAPE1)
+        sepRlin.append(r_lin)
+        sepRlog.append(r_log)
+        sepSlin.append(s_lin)
+
+    #Append sub with the metrics for each observed and predicted time profile match
+    errors = {'Ratio': sepratio, 'Error': sepE, 'Absolute Error': sepAE, 'Log Error': sepLE, 'Absolute Log Error': sepALE, 'Absolute Percent Error': sepAPE, 'Mean Accuracy Ratio': sepMAR, 'Root Mean Square Error': sepRMSE, 'Root Mean Square Log Error': sepRMSLE, 'Percent Error': sepPE, 'Symmetric Percent Error': sepSPE, 'Symmetric Absolute Perecent Error': sepSAPE, 'Pearson Correlation Coefficient (linear)': sepRlin, 'Pearson Correlation Coefficient (log)': sepRlog, 'Spearman Correlation Coefficient': sepSlin}
+    
+    logger.info(sub['Predicted Time Profile'])
+    logger.info(errors['Ratio'])
+    if len(errors['Ratio']) != 0:
+        sub = sub.assign(**errors)
+    
+    #Write out selections and the metrics associated with each profile match
+    fnm = f"time_profile_selections_{model}_{energy_key.strip()}_{thresh_fnm}"
+    if mismatch:
+        fnm = fnm + "_mm"
+    write_df(sub, fnm)
+
     #Calculate mean of metrics for all time profiles
+    MRatio = None
+    MedRatio = None
     ME = None
     MedE = None
     MAE = None
@@ -2918,6 +3008,8 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
     yint = None
     
     if len(sepE) > 1:
+        MRatio = statistics.mean(sepratio)
+        MedRatio = statistics.median(sepratio)
         ME = statistics.mean(sepE)
         MedE = statistics.median(sepE)
         MAE = statistics.mean(sepAE)
@@ -2936,6 +3028,8 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
         SMAPE = statistics.mean(sepSAPE)
 
     if len(sepE) == 1:
+        MRatio = sepratio[0]
+        MedRatio = sepratio[0]
         ME = sepE[0]
         MedE = sepE[0]
         MAE = sepAE[0]
@@ -2966,8 +3060,8 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
     ####METRICS
     fill_flux_metrics_dict(dict, model, energy_key, thresh_key,
         pred_energy_key, pred_thresh_key, figname,
-        slope, yint, Rlin, Rlog, Slin, ME, MedE, MLE, MedLE, MAE,
-        MedAE, MALE, MedALE, MPE, MAPE, MSPE, SMAPE,
+        slope, yint, Rlin, Rlog, Slin, MRatio, MedRatio, ME, MedE, MLE,
+        MedLE, MAE, MedAE, MALE, MedALE, MPE, MAPE, MSPE, SMAPE,
         MAR, RMSE, RMSLE, MdSA, tp_plotnames)
 
 
@@ -3181,8 +3275,8 @@ def awt_metrics(df, dict, model, energy_key, thresh_key, validation_type):
     dict['Prediction Energy Channel'].append(sub.iloc[0]['Prediction Energy Channel Key'])
     dict['Prediction Threshold'].append(sub.iloc[0]['Prediction Threshold Key'])
 
-    #AWT is always compared to Observed SEP Threshold Crossing Time and
-    #Observed SEP Start Time. obs_ref allows for the calculation of AWT wrt
+    #AWT is always compared to Observed SEP Threshold Crossing Time.
+    #obs_ref allows for the calculation of AWT wrt
     #another observation time.
     forecasts = [{'pred_key': 'Predicted SEP All Clear',
                     'match_key': 'All Clear Match Status',
@@ -3196,6 +3290,9 @@ def awt_metrics(df, dict, model, energy_key, thresh_key, validation_type):
                  {'pred_key': 'Predicted SEP Peak Intensity (Onset Peak)',
                     'match_key': 'Peak Intensity Match Status',
                     'obs_key': 'Observed SEP Peak Intensity (Onset Peak) Time'},
+ #                {'pred_key': 'Predicted SEP Peak Intensity (Onset Peak)',
+ #                   'match_key': 'Peak Intensity Match Status',
+ #                   'obs_key': 'Observed SEP Peak Intensity Max (Max Flux) Time'},
                  {'pred_key': 'Predicted SEP Peak Intensity Max (Max Flux)',
                     'match_key': 'Peak Intensity Max Match Status',
                     'obs_key': 'Observed SEP Peak Intensity Max (Max Flux) Time'},
@@ -3215,7 +3312,7 @@ def awt_metrics(df, dict, model, energy_key, thresh_key, validation_type):
         #Create an empty dataframe with the same columns plus AWT info
         cols = sub.columns.to_list()
         cols.append('AWT to Observed SEP Threshold Crossing Time')
-        cols.append('AWT to Observed SEP Start Time')
+#        cols.append('AWT to Observed SEP Start Time')
         if ftype['obs_key'] != '':
             cols.append('AWT to ' + ftype['obs_key'])
         sel_df = pd.DataFrame(columns=cols) #Selected forecasts and AWT results
@@ -3228,7 +3325,8 @@ def awt_metrics(df, dict, model, energy_key, thresh_key, validation_type):
         if validation_type == "First":
             if len(sep_events) == len(sel_df.index):
                 #Fill this set of fields in the AWT dict with None
-                time_keys = ['Observed SEP Threshold Crossing Time','Observed SEP Start Time']
+#                time_keys = ['Observed SEP Threshold Crossing Time','Observed SEP Start Time']
+                time_keys = ['Observed SEP Threshold Crossing Time']
                 if ftype['obs_key'] != '':
                     time_keys.append(ftype['obs_key'])
                 for key in time_keys:
@@ -3283,13 +3381,13 @@ def awt_metrics(df, dict, model, energy_key, thresh_key, validation_type):
                 tc_awt = np.nan
             row.append(tc_awt)
             
-            st = sep_sub.iloc[idx]['Observed SEP Start Time']
-            st_awt = (st - issue_time).total_seconds()/(60.*60.)
+#            st = sep_sub.iloc[idx]['Observed SEP Start Time']
+#            st_awt = (st - issue_time).total_seconds()/(60.*60.)
             #If issue time is more than 7 days later than the start time,
             #the assume this is not a realistic issue time and ignore
-            if st_awt < -7.*24.:
-                st_awt = np.nan
-            row.append(st_awt)
+#            if st_awt < -7.*24.:
+#                st_awt = np.nan
+#            row.append(st_awt)
 
             if ftype['obs_key'] != '':
                 tm = sep_sub.iloc[idx][ftype['obs_key']]
@@ -3306,7 +3404,8 @@ def awt_metrics(df, dict, model, energy_key, thresh_key, validation_type):
         if sel_df.empty:
             #No forecasts for this particular quantity
             #Fill this set of fields in the AWT dict with None
-            time_keys = ['Observed SEP Threshold Crossing Time','Observed SEP Start Time']
+#            time_keys = ['Observed SEP Threshold Crossing Time','Observed SEP Start Time']
+            time_keys = ['Observed SEP Threshold Crossing Time']
             if ftype['obs_key'] != '':
                 time_keys.append(ftype['obs_key'])
             for key in time_keys:
@@ -3320,7 +3419,8 @@ def awt_metrics(df, dict, model, energy_key, thresh_key, validation_type):
         #May be the case that none of the forecasts had a valid AWT
         #calculation. If every single AWT value is None, then do not
         #output a file or proceed with AWT calculation.
-        time_keys = ['Observed SEP Threshold Crossing Time','Observed SEP Start Time']
+#        time_keys = ['Observed SEP Threshold Crossing Time','Observed SEP Start Time']
+        time_keys = ['Observed SEP Threshold Crossing Time']
         if ftype['obs_key'] != '':
             time_keys.append(ftype['obs_key'])
         chk_awts = []
