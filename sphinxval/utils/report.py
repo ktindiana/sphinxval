@@ -56,7 +56,7 @@ def make_markdown_table(column_1, column_2, dataframe, width=50):
                                'False Alarm Rate', 'Frequency of Misses', 
                                'Probability of Correct Negatives', 
                                'Frequency of Hits', 'False Alarm Ratio', 
-                               'Detectio Failure Ratio', 
+                               'Detection Failure Ratio', 
                                'Frequency of Correct Negatives', 
                                'Threat Score', 'Brier Score', 
                                'Pearson Correlation Coefficient (linear)', 
