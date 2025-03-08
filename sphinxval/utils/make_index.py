@@ -92,6 +92,7 @@ def make_index(directory, title='SPHINX Validation Report Repository', banner_te
     # REMOVE MARKDOWN FILES
     files = [file for file in files if not file.endswith('.md')]
     files = [file for file in files if not file.endswith('index.html')]
+    files.sort()
     html += '    <div class="content">\n'
     html += '        <div class="links">\n'
     for file in files:
