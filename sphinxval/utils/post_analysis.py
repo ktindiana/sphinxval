@@ -23,7 +23,8 @@ import sklearn.metrics as skl
 import matplotlib.pylab as plt
 
 scoreboard_models = ["ASPECS", "iPATH", "MagPy", "SEPMOD",
-                    "SEPSTER", "SPRINTS", "UMASEP"]
+                    "SEPSTER", "SPRINTS", "UMASEP", "GSU",
+                    "MAG4", "REleASE"]
 
 
 #If not empty, add metrics to the contingency metrics analysis
@@ -1213,6 +1214,19 @@ def all_clear_grid(csv_path, models, energy_min, energy_max, threshold,
                 
                 if sub.empty:
                     sep_outcome = 'No Data'
+                    #Record info for deoverlapping
+                    dict['Start Date'].append(sep)
+                    dict['End Date'].append(pd.NaT)
+                    dict['Observed SEP Threshold Crossing Time'].append(sep)
+                    dict['Observed SEP All Clear'].append(False)
+                    dict['Predicted SEP All Clear'].append(sep_outcome)
+                    dict['Total Forecasts'].append(np.nan)
+                    dict['Total Hits'].append(np.nan)
+                    dict['Total Misses'].append(np.nan)
+                    dict['Total False Alarms'].append(np.nan)
+                    dict['Total Correct Negatives'].append(np.nan)
+                    dict['First Prediction Window'].append(pd.NaT)
+                    dict['Last Prediction Window'].append(pd.NaT)
                 else:
                     sub.sort_values(by='Prediction Window Start', inplace=True)
                     pred_win_first = sub['Prediction Window Start'].iloc[0]
@@ -1276,6 +1290,19 @@ def all_clear_grid(csv_path, models, energy_min, energy_max, threshold,
  
                 if sub.empty:
                     nonsep_outcome = 'No Data'
+                    #Record info for deoverlapping
+                    dict['Start Date'].append(non_st)
+                    dict['End Date'].append(non_end)
+                    dict['Observed SEP Threshold Crossing Time'].append(pd.NaT)
+                    dict['Observed SEP All Clear'].append(True)
+                    dict['Predicted SEP All Clear'].append(nonsep_outcome)
+                    dict['Total Forecasts'].append(np.nan)
+                    dict['Total Hits'].append(np.nan)
+                    dict['Total Misses'].append(np.nan)
+                    dict['Total False Alarms'].append(np.nan)
+                    dict['Total Correct Negatives'].append(np.nan)
+                    dict['First Prediction Window'].append(pd.NaT)
+                    dict['Last Prediction Window'].append(pd.NaT)
                 else:
                     sub.sort_values(by='Prediction Window Start', inplace=True)
                     pred_win_first = sub['Prediction Window Start'].iloc[0]
@@ -1337,7 +1364,10 @@ def all_clear_grid(csv_path, models, energy_min, energy_max, threshold,
     df_sep['Total Misses'] = df_sep_drop.apply(lambda x: x.str.contains('Miss')).sum(axis=1)
     df_sep['Total No Data'] = df_sep_drop.apply(lambda x: x.str.contains('No Data')).sum(axis=1)
     if write_grid:
-        df_sep.to_csv(os.path.join(csv_path,f"all_clear_grid_SEP_{energy_key}_{thresh_key}.csv"), index=False)
+        gridname = f"all_clear_grid_SEP_{energy_key}_{thresh_key}.csv"
+        if len(models) == 1:
+            gridname = f"all_clear_grid_SEP_{models[0]}_{energy_key}_{thresh_key}.csv"
+        df_sep.to_csv(os.path.join(csv_path,gridname), index=False)
 
     df_nonsep = pd.DataFrame(nonsep_results)
     df_nonsep_drop = df_nonsep.drop(columns=['Non-Event Start', 'Non-Event End'], axis=1)
@@ -1345,10 +1375,16 @@ def all_clear_grid(csv_path, models, energy_min, energy_max, threshold,
     df_nonsep['Total False Alarms'] = df_nonsep_drop.apply(lambda x: x.str.contains('FA')).sum(axis=1)
     df_nonsep['Total No Data'] = df_nonsep_drop.apply(lambda x: x.str.contains('No Data')).sum(axis=1)
     if write_grid:
-        df_nonsep.to_csv(os.path.join(csv_path,f"all_clear_grid_NonEvent_{energy_key}_{thresh_key}.csv"), index=False)
+        gridname = f"all_clear_grid_NonEvent_{energy_key}_{thresh_key}.csv"
+        if len(models) == 1:
+            gridname = f"all_clear_grid_NonEvent_{models[0]}_{energy_key}_{thresh_key}.csv"
+        df_nonsep.to_csv(os.path.join(csv_path,gridname), index=False)
 
     df_scores = pd.DataFrame(all_clear_dict)
-    df_scores.to_csv(os.path.join(csv_path,f"all_clear_grid_metrics_{energy_key}_{thresh_key}.csv"), index=False)
+    gridname = f"all_clear_grid_metrics_{energy_key}_{thresh_key}.csv"
+    if len(models) == 1:
+        gridname = f"all_clear_grid_metrics_{models[0]}_{energy_key}_{thresh_key}.csv"
+    df_scores.to_csv(os.path.join(csv_path,gridname), index=False)
 
 
 
