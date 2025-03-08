@@ -12,7 +12,6 @@ logpath = './logs'
 baseurlpath = None
 #baseurlpath = 'https://web-dev.ccmc.smce.nasa.gov:8001/sphinx'
 
-
 ######SHORTNAME#####
 # Set to a list of items if you want to group a model's submodules to share
 # the same shortname (example: 'UMASEP-10 WCP' -> 'UMASEP-10')

@@ -56,7 +56,7 @@ def make_markdown_table(column_1, column_2, dataframe, width=50):
                                'False Alarm Rate', 'Frequency of Misses', 
                                'Probability of Correct Negatives', 
                                'Frequency of Hits', 'False Alarm Ratio', 
-                               'Detection Failure Ratio', 
+                               'Detectio Failure Ratio', 
                                'Frequency of Correct Negatives', 
                                'Threat Score', 'Brier Score', 
                                'Pearson Correlation Coefficient (linear)', 
@@ -183,7 +183,7 @@ def add_collapsible_segment_nest(header_list, text_list, depth=0):
 
 def build_info_string_header(value, limit_message, selections_filename):
     info_string = 'Instruments and observed values used in validation.<br>'
-    info_string += 'Extracted from: ' + os.path.abspath(selections_filename) + '<br>\n'
+    info_string += 'Extracted from: ' + selections_filename + '<br>\n'
     info_string += 'N = ' + str(value) + '<br>\n'
     info_string += limit_message
     return info_string
@@ -692,7 +692,8 @@ def add_tab(appendage, markdown_text, model):
     return text
 
 def add_index_link():
-    return '<a href="' + os.path.abspath(os.path.join(config.reportpath, 'index.html')) + '">&#8592; Other Reports</a>\n'
+    href_path = 'index.html'
+    return '<a href="' + href_path + '">&#8592; Other Reports</a>\n'
 
 def convert_markdown_to_html(text, model, validation_reference=False):
     
@@ -719,7 +720,7 @@ def convert_markdown_to_html(text, model, validation_reference=False):
         text_final += text[i]
         
     # FINALIZE
-    html = markdown.markdown(text_final)        
+    html = markdown.markdown(text_final)
 
     return html
       

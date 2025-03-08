@@ -95,10 +95,8 @@ def make_index(directory, title='SPHINX Validation Report Repository', banner_te
     html += '    <div class="content">\n'
     html += '        <div class="links">\n'
     for file in files:
-        if config.baseurlpath is None:
-            file = os.path.abspath(os.path.normpath(os.path.join(directory, file)))
-        else:
-            file = os.path.normpath(os.path.join(config.baseurlpath, directory, file))
+        if config.baseurlpath is not None:
+            file = os.path.normpath(os.path.join(config.baseurlpath, file))
         html += '            <a href="' + file + '">' + os.path.basename(file) + '</a><br>\n'
     html += '        </div>\n'
     html += '    </div>\n'
