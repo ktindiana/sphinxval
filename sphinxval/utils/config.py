@@ -22,7 +22,10 @@ shortname_grouping = [
     ('UMASEP-100 .*', 'UMASEP-100'),
     ('UMASEP-30 .*', 'UMASEP-30'),
     ('UMASEP-50 .*', 'UMASEP-50'),
-    ('UMASEP-500 .*', 'UMASEP-500')
+    ('UMASEP-500 .*', 'UMASEP-500'),
+    ('SAWS-ASPECS nowcast 50%', 'SAWS-ASPECS 50%'),
+    ('SAWS-ASPECS nowcast 90%', 'SAWS-ASPECS 90%'),
+    ('SAWS-ASPECS nowcast', 'SAWS-ASPECS')
 ]
 
 # SEP Profile Path Appendages
@@ -48,6 +51,12 @@ sep_profile_path_relative_to_json = {
     'SAWS-ASPECS flare' : '../../../Profile/{year}/{month}/',
     'SAWS-ASPECS flare 50%' : '../../../Profile/{year}/{month}/',
     'SAWS-ASPECS flare 90%' : '../../../Profile/{year}/{month}/',
+    'SAWS-ASPECS' : '../../../Profile/{year}/{month}/',
+    'SAWS-ASPECS 50%' : '../../../Profile/{year}/{month}/',
+    'SAWS-ASPECS 90%' : '../../../Profile/{year}/{month}/',
+    'SAWS-ASPECS nowcast' : '../../../Profile/{year}/{month}/',
+    'SAWS-ASPECS nowcast 50%' : '../../../Profile/{year}/{month}/',
+    'SAWS-ASPECS nowcast 90%' : '../../../Profile/{year}/{month}/',
     'ZEUS+iPATH_CME' : '../../../{energy}MeV/{year}/{month}/',
     'ZEUS+iPATH_Flare' : '../../../{energy}MeV/{year}/{month}/',
     'SEPMOD' : './',
@@ -88,7 +97,7 @@ peak_flux_cut = 8e-1
 #predicted energy channels and thresholds, but not exactly the same.
 #Only one excepted case allowed in current version.
 #Set do_mismatch = True to allow comparison of mismatched energy channels and thresholds
-do_mismatch = True
+do_mismatch = False
 
 #mm stands for "mismatch"
 #WRITE UNITS IN SAME FORMAT AS REQUESTED FOR SEP SCOREBOARDS
@@ -102,7 +111,7 @@ t_units = vunits.convert_string_to_units("pfu")
 t2_units = vunits.convert_string_to_units("MeV^-1*s^-1*cm^-2*sr^-1")
 
 ######SET MODEL INFO#####
-mm_model = "REleASE" #Model short name contains this string
+mm_model = "60-min" #Model short name contains this string
 mm_pred_energy_channel = {"min": 15.8, "max": 39.8, "units": e_units}
 mm_pred_threshold = {"threshold": 0.1, "threshold_units": t2_units}
 #mm_pred_energy_channel = {"min": 28.2, "max": 50.1, "units": e_units}

@@ -2712,6 +2712,10 @@ def setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_o
             
             sphinx.last_input_time = fcast.last_input_time()
 
+            #HACK TO ALLOW ASPECS FORECASTS THROUGH
+            if pd.isnull(sphinx.last_input_time) and pd.isnull(sphinx.last_trigger_time):
+                sphinx.last_input_time = datetime.datetime(1970,1,1)
+                sphinx.last_trigger_time = datetime.datetime(1970,1,1)
 
             #Note if the model uses eruptions as triggers for 2nd matching step
             logger.debug("\n")

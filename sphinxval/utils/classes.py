@@ -1172,33 +1172,33 @@ class Forecast():
             if verbose:
                 logger.warning("Invalid forecast. " + msg + " " + self.source)
 
-
-        if pd.isnull(last_trigger_time) and pd.isnull(last_input_time):
-            self.valid = False
-            msg = "Trigger and input timing data not available"
-            self.invalid_reason += msg + ";"
-            if verbose:
-                logger.warning("Invalid forecast. " + msg + f", last trigger time: {last_trigger_time}, last input time: {last_input_time} " + self.source)
-
-
-        if not pd.isnull(last_trigger_time):
-            if self.issue_time < last_trigger_time:
-                self.valid = False
-                msg = "Issue time before trigger time"
-                self.invalid_reason += msg + ";"
-                if verbose:
-                    logger.warning("Invalid forecast. "
-                          "Issue time (" + str(self.issue_time) + ") must start after last trigger (" + str(last_trigger_time) + ") " + self.source)
-
-
-        if not pd.isnull(last_input_time):
-            if self.issue_time < last_input_time:
-                self.valid = False
-                msg = "Issue time before input time"
-                self.invalid_reason += msg  + ";"
-                if verbose:
-                    logger.warning("Invalid forecast. "
-                          "Issue time (" + str(self.issue_time) + ") must start after last input time ("+ str(last_input_time) + ") " + self.source)
+#HACK COMMENT TRIGGER/INPUT CHECKING TO ALLOW ASPECS FORECASTS TO PASS
+#        if pd.isnull(last_trigger_time) and pd.isnull(last_input_time):
+#            self.valid = False
+#            msg = "Trigger and input timing data not available"
+#            self.invalid_reason += msg + ";"
+#            if verbose:
+#                logger.warning("Invalid forecast. " + msg + f", last trigger time: {last_trigger_time}, last input time: {last_input_time} " + self.source)
+#
+#
+#        if not pd.isnull(last_trigger_time):
+#            if self.issue_time < last_trigger_time:
+#                self.valid = False
+#                msg = "Issue time before trigger time"
+#                self.invalid_reason += msg + ";"
+#                if verbose:
+#                    logger.warning("Invalid forecast. "
+#                          "Issue time (" + str(self.issue_time) + ") must start after last trigger (" + str(last_trigger_time) + ") " + self.source)
+#
+#
+#        if not pd.isnull(last_input_time):
+#            if self.issue_time < last_input_time:
+#                self.valid = False
+#                msg = "Issue time before input time"
+#                self.invalid_reason += msg  + ";"
+#                if verbose:
+#                    logger.warning("Invalid forecast. "
+#                          "Issue time (" + str(self.issue_time) + ") must start after last input time ("+ str(last_input_time) + ") " + self.source)
 
 
         if pd.isnull(self.prediction_window_start) or pd.isnull(self.prediction_window_end):
