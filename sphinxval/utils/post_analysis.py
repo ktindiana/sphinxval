@@ -1500,9 +1500,14 @@ def probability_deoverlap(csv_path, models, energy_min, energy_max, threshold,
 
 
     #Dictionaries needed to create visual grids
-    sep_results = {"SEP Events": df_dates["SEP Events"].to_list()}
-    nonsep_results = {"Non-Event Start": df_dates["Non-Event Start"].to_list(),
+    sep_results_max = {"SEP Events": df_dates["SEP Events"].to_list()}
+    nonsep_results_max = {"Non-Event Start": df_dates["Non-Event Start"].to_list(),
         "Non-Event End": df_dates["Non-Event End"].to_list()}
+
+    sep_results_mean = {"SEP Events": df_dates["SEP Events"].to_list()}
+    nonsep_results_mean = {"Non-Event Start": df_dates["Non-Event Start"].to_list(),
+        "Non-Event End": df_dates["Non-Event End"].to_list()}
+
 
     #Probability metrics
     probability_dict = validation.initialize_probability_dict()
@@ -1524,15 +1529,18 @@ def probability_deoverlap(csv_path, models, energy_min, energy_max, threshold,
                 'Observed SEP Threshold Crossing Time': [],
                 'Observed SEP Probability': [],
                 'Predicted SEP Probability Max': [],
+                'Predicted SEP Probability Mean': [],
                 'Total Forecasts': [],
                 'First Prediction Window': [],
                 'Last Prediction Window': []}
 
 
-        #Store Hit/Miss/No Data
-        sep_outcomes = []
+        #Store Max, Mean probability
+        sep_max = []
+        sep_mean = []
         #Store False Alarm/Correct Negative/No Data
-        nonsep_outcomes = []
+        nonsep_max = []
+        nonsep_mean = []
         
         fname = os.path.join(csv_path,
             f"probability_selections_{model}_{energy_key}_{thresh_key}.csv")
@@ -1559,8 +1567,8 @@ def probability_deoverlap(csv_path, models, energy_min, energy_max, threshold,
 
             #SEP EVENTS
             #For each SEP event, get Hit/Miss/No Data
-            sep_outcome = None
-            sep_outcome_bool = None
+            sep_outcome_max = np.nan
+            sep_outcome_mean = np.nan
             nsepcasts = np.nan
             maxprob = np.nan
             nnoncasts = np.nan
@@ -1569,13 +1577,13 @@ def probability_deoverlap(csv_path, models, energy_min, energy_max, threshold,
                 sub = df[df['Observed SEP Threshold Crossing Time'] == sep]
                 
                 if sub.empty:
-                    sep_outcome = np.nan
                     #Record info for deoverlapping
                     dict['Start Date'].append(sep)
                     dict['End Date'].append(pd.NaT)
                     dict['Observed SEP Threshold Crossing Time'].append(sep)
                     dict['Observed SEP Probability'].append(1.0)
-                    dict['Predicted SEP Probability Max'].append(sep_outcome)
+                    dict['Predicted SEP Probability Max'].append(np.nan)
+                    dict['Predicted SEP Probability Mean'].append(np.nan)
                     dict['Total Forecasts'].append(np.nan)
                     dict['First Prediction Window'].append(pd.NaT)
                     dict['Last Prediction Window'].append(pd.NaT)
@@ -1587,21 +1595,22 @@ def probability_deoverlap(csv_path, models, energy_min, energy_max, threshold,
                     nsepcasts = len(sub) #total forecasts associated with the SEP event
                     print(f"{nsepcasts} {model} forecasts associated with {sep}")
                     #Desire max probability forecast for the SEP event
-                    sep_outcome = sub['Predicted SEP Probability'].max()
- 
+                    sep_outcome_max = sub['Predicted SEP Probability'].max()
+                    sep_outcome_mean = sub['Predicted SEP Probability'].mean()
 
                     #Record info for deoverlapping
                     dict['Start Date'].append(sep)
                     dict['End Date'].append(pd.NaT)
                     dict['Observed SEP Threshold Crossing Time'].append(sep)
                     dict['Observed SEP Probability'].append(1.0)
-                    dict['Predicted SEP Probability Max'].append(sep_outcome)
+                    dict['Predicted SEP Probability Max'].append(sep_outcome_max)
+                    dict['Predicted SEP Probability Mean'].append(sep_outcome_mean)
                     dict['Total Forecasts'].append(nsepcasts)
                     dict['First Prediction Window'].append(pred_win_first)
                     dict['Last Prediction Window'].append(pred_win_last)
 
-            sep_outcomes.append(sep_outcome)
-
+            sep_max.append(sep_outcome_max)
+            sep_mean.append(sep_outcome_mean)
             
             #NON-EVENTS
             #For each non-event, get False Alarm/Correct Negative/No Data
@@ -1609,7 +1618,8 @@ def probability_deoverlap(csv_path, models, energy_min, energy_max, threshold,
             #All forecasts with prediction windows that start at the
             #Non-Event Start dates and all predictions with start timess all the
             #way through to the End date
-            nonsep_outcome = None
+            nonsep_outcome_max = np.nan
+            nonsep_outcome_mean = np.nan
             if not pd.isnull(non_st):
                 sub = associated_forecasts(df, non_st, non_end, split)
                 #Remove any forecasts in sub that are associated to a SEP
@@ -1618,13 +1628,13 @@ def probability_deoverlap(csv_path, models, energy_min, energy_max, threshold,
                 sub = sub[sub['Observed SEP Probability']==0.0]
  
                 if sub.empty:
-                    nonsep_outcome = np.nan
                     #Record info for deoverlapping
                     dict['Start Date'].append(non_st)
                     dict['End Date'].append(non_end)
                     dict['Observed SEP Threshold Crossing Time'].append(pd.NaT)
                     dict['Observed SEP Probability'].append(0.0)
-                    dict['Predicted SEP Probability Max'].append(nonsep_outcome)
+                    dict['Predicted SEP Probability Max'].append(np.nan)
+                    dict['Predicted SEP Probability Mean'].append(np.nan)
                     dict['Total Forecasts'].append(np.nan)
                     dict['First Prediction Window'].append(pd.NaT)
                     dict['Last Prediction Window'].append(pd.NaT)
@@ -1636,28 +1646,34 @@ def probability_deoverlap(csv_path, models, energy_min, energy_max, threshold,
                     nnoncasts = len(sub) #total number of forecasts
                     print(f"{nnoncasts} {model} forecasts associated with {non_st} to {non_end}")
                 
-                    nonsep_outcome = sub['Predicted SEP Probability'].max()
-
+                    nonsep_outcome_max = sub['Predicted SEP Probability'].max()
+                    nonsep_outcome_mean = sub['Predicted SEP Probability'].mean()
+                    
                     #Record info for deoverlapping
                     dict['Start Date'].append(non_st)
                     dict['End Date'].append(non_end)
                     dict['Observed SEP Threshold Crossing Time'].append(pd.NaT)
                     dict['Observed SEP Probability'].append(0.0)
-                    dict['Predicted SEP Probability Max'].append(nonsep_outcome)
+                    dict['Predicted SEP Probability Max'].append(nonsep_outcome_max)
+                    dict['Predicted SEP Probability Mean'].append(nonsep_outcome_mean)
                     dict['Total Forecasts'].append(nnoncasts)
                     dict['First Prediction Window'].append(pred_win_first)
                     dict['Last Prediction Window'].append(pred_win_last)
 
-            nonsep_outcomes.append(nonsep_outcome)
+            nonsep_max.append(nonsep_outcome_max)
+            nonsep_mean.append(nonsep_outcome_mean)
 
-        #Save aggregated max probabilities per model
-        sep_results.update({model: sep_outcomes})
-        nonsep_results.update({model: nonsep_outcomes})
+        #Save aggregated max, mean probabilities per model
+        sep_results_max.update({model: sep_max})
+        nonsep_results_max.update({model: nonsep_max})
+
+        sep_results_mean.update({model: sep_mean})
+        nonsep_results_mean.update({model: nonsep_mean})
 
         #Write out deoverlapped dataframe per model
         df_do = pd.DataFrame(dict)
         df_do = df_do.sort_values('Start Date')
-        fnameout = fname.replace('.csv','_deoverlap_Max.csv')
+        fnameout = fname.replace('.csv','_deoverlap.csv')
         df_do.to_csv(fnameout, index=False)
         print(f"Wrote out {fnameout}.")
 
@@ -1666,52 +1682,74 @@ def probability_deoverlap(csv_path, models, energy_min, energy_max, threshold,
         #Drop time periods with No Data
         df_do = df_do.dropna(subset=['Observed SEP Probability', 'Predicted SEP Probability Max'])
         obs = df_do['Observed SEP Probability'].to_list()
-        pred = df_do['Predicted SEP Probability Max'].to_list()
 
-        #Calculate metrics
-        brier_score = metrics.calc_brier(obs, pred)
-        brier_skill = metrics.calc_brier_skill(obs, pred)
-        rank_corr_coeff = metrics.calc_spearman(obs, pred)
+        for type in ['Max','Mean']:
+            key = 'Predicted SEP Probability ' + type
+            pred = df_do[key].to_list()
 
-        roc_auc, roc_curve_plt = metrics.receiver_operator_characteristic(obs, pred, model)
-        
-        roc_curve_plt.plot()
-        skill_line = np.linspace(0.0, 1.0, num=10) # Constructing a diagonal line that represents no skill/random guess
-        plt.plot(skill_line, skill_line, '--', label = 'Random Guess')
-        figname = csv_path + '/../plots/ROC_curve_' \
-                + model + "_" + energy_key.strip() + "_" + thresh_key
+            #Calculate metrics
+            brier_score = metrics.calc_brier(obs, pred)
+            brier_skill = metrics.calc_brier_skill(obs, pred)
+            rank_corr_coeff = metrics.calc_spearman(obs, pred)
 
-        figname += "_deoverlap_max.pdf"
-        plt.legend(loc="lower right")
-        roc_curve_plt.figure_.savefig(figname, dpi=300, bbox_inches='tight')
-        plt.close(roc_curve_plt.figure_)
-        
-        #Save to dict (ultimately dataframe)
-        probability_dict['Model'].append(model)
-        probability_dict['Energy Channel'].append(energy_key)
-        probability_dict['Threshold'].append(thresh_key)
-        probability_dict['Prediction Energy Channel'].append(energy_key)
-        probability_dict['Prediction Threshold'].append(thresh_key)
-        probability_dict['ROC Curve Plot'].append(figname)
-        probability_dict['Brier Score'].append(brier_score)
-        probability_dict['Brier Skill Score'].append(brier_skill)
-        probability_dict['Spearman Correlation Coefficient'].append(rank_corr_coeff)
-        probability_dict['Area Under ROC Curve'].append(roc_auc)
+            roc_auc, roc_curve_plt = metrics.receiver_operator_characteristic(obs, pred, model)
+            
+            roc_curve_plt.plot()
+            skill_line = np.linspace(0.0, 1.0, num=10) # Constructing a diagonal line that represents no skill/random guess
+            plt.plot(skill_line, skill_line, '--', label = 'Random Guess')
+            figname = csv_path + '/../plots/ROC_curve_' \
+                    + model + "_" + energy_key.strip() + "_" + thresh_key
+
+            figname += "_deoverlap_" + type + ".pdf"
+            plt.legend(loc="lower right")
+            roc_curve_plt.figure_.savefig(figname, dpi=300, bbox_inches='tight')
+            plt.close(roc_curve_plt.figure_)
+            
+            #Save to dict (ultimately dataframe)
+            probability_dict['Model'].append(model + ' ' + type)
+            probability_dict['Energy Channel'].append(energy_key)
+            probability_dict['Threshold'].append(thresh_key)
+            probability_dict['Prediction Energy Channel'].append(energy_key)
+            probability_dict['Prediction Threshold'].append(thresh_key)
+            probability_dict['ROC Curve Plot'].append(figname)
+            probability_dict['Brier Score'].append(brier_score)
+            probability_dict['Brier Skill Score'].append(brier_skill)
+            probability_dict['Spearman Correlation Coefficient'].append(rank_corr_coeff)
+            probability_dict['Area Under ROC Curve'].append(roc_auc)
 
     
-    df_sep = pd.DataFrame(sep_results)
+    df_sep_max = pd.DataFrame(sep_results_max)
+    df_sep_mean = pd.DataFrame(sep_results_mean)
     if write_grid:
-        gridname = f"probability_deoverlap_SEP_{energy_key}_{thresh_key}.csv"
+        #MAX results
+        gridname = f"probability_grid_SEP_{energy_key}_{thresh_key}_Max.csv"
         if len(models) == 1:
-            gridname = f"probability_deoverlap_SEP_{models[0]}_{energy_key}_{thresh_key}.csv"
-        df_sep.to_csv(os.path.join(csv_path,gridname), index=False)
+            gridname = f"probability_grid_SEP_{models[0]}_{energy_key}_{thresh_key}_Max.csv"
+        df_sep_max.to_csv(os.path.join(csv_path,gridname), index=False)
+        
+        #MEAN results
+        gridname = f"probability_grid_SEP_{energy_key}_{thresh_key}_Mean.csv"
+        if len(models) == 1:
+            gridname = f"probability_gird_SEP_{models[0]}_{energy_key}_{thresh_key}_Mean.csv"
+        df_sep_mean.to_csv(os.path.join(csv_path,gridname), index=False)
 
-    df_nonsep = pd.DataFrame(nonsep_results)
+
+    df_nonsep_max = pd.DataFrame(nonsep_max)
+    df_nonsep_mean = pd.DataFrame(nonsep_mean)
     if write_grid:
+        #MAX results
         gridname = f"probability_deoverlap_NonEvent_{energy_key}_{thresh_key}.csv"
         if len(models) == 1:
             gridname = f"probability_deoverlap_NonEvent_{models[0]}_{energy_key}_{thresh_key}.csv"
-        df_nonsep.to_csv(os.path.join(csv_path,gridname), index=False)
+        df_nonsep_max.to_csv(os.path.join(csv_path,gridname), index=False)
+
+        #MEAN results
+        gridname = f"probability_deoverlap_NonEvent_{energy_key}_{thresh_key}_Mean.csv"
+        if len(models) == 1:
+            gridname = f"probability_deoverlap_NonEvent_{models[0]}_{energy_key}_{thresh_key}_Mean.csv"
+        df_nonsep_mean.to_csv(os.path.join(csv_path,gridname), index=False)
+
+
 
     df_scores = pd.DataFrame(probability_dict)
     gridname = f"probability_metrics_deoverlap_{energy_key}_{thresh_key}.csv"
