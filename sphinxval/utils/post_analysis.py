@@ -916,6 +916,75 @@ def make_box_plots(df, path, quantity, anonymous, highlight, scoreboard,
                     closeplot=False, saveplot=saveplot)
 
 
+
+############ DEOVERLAPPING ###################
+
+def create_date_range(first_date, last_date, td = datetime.timedelta(hours=24)):
+    """ Create a date range between first_date and last_date with timedelta
+        of td, default 24 hours.
+        
+        INPUTS:
+        
+            :first_date: (datetime) starting time for date range
+            :last_date: (datetime) ending time for date range
+            :td: (datetime timedelta) duration of each time range
+            
+        OUTPUT:
+        
+            :date_range_st: (datetime list) starting date of each time period
+                in the range
+            :date_range_end: (datetime list) ending date of each time period 
+                in the range. e.g. the first period is:
+                date_range_st[0] to date_range_end[0] 
+                Also date_range_end[0] == date_range_st[1], but two lists are
+                output for convenience
+
+    """
+
+    #Specify date range covered by prediction windows
+    start_date = pd.Timestamp(year=first_date.year, month=first_date.month, day=first_date.day)
+    end_date = pd.Timestamp(year=last_date.year, month=last_date.month, day=last_date.day)
+        
+    #Create a range of daily time stamps from the start date to the end date
+    date_range_st = pd.date_range(start=start_date, end=end_date-td, freq=td)
+    date_range_end = date_range_st + td
+
+
+    date_range_st = date_range_st.to_list()
+    date_range_end = date_range_end.to_list()
+    
+    return date_range_st, date_range_end
+
+
+def create_date_range_df(dates_file, seps, nonevent_st, nonevent_end):
+    """ Contains dates of SEP events and specific non-event time periods.
+        SEP Event, Non-Event Start, Non-Event End
+        
+    """
+    df_dates = pd.DataFrame()
+    if dates_file != '':
+        df_dates = pd.read_csv(dates_file, parse_dates=['SEP Events','Non-Event Start','Non-Event End'])
+        print(f"all_clear_grid: Read in dates from file {dates_file}.")
+    else:
+        print(f"all_clear_grid: Using input date range for seps and nonevents.")
+        #seps and nonevent arrays have to be same length to create a dataframe
+        if len(seps) > len(nonevent_st):
+            nmore = len(seps) - len(nonevent_st)
+            nonevent_st = nonevent_st + [pd.NaT]*nmore
+            nonevent_end = nonevent_end + [pd.NaT]*nmore
+        if len(seps) < len(nonevent_st):
+            nmore = len(nonevent_st) - len(seps)
+            seps = seps + [pd.NaT]*nmore
+        temp = {'SEP Events': seps, 'Non-Event Start': nonevent_st, 'Non-Event End': nonevent_end}
+        df_dates = pd.DataFrame(temp)
+        df_dates['SEP Events'] = pd.to_datetime(df_dates['SEP Events'])
+        df_dates['Non-Event Start'] = pd.to_datetime(df_dates['Non-Event Start'])
+        df_dates['Non-Event End'] = pd.to_datetime(df_dates['Non-Event End'])
+
+    return df_dates
+
+
+
 def associated_forecasts(df, date_st, date_end, split):
     """ Extract a sub-dictionary of only the forecasts associated with
         date_st to date_end.
@@ -1057,7 +1126,7 @@ def all_clear_all(df, obs, pred):
 
 
 
-def all_clear_grid(csv_path, models, energy_min, energy_max, threshold,
+def all_clear_deoverlap(csv_path, models, energy_min, energy_max, threshold,
     dates_file='',seps=[], nonevent_st=[], nonevent_end=[], split=False,
     write_grid=True):
     """ For a list of models, reads in all_clear_selections files output
@@ -1109,24 +1178,7 @@ def all_clear_grid(csv_path, models, energy_min, energy_max, threshold,
     #models that need to be deoverlapped.
     print(f"all_clear_grid: Reading in dates file {dates_file}.")
     
-    if dates_file != '':
-        df_dates = pd.read_csv(dates_file, parse_dates=['SEP Events','Non-Event Start','Non-Event End'])
-        print(f"all_clear_grid: Read in dates from file {dates_file}.")
-    else:
-        print(f"all_clear_grid: Using input date range for seps and nonevents.")
-        #seps and nonevent arrays have to be same length to create a dataframe
-        if len(seps) > len(nonevent_st):
-            nmore = len(seps) - len(nonevent_st)
-            nonevent_st = nonevent_st + [pd.NaT]*nmore
-            nonevent_end = nonevent_end + [pd.NaT]*nmore
-        if len(seps) < len(nonevent_st):
-            nmore = len(nonevent_st) - len(seps)
-            seps = seps + [pd.NaT]*nmore
-        temp = {'SEP Events': seps, 'Non-Event Start': nonevent_st, 'Non-Event End': nonevent_end}
-        df_dates = pd.DataFrame(temp)
-        df_dates['SEP Events'] = pd.to_datetime(df_dates['SEP Events'])
-        df_dates['Non-Event Start'] = pd.to_datetime(df_dates['Non-Event Start'])
-        df_dates['Non-Event End'] = pd.to_datetime(df_dates['Non-Event End'])
+    df_dates = create_date_range_df(dates_file, seps, nonevent_st, nonevent_end)
 
 
     #Dictionaries needed to create visual grids
@@ -1353,7 +1405,7 @@ def all_clear_grid(csv_path, models, energy_min, energy_max, threshold,
         #Deoverlapped dataframe
         df_do = pd.DataFrame(dict)
         df_do = df_do.sort_values('Start Date')
-        fnameout = fname.replace('.csv','_grid.csv')
+        fnameout = fname.replace('.csv','_deoverlap.csv')
         df_do.to_csv(fnameout, index=False)
         print(f"Wrote out {fnameout}.")
 
@@ -1364,9 +1416,9 @@ def all_clear_grid(csv_path, models, energy_min, energy_max, threshold,
     df_sep['Total Misses'] = df_sep_drop.apply(lambda x: x.str.contains('Miss')).sum(axis=1)
     df_sep['Total No Data'] = df_sep_drop.apply(lambda x: x.str.contains('No Data')).sum(axis=1)
     if write_grid:
-        gridname = f"all_clear_grid_SEP_{energy_key}_{thresh_key}.csv"
+        gridname = f"all_clear_deoverlap_SEP_{energy_key}_{thresh_key}.csv"
         if len(models) == 1:
-            gridname = f"all_clear_grid_SEP_{models[0]}_{energy_key}_{thresh_key}.csv"
+            gridname = f"all_clear_deoverlap_SEP_{models[0]}_{energy_key}_{thresh_key}.csv"
         df_sep.to_csv(os.path.join(csv_path,gridname), index=False)
 
     df_nonsep = pd.DataFrame(nonsep_results)
@@ -1375,21 +1427,302 @@ def all_clear_grid(csv_path, models, energy_min, energy_max, threshold,
     df_nonsep['Total False Alarms'] = df_nonsep_drop.apply(lambda x: x.str.contains('FA')).sum(axis=1)
     df_nonsep['Total No Data'] = df_nonsep_drop.apply(lambda x: x.str.contains('No Data')).sum(axis=1)
     if write_grid:
-        gridname = f"all_clear_grid_NonEvent_{energy_key}_{thresh_key}.csv"
+        gridname = f"all_clear_deoverlap_NonEvent_{energy_key}_{thresh_key}.csv"
         if len(models) == 1:
-            gridname = f"all_clear_grid_NonEvent_{models[0]}_{energy_key}_{thresh_key}.csv"
+            gridname = f"all_clear_deoverlap_NonEvent_{models[0]}_{energy_key}_{thresh_key}.csv"
         df_nonsep.to_csv(os.path.join(csv_path,gridname), index=False)
 
     df_scores = pd.DataFrame(all_clear_dict)
-    gridname = f"all_clear_grid_metrics_{energy_key}_{thresh_key}.csv"
+    gridname = f"all_clear_deoverlap_metrics_{energy_key}_{thresh_key}.csv"
     if len(models) == 1:
-        gridname = f"all_clear_grid_metrics_{models[0]}_{energy_key}_{thresh_key}.csv"
+        gridname = f"all_clear_deoverlap_metrics_{models[0]}_{energy_key}_{thresh_key}.csv"
     df_scores.to_csv(os.path.join(csv_path,gridname), index=False)
 
 
 
 
-def deoverlap_all_clear(csv_path, model, energy_min, energy_max, threshold,
+
+def probability_deoverlap(csv_path, models, energy_min, energy_max, threshold,
+    dates_file='',seps=[], nonevent_st=[], nonevent_end=[], split=False,
+    write_grid=True):
+    """ For a list of models, reads in probability_selections files output
+        by sphinx and extracts the maximum probability predicted for a set of dates, 
+        stored in df_dates.
+        
+        User may enter a file containing SEP and non-event dates.
+        df_dates is expected to consist of two columns, labeled 
+        "SEP Events" and "Non-Events".
+        
+        Or user may enter a list of SEP dates, a list of non-event start times, 
+        and a list of non-event end times.
+        
+        This subroutine uses the original all_clear_selections files.
+        
+        INPUT:
+        
+            :csv_path: (string) path the all_clear_selections csv files.
+            :models: (list) list of models to be included in the grid; 
+                model names must exactly match the short_name field in 
+                the forecast jsons or SPHINX output files.
+            :dates_file: (string) csv file containing list of dates that want to use to 
+                generate grids with a column titled "SEP Events" with the 
+                SEP start times and columns titled "Non-Event Start" 
+                and "Non-Event End". 
+            :energy_min: (float) low edge of energy channel of interest
+            :energy_max: (float) high edge of energy channel of interest (-1)
+                for infinity (>10 MeV -> energy_min = 10, energy_max = -1)
+            :threshold: (float) threshold applied for SEP event definition
+                (e.g. >10 MeV exceeds 10 pfu -> threshold = 10)
+            :split: (bool) 
+                If True, for forecasts with prediction windows that cross dates, 
+                    they will be associated with the date with the most overlap 
+                    with their prediction window.
+                If False, then forecasts with the prediction_window_start inside of 
+                    the non-event time period will be evaluated.
+            :write_grid: (bool) if True, will write out visual grid csv file
+                
+        OUTPUT:
+        
+            Write out two csv files containing desired grid with 
+            dates on one axis, models on other axis, and outcomes
+            as the entries. "No Data" entries indicate a forecast
+            was not provided for a given date.
+            
+            Write out recalculated probability metrics and plots.
+         
+    """
+    
+    #Find date range that fully spans SEP event and non-event periods for
+    #models that need to be deoverlapped.
+    print(f"probability_deoverlap: Reading in dates file {dates_file}.")
+    
+    df_dates = create_date_range_df(dates_file, seps, nonevent_st, nonevent_end)
+
+
+    #Dictionaries needed to create visual grids
+    sep_results = {"SEP Events": df_dates["SEP Events"].to_list()}
+    nonsep_results = {"Non-Event Start": df_dates["Non-Event Start"].to_list(),
+        "Non-Event End": df_dates["Non-Event End"].to_list()}
+
+    #Probability metrics
+    probability_dict = validation.initialize_probability_dict()
+
+    #Find first and last date out of all the dates
+    max_date = df_dates.max().max()
+    min_date = df_dates.min().min()
+    
+    print(f"probability_deoverlap: Models will be deoverlapped between {min_date} and {max_date}.")
+
+    energy_key = f"min.{float(energy_min):.1f}.max.{float(energy_max):.1f}.units.MeV"
+    print(f"Energy channel: {energy_key}")
+    thresh_key = f"threshold_{float(threshold):.1f}"
+    print(f"Threshold: {thresh_key}")
+
+    for model in models:
+        #Counts of forecasts associated with each date range output to file
+        dict = {'Start Date': [], 'End Date': [],
+                'Observed SEP Threshold Crossing Time': [],
+                'Observed SEP Probability': [],
+                'Predicted SEP Probability Max': [],
+                'Total Forecasts': [],
+                'First Prediction Window': [],
+                'Last Prediction Window': []}
+
+
+        #Store Hit/Miss/No Data
+        sep_outcomes = []
+        #Store False Alarm/Correct Negative/No Data
+        nonsep_outcomes = []
+        
+        fname = os.path.join(csv_path,
+            f"probability_selections_{model}_{energy_key}_{thresh_key}.csv")
+
+        if 'UNSPELL' in model: #should be revised to generally account for mismatch
+            if energy_min == 10:
+                fname = os.path.join(csv_path,
+                "probability_selections_UNSPELL flare_min.10.0.max.-1.0.units.MeV_min.5.0.max.-1.0.units.MeV_threshold_10.0_mm.csv")
+        
+        if not os.path.isfile(fname):
+            print(f"probability_deoverlap: File does not exist. Check model and csv_path. {fname}. Skipping model.")
+            continue
+
+        print(f"probability_deoverlap: Reading in file {fname}.")
+        
+        df = pd.read_csv(fname, parse_dates=['Observed SEP Threshold Crossing Time','Prediction Window Start','Prediction Window End'])
+
+        #Date columns indicating SEP range
+        key_st = 'Prediction Window Start'
+        key_end = 'Prediction Window End'
+
+        #Go through SEP Events and Non-Events and record results
+        for sep, non_st, non_end in df_dates.itertuples(index=False):
+
+            #SEP EVENTS
+            #For each SEP event, get Hit/Miss/No Data
+            sep_outcome = None
+            sep_outcome_bool = None
+            nsepcasts = np.nan
+            maxprob = np.nan
+            nnoncasts = np.nan
+            if not pd.isnull(sep):
+                #Get results for a single SEP event
+                sub = df[df['Observed SEP Threshold Crossing Time'] == sep]
+                
+                if sub.empty:
+                    sep_outcome = np.nan
+                    #Record info for deoverlapping
+                    dict['Start Date'].append(sep)
+                    dict['End Date'].append(pd.NaT)
+                    dict['Observed SEP Threshold Crossing Time'].append(sep)
+                    dict['Observed SEP Probability'].append(1.0)
+                    dict['Predicted SEP Probability Max'].append(sep_outcome)
+                    dict['Total Forecasts'].append(np.nan)
+                    dict['First Prediction Window'].append(pd.NaT)
+                    dict['Last Prediction Window'].append(pd.NaT)
+                else:
+                    sub.sort_values(by='Prediction Window Start', inplace=True)
+                    pred_win_first = sub['Prediction Window Start'].iloc[0]
+                    pred_win_last = sub['Prediction Window Start'].iloc[len(sub['Prediction Window End'])-1]
+
+                    nsepcasts = len(sub) #total forecasts associated with the SEP event
+                    print(f"{nsepcasts} {model} forecasts associated with {sep}")
+                    #Desire max probability forecast for the SEP event
+                    sep_outcome = sub['Predicted SEP Probability'].max()
+ 
+
+                    #Record info for deoverlapping
+                    dict['Start Date'].append(sep)
+                    dict['End Date'].append(pd.NaT)
+                    dict['Observed SEP Threshold Crossing Time'].append(sep)
+                    dict['Observed SEP Probability'].append(1.0)
+                    dict['Predicted SEP Probability Max'].append(sep_outcome)
+                    dict['Total Forecasts'].append(nsepcasts)
+                    dict['First Prediction Window'].append(pred_win_first)
+                    dict['Last Prediction Window'].append(pred_win_last)
+
+            sep_outcomes.append(sep_outcome)
+
+            
+            #NON-EVENTS
+            #For each non-event, get False Alarm/Correct Negative/No Data
+            #Here we need to extract the appropriate columns
+            #All forecasts with prediction windows that start at the
+            #Non-Event Start dates and all predictions with start timess all the
+            #way through to the End date
+            nonsep_outcome = None
+            if not pd.isnull(non_st):
+                sub = associated_forecasts(df, non_st, non_end, split)
+                #Remove any forecasts in sub that are associated to a SEP
+                #event (Observed SEP All Clear False), because those should
+                #not be considered to be part of the non-event time period
+                sub = sub[sub['Observed SEP Probability']==0.0]
+ 
+                if sub.empty:
+                    nonsep_outcome = np.nan
+                    #Record info for deoverlapping
+                    dict['Start Date'].append(non_st)
+                    dict['End Date'].append(non_end)
+                    dict['Observed SEP Threshold Crossing Time'].append(pd.NaT)
+                    dict['Observed SEP Probability'].append(0.0)
+                    dict['Predicted SEP Probability Max'].append(nonsep_outcome)
+                    dict['Total Forecasts'].append(np.nan)
+                    dict['First Prediction Window'].append(pd.NaT)
+                    dict['Last Prediction Window'].append(pd.NaT)
+                else:
+                    sub.sort_values(by='Prediction Window Start', inplace=True)
+                    pred_win_first = sub['Prediction Window Start'].iloc[0]
+                    pred_win_last = sub['Prediction Window Start'].iloc[len(sub['Prediction Window End'])-1]
+
+                    nnoncasts = len(sub) #total number of forecasts
+                    print(f"{nnoncasts} {model} forecasts associated with {non_st} to {non_end}")
+                
+                    nonsep_outcome = sub['Predicted SEP Probability'].max()
+
+                    #Record info for deoverlapping
+                    dict['Start Date'].append(non_st)
+                    dict['End Date'].append(non_end)
+                    dict['Observed SEP Threshold Crossing Time'].append(pd.NaT)
+                    dict['Observed SEP Probability'].append(0.0)
+                    dict['Predicted SEP Probability Max'].append(nonsep_outcome)
+                    dict['Total Forecasts'].append(nnoncasts)
+                    dict['First Prediction Window'].append(pred_win_first)
+                    dict['Last Prediction Window'].append(pred_win_last)
+
+            nonsep_outcomes.append(nonsep_outcome)
+
+        #Save aggregated max probabilities per model
+        sep_results.update({model: sep_outcomes})
+        nonsep_results.update({model: nonsep_outcomes})
+
+        #Write out deoverlapped dataframe per model
+        df_do = pd.DataFrame(dict)
+        df_do = df_do.sort_values('Start Date')
+        fnameout = fname.replace('.csv','_deoverlap_Max.csv')
+        df_do.to_csv(fnameout, index=False)
+        print(f"Wrote out {fnameout}.")
+
+
+        #Recalculate probability metrics and plots using the deoverlapped max probability
+        #Drop time periods with No Data
+        df_do = df_do.dropna(subset=['Observed SEP Probability', 'Predicted SEP Probability Max'])
+        obs = df_do['Observed SEP Probability'].to_list()
+        pred = df_do['Predicted SEP Probability Max'].to_list()
+
+        #Calculate metrics
+        brier_score = metrics.calc_brier(obs, pred)
+        brier_skill = metrics.calc_brier_skill(obs, pred)
+        rank_corr_coeff = metrics.calc_spearman(obs, pred)
+
+        roc_auc, roc_curve_plt = metrics.receiver_operator_characteristic(obs, pred, model)
+        
+        roc_curve_plt.plot()
+        skill_line = np.linspace(0.0, 1.0, num=10) # Constructing a diagonal line that represents no skill/random guess
+        plt.plot(skill_line, skill_line, '--', label = 'Random Guess')
+        figname = csv_path + '/../plots/ROC_curve_' \
+                + model + "_" + energy_key.strip() + "_" + thresh_key
+
+        figname += "_deoverlap_max.pdf"
+        plt.legend(loc="lower right")
+        roc_curve_plt.figure_.savefig(figname, dpi=300, bbox_inches='tight')
+        plt.close(roc_curve_plt.figure_)
+        
+        #Save to dict (ultimately dataframe)
+        probability_dict['Model'].append(model)
+        probability_dict['Energy Channel'].append(energy_key)
+        probability_dict['Threshold'].append(thresh_key)
+        probability_dict['Prediction Energy Channel'].append(energy_key)
+        probability_dict['Prediction Threshold'].append(thresh_key)
+        probability_dict['ROC Curve Plot'].append(figname)
+        probability_dict['Brier Score'].append(brier_score)
+        probability_dict['Brier Skill Score'].append(brier_skill)
+        probability_dict['Spearman Correlation Coefficient'].append(rank_corr_coeff)
+        probability_dict['Area Under ROC Curve'].append(roc_auc)
+
+    
+    df_sep = pd.DataFrame(sep_results)
+    if write_grid:
+        gridname = f"probability_deoverlap_SEP_{energy_key}_{thresh_key}.csv"
+        if len(models) == 1:
+            gridname = f"probability_deoverlap_SEP_{models[0]}_{energy_key}_{thresh_key}.csv"
+        df_sep.to_csv(os.path.join(csv_path,gridname), index=False)
+
+    df_nonsep = pd.DataFrame(nonsep_results)
+    if write_grid:
+        gridname = f"probability_deoverlap_NonEvent_{energy_key}_{thresh_key}.csv"
+        if len(models) == 1:
+            gridname = f"probability_deoverlap_NonEvent_{models[0]}_{energy_key}_{thresh_key}.csv"
+        df_nonsep.to_csv(os.path.join(csv_path,gridname), index=False)
+
+    df_scores = pd.DataFrame(probability_dict)
+    gridname = f"probability_metrics_deoverlap_{energy_key}_{thresh_key}.csv"
+    if len(models) == 1:
+        gridname = f"probability_metrics_deoverlap_{models[0]}_{energy_key}_{thresh_key}.csv"
+    df_scores.to_csv(os.path.join(csv_path,gridname), index=False)
+
+
+
+
+def deoverlap_forecasts(quantity, csv_path, model, energy_min, energy_max, threshold,
     date_range_st = None, date_range_end=None, td=pd.NaT, split=True):
     """ For models that produce continuous forecasts on a set cadence 
         with overlapping prediction windows, deoverlap by getting a 
@@ -1405,8 +1738,9 @@ def deoverlap_all_clear(csv_path, model, energy_min, energy_max, threshold,
         
         INPUT:
         
+            :quantity: (string) "All Clear", "all clear", "probability, "Probability"
             :csv_path: (string) path to the csv directory containing all_clear_selections_*.csv
-                files output by SPHINX.
+                or probability_selections_*.csv files output by SPHINX.
             :model: (string) one model name to deoverlap; must exactly match model
                 short_name used in the all_clear_selections files
             :date_range_st: (pd date_range series) start of time periods of interest. May include a continuous time period or a set of specific time
@@ -1428,10 +1762,8 @@ def deoverlap_all_clear(csv_path, model, energy_min, energy_max, threshold,
                 
         OUTPUT:
         
-            Rederived contingency table and metrics
-            :df_do: (dataframe) deoverlapped all clear values
-            :all_clear_metrics_df: (dateframe) contains metrics derived
-                from the deoverlapped results
+            For All Clear: Rederived contingency table and metrics written to file
+            For probability: Rederived probability metrics and ROC curve written to file
         
     """
     energy_key = f"min.{float(energy_min):.1f}.max.{float(energy_max):.1f}.units.MeV"
@@ -1464,23 +1796,20 @@ def deoverlap_all_clear(csv_path, model, energy_min, energy_max, threshold,
     #If start times provided, but not end times, then apply td
     if not pd.isnull(date_range_st) and pd.isnull(date_range_end):
         date_range_end = date_range_st + td
+        date_range_st = date_range_st.to_list()
+        date_range_end = date_range_end.to_list()
 
     #If no date range provided, then create a continuous date range
     #between the first and last date in the provided forecasts
     if pd.isnull(date_range_st):
-        #Specify date range covered by prediction windows
-        start_date = pd.Timestamp(year=first_date.year, month=first_date.month, day=first_date.day)
-        end_date = pd.Timestamp(year=last_date.year, month=last_date.month, day=last_date.day)
-            
-        #Create a range of daily time stamps from the start date to the end date
-        date_range_st = pd.date_range(start=start_date, end=end_date-td, freq=td)
-        date_range_end = date_range_st + td
+        date_range_st, date_range_end = create_date_range(first_date, last_date, td)
 
+    if quantity == "All Clear" or quantity == "all clear":
+        all_clear_deoverlap(csv_path, [model], energy_min, energy_max, threshold, seps=sep_events,
+            nonevent_st=date_range_st, nonevent_end=date_range_end, split=split,
+            write_grid=False)
 
-    date_range_st = date_range_st.to_list()
-    date_range_end = date_range_end.to_list()
-
-    all_clear_grid(csv_path, [model], energy_min, energy_max, threshold, seps=sep_events,
-        nonevent_st=date_range_st, nonevent_end=date_range_end, split=split,
-        write_grid=False)
-
+    if quantity == "Probability" or quantity == "probability":
+        probability_deoverlap(csv_path, [model], energy_min, energy_max, threshold, seps=sep_events,
+            nonevent_st=date_range_st, nonevent_end=date_range_end, split=split,
+            write_grid=False)
