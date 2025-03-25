@@ -1730,7 +1730,7 @@ def probability_deoverlap(csv_path, models, energy_min, energy_max, threshold,
         #MEAN results
         gridname = f"probability_grid_SEP_{energy_key}_{thresh_key}_Mean.csv"
         if len(models) == 1:
-            gridname = f"probability_gird_SEP_{models[0]}_{energy_key}_{thresh_key}_Mean.csv"
+            gridname = f"probability_grid_SEP_{models[0]}_{energy_key}_{thresh_key}_Mean.csv"
         df_sep_mean.to_csv(os.path.join(csv_path,gridname), index=False)
 
 
@@ -1738,15 +1738,15 @@ def probability_deoverlap(csv_path, models, energy_min, energy_max, threshold,
     df_nonsep_mean = pd.DataFrame(nonsep_mean)
     if write_grid:
         #MAX results
-        gridname = f"probability_deoverlap_NonEvent_{energy_key}_{thresh_key}.csv"
+        gridname = f"probability_grid_NonEvent_{energy_key}_{thresh_key}_Max.csv"
         if len(models) == 1:
-            gridname = f"probability_deoverlap_NonEvent_{models[0]}_{energy_key}_{thresh_key}.csv"
+            gridname = f"probability_grid_NonEvent_{models[0]}_{energy_key}_{thresh_key}_Max.csv"
         df_nonsep_max.to_csv(os.path.join(csv_path,gridname), index=False)
 
         #MEAN results
-        gridname = f"probability_deoverlap_NonEvent_{energy_key}_{thresh_key}_Mean.csv"
+        gridname = f"probability_grid_NonEvent_{energy_key}_{thresh_key}_Mean.csv"
         if len(models) == 1:
-            gridname = f"probability_deoverlap_NonEvent_{models[0]}_{energy_key}_{thresh_key}_Mean.csv"
+            gridname = f"probability_grid_NonEvent_{models[0]}_{energy_key}_{thresh_key}_Mean.csv"
         df_nonsep_mean.to_csv(os.path.join(csv_path,gridname), index=False)
 
 
