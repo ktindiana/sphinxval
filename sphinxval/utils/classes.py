@@ -679,7 +679,7 @@ class Forecast():
         
         if 'filename' in full_json:
             self.source = full_json['filename']
-            
+
             #pull out path
             fullpath = full_json['filename']
             fullpath = fullpath.strip().split("/")

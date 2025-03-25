@@ -58,7 +58,8 @@ def switch_error_func(metric, y_true, y_pred):
     
     func = {
         'E': calc_E,                        # Error
-        'AE': calc_AE,                      # Absolute Error        
+        'Ratio': calc_ratio,                # Ratio
+        'AE': calc_AE,                      # Absolute Error
         'LE': calc_LE,                      # Log Error
         'ALE': calc_ALE,                    # Absolute Log Error
         'SE': calc_SE,                      # Squared Error
@@ -108,6 +109,51 @@ def calc_mean(metric):
     metric = np.asarray(metric)
 
     return np.nanmean(metric[np.isfinite(metric)])
+
+
+def calc_ratio(y_true, y_pred):
+    """
+    Calculates a variant of standard error
+
+    Best value is 0.0
+    Range is (-inf,inf)
+    No asymptotes
+
+    Note: Defined in the non-standard way as error = y_pred - y_true
+        so that a negative error means the model is underforecasting
+
+    Parameters
+    ----------
+    y_true : array-like
+        Observed (true) values
+
+    y_pred : array-like
+        Forecasted (estimated) values
+
+    Returns
+    -------
+    error : array-like
+        Error between forecast and observation
+
+    Formula
+    -------
+    E = y_pred - y_true
+    """
+
+    check_consistent_length(y_true, y_pred)
+
+    y_true = check_array(y_true, force_all_finite=True, ensure_2d=False)
+    y_pred = check_array(y_pred, force_all_finite=True, ensure_2d=False)
+    
+    if (y_true < 0).any():
+        logger.error("Logarithmic Error cannot be used when "
+                         "targets contain negative values.")
+        raise ValueError("Logarithmic Error cannot be used when "
+                         "targets contain negative values.")
+
+    return y_pred/y_true
+
+
 
 
 def calc_E(y_true, y_pred):
