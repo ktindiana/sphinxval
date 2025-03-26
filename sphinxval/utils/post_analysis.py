@@ -1671,20 +1671,20 @@ def probability_deoverlap(csv_path, models, energy_min, energy_max, threshold,
         nonsep_results_mean.update({model: nonsep_mean})
 
         #Write out deoverlapped dataframe per model
-        df_do = pd.DataFrame(dict)
-        df_do = df_do.sort_values('Start Date')
+        df_do_all = pd.DataFrame(dict)
+        df_do_all = df_do_all.sort_values('Start Date')
         fnameout = fname.replace('.csv','_deoverlap.csv')
-        df_do.to_csv(fnameout, index=False)
+        df_do_all.to_csv(fnameout, index=False)
         print(f"Wrote out {fnameout}.")
 
 
-        #Recalculate probability metrics and plots using the deoverlapped max probability
-        #Drop time periods with No Data
-        df_do = df_do.dropna(subset=['Observed SEP Probability', 'Predicted SEP Probability Max'])
-        obs = df_do['Observed SEP Probability'].to_list()
-
         for type in ['Max','Mean']:
             key = 'Predicted SEP Probability ' + type
+
+            #Recalculate probability metrics and plots using the deoverlapped max probability
+            #Drop time periods with No Data
+            df_do = df_do_all.dropna(subset=['Observed SEP Probability', key])
+            obs = df_do['Observed SEP Probability'].to_list()
             pred = df_do[key].to_list()
 
             #Calculate metrics
