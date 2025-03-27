@@ -21,6 +21,7 @@ import os.path
 import numpy as np
 import sklearn.metrics as skl
 import matplotlib.pylab as plt
+import math
 
 scoreboard_models = ["ASPECS", "iPATH", "MagPy", "SEPMOD",
                     "SEPSTER", "SPRINTS", "UMASEP", "GSU",
@@ -915,6 +916,201 @@ def make_box_plots(df, path, quantity, anonymous, highlight, scoreboard,
                     save=figname, uselog=False, showplot=showplot, \
                     closeplot=False, saveplot=saveplot)
 
+
+############# SPHINX OUTPUT STATS ############
+def forecast_coverage(df, start_date, end_date):
+    """ Daily coverage of forecasts. 
+        Counts the number of days in the total time range where forecasts
+        were issued. Returns the number of days no forecasts were issued
+        
+        INPUT: 
+        
+            :df: (pandas DataFrame) SPHINX dataframe for only one model, 
+                (an probabily energy channel, and threshold combination)
+            :start_date: (datetime) Start of date range checking for coverage
+            :end_date: (datetime) End of date range checking for coverage
+                
+        OUTPUT:
+        
+            :N_no_data: (int) number of days with no forecasts
+            :N_data: (int) number of days with forecasts
+        
+    """
+
+    sub = df.loc[(df['Prediction Window Start'] >= start_date) & (df['Prediction Window End'] <= end_date)]
+    td24 = datetime.timedelta(hours=24)
+    
+    start_day = datetime.datetime(start_date.year,start_date.month,start_date.day)
+    end_day = datetime.datetime(end_date.year,end_date.month,end_date.day)
+    Ndays = int((end_day - start_day)/td24) + 1 #+1 to include the end_day
+    
+    N_no_data = 0
+    N_data = 0
+
+    for i in range(Ndays):
+        check_day = start_day + i*td24
+        check_day_end = check_day + td24
+        sub_range = sub.loc[(sub['Prediction Window Start'] >= check_day) & (sub['Prediction Window Start'] < check_day_end)]
+        
+        if sub_range.empty:
+            N_no_data += 1
+        else:
+            N_data += 1
+        
+    return N_no_data, N_data
+
+
+
+def forecast_stats(fname):
+    """ Read in a SPHINX dataframe (SPHINX_evaluated, SPHINX_removed) and 
+        calculate stats related to the forecasts within.
+        
+        INPUT:
+        
+            :fname: csv file for a SPHINX dataframe
+            
+        OUTPUT:
+        
+            Stats file written out to same directory of the dataframe.
+        
+    """
+    
+    dict = {'Model': [],
+            'Energy Channel': [],
+            'Threshold': [],
+            'Prediction Energy Channel': [],
+            'Prediction Threshold': [],
+            'First Issue Time': [],
+            'Last Issue Time': [],
+            'N Issue Time Days': [],
+            'First Prediction Window Start': [],
+            'Last Prediction Window End': [],
+            'N Prediction Days': [],
+            'N Days with Forecasts': [],
+            'N Days without Forecasts': [],
+            'N Days with SEP Event Onsets': [],
+            'Imbalance (Days)': [],
+            'Total Number of Forecasts': [],
+            'Total Number of Forecasts with SEP Events': [],
+            'Imbalance (Forecasts)': [],
+            }
+    
+    df = pd.read_csv(fname, parse_dates=['Forecast Issue Time', 'Prediction Window Start',
+                            'Prediction Window End', 'Observed SEP Threshold Crossing Time',
+                            'Observed SEP End Time'])
+                            
+    models = resume.identify_unique(df, 'Model')
+    
+    #Extract all forecasts per model
+    for model in models:
+        df_model = df.loc[df['Model'] == model]
+        energy_keys = resume.identify_unique(df_model, 'Energy Channel Key')
+ 
+        #Extract all forecasts per energy channel
+        for ek in energy_keys:
+            sub = df_model.loc[(df_model['Energy Channel Key'] == ek)]
+            if sub.empty: continue
+            thresholds = resume.identify_unique(sub, 'Threshold Key')
+
+            for tk in thresholds:
+                sub = df_model.loc[(df_model['Energy Channel Key'] == ek) & (df_model['Threshold Key'] == tk)]
+                if sub.empty: continue
+                pred_energy_keys = resume.identify_unique(sub, 'Prediction Energy Channel Key')
+                
+                for pek in pred_energy_keys:
+                    sub = df_model.loc[(df_model['Energy Channel Key'] == ek) & (df_model['Threshold Key'] == tk)
+                            & (df_model['Prediction Energy Channel Key'] == pek)]
+                    if sub.empty: continue
+                    pred_thresholds = resume.identify_unique(sub, 'Prediction Threshold Key')
+                    
+                    for ptk in pred_thresholds:
+                        sub = df_model.loc[(df_model['Energy Channel Key'] == ek) & (df_model['Threshold Key'] == tk)
+                            & (df_model['Prediction Energy Channel Key'] == pek) & (df_model['Prediction Threshold Key'] == ptk)]
+                        if sub.empty: continue
+                        
+                        #Calculate stats for unique model configuration
+                        td24 = datetime.timedelta(hours=24)
+                        
+                        #Total number of days producing forecasts assuming real time forecasting
+                        #starts with first timestamp and finishes at last timestamp
+                        first_pred_win_st = sub['Prediction Window Start'].min()
+                        last_pred_win_end = sub['Prediction Window End'].max()
+                        Ndays = math.ceil((last_pred_win_end - first_pred_win_st)/td24)
+                        
+                        #Total number of days using issue time
+                        issue_st = sub['Forecast Issue Time'].min()
+                        issue_end = sub['Forecast Issue Time'].max()
+                        Ndays_issue = math.ceil((issue_end - issue_st)/td24)
+                        
+                        #Total number of Forecasts
+                        Nforecasts = len(sub)
+                        
+                        #Number of days with Forecasts issued and without Forecasts issued
+                        N_no_data, N_data = forecast_coverage(sub, first_pred_win_st, last_pred_win_end)
+                        
+                        #Number of SEP events
+                        sub_sep = sub.dropna(subset=['Observed SEP Threshold Crossing Time'])
+                        Nsep_forecasts = len(sub_sep)
+                        sep = resume.identify_unique(sub, 'Observed SEP Threshold Crossing Time')
+                        Nsep = len(sep)
+                        
+                        #Imbalance
+                        if Nsep_forecasts != 0:
+                            fcast_imbalance = (Nforecasts - Nsep_forecasts)/Nsep_forecasts
+                        else:
+                            fcast_imbalance = 0
+                            
+                        if Nsep != 0:
+                            days_imbalance = (N_data - Nsep)/Nsep
+                        else:
+                            days_imbalance = 0
+                
+#                        print(f"Model: {model} \n"
+#                              f"Energy Channel: {ek} \n"
+#                              f"Threshold: {tk} \n"
+#                              f"Prediction Energy Channel: {pek} \n"
+#                              f"Prediction Threshold: {ptk} \n"
+#                              f"First Issue Time: {issue_st} \n"
+#                              f"Last Issue Time: {issue_end} \n"
+#                              f"N Issue Time Days: {Ndays_issue} \n"
+#                              f"First Prediction Window Start: {first_pred_win_st} \n"
+#                              f"Last Prediction Window End: {last_pred_win_end} \n"
+#                              f"N Prediction Days: {Ndays} \n"
+#                              f"N Days with Forecasts: {N_data} \n"
+#                              f"N Days without Forecasts: {N_no_data} \n"
+#                              f"N Days with SEP Event Onsets: {Nsep} \n"
+#                              f"Imbalance (Days): {days_imbalance} \n"
+#                              f"Total Number of Forecasts: {Nforecasts} \n"
+#                              f"Total Number of Forecasts with SEP Events: {Nsep_forecasts} \n"
+#                              f"Imbalance (Forecasts): {fcast_imbalance} \n" )
+                              
+                
+                
+                        dict['Model'].append(model)
+                        dict['Energy Channel'].append(ek)
+                        dict['Threshold'].append(tk)
+                        dict['Prediction Energy Channel'].append(pek)
+                        dict['Prediction Threshold'].append(ptk)
+                        dict['First Prediction Window Start'].append(first_pred_win_st)
+                        dict['Last Prediction Window End'].append(last_pred_win_end)
+                        dict['N Prediction Days'].append(Ndays)
+                        dict['First Issue Time'].append(issue_st)
+                        dict['Last Issue Time'].append(issue_end)
+                        dict['N Issue Time Days'].append(Ndays_issue)
+                        dict['N Days with Forecasts'].append(N_data)
+                        dict['N Days without Forecasts'].append(N_no_data)
+                        dict['N Days with SEP Event Onsets'].append(Nsep)
+                        dict['Imbalance (Days)'].append(days_imbalance)
+                        dict['Total Number of Forecasts'].append(Nforecasts)
+                        dict['Total Number of Forecasts with SEP Events'].append(Nsep_forecasts)
+                        dict['Imbalance (Forecasts)'].append(fcast_imbalance)
+                        
+
+    df_stats = pd.DataFrame(dict)
+    df_stats = df_stats.sort_values(by=['Model', 'Energy Channel'])
+    outfname = fname.split('.csv')
+    outfname = outfname[0] + '_stats.csv'
+    df_stats.to_csv(outfname, index=False)
 
 
 ############ DEOVERLAPPING ###################
