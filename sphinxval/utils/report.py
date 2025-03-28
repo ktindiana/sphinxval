@@ -888,10 +888,10 @@ def report(output_dir, relative_path_plots, sphinx_dataframe=None): ### ADD OPTI
                     git_info += '&nbsp;&nbsp;&nbsp;&nbsp;Changes were found in the following files:<br>'
                     for this_filename in config.git_changed_files:
                         git_info += '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + this_filename + '<br>'
-                if len(config.git_untracked_files) > 0:
-                    git_info += '&nbsp;&nbsp;&nbsp;&nbsp;The following untracked files were found:<br>'
-                    for this_filename in config.git_untracked_files:
-                        git_info += '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + this_filename + '<br>'
+                #if len(config.git_untracked_files) > 0:
+                #    git_info += '&nbsp;&nbsp;&nbsp;&nbsp;The following untracked files were found:<br>'
+                #    for this_filename in config.git_untracked_files:
+                #        git_info += '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + this_filename + '<br>'
                 info_text += add_collapsible_segment('Dirty Git Repository (details)', git_info) + '<br>'
 
             if appendages[j] == '':
