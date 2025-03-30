@@ -11,6 +11,10 @@ parser.add_argument("--DeoverlapAllClear", type=str, default='', \
         help=("path to csv directory containing all_clear_selections*.csv. "
             "If deoverlapping, also use --Include to specify a single model name "
             "using the exact short_name as well as --EnergyBin and --Threshold."))
+parser.add_argument("--DeoverlapProbability", type=str, default='', \
+        help=("path to csv directory containing probabililty_selections*.csv. "
+            "If deoverlapping, also use --Include to specify a single model name "
+            "using the exact short_name as well as --EnergyBin and --Threshold."))
 parser.add_argument("--MaxFluxOutcomes", type=str, default='', \
         help=("pkl file containing max_flux_in_pred_win_selections*.pkl"))
 parser.add_argument("--Threshold", type=float, default=10., \
@@ -56,7 +60,8 @@ parser.add_argument("--showplot",
 
 args = parser.parse_args()
 acfa_filename = args.AllClearOutcomes
-deoverlap_path = args.DeoverlapAllClear
+deoverlap_ac_path = args.DeoverlapAllClear
+deoverlap_prob_path = args.DeoverlapProbability
 mf_filename = args.MaxFluxOutcomes
 threshold = args.Threshold
 path = args.Path
@@ -77,11 +82,16 @@ energy_max = float(bin[1])
 if acfa_filename != '':
     pa.export_all_clear_incorrect(acfa_filename, threshold, doplot=True)
 
-if deoverlap_path != '':
+if deoverlap_ac_path != '':
     threshold = float(threshold)
     model = include[0]
-    pa.deoverlap_all_clear(deoverlap_path, model, energy_min, energy_max,
+    pa.deoverlap_forecasts("All Clear", deoverlap_ac_path, model, energy_min, energy_max,
         threshold)
+
+if deoverlap_prob_path != '':
+    threshold = float(threshold)
+    model = include[0]
+    pa.deoverlap_forecasts("Probability", deoverlap_prob_path, model, energy_min, energy_max, threshold)
 
 if mf_filename != '':
     pa.export_max_flux_incorrect(mf_filename, threshold, doplot=True)
