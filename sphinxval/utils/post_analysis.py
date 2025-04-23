@@ -5,914 +5,918 @@
     the output pkl and csv
 '''
 import sys
-# from . import plotting_tools as plt_tools
-# from . import time_profile as profile
-# from . import resume
+from . import plotting_tools as plt_tools
+from . import time_profile as profile
+from . import resume
+from . import validation
+from . import metrics
 import pickle
 import pandas as pd
 import matplotlib as plt
-# from . import config as cfg
-import metrics
-# from . import validation
-from datetime import datetime
+from . import config as cfg
+from . import metrics
+from . import validation
+import datetime
 import os.path
 import numpy as np
 import sklearn.metrics as skl
-import matplotlib.pyplot as plt
+import matplotlib.pylab as plt
 from scipy import stats 
 from statsmodels.distributions.empirical_distribution import ECDF
+import math
 
 scoreboard_models = ["ASPECS", "iPATH", "MagPy", "SEPMOD",
                     "SEPSTER", "SPRINTS", "UMASEP", "GSU",
                     "MAG4", "REleASE"]
 
+
 #If not empty, add metrics to the contingency metrics analysis
-# add_contingency = {}
+add_contingency = {}
 #e.g.
 #add_contingency = {
 #"Model": ['UMASEP-10'],
-#"Energy Channel": ['min.100.0.max.-1.0.units.MeV'],
-#"Threshold": ['threshold.100.0.units.1 / (cm2 s sr)'],
-#"Prediction Energy Channel": ['min.100.0.max.-1.0.units.MeV'],
-#"Prediction Threshold": ['threshold.100.0.units.1 / (cm2 s sr)'],
+#"Energy Channel": ['min.10.0.max.-1.0.units.MeV'],
+#"Threshold": ['threshold.10.0.units.1 / (cm2 s sr)'],
+#"Prediction Energy Channel": ['min.10.0.max.-1.0.units.MeV'],
+#"Prediction Threshold": ['threshold.10.0.units.1 / (cm2 s sr)'],
 #"Hits": [30], #Hits
 #"False Alarms": [1], #False Alarms
 #"Correct Negatives": [29],  #Correct negatives
 #"Misses": [2] #Misses
 #}
 
-# add_probability = {}
+add_probability = {}
 
-# non_event_duration = datetime.timedelta(hours=14)
-# non_event_start = [
-#         '2011-05-09 20:42:00',
-#         '2012-03-04 10:29:00',
-#         '2012-03-05 03:30:00',
-#         '2012-06-13 11:29:00',
-#         '2012-06-29 09:13:00',
-#         '2013-06-07 22:32:00',
-#         '2013-06-28 01:36:00',
-#         '2014-08-01 18:00:00',
-#         '2014-10-24 07:37:00',
-#         '2014-11-06 03:32:00',
-#         '2014-11-07 16:53:00',
-#         '2014-12-17 04:25:00',
-#         '2014-12-18 21:41:00',
-#         '2015-03-09 23:29:00',
-#         '2016-07-23 05:00:00',
-#         '2021-11-01 00:57:00',
-#         '2021-11-02 02:03:00',
-#         '2022-01-18 17:01:00',
-#         '2022-04-17 03:17:00',
-#         '2022-04-20 03:41:00',
-#         '2022-04-29 07:15:00',
-#         '2022-05-25 18:12:00',
-#         '2022-08-17 13:26:00',
-#         '2022-08-18 10:37:00',
-#         '2022-08-19 04:14:00',
-#         '2022-08-29 16:15:00',
-#         '2022-08-30 18:05:00',
-#         '2022-12-01 07:04:00',
-#         '2023-03-04 15:19:00',
-#         '2023-03-06 02:08:00'
-#         ]
+non_event_duration = datetime.timedelta(hours=14)
+non_event_start = [
+        '2011-05-09 20:42:00',
+        '2012-03-04 10:29:00',
+        '2012-03-05 03:30:00',
+        '2012-06-13 11:29:00',
+        '2012-06-29 09:13:00',
+        '2013-06-07 22:32:00',
+        '2013-06-28 01:36:00',
+        '2014-08-01 18:00:00',
+        '2014-10-24 07:37:00',
+        '2014-11-06 03:32:00',
+        '2014-11-07 16:53:00',
+        '2014-12-17 04:25:00',
+        '2014-12-18 21:41:00',
+        '2015-03-09 23:29:00',
+        '2016-07-23 05:00:00',
+        '2021-11-01 00:57:00',
+        '2021-11-02 02:03:00',
+        '2022-01-18 17:01:00',
+        '2022-04-17 03:17:00',
+        '2022-04-20 03:41:00',
+        '2022-04-29 07:15:00',
+        '2022-05-25 18:12:00',
+        '2022-08-17 13:26:00',
+        '2022-08-18 10:37:00',
+        '2022-08-19 04:14:00',
+        '2022-08-29 16:15:00',
+        '2022-08-30 18:05:00',
+        '2022-12-01 07:04:00',
+        '2023-03-04 15:19:00',
+        '2023-03-06 02:08:00'
+        ]
 
-# def read_observed_flux_files(path, energy_key, thresh_key):
-#     """ Read in all observed flux time profiles that were associated
-#         with a forecast prediction window from the SPHINX_dataframe.pkl
-#         file.
+def read_observed_flux_files(path, energy_key, thresh_key):
+    """ Read in all observed flux time profiles that were associated
+        with a forecast prediction window from the SPHINX_dataframe.pkl
+        file.
         
-#         INPUT:
+        INPUT:
         
-#         :path: (string) path to the output directory with trailing /
-#             (not including) output/
-#         :energy_key: (string) energy channel key
-#         :thresh_key: (string) threshold key
+        :path: (string) path to the output directory with trailing /
+            (not including) output/
+        :energy_key: (string) energy channel key
+        :thresh_key: (string) threshold key
             
-#         OUTPUT:
+        OUTPUT:
         
-#         :dates: (1xn datetime array) dates
-#         :fluxes: (1xn floar array) fluxes associated with dates
+        :dates: (1xn datetime array) dates
+        :fluxes: (1xn floar array) fluxes associated with dates
         
-#     """
+    """
 
-#     spx_fname = path + "output/pkl/SPHINX_dataframe.pkl"
-#     sphinx_df = resume.read_in_df(spx_fname)
-#     sphinx_df = sphinx_df[(sphinx_df["Energy Channel Key"] == energy_key) & (sphinx_df["Threshold Key"] == thresh_key)]
+    spx_fname = path + "output/pkl/SPHINX_dataframe.pkl"
+    sphinx_df = resume.read_in_df(spx_fname)
+    sphinx_df = sphinx_df[(sphinx_df["Energy Channel Key"] == energy_key) & (sphinx_df["Threshold Key"] == thresh_key)]
     
     
-#     observations = sphinx_df['Observed Time Profile'].to_list()
-#     #Create list of unique observed time profile filenames
-#     #(may be repeates in the sphinx dataframe
-#     tprof = []
-#     for obsfile in observations:
-#         obsfile = obsfile.strip().split(",")
-#         for tp in obsfile:
-#             if tp not in tprof:
-#                 tprof.append(tp)
+    observations = sphinx_df['Observed Time Profile'].to_list()
+    #Create list of unique observed time profile filenames
+    #(may be repeates in the sphinx dataframe
+    tprof = []
+    for obsfile in observations:
+        obsfile = obsfile.strip().split(",")
+        for tp in obsfile:
+            if tp not in tprof:
+                tprof.append(tp)
 
-#     dates = []
-#     fluxes = []
-#     for fnm in tprof:
-#         dt, flx = profile.read_single_time_profile(fnm)
-#         if dt == []:
-#             continue
-#         dates.extend(dt)
-#         fluxes.extend(flx)
+    dates = []
+    fluxes = []
+    for fnm in tprof:
+        dt, flx = profile.read_single_time_profile(fnm)
+        if dt == []:
+            continue
+        dates.extend(dt)
+        fluxes.extend(flx)
 
-#     return dates, fluxes
+    return dates, fluxes
 
 
-# def export_all_clear_incorrect(filename, threshold, doplot=False):
-#     """ Provide the filename of an all_clear_selections_*.pkl
-#         file.
+def export_all_clear_incorrect(filename, threshold, doplot=False):
+    """ Provide the filename of an all_clear_selections_*.pkl
+        file.
         
-#         Select cases where observed All Clear is True and
-#         predicted All Clear is False.
+        Select cases where observed All Clear is True and
+        predicted All Clear is False.
         
-#         Output as a csv file.
-#         Plot all forecasts with time with the False Alarms highlighted.
+        Output as a csv file.
+        Plot all forecasts with time with the False Alarms highlighted.
         
-#         INPUT:
+        INPUT:
         
-#         :filename: (string) name of all_clear_selections_*.pkl
-#             file. Full path.
+        :filename: (string) name of all_clear_selections_*.pkl
+            file. Full path.
             
-#         :doplot: (bool) set to True to plot false alarms with time
+        :doplot: (bool) set to True to plot false alarms with time
             
-#         OUTPUT:
+        OUTPUT:
         
-#         Write out csv file with false alarms.
-#         Create plot with distribution of times between false alarms.
+        Write out csv file with false alarms.
+        Create plot with distribution of times between false alarms.
         
-#     """
+    """
     
-#     df = resume.read_in_df(filename)
-#     if df.empty:
-#         return
+    df = resume.read_in_df(filename)
+    if df.empty:
+        return
         
-#     model = df["Model"].iloc[0]
-#     energy_key = df["Energy Channel Key"].iloc[0]
-#     thresh_key = df["Threshold Key"].iloc[0]
+    model = df["Model"].iloc[0]
+    energy_key = df["Energy Channel Key"].iloc[0]
+    thresh_key = df["Threshold Key"].iloc[0]
 
-#     #Correct Predictions
-#     cn_dates = []
-#     cn_fluxes = []
-#     sub = df.loc[(df["Observed SEP All Clear"] == True) & (df["Predicted SEP All Clear"] == True)]
-#     if sub.empty:
-#         print("post_analysis: export_all_clear_incorrect: No correct negatives identified.")
-#     else:
-#         cn_dates = sub["Prediction Window Start"].to_list()
-#         cn_fluxes = [threshold]*len(cn_dates)
+    #Correct Predictions
+    cn_dates = []
+    cn_fluxes = []
+    sub = df.loc[(df["Observed SEP All Clear"] == True) & (df["Predicted SEP All Clear"] == True)]
+    if sub.empty:
+        print("post_analysis: export_all_clear_incorrect: No correct negatives identified.")
+    else:
+        cn_dates = sub["Prediction Window Start"].to_list()
+        cn_fluxes = [threshold]*len(cn_dates)
 
-#     #Hits
-#     hits_dates = []
-#     hits_fluxes = []
-#     sub = df.loc[(df["Observed SEP All Clear"] == False) & (df["Predicted SEP All Clear"] == False)]
-#     if sub.empty:
-#         print("post_analysis: export_all_clear_incorrect: No hits.")
-#     else:
-#         hits_dates = sub["Prediction Window Start"].to_list()
-#         hits_fluxes = [threshold]*len(hits_dates)
+    #Hits
+    hits_dates = []
+    hits_fluxes = []
+    sub = df.loc[(df["Observed SEP All Clear"] == False) & (df["Predicted SEP All Clear"] == False)]
+    if sub.empty:
+        print("post_analysis: export_all_clear_incorrect: No hits.")
+    else:
+        hits_dates = sub["Prediction Window Start"].to_list()
+        hits_fluxes = [threshold]*len(hits_dates)
 
 
 
-#     #False Alarms
-#     fa_dates = []
-#     fa_fluxes = []
-#     fa_sub = df.loc[(df["Observed SEP All Clear"] == True) & (df["Predicted SEP All Clear"] == False)]
+    #False Alarms
+    fa_dates = []
+    fa_fluxes = []
+    fa_sub = df.loc[(df["Observed SEP All Clear"] == True) & (df["Predicted SEP All Clear"] == False)]
     
-#     if fa_sub.empty:
-#         print("post_analysis: export_all_clear_incorrect: No false alarms identified.")
-#     else:
-#         fa_dates = fa_sub["Prediction Window Start"].to_list()
-#         fa_fluxes = [threshold+2]*len(fa_dates)
+    if fa_sub.empty:
+        print("post_analysis: export_all_clear_incorrect: No false alarms identified.")
+    else:
+        fa_dates = fa_sub["Prediction Window Start"].to_list()
+        fa_fluxes = [threshold+2]*len(fa_dates)
 
-#         fname = filename.replace(".pkl","_false_alarms.csv")
-#         fname = fname.replace("pkl","csv")
+        fname = filename.replace(".pkl","_false_alarms.csv")
+        fname = fname.replace("pkl","csv")
         
-#         #Write false alarms out to csv file
-#         fa_sub.to_csv(fname)
+        #Write false alarms out to csv file
+        fa_sub.to_csv(fname)
 
 
-#     #Misses
-#     miss_dates = []
-#     miss_fluxes = []
-#     miss_sub = df.loc[(df["Observed SEP All Clear"] == False) & (df["Predicted SEP All Clear"] == True)]
+    #Misses
+    miss_dates = []
+    miss_fluxes = []
+    miss_sub = df.loc[(df["Observed SEP All Clear"] == False) & (df["Predicted SEP All Clear"] == True)]
     
-#     if miss_sub.empty:
-#         print("post_analysis: export_all_clear_incorrect: No misses identified.")
-#     else:
-#         miss_dates = miss_sub["Prediction Window Start"].to_list()
-#         miss_fluxes = [threshold-2]*len(miss_dates)
+    if miss_sub.empty:
+        print("post_analysis: export_all_clear_incorrect: No misses identified.")
+    else:
+        miss_dates = miss_sub["Prediction Window Start"].to_list()
+        miss_fluxes = [threshold-2]*len(miss_dates)
 
-#         fname = filename.replace(".pkl","_misses.csv")
-#         fname = fname.replace("pkl","csv")
+        fname = filename.replace(".pkl","_misses.csv")
+        fname = fname.replace("pkl","csv")
         
-#         #Write false alarms out to csv file
-#         miss_sub.to_csv(fname)
-
-
-
-#     if doplot:
-#         #Read in observed time profiles to plot with the forecasts
-#         path = filename.strip().split("output")[0]
-#         obs_dates, obs_fluxes = read_observed_flux_files(path, energy_key, thresh_key)
-        
-#         figname = filename.replace(".pkl","_incorrect.png")
-#         figname = figname.replace("pkl","plots")
-        
-#         title = "All Clear " + model + " (" + energy_key + ", " + thresh_key +")"
-        
-#         mismatch = df["Mismatch Allowed"].iloc[0]
-#         if mismatch:
-#             pred_energy_channel = df["Prediction Energy Channel Key"].iloc[0]
-#             pred_thresh_key = df["Prediction Threshold Key"].iloc[0]
-#             title = "All Clear " + model + " (Observations: " + energy_key \
-#                     + ", " + thresh_key +" and "  + " Predictions: " \
-#                     + pred_energy_channel + ", " + pred_thresh_key +")"
-        
-#         labels = ["Observed Flux", "Hits", "Correct Negatives", "False Alarms", "Misses"]
-#         fig, _ = plt_tools.plot_flux_false_alarms(obs_dates, obs_fluxes,
-#             hits_dates, hits_fluxes, cn_dates, cn_fluxes, fa_dates, fa_fluxes,
-#             miss_dates, miss_fluxes, labels, threshold,
-#             x_label="Date", y_label="", date_format="Year", title=title,
-#             figname=figname, saveplot=True, showplot=True)
-        
+        #Write false alarms out to csv file
+        miss_sub.to_csv(fname)
 
 
-# def export_max_flux_incorrect(filename, threshold, doplot=False):
-#     """ Provide the filename of an max_flux_in_pred_win_selections_*.pkl
-#         file.
+
+    if doplot:
+        #Read in observed time profiles to plot with the forecasts
+        path = filename.strip().split("output")[0]
+        obs_dates, obs_fluxes = read_observed_flux_files(path, energy_key, thresh_key)
         
-#         Select cases where observed max flux in the prediction window is below
-#         threshold and predicted max flux is above threshold.
+        figname = filename.replace(".pkl","_incorrect.png")
+        figname = figname.replace("pkl","plots")
         
-#         Output as a csv file.
-#         Plot all forecasts with time with the False Alarms highlighted.
+        title = "All Clear " + model + " (" + energy_key + ", " + thresh_key +")"
         
-#         INPUT:
+        mismatch = df["Mismatch Allowed"].iloc[0]
+        if mismatch:
+            pred_energy_channel = df["Prediction Energy Channel Key"].iloc[0]
+            pred_thresh_key = df["Prediction Threshold Key"].iloc[0]
+            title = "All Clear " + model + " (Observations: " + energy_key \
+                    + ", " + thresh_key +" and "  + " Predictions: " \
+                    + pred_energy_channel + ", " + pred_thresh_key +")"
         
-#         :filename: (string) name of all_clear_selections_*.pkl
-#             file. Full path.
-#         :threshold: (float) flux threshold
+        labels = ["Observed Flux", "Hits", "Correct Negatives", "False Alarms", "Misses"]
+        fig, _ = plt_tools.plot_flux_false_alarms(obs_dates, obs_fluxes,
+            hits_dates, hits_fluxes, cn_dates, cn_fluxes, fa_dates, fa_fluxes,
+            miss_dates, miss_fluxes, labels, threshold,
+            x_label="Date", y_label="", date_format="Year", title=title,
+            figname=figname, saveplot=True, showplot=True)
+        
+
+
+def export_max_flux_incorrect(filename, threshold, doplot=False):
+    """ Provide the filename of an max_flux_in_pred_win_selections_*.pkl
+        file.
+        
+        Select cases where observed max flux in the prediction window is below
+        threshold and predicted max flux is above threshold.
+        
+        Output as a csv file.
+        Plot all forecasts with time with the False Alarms highlighted.
+        
+        INPUT:
+        
+        :filename: (string) name of all_clear_selections_*.pkl
+            file. Full path.
+        :threshold: (float) flux threshold
             
-#         :doplot: (bool) set to True to plot false alarms with time
+        :doplot: (bool) set to True to plot false alarms with time
             
-#         OUTPUT:
+        OUTPUT:
         
-#         Write out csv file with false alarms.
-#         Create plot with distribution of times between false alarms.
+        Write out csv file with false alarms.
+        Create plot with distribution of times between false alarms.
         
-#     """
+    """
     
-#     df = resume.read_in_df(filename)
+    df = resume.read_in_df(filename)
     
-#     energy_key = resume.identify_unique(df, "Energy Channel Key")[0]
-#     thresh_key = resume.identify_unique(df, "Threshold Key")[0]
+    energy_key = resume.identify_unique(df, "Energy Channel Key")[0]
+    thresh_key = resume.identify_unique(df, "Threshold Key")[0]
     
-#     if df.empty:
-#         print("post_analysis: export_max_flux_incorrect: Dataframe empty. Returning.")
-#         return
+    if df.empty:
+        print("post_analysis: export_max_flux_incorrect: Dataframe empty. Returning.")
+        return
 
-#     #Could have a column with "Predicted SEP Peak Intensity (Onset Peak)" or
-#     #"Predicted SEP Peak Intensity Max (Max Flux)"
-#     pred_col = None
-#     columns = df.columns.to_list()
-#     for col in columns:
-#         if "Units" in col:
-#             continue
-#         if "Predicted SEP Peak Intensity" in col:
-#             pred_col = col
-#             print("Predicted column is " + pred_col)
+    #Could have a column with "Predicted SEP Peak Intensity (Onset Peak)" or
+    #"Predicted SEP Peak Intensity Max (Max Flux)"
+    pred_col = None
+    columns = df.columns.to_list()
+    for col in columns:
+        if "Units" in col:
+            continue
+        if "Predicted SEP Peak Intensity" in col:
+            pred_col = col
+            print("Predicted column is " + pred_col)
     
 
-#     #Correct Predictions
-#     cn_dates = []
-#     cn_fluxes = []
-#     #Correct negatives
-#     sub = df[(df["Observed Max Flux in Prediction Window"] < threshold) & (df[pred_col] < threshold)]
+    #Correct Predictions
+    cn_dates = []
+    cn_fluxes = []
+    #Correct negatives
+    sub = df[(df["Observed Max Flux in Prediction Window"] < threshold) & (df[pred_col] < threshold)]
     
-#     if sub.empty:
-#         print("post_analysis: export_max_flux_incorrect: No correct negatives identified.")
-#     else:
-#         cn_dates = sub["Prediction Window Start"].to_list()
-#         cn_fluxes = sub[pred_col].to_list()
-
-
-#     #Hits
-#     hits_dates = []
-#     hits_fluxes = []
-#     sub = df[(df["Observed Max Flux in Prediction Window"] >= threshold) & (df[pred_col] >= threshold)]
-    
-#     if sub.empty:
-#         print("post_analysis: export_max_flux_incorrect: No hits identified.")
-#     else:
-#         hits_dates= sub["Prediction Window Start"].to_list()
-#         hits_fluxes = sub[pred_col].to_list()
+    if sub.empty:
+        print("post_analysis: export_max_flux_incorrect: No correct negatives identified.")
+    else:
+        cn_dates = sub["Prediction Window Start"].to_list()
+        cn_fluxes = sub[pred_col].to_list()
 
 
-#     #False Alarms
-#     fa_dates = []
-#     fa_fluxes = []
-#     fa_sub = df[(df["Observed Max Flux in Prediction Window"] < threshold) & (df[pred_col] >= threshold)]
+    #Hits
+    hits_dates = []
+    hits_fluxes = []
+    sub = df[(df["Observed Max Flux in Prediction Window"] >= threshold) & (df[pred_col] >= threshold)]
     
-#     if fa_sub.empty:
-#         print("post_analysis: export_max_flux_incorrect: No false alarms identified.")
-#     else:
-#         fa_dates = fa_sub["Prediction Window Start"].to_list()
-#         fa_fluxes = fa_sub[pred_col].to_list()
+    if sub.empty:
+        print("post_analysis: export_max_flux_incorrect: No hits identified.")
+    else:
+        hits_dates= sub["Prediction Window Start"].to_list()
+        hits_fluxes = sub[pred_col].to_list()
+
+
+    #False Alarms
+    fa_dates = []
+    fa_fluxes = []
+    fa_sub = df[(df["Observed Max Flux in Prediction Window"] < threshold) & (df[pred_col] >= threshold)]
+    
+    if fa_sub.empty:
+        print("post_analysis: export_max_flux_incorrect: No false alarms identified.")
+    else:
+        fa_dates = fa_sub["Prediction Window Start"].to_list()
+        fa_fluxes = fa_sub[pred_col].to_list()
         
-#         fafname = filename.replace(".pkl","_false_alarms.csv")
-#         fafname = fafname.replace("pkl","csv")
+        fafname = filename.replace(".pkl","_false_alarms.csv")
+        fafname = fafname.replace("pkl","csv")
         
-#         #Write false alarms out to csv file
-#         fa_sub.to_csv(fafname)
+        #Write false alarms out to csv file
+        fa_sub.to_csv(fafname)
     
     
-#     #Misses
-#     miss_dates = []
-#     miss_fluxes = []
-#     miss_sub = df[(df["Observed Max Flux in Prediction Window"] >= threshold) & (df[pred_col] < threshold)]
+    #Misses
+    miss_dates = []
+    miss_fluxes = []
+    miss_sub = df[(df["Observed Max Flux in Prediction Window"] >= threshold) & (df[pred_col] < threshold)]
  
-#     if miss_sub.empty:
-#         print("post_analysis: export_max_flux_incorrect: No misses identified.")
-#     else:
-#         miss_dates = miss_sub["Prediction Window Start"].to_list()
-#         miss_fluxes = miss_sub[pred_col].to_list()
+    if miss_sub.empty:
+        print("post_analysis: export_max_flux_incorrect: No misses identified.")
+    else:
+        miss_dates = miss_sub["Prediction Window Start"].to_list()
+        miss_fluxes = miss_sub[pred_col].to_list()
         
-#         mfname = filename.replace(".pkl","_misses.csv")
-#         mfname = mfname.replace("pkl","csv")
+        mfname = filename.replace(".pkl","_misses.csv")
+        mfname = mfname.replace("pkl","csv")
 
-#         #Write misses out to csv file
-#         miss_sub.to_csv(mfname)
+        #Write misses out to csv file
+        miss_sub.to_csv(mfname)
 
 
 
-#     if doplot:
-#         figname = filename.replace(".pkl","_Outcomes.png")
-#         figname = figname.replace("pkl","plots")
+    if doplot:
+        figname = filename.replace(".pkl","_Outcomes.png")
+        figname = figname.replace("pkl","plots")
                 
 
-#         #Read in observed time profiles to plot with the forecasts
-#         path = filename.strip().split("output")[0]
-#         obs_dates, obs_fluxes = read_observed_flux_files(path, energy_key, thresh_key)
+        #Read in observed time profiles to plot with the forecasts
+        path = filename.strip().split("output")[0]
+        obs_dates, obs_fluxes = read_observed_flux_files(path, energy_key, thresh_key)
         
-#         model = df["Model"].iloc[0]
+        model = df["Model"].iloc[0]
         
-#         title = "Max Flux " + model + " (" + energy_key + ", " + thresh_key +")"
+        title = "Max Flux " + model + " (" + energy_key + ", " + thresh_key +")"
         
-#         mismatch = df["Mismatch Allowed"].iloc[0]
-#         if mismatch:
-#             pred_energy_channel = df["Prediction Energy Channel Key"].iloc[0]
-#             pred_thresh_key = df["Prediction Threshold Key"].iloc[0]
-#             title = model + " False Alarms (Observations: " + energy_key \
-#                     + ", " + thresh_key +" and "  + " Predictions: " \
-#                     + pred_energy_channel + ", " + pred_thresh_key +")"
+        mismatch = df["Mismatch Allowed"].iloc[0]
+        if mismatch:
+            pred_energy_channel = df["Prediction Energy Channel Key"].iloc[0]
+            pred_thresh_key = df["Prediction Threshold Key"].iloc[0]
+            title = model + " False Alarms (Observations: " + energy_key \
+                    + ", " + thresh_key +" and "  + " Predictions: " \
+                    + pred_energy_channel + ", " + pred_thresh_key +")"
         
-#         labels = ["Observed Flux", "Hits", "Correct Negatives", "False Alarms", "Misses"]
-#         fig, _ = plt_tools.plot_flux_false_alarms(obs_dates, obs_fluxes,
-#             hits_dates, hits_fluxes, cn_dates, cn_fluxes, fa_dates, fa_fluxes,
-#             miss_dates, miss_fluxes, labels, threshold,
-#             x_label="Date", y_label="", date_format="Year", title=title,
-#             figname=figname, saveplot=True, showplot=True)
+        labels = ["Observed Flux", "Hits", "Correct Negatives", "False Alarms", "Misses"]
+        fig, _ = plt_tools.plot_flux_false_alarms(obs_dates, obs_fluxes,
+            hits_dates, hits_fluxes, cn_dates, cn_fluxes, fa_dates, fa_fluxes,
+            miss_dates, miss_fluxes, labels, threshold,
+            x_label="Date", y_label="", date_format="Year", title=title,
+            figname=figname, saveplot=True, showplot=True)
         
 
 
 
-# def get_file_prefix(quantity):
-#     """ File prefix for various forecasted quantities.
+def get_file_prefix(quantity):
+    """ File prefix for various forecasted quantities.
     
-#     """
-#     dict = {"All Clear": "all_clear",
-#             "Advanced Warning Time": "awt",
-#             "Probability": "probability",
-#             "Threshold Crossing Time": "threshold_crossing_time",
-#             "Start Time": "start_time",
-#             "End Time": "end_time",
-#             "Onset Peak Time": "peak_intensity_time",
-#             "Onset Peak": "peak_intensity",
-#             "Max Flux Time": "peak_intensity_max_time",
-#             "Max Flux": "peak_intensity_max",
-#             "Max Flux in Prediction Window": "max_flux_in_pred_win",
-#             "Duration": "duration",
-#             "Fluence": "fluence",
-#             "Time Profile": "time_profile"
-#             }
+    """
+    dict = {"All Clear": "all_clear",
+            "Advanced Warning Time": "awt",
+            "Probability": "probability",
+            "Threshold Crossing Time": "threshold_crossing_time",
+            "Start Time": "start_time",
+            "End Time": "end_time",
+            "Onset Peak Time": "peak_intensity_time",
+            "Onset Peak": "peak_intensity",
+            "Max Flux Time": "peak_intensity_max_time",
+            "Max Flux": "peak_intensity_max",
+            "Max Flux in Prediction Window": "max_flux_in_pred_win",
+            "Duration": "duration",
+            "Fluence": "fluence",
+            "Time Profile": "time_profile"
+            }
 
-#     if quantity not in dict.keys():
-#         sys.exit("post_analysis: " + quantity + "not valid. Choose one "
-#             + str(dict.keys()))
+    if quantity not in dict.keys():
+        sys.exit("post_analysis: " + quantity + "not valid. Choose one "
+            + str(dict.keys()))
 
-#     return dict[quantity]
+    return dict[quantity]
     
 
 
-# def read_in_metrics(path, quantity, include, exclude):
-#     """ Read in metrics files related to specfied quantity.
+def read_in_metrics(path, quantity, include, exclude):
+    """ Read in metrics files related to specfied quantity.
     
-#     INPUT:
+    INPUT:
     
-#     :path: (string) location of the output/ folder
-#     :quantity: (string) Forecasted quantity of interest.
-#     :exclude: (array of strings) names or partial names of models
-#         to exclude from the metrics post analysis
+    :path: (string) location of the output/ folder
+    :quantity: (string) Forecasted quantity of interest.
+    :exclude: (array of strings) names or partial names of models
+        to exclude from the metrics post analysis
     
-#     OUTPUT:
+    OUTPUT:
     
-#     :df: (pandas DataFrame) dataframe containing all the metrics
+    :df: (pandas DataFrame) dataframe containing all the metrics
     
-#     """
+    """
     
-#     prefix = get_file_prefix(quantity)
-#     fname = path + "output/pkl/" + prefix + "_metrics.pkl"
-#     print("read_in_metrics: Reading in " + fname)
+    prefix = get_file_prefix(quantity)
+    fname = path + "output/pkl/" + prefix + "_metrics.pkl"
+    print("read_in_metrics: Reading in " + fname)
     
-#     df = resume.read_in_df(fname)
+    df = resume.read_in_df(fname)
     
-#     #This is a little tricky because a part of a model
-#     #short_name might be in include. For example, to
-#     #include all 30 of SAWS-ASPECS flavors, the user would
-#     #simply have to put "ASPECS" in include.
-#     #So need to check if the substring is in any of the
-#     #model names. If not, then will append the model name
-#     #to the exclude array and remove from the data frame.
-#     if include[0] != 'All':
-#         models = resume.identify_unique(df,'Model')
-#         for model in models:
-#             included = False
-#             for incl_model in include:
-#                 if incl_model in model:
-#                     included = True
-#             if not included:
-#                 exclude.append(model)
+    #This is a little tricky because a part of a model
+    #short_name might be in include. For example, to
+    #include all 30 of SAWS-ASPECS flavors, the user would
+    #simply have to put "ASPECS" in include.
+    #So need to check if the substring is in any of the
+    #model names. If not, then will append the model name
+    #to the exclude array and remove from the data frame.
+    if include[0] != 'All':
+        models = resume.identify_unique(df,'Model')
+        for model in models:
+            included = False
+            for incl_model in include:
+                if incl_model in model:
+                    included = True
+            if not included:
+                exclude.append(model)
 
-#     #Remove model results that should be excluded from the plots
-#     for model in exclude:
-#         if model != '':
-#             model = model.replace('+','\+')
-#             model = model.replace('(','\(')
-#             model = model.replace(')','\)')
+    #Remove model results that should be excluded from the plots
+    for model in exclude:
+        if model != '':
+            model = model.replace('+','\+')
+            model = model.replace('(','\(')
+            model = model.replace(')','\)')
             
-#             #Avoid removing an included model that contains an excluded
-#             #substring
-#             included_model = ''
-#             for incl_model in include:
-#                 if model in incl_model:
-#                     included_model = incl_model
+            #Avoid removing an included model that contains an excluded
+            #substring
+            included_model = ''
+            for incl_model in include:
+                if model in incl_model:
+                    included_model = incl_model
             
-#             if included_model != '':
-#                 df = df[(~df['Model'].str.contains(model) | df['Model'].str.contains(included_model))]
-#             else:
-#                 df = df[~df['Model'].str.contains(model)]
-#             print("read_in_metrics: Removed model metrics for " + model)
+            if included_model != '':
+                df = df[(~df['Model'].str.contains(model) | df['Model'].str.contains(included_model))]
+            else:
+                df = df[~df['Model'].str.contains(model)]
+            print("read_in_metrics: Removed model metrics for " + model)
 
-#     return df
+    return df
 
 
-# def plot_groups(quantity):
-#     """ Return metrics that should be plotted together according
-#         to forecasted quantity.
+def plot_groups(quantity):
+    """ Return metrics that should be plotted together according
+        to forecasted quantity.
         
-#         INPUT:
+        INPUT:
         
-#             :quantity: (string) forecasted quantity
+            :quantity: (string) forecasted quantity
             
-#         OUTPUT:
+        OUTPUT:
         
-#             :groups: (arr of strings) arrays containing metric names to be
-#                 be plotted together
+            :groups: (arr of strings) arrays containing metric names to be
+                be plotted together
                 
-#     """
-#     #ALL CLEAR
-#     if quantity == "All Clear":
-#         groups = [  ["All Clear 'True Positives' (Hits)",
-#                     "All Clear 'False Positives' (False Alarms)",
-#                     "All Clear 'True Negatives' (Correct Negatives)",
-#                     "All Clear 'False Negatives' (Misses)"],
-#                     ["Percent Correct", "Bias", "Hit Rate", "False Alarm Rate",
-#                     "Frequency of Misses", "Frequency of Hits"],
-#                     ["Probability of Correct Negatives",
-#                     "Frequency of Correct Negatives", "False Alarm Ratio",
-#                     "Detection Failure Ratio", "Threat Score"],
-#                     ["Gilbert Skill Score", "True Skill Statistic",
-#                     "Heidke Skill Score", "Odds Ratio Skill Score",
-#                     "Symmetric Extreme Dependency Score"],
-#                     ["Number SEP Events Correctly Predicted",
-#                     "Number SEP Events Missed"],
-#                     ["Odds Ratio"],
-#                     ["Hit Rate", "False Alarm Ratio", "Bias",
-#                     "True Skill Statistic", "Heidke Skill Score"] #RE
-#                 ]
+    """
+    #ALL CLEAR
+    if quantity == "All Clear":
+        groups = [  ["All Clear 'True Positives' (Hits)",
+                    "All Clear 'False Positives' (False Alarms)",
+                    "All Clear 'True Negatives' (Correct Negatives)",
+                    "All Clear 'False Negatives' (Misses)"],
+                    ["Percent Correct", "Bias", "Hit Rate", "False Alarm Rate",
+                    "Frequency of Misses", "Frequency of Hits"],
+                    ["Probability of Correct Negatives",
+                    "Frequency of Correct Negatives", "False Alarm Ratio",
+                    "Detection Failure Ratio", "Threat Score"],
+                    ["Gilbert Skill Score", "True Skill Statistic",
+                    "Heidke Skill Score", "Odds Ratio Skill Score",
+                    "Symmetric Extreme Dependency Score"],
+                    ["Number SEP Events Correctly Predicted",
+                    "Number SEP Events Missed"],
+                    ["Odds Ratio"],
+                    ["Hit Rate", "False Alarm Ratio", "Bias",
+                    "True Skill Statistic", "Heidke Skill Score"] #RE
+                ]
 
-#     #PROBABILITY
-#     if quantity == "Probability":
-#         groups = [["Brier Score", "Brier Skill Score", "Area Under ROC Curve"]]
+    #PROBABILITY
+    if quantity == "Probability":
+        groups = [["Brier Score", "Brier Skill Score", "Area Under ROC Curve"]]
 
-#     #FLUX METRICS
-#     flux_types = ["Onset Peak", "Max Flux", "Fluence",
-#                 "Max Flux in Prediction Window", "Time Profile"]
-#     if quantity in flux_types:
-#         groups = [ ["Linear Regression Slope",
-#                     "Pearson Correlation Coefficient (Linear)",
-#                     "Pearson Correlation Coefficient (Log)",
-#                     "Spearman Correlation Coefficient (Linear)"],
-#                     ["Mean Error (ME)", "Median Error (MedE)"],
-#                     ["Mean Absolute Error (MAE)",
-#                     "Median Absolute Error (MedAE)",
-#                     "Root Mean Square Error (RMSE)"],
-#                     ["Mean Log Error (MLE)", "Median Log Error (MedLE)"],
-#                     ["Mean Absolute Log Error (MALE)",
-#                     "Median Absolute Log Error (MedALE)",
-#                     "Root Mean Square Log Error (RMSLE)"],
-#                     ["Mean Percent Error (MPE)",
-#                     "Mean Symmetric Percent Error (MSPE)",
-#                     "Mean Symmetric Absolute Percent Error (SMAPE)"],
-#                     ["Mean Absolute Percent Error (MAPE)",
-#                     "Median Symmetric Accuracy (MdSA)",
-#                     "Mean Accuracy Ratio (MAR)"]
-#                 ]
+    #FLUX METRICS
+    flux_types = ["Onset Peak", "Max Flux", "Fluence",
+                "Max Flux in Prediction Window", "Time Profile"]
+    if quantity in flux_types:
+        groups = [ ["Linear Regression Slope",
+                    "Pearson Correlation Coefficient (Linear)",
+                    "Pearson Correlation Coefficient (Log)",
+                    "Spearman Correlation Coefficient (Linear)"],
+                    ["Mean Error (ME)", "Median Error (MedE)"],
+                    ["Mean Absolute Error (MAE)",
+                    "Median Absolute Error (MedAE)",
+                    "Root Mean Square Error (RMSE)"],
+                    ["Mean Log Error (MLE)", "Median Log Error (MedLE)"],
+                    ["Mean Absolute Log Error (MALE)",
+                    "Median Absolute Log Error (MedALE)",
+                    "Root Mean Square Log Error (RMSLE)"],
+                    ["Mean Percent Error (MPE)",
+                    "Mean Symmetric Percent Error (MSPE)",
+                    "Mean Symmetric Absolute Percent Error (SMAPE)"],
+                    ["Mean Absolute Percent Error (MAPE)",
+                    "Median Symmetric Accuracy (MdSA)",
+                    "Mean Accuracy Ratio (MAR)"]
+                ]
 
-#     #TIME METRICS
-#     time_types = ["Threshold Crossing Time", "Start Time", "End Time",
-#                 "Onset Peak Time", "Max Flux Time"]
-#     if quantity in time_types:
-#         groups = []
+    #TIME METRICS
+    time_types = ["Threshold Crossing Time", "Start Time", "End Time",
+                "Onset Peak Time", "Max Flux Time"]
+    if quantity in time_types:
+        groups = []
 
-#     return groups
+    return groups
 
 
-# def add_to_all_clear(df):
-#     """ Add more lines to the all clear metrics dataframe if the
-#         add_contingency dict above is populated.
+def add_to_all_clear(df):
+    """ Add more lines to the all clear metrics dataframe if the
+        add_contingency dict above is populated.
         
-#         INPUT:
+        INPUT:
         
-#             :df: (pandas DataFrame) contains all clear metrics
+            :df: (pandas DataFrame) contains all clear metrics
             
-#         Output:
+        Output:
         
-#             None but df is updated with more rows
+            None but df is updated with more rows
         
-#     """
-#     if add_contingency == {}:
-#         return df
+    """
+    if add_contingency == {}:
+        return df
         
-#     dict = validation.initialize_all_clear_dict()
+    dict = validation.initialize_all_clear_dict()
         
-#     n = len(add_contingency['Model'])
-#     for i in range(n):
-#         model = add_contingency['Model'][i]
-#         energy_key = add_contingency['Energy Channel'][i]
-#         thresh_key = add_contingency['Threshold'][i]
-#         pred_energy_key = add_contingency['Prediction Energy Channel'][i]
-#         pred_thresh_key = add_contingency['Prediction Threshold'][i]
-#         h = add_contingency['Hits'][i]
-#         m = add_contingency['Misses'][i]
-#         f = add_contingency['False Alarms'][i]
-#         c = add_contingency['Correct Negatives'][i]
+    n = len(add_contingency['Model'])
+    for i in range(n):
+        model = add_contingency['Model'][i]
+        energy_key = add_contingency['Energy Channel'][i]
+        thresh_key = add_contingency['Threshold'][i]
+        pred_energy_key = add_contingency['Prediction Energy Channel'][i]
+        pred_thresh_key = add_contingency['Prediction Threshold'][i]
+        h = add_contingency['Hits'][i]
+        m = add_contingency['Misses'][i]
+        f = add_contingency['False Alarms'][i]
+        c = add_contingency['Correct Negatives'][i]
     
-#         scores = metrics.contingency_scores(h,m,f,c)
+        scores = metrics.contingency_scores(h,m,f,c)
     
-#         print("post_analysis: add_to_all_clear: Adding " + model + " for " + energy_key + " and " + thresh_key + " to all clear plots:")
-#         print(scores)
+        print("post_analysis: add_to_all_clear: Adding " + model + " for " + energy_key + " and " + thresh_key + " to all clear plots:")
+        print(scores)
     
-#         validation.fill_all_clear_dict(dict, model, energy_key, thresh_key, pred_energy_key,
-#         pred_thresh_key, scores, h, 'Not provided', m, 'Not provided')
-    
-    
-#     add_df = pd.DataFrame(dict)
-#     df = pd.concat([df,add_df], ignore_index=True)
+        validation.fill_all_clear_dict(dict, model, energy_key, thresh_key, pred_energy_key,
+        pred_thresh_key, scores, h, 'Not provided', m, 'Not provided')
     
     
-#     return df
+    add_df = pd.DataFrame(dict)
+    df = pd.concat([df,add_df], ignore_index=True)
+    
+    
+    return df
 
 
-# def max_prob_per_time_period(df, model, energy_key, thresh_key, starttime, endtime):
-#     """ Given a probability_selections df, find the maximum
-#         probability issued by the model between the
-#         starttime and endtime.
+def max_prob_per_time_period(df, model, energy_key, thresh_key, starttime, endtime):
+    """ Given a probability_selections df, find the maximum
+        probability issued by the model between the
+        starttime and endtime.
         
-#     """
-#     sub  = df[(df['Model'] == model) & (df['Energy Channel Key'] == energy_key)
-#             & (df['Threshold Key'] == thresh_key)]
+    """
+    sub  = df[(df['Model'] == model) & (df['Energy Channel Key'] == energy_key)
+            & (df['Threshold Key'] == thresh_key)]
     
-#     sub = sub[(sub['Prediction Window End'] >= starttime) & (sub['Prediction Window Start'] < endtime)]
+    sub = sub[(sub['Prediction Window End'] >= starttime) & (sub['Prediction Window Start'] < endtime)]
     
-#     if sub.empty:
-#         return None
+    if sub.empty:
+        return None
     
-#     row = validation.identify_max_forecast(sub,'Predicted SEP Probability')
+    row = validation.identify_max_forecast(sub,'Predicted SEP Probability')
     
-#     return row
+    return row
     
 
-# def calculate_probability_metrics(df, dict, path, model, energy_key, thresh_fnm):
+def calculate_probability_metrics(df, dict, path, model, energy_key, thresh_fnm):
 
-#     obs = df['Observed SEP Probability'].to_list()
-#     pred = df['Predicted SEP Probability'].to_list()
+    obs = df['Observed SEP Probability'].to_list()
+    pred = df['Predicted SEP Probability'].to_list()
 
-#     #Calculate metrics
-#     brier_score = metrics.calc_brier(obs, pred)
-#     brier_skill = metrics.calc_brier_skill(obs, pred)
-#     rank_corr_coeff = metrics.calc_spearman(obs, pred)
+    #Calculate metrics
+    brier_score = metrics.calc_brier(obs, pred)
+    brier_skill = metrics.calc_brier_skill(obs, pred)
+    rank_corr_coeff = metrics.calc_spearman(obs, pred)
 
-#     roc_auc, roc_curve_plt = metrics.receiver_operator_characteristic(obs, pred, model)
+    roc_auc, roc_curve_plt = metrics.receiver_operator_characteristic(obs, pred, model)
     
-#     roc_curve_plt.plot()
-#     skill_line = np.linspace(0.0, 1.0, num=10) # Constructing a diagonal line that represents no skill/random guess
-#     plt.plot(skill_line, skill_line, '--', label = 'Random Guess')
-#     figname = path + '/summary/ROC_curve_' \
-#             + model + "_" + energy_key.strip() + "_" + thresh_fnm
-# #    if mismatch:
-# #            figname = figname + "_mm"
-# #    if validation_type != "" and validation_type != "All":
-# #            figname = figname + "_" + validation_type
-#     figname += "_Max_All.pdf"
-#     plt.legend(loc="lower right")
-#     roc_curve_plt.figure_.savefig(figname, dpi=300, bbox_inches='tight')
-#     plt.close(roc_curve_plt.figure_)
+    roc_curve_plt.plot()
+    skill_line = np.linspace(0.0, 1.0, num=10) # Constructing a diagonal line that represents no skill/random guess
+    plt.plot(skill_line, skill_line, '--', label = 'Random Guess')
+    figname = path + '/summary/ROC_curve_' \
+            + model + "_" + energy_key.strip() + "_" + thresh_fnm
+#    if mismatch:
+#            figname = figname + "_mm"
+#    if validation_type != "" and validation_type != "All":
+#            figname = figname + "_" + validation_type
+    figname += "_Max_All.pdf"
+    plt.legend(loc="lower right")
+    roc_curve_plt.figure_.savefig(figname, dpi=300, bbox_inches='tight')
+    plt.close(roc_curve_plt.figure_)
 
 
-#     #Save to dict (ultimately dataframe)
-#     dict['Model'].append(df['Model'].iloc[0])
-#     dict['Energy Channel'].append(df['Energy Channel Key'].iloc[0])
-#     dict['Threshold'].append(df['Threshold Key'].iloc[0])
-#     dict['Prediction Energy Channel'].append(df['Prediction Energy Channel Key'].iloc[0])
-#     dict['Prediction Threshold'].append(df['Prediction Threshold Key'].iloc[0])
-#     dict['ROC Curve Plot'].append(figname)
-#     dict['Brier Score'].append(brier_score)
-#     dict['Brier Skill Score'].append(brier_skill)
-#     dict['Spearman Correlation Coefficient'].append(rank_corr_coeff)
-#     dict['Area Under ROC Curve'].append(roc_auc)
+    #Save to dict (ultimately dataframe)
+    dict['Model'].append(df['Model'].iloc[0])
+    dict['Energy Channel'].append(df['Energy Channel Key'].iloc[0])
+    dict['Threshold'].append(df['Threshold Key'].iloc[0])
+    dict['Prediction Energy Channel'].append(df['Prediction Energy Channel Key'].iloc[0])
+    dict['Prediction Threshold'].append(df['Prediction Threshold Key'].iloc[0])
+    dict['ROC Curve Plot'].append(figname)
+    dict['Brier Score'].append(brier_score)
+    dict['Brier Skill Score'].append(brier_skill)
+    dict['Spearman Correlation Coefficient'].append(rank_corr_coeff)
+    dict['Area Under ROC Curve'].append(roc_auc)
 
 
 
 
-# def get_max_probabilities(df, path):
-#     """ Models that produce more than one probability forecast per
-#         SEP event or non-event period will have a file named
-#         probability_selections_*_Max.pkl or csv.
-#         This Max file only contains the maximum probability issued
-#         for each observed SEP event that fell within the prediction
-#         windows. Note that only models that made more than one prediction
-#         for an SEP event will be in the Max file. The full list of
-#         models should come from the full probability dataframe.
+def get_max_probabilities(df, path):
+    """ Models that produce more than one probability forecast per
+        SEP event or non-event period will have a file named
+        probability_selections_*_Max.pkl or csv.
+        This Max file only contains the maximum probability issued
+        for each observed SEP event that fell within the prediction
+        windows. Note that only models that made more than one prediction
+        for an SEP event will be in the Max file. The full list of
+        models should come from the full probability dataframe.
         
-#         SPHINX does not know about non-event periods. The array above
-#         called non_event_start lists the flare start time for all
-#         SEPVAL non-event periods. The non_event_duration indicates
-#         how long after the flare start should be considered to assess
-#         probability predictions.
+        SPHINX does not know about non-event periods. The array above
+        called non_event_start lists the flare start time for all
+        SEPVAL non-event periods. The non_event_duration indicates
+        how long after the flare start should be considered to assess
+        probability predictions.
         
-#         This code will identify the maximum probability for forecasts
-#         between non_event_start + non_event_duration and write out
-#         to the probability_selections_*_Max_non_event.csv file.
+        This code will identify the maximum probability for forecasts
+        between non_event_start + non_event_duration and write out
+        to the probability_selections_*_Max_non_event.csv file.
         
-#         The probability metrics will be recalculated and saved to file.
+        The probability metrics will be recalculated and saved to file.
         
-#     """
-#     columns = df.columns.to_list()
-#     all_max_metrics_df = pd.DataFrame(columns=columns)
-#     dict = validation.initialize_probability_dict()
+    """
+    columns = df.columns.to_list()
+    all_max_metrics_df = pd.DataFrame(columns=columns)
+    dict = validation.initialize_probability_dict()
     
-#     all_models = df['Model'].to_list()
+    all_models = df['Model'].to_list()
     
-#     #Check for a probability_selections_*_Max.pkl file. If exists,
-#     #then need to add max probability for non-events and recalculate
-#     #metrics.
-#     #If doesn't exist, then keep metrics as-is.
-#     for i in range(len(df)):
-#         metrics_df = pd.DataFrame(columns = columns)
-#         model = df['Model'].iloc[i]
-#         energy_key = df['Energy Channel'].iloc[i]
-#         thresh_key = df['Threshold'].iloc[i]
+    #Check for a probability_selections_*_Max.pkl file. If exists,
+    #then need to add max probability for non-events and recalculate
+    #metrics.
+    #If doesn't exist, then keep metrics as-is.
+    for i in range(len(df)):
+        metrics_df = pd.DataFrame(columns = columns)
+        model = df['Model'].iloc[i]
+        energy_key = df['Energy Channel'].iloc[i]
+        thresh_key = df['Threshold'].iloc[i]
         
-#         thresh_fnm = validation.make_thresh_fname(thresh_key)
-#         fnm = "probability_selections_" + model + "_" + energy_key.strip() \
-#             + "_" + thresh_fnm
+        thresh_fnm = validation.make_thresh_fname(thresh_key)
+        fnm = "probability_selections_" + model + "_" + energy_key.strip() \
+            + "_" + thresh_fnm
         
-#         all_fname = path + "output/pkl/" + fnm + ".pkl"
-#         max_fname = path + "output/pkl/" + fnm + "_Max.pkl"
+        all_fname = path + "output/pkl/" + fnm + ".pkl"
+        max_fname = path + "output/pkl/" + fnm + "_Max.pkl"
 
  
-#         #If no Max file, then no need to recalculate metrics, just
-#         #save already calculated metrics
-#         if not os.path.exists(max_fname):
-#             all_max_metrics_df[len(all_max_metrics_df)] = df.iloc[i]
-#             continue
+        #If no Max file, then no need to recalculate metrics, just
+        #save already calculated metrics
+        if not os.path.exists(max_fname):
+            all_max_metrics_df[len(all_max_metrics_df)] = df.iloc[i]
+            continue
     
-#         #Read in the maximum values per SEP event
-#         max_event_df = resume.read_in_df(max_fname)
+        #Read in the maximum values per SEP event
+        max_event_df = resume.read_in_df(max_fname)
 
-#         #Need to add in the maximum values per non-event
-#         selections_df = resume.read_in_df(all_fname)
+        #Need to add in the maximum values per non-event
+        selections_df = resume.read_in_df(all_fname)
         
-#         for date in non_event_start:
-#             starttime = datetime.datetime.fromisoformat(date, '%Y-%m-%d %H:%M:%S')
-#             endtime = starttime + non_event_duration
-#             max_row = max_prob_per_time_period(selections_df, model,
-#                     energy_key, thresh_key, starttime, endtime)
-#             max_event_df.loc[len(max_event_df)] = max_row
-        
-        
-#         #Write out selections file with SEP event and non-event periods.
-#         max_all_fname = path + "output/csv/" + fnm + "_Max_all.csv"
-#         max_event_df.to_csv(max_all_fname)
+        for date in non_event_start:
+            starttime = datetime.datetime.strptime(date, '%Y-%m-%d %H:%M:%S')
+            endtime = starttime + non_event_duration
+            max_row = max_prob_per_time_period(selections_df, model,
+                    energy_key, thresh_key, starttime, endtime)
+            max_event_df.loc[len(max_event_df)] = max_row
         
         
-#         #Clear the dataframe
-#         #Find predicted None values
-#         noneval = pd.isna(max_event_df['Predicted SEP Probability'])
-#         #Extract only indices for Nones
-#         #True indicates that peak intensity was a None value
-#         noneval = noneval.loc[noneval == True]
-#         noneval = noneval.index.to_list()
-#         if len(noneval) > 0:
-#             for ix in noneval:
-#                 max_event_df = max_event_df.drop(index=ix)
+        #Write out selections file with SEP event and non-event periods.
+        max_all_fname = path + "output/csv/" + fnm + "_Max_all.csv"
+        max_event_df.to_csv(max_all_fname)
+        
+        
+        #Clear the dataframe
+        #Find predicted None values
+        noneval = pd.isna(max_event_df['Predicted SEP Probability'])
+        #Extract only indices for Nones
+        #True indicates that peak intensity was a None value
+        noneval = noneval.loc[noneval == True]
+        noneval = noneval.index.to_list()
+        if len(noneval) > 0:
+            for ix in noneval:
+                max_event_df = max_event_df.drop(index=ix)
 
-#         if not max_event_df.empty:
-#             #Find predicted None values
-#             noneval = pd.isna(max_event_df['Observed SEP Probability'])
-#             #Extract only indices for Nones
-#             #True indicates that peak intensity was a None value
-#             noneval = noneval.loc[noneval == True]
-#             noneval = noneval.index.to_list()
-#             if len(noneval) > 0:
-#                 for ix in noneval:
-#                     max_event_df = max_event_df.drop(index=ix)
+        if not max_event_df.empty:
+            #Find predicted None values
+            noneval = pd.isna(max_event_df['Observed SEP Probability'])
+            #Extract only indices for Nones
+            #True indicates that peak intensity was a None value
+            noneval = noneval.loc[noneval == True]
+            noneval = noneval.index.to_list()
+            if len(noneval) > 0:
+                for ix in noneval:
+                    max_event_df = max_event_df.drop(index=ix)
 
         
         
-#         #Now have maximum probability for all SEP event and non_event
-#         #time periods. Need to recalculate metrics.
-#         calculate_probability_metrics(max_event_df, dict, path,
-#             model, energy_key, thresh_fnm)
+        #Now have maximum probability for all SEP event and non_event
+        #time periods. Need to recalculate metrics.
+        calculate_probability_metrics(max_event_df, dict, path,
+            model, energy_key, thresh_fnm)
         
-#         #Add the newly calculated metrics for the max of all SEP event
-#         #and non-event periods for the give model, energy channel, and thresh
-#         metrics_df = pd.concat([metrics_df, pd.DataFrame(dict)],
-#             ignore_index=True)
+        #Add the newly calculated metrics for the max of all SEP event
+        #and non-event periods for the give model, energy channel, and thresh
+        metrics_df = pd.concat([metrics_df, pd.DataFrame(dict)],
+            ignore_index=True)
     
-#     all_max_metrics_df = pd.concat([all_max_metrics_df, metrics_df], ignore_index=True)
+    all_max_metrics_df = pd.concat([all_max_metrics_df, metrics_df], ignore_index=True)
     
-#     return all_max_metrics_df
+    return all_max_metrics_df
 
 
 
-# def make_box_plots(df, path, quantity, anonymous, highlight, scoreboard,
-#     saveplot, showplot):
-#     """ Take a dataframe of metrics and generate box plots
-#         of each of the metrics.
+def make_box_plots(df, path, quantity, anonymous, highlight, scoreboard,
+    saveplot, showplot):
+    """ Take a dataframe of metrics and generate box plots
+        of each of the metrics.
         
-#         If anonymous = True, then will generate a generic lengend, i.e.
-#             Model 1, Model 2
+        If anonymous = True, then will generate a generic lengend, i.e.
+            Model 1, Model 2
             
-#         If a value is specified for highlight, will use that model
-#             name in the legend and set data points to red.
+        If a value is specified for highlight, will use that model
+            name in the legend and set data points to red.
             
-#         INPUT:
+        INPUT:
         
-#         :df: (pandas DataFrame) contains metrics
-#         :anonymous: (bool) False uses model names in legend.
-#             True uses generic names in legend.
-#         :highlight: (string) model name to highlight on the plot.
-#             If anonymous True, then this model name will be shown.
-#             Points corresponding to this model will be in red.
+        :df: (pandas DataFrame) contains metrics
+        :anonymous: (bool) False uses model names in legend.
+            True uses generic names in legend.
+        :highlight: (string) model name to highlight on the plot.
+            If anonymous True, then this model name will be shown.
+            Points corresponding to this model will be in red.
             
-#         OUTPUT:
+        OUTPUT:
         
-#         Figure(s) with box plots will be written to the
-#         path/output/plots/. directory
+        Figure(s) with box plots will be written to the
+        path/output/plots/. directory
     
-#     """
-#     if quantity == 'All Clear':
-#         #Add metrics hard coded at the top of this code
-#         df = add_to_all_clear(df)
-#         fname = path + ""
-#         prefix = get_file_prefix(quantity)
-#         fname = path + "output/pkl/" + prefix + "_metrics_plotted.pkl"
-#         fname = fname.replace("pkl","csv")
-#         print("make_box_plots: Writing " + fname)
-#         df.to_csv(fname)
+    """
+    if quantity == 'All Clear':
+        #Add metrics hard coded at the top of this code
+        df = add_to_all_clear(df)
+        fname = path + ""
+        prefix = get_file_prefix(quantity)
+        fname = path + "output/pkl/" + prefix + "_metrics_plotted.pkl"
+        fname = fname.replace("pkl","csv")
+        print("make_box_plots: Writing " + fname)
+        df.to_csv(fname)
 
-#     if quantity == "Probability":
-#         #Get maximum probability for non-event time periods for models
-#         #that produce high cadence forecasts.
-#         #If models produce only a single forecast for an event period,
-#         #these will also be included
-#         df = get_max_probabilities(df, path)
-#         fname = path + ""
-#         prefix = get_file_prefix(quantity)
-#         fname = path + "output/pkl/" + prefix + "_metrics_plotted.pkl"
-#         fname = fname.replace("pkl","csv")
-#         print("make_box_plots: Writing " + fname)
-#         df.to_csv(fname)
+    if quantity == "Probability":
+        #Get maximum probability for non-event time periods for models
+        #that produce high cadence forecasts.
+        #If models produce only a single forecast for an event period,
+        #these will also be included
+        df = get_max_probabilities(df, path)
+        fname = path + ""
+        prefix = get_file_prefix(quantity)
+        fname = path + "output/pkl/" + prefix + "_metrics_plotted.pkl"
+        fname = fname.replace("pkl","csv")
+        print("make_box_plots: Writing " + fname)
+        df.to_csv(fname)
 
 
-#     energy_channels = resume.identify_unique(df,'Energy Channel')
-#     thresholds = resume.identify_thresholds_per_energy_channel(df,
-#             ek_name='Energy Channel', tk_name='Threshold')
+    energy_channels = resume.identify_unique(df,'Energy Channel')
+    thresholds = resume.identify_thresholds_per_energy_channel(df,
+            ek_name='Energy Channel', tk_name='Threshold')
 
-#     groups = plot_groups(quantity)
+    groups = plot_groups(quantity)
 
-#     #Make plots according to energy channel and threshold combinations
-#     for ek in energy_channels:
-#         thresh = thresholds[ek]
-#         for tk in thresh:
-#             print(ek + ", " + tk)
-#             sub = df.loc[(df['Energy Channel'] == ek) &
-#                     (df['Threshold'] == tk)]
+    #Make plots according to energy channel and threshold combinations
+    for ek in energy_channels:
+        thresh = thresholds[ek]
+        for tk in thresh:
+            print(ek + ", " + tk)
+            sub = df.loc[(df['Energy Channel'] == ek) &
+                    (df['Threshold'] == tk)]
             
-#             grp = 0
-#             for group in groups:
-#                 grp += 1
-#                 values = []
-#                 metric_names = []
-#                 model_names = []
-#                 hghlt = ''
-#                 for metric_col in group:
-#                     vals = sub[metric_col].to_list()
-#                     if metric_col in cfg.in_percent:
-#                         vals = [x*100. for x in vals]
+            grp = 0
+            for group in groups:
+                grp += 1
+                values = []
+                metric_names = []
+                model_names = []
+                hghlt = ''
+                for metric_col in group:
+                    vals = sub[metric_col].to_list()
+                    if metric_col in cfg.in_percent:
+                        vals = [x*100. for x in vals]
 
 
-#                     model_list = sub['Model'].to_list()
-#                     nfcasts = []
-#                     if 'N (Total Number of Forecasts)' in sub.columns.to_list():
-#                         nfcasts = sub['N (Total Number of Forecasts)'].to_list()
+                    model_list = sub['Model'].to_list()
+                    nfcasts = []
+                    if 'N (Total Number of Forecasts)' in sub.columns.to_list():
+                        nfcasts = sub['N (Total Number of Forecasts)'].to_list()
 
 
-#                     #--- Adjust names of models in lists as needed --------
-#                     #ANONYMOUS
-#                     if anonymous and highlight == '':
-#                         for j in range(len(model_list)):
-#                             model_list[j] = "Model " + str(j)
+                    #--- Adjust names of models in lists as needed --------
+                    #ANONYMOUS
+                    if anonymous and highlight == '':
+                        for j in range(len(model_list)):
+                            model_list[j] = "Model " + str(j)
 
-#                     for jj in range(len(nfcasts)):
-#                         model_list[jj] += " (" + str(nfcasts[jj]) + ")"
+                    for jj in range(len(nfcasts)):
+                        model_list[jj] += " (" + str(nfcasts[jj]) + ")"
 
 
-#                     #HIGHLIGHTED MODEL
-#                     if highlight != '':
-#                         in_list = False
-#                         for j in range(len(model_list)):
-#                             if highlight in model_list[j]:
-#                                 in_list = True
-#                                 continue
-#                             else:
-#                                 model_list[j] = "Models"
+                    #HIGHLIGHTED MODEL
+                    if highlight != '':
+                        in_list = False
+                        for j in range(len(model_list)):
+                            if highlight in model_list[j]:
+                                in_list = True
+                                continue
+                            else:
+                                model_list[j] = "Models"
                     
-#                         #Only include the plots where the highlighted model
-#                         #is in the model list
-#                         if in_list:
-#                             values.extend(vals)
-#                             metric_names.extend([metric_col]*len(vals))
-#                             model_names.extend(model_list)
+                        #Only include the plots where the highlighted model
+                        #is in the model list
+                        if in_list:
+                            values.extend(vals)
+                            metric_names.extend([metric_col]*len(vals))
+                            model_names.extend(model_list)
 
 
-#                     #SCOREBOARD MODELS
-#                     #Highlight only the models on the SEP Scoreboards
-#                     if scoreboard:
-#                          for j in range(len(model_list)):
-#                             in_list = False
-#                             for mod in scoreboard_models:
-#                                 if mod in model_list[j] and 'electrons' not in model_list[j]:
-#                                     in_list = True
+                    #SCOREBOARD MODELS
+                    #Highlight only the models on the SEP Scoreboards
+                    if scoreboard:
+                         for j in range(len(model_list)):
+                            in_list = False
+                            for mod in scoreboard_models:
+                                if mod in model_list[j] and 'electrons' not in model_list[j]:
+                                    in_list = True
 
-#                             if in_list:
-#                                 model_list[j] = "SEP Scoreboards"
-#                             else:
-#                                 model_list[j] = "Models"
+                            if in_list:
+                                model_list[j] = "SEP Scoreboards"
+                            else:
+                                model_list[j] = "Models"
                     
-#                     #If no model is highlighted, then make all the plots
-#                     if highlight == '':
-#                         values.extend(vals)
-#                         metric_names.extend([metric_col]*len(vals))
-#                         model_names.extend(model_list)
+                    #If no model is highlighted, then make all the plots
+                    if highlight == '':
+                        values.extend(vals)
+                        metric_names.extend([metric_col]*len(vals))
+                        model_names.extend(model_list)
 
 
 
 
-#                 dict = {"Metrics": metric_names, "Models":model_names,
-#                         "Values":values}
-#                 metrics_df = pd.DataFrame(dict)
+                dict = {"Metrics": metric_names, "Models":model_names,
+                        "Values":values}
+                metrics_df = pd.DataFrame(dict)
                 
           
-                # title = quantity + " Group " + str(grp) + " (" + ek + ", " + tk + ")"
-                # figname = path + "/summary/" + quantity + "_" + ek  \
-                #         + "_boxes_Group" + str(grp)
-                # if highlight != '':
-                #     figname += "_" + highlight
-                # if scoreboard:
-                #     figname += "_Scoreboards"
-                # if anonymous:
-                #     figname += "_anon"
-                # plt_tools.box_plot_metrics(metrics_df, group, highlight,
-                #     x_label="Metric", y_label="Value", title=title,
-                #     save=figname, uselog=False, showplot=showplot, \
-                #     closeplot=False, saveplot=saveplot)
+                title = quantity + " Group " + str(grp) + " (" + ek + ", " + tk + ")"
+                figname = path + "/summary/" + quantity + "_" + ek  \
+                        + "_boxes_Group" + str(grp)
+                if highlight != '':
+                    figname += "_" + highlight
+                if scoreboard:
+                    figname += "_Scoreboards"
+                if anonymous:
+                    figname += "_anon"
+                plt_tools.box_plot_metrics(metrics_df, group, highlight,
+                    x_label="Metric", y_label="Value", title=title,
+                    save=figname, uselog=False, showplot=showplot, \
+                    closeplot=False, saveplot=saveplot)
 
 
 ############# SPHINX OUTPUT STATS ############
@@ -2043,6 +2047,927 @@ def deoverlap_forecasts(quantity, csv_path, model, energy_min, energy_max, thres
 
     if quantity == "Probability" or quantity == "probability":
         probability_deoverlap(csv_path, [model], energy_min, energy_max, threshold, seps=sep_events,
+            nonevent_st=date_range_st, nonevent_end=date_range_end, split=split,
+            write_grid=False)
+        
+def make_histograms():
+    from matplotlib.ticker import MultipleLocator
+    import matplotlib
+    
+    
+    plt.rcParams['font.size'] = 16
+    plt.rcParams['font.family'] = 'sans-serif'
+    plt.rcParams['font.sans-serif'] = 'Arial'
+    # model_names = ['ZEUS+iPATH_CME']
+    # model_names = ['SEPMOD', 'ZEUS+iPATH_CME', 'SEPSTER2D', 'SEPSTER (Parker Spiral)', 'UMASEP-100', 'COMESEP flare+CME ', 'MFLAMPA', 'STAT', 'SFS-Update', 'ADEPT-AFRL 1hr', 'ADEPT-AFRL 6hr',\
+    # 'SPREAdFAST', 'SEPSAT', 'SAWS-ASPECS CME (SOHO) 50%', 'SAWS-ASPECS CME (SOHO) electrons 50%', 'SAWS-ASPECS flare + CME (SOHO) 50%', 'SAWS-ASPECS flare 50%', 'SAWS-ASPECS flare electrons 50%']
+    model_names = ['SAWS-ASPECS 0-6 hrs 50%', 'SAWS-ASPECS 0-6 hrs 90%', 'SAWS-ASPECS 50%', 'SAWS-ASPECS 90%', 'SAWS-ASPECS flare 50%', 'SAWS-ASPECS flare 90%', \
+    'SEPMOD', 'SEPSTER (Parker Spiral)', 'SEPSTER (WSA-ENLIL)', 'SEPSTER2D', 'UMASEP-100', 'ZEUS+iPATH_CME']
+    # model_names = ['ADEPT-AFRL 1hr', 'COMESEP flare only', 'COMESEP flare+CME', 'SAWS-ASPECS CME (SOHO) 50%', 'SAWS-ASPECS CME (SOHO) 90%', 'SAWS-ASPECS CME (SOHO) electrons 50%', 'SAWS-ASPECS CME (SOHO) electrons 90%', \
+    #     'SAWS-ASPECS flare + CME (SOHO) 50%', 'SAWS-ASPECS flare + CME (SOHO) 90%', 'SAWS-ASPECS CME (SOHO) electrons 50%', 'SAWS-ASPECS CME (SOHO) electrons 90%', 'SAWS-ASPECS flare 50%', 'SAWS-ASPECS flare 90%',\
+    #     'SAWS-ASPECS flare electrons 50%', 'SAWS-ASPECS flare electrons 90%', 'SEPSAT', 'SFS-Update', 'SEPMOD', 'SEPSTER (Parker Spiral)', 'SEPSTER (WSA+ENLIL)', 'SEPSTER2D', 'UMASEP-100', 'ZEUS+iPATH_CME']
+    # model_names = ['ZEUS+iPATH_CME']
+    # Choosing metrics here for time metrics these will be interpreted as not the log values 
+    metrics_list = ['LE']
+    # list this out as it appears in the _selections files
+    # forecast_quantity = ['peak_intensity_max', 'start_time', 'peak_intensity_max_time', 'peak_intensity', 'duration']
+    forecast_quantity = ['peak_intensity_max', 'peak_intensity']
+    name_dictionary = {
+        'SEPMOD': 'SEPMOD',
+        'ZEUS+iPATH_CME': 'iPATH',
+        'SEPSTER2D': 'SEPSTER2D',
+        'SEPSTER (Parker Spiral)': 'SEPSTER (PS)',
+        'SEPSTER (WSA-ENLIL)': 'SEPSTER (WE)',
+        'UMASEP-100': 'UMASEP-100',
+        'COMESEP flare only': 'COMESEP flare only',
+        'COMESEP flare+CME ': 'COMESEP flare+CME',
+        'MFLAMPA': 'MFLAMPA',
+        'STAT': 'STAT',
+        'SFS-Update': 'SFS Update',
+        'ADEPT-AFRL 1hr' :'ADEPT 1hr',
+        'ADEPT-AFRL 6hr': 'ADEPT 6hr',
+        'SPREAdFAST': 'SPREAdFAST',
+        'SEPSAT': 'SEPSAT',
+        'SAWS-ASPECS 0-6 hrs 50%': 'SAWS-ASPECS 0-6 hrs 50%',
+        'SAWS-ASPECS 0-6 hrs 90%': 'SAWS-ASPECS 0-6 hrs 90%',
+        'SAWS-ASPECS 50%': 'SAWS-ASPECS 50%',
+        'SAWS-ASPECS 90%': 'SAWS-ASPECS 90%',
+        'SAWS-ASPECS CME (SOHO) 50%': 'ASPECS CME 50%',
+        'SAWS-ASPECS CME (SOHO) electrons 50%': 'ASPECS CME electrons 50%' ,
+        'SAWS-ASPECS flare + CME (SOHO) 50%': 'ASPECS CME + flare 50%',
+        'SAWS-ASPECS flare 50%': 'ASPECS flare 50%', 
+        'SAWS-ASPECS flare electrons 50%': 'ASPECS flare electrons 50%',
+        'SAWS-ASPECS CME (SOHO) 90%': 'ASPECS CME 90%',
+        'SAWS-ASPECS CME (SOHO) electrons 90%': 'ASPECS CME electrons 90%' ,
+        'SAWS-ASPECS flare + CME (SOHO) 90%': 'ASPECS CME + flare 90%',
+        'SAWS-ASPECS flare 90%': 'ASPECS flare 90%', 
+        'SAWS-ASPECS flare electrons 90%': 'ASPECS flare electrons 90%',
+        'UMASEP-10': 'UMASEP-10'
+    }
+    forecast_label = {
+        'peak_intensity_max': 'SEP Max Peak Flux',
+        'start_time': 'SEP Start Time',
+        'peak_intensity_max_time': 'SEP Max Peak Flux Time',
+        'peak_intensity': 'SEP Onset Peak Flux',
+        'duration': 'SEP Event Duration'
+    }
+    observed_dictionary = {
+        'peak_intensity_max': 'Observed SEP Peak Intensity Max (Max Flux)',
+        'start_time': 'Observed SEP Start Time',
+        'peak_intensity_max_time': 'Observed SEP Peak Intensity Max (Max Flux) Time',
+        'peak_intensity': 'Observed SEP Peak Intensity (Onset Peak)',
+        'duration': 'Observed SEP Duration'
+    }
+    forecast_dictionary = {
+        'peak_intensity_max': 'Predicted SEP Peak Intensity Max (Max Flux)',
+        'start_time': 'Predicted SEP Start Time',
+        'peak_intensity_max_time': 'Predicted SEP Peak Intensity Max (Max Flux) Time',
+        'peak_intensity': 'Predicted SEP Peak Intensity (Onset Peak)',
+        'duration': 'Predicted SEP Duration'
+    }
+    # These 'outliers' are subject to change based on want we decide is best
+    outliers_dictionary = {
+        'peak_intensity_max': 2.0,
+        'start_time': 10.0,
+        'peak_intensity_max_time': 24.0,
+        'peak_intensity': 2.0,
+        'duration': 24.0
+    }
+    # setting up a list to be used in the outliers output file as the column names for the dataframe
+    fields_outlier = ['Model', 'Dataset', 'Energy Channel Key', 'Observed SEP Threshold Crossing Time', 'Observed SEP Peak Intensity Max (Max Flux)', \
+        'Observed SEP Peak Intensity Max (Max Flux) Time', 'Predicted SEP Start Time', 'Predicted SEP Peak Intensity Max (Max Flux)', \
+            'Predicted SEP Peak Intensity Max (Max Flux) Time', 'Observed SEP Onset Peak Flux', 'Predicted SEP Onset Peak Flux', 'Reason for Outlier', 'Metric Name', 'Metric Calculation', 'Forecast Source']
+    outliers = []
+    event_list_sepval = []
+    event_list_sb = []
+    event_fields = ['Model', 'Dataset', 'Energy Channel Key', 'Observed SEP Threshold Crossing Time', 'Metric Calculation']
+    energy_list = ['10', '100']
+    
+    # jet_cmap = plt.cm.get_cmap('jet')
+    # mapping = []
+    # for i in range(len(model_names)):
+    #     mapping.append(jet_cmap(i*12))
+    
+    
+    # There's probably a better way to do this but I was short on time to prepare this analysis. Histograms are made looping
+    # over energy, forecast quantity and then lastly by model, which ia all based on the lists and dictionaries above
+    for energy in energy_list:
+        print('Energy Channel', energy)
+        if energy == '10':
+            energy_thresh = 'min.10.0.max.-1.0.units.MeV_threshold_10.0'
+        else:
+            energy_thresh = 'min.100.0.max.-1.0.units.MeV_threshold_1.0'
+        for forecasts in forecast_quantity:
+            print(forecasts)
+            print(len(model_names))
+            labels = []
+            x_locations = []
+            x_loc = 0
+            big_fig, big_ax = plt.subplots(figsize=(14, 12))
+            plot_iter = 0
+            big_ax.set_prop_cycle(color=plt.cm.tab20.colors)
+            for names in model_names:
+                if 'UMASEP' in names:
+                    if energy == '10':
+                        names = 'UMASEP-10'
+                    else:
+                        names = 'UMASEP-100'
+                print(names)
+                if 'SEPSTER' in names or 'UMASEP' in names or 'COMESEP' in names or 'SFS' in names or 'ADEPT' in names:
+                    if '2D' in names:
+                        observed_label = observed_dictionary[forecasts]
+                        predicted_label = forecast_dictionary[forecasts]
+                        file_to_read_in_sepval = './SEPVAL/' + forecasts + '_selections_' + names +' CME_' + energy_thresh + '.csv'
+                        if os.path.isfile(file_to_read_in_sepval):
+                            if forecasts == 'peak_intensity_max':
+                                predicted_label = 'Predicted SEP Peak Intensity (Onset Peak)'
+                            elif forecasts == 'peak_intensity_max_time':
+                                predicted_label = 'Predicted SEP Peak Intensity (Onset Peak) Time'
+                            dataframe_sepval = pd.read_csv(file_to_read_in_sepval)
+                            obs_sepval = dataframe_sepval[observed_label]
+                            pred_sepval = dataframe_sepval[predicted_label]
+                            
+                            
+
+
+                            file_to_read_in_sb = './Scoreboard/' + forecasts + '_selections_' + names + '_' + energy_thresh + '.csv'
+                            if os.path.isfile(file_to_read_in_sb):
+                                dataframe_sb = pd.read_csv(file_to_read_in_sb)
+                                obs_sb = dataframe_sb[observed_label]
+                                pred_sb = dataframe_sb[predicted_label]
+                            else:
+                                obs_sb = []
+                                pred_sb = []
+                        else:
+                            pred_sepval = []
+                            obs_sepval = []
+                            obs_sb = []
+                            pred_sb = []
+                    elif 'UMASEP' in names:
+                        observed_label = observed_dictionary[forecasts]
+                        predicted_label = forecast_dictionary[forecasts]
+                        file_to_read_in_sepval = './SEPVAL/' + forecasts + '_selections_' + names +'_' + energy_thresh + '_First.csv'
+                        if os.path.isfile(file_to_read_in_sepval):
+                            if forecasts == 'peak_intensity_max':
+                                predicted_label = 'Predicted SEP Peak Intensity (Onset Peak)'
+                            elif forecasts == 'peak_intensity_max_time':
+                                predicted_label = 'Predicted SEP Peak Intensity (Onset Peak) Time'
+                            dataframe_sepval = pd.read_csv(file_to_read_in_sepval)
+                            obs_sepval = dataframe_sepval[observed_label]
+                            pred_sepval = dataframe_sepval[predicted_label]
+                            
+                            file_to_read_in_sb = './Scoreboard/' + forecasts + '_selections_' + names + '_'+ energy_thresh + '_First.csv'
+                            if os.path.isfile(file_to_read_in_sb):
+                                dataframe_sb = pd.read_csv(file_to_read_in_sb)
+                                obs_sb = dataframe_sb[observed_label]
+                                pred_sb = dataframe_sb[predicted_label]
+                            else:
+                                obs_sb = []
+                                pred_sb = []
+                        else:
+                            pred_sepval = []
+                            obs_sepval = []
+                            obs_sb = []
+                            pred_sb = []
+                    else:
+                        observed_label = observed_dictionary[forecasts]
+                        predicted_label = forecast_dictionary[forecasts]
+                        file_to_read_in_sepval = './SEPVAL/' + forecasts + '_selections_' + names +'_' + energy_thresh + '.csv'
+                        if os.path.isfile(file_to_read_in_sepval):
+                            if forecasts == 'peak_intensity_max':
+                                predicted_label = 'Predicted SEP Peak Intensity (Onset Peak)'
+                            elif forecasts == 'peak_intensity_max_time':
+                                predicted_label = 'Predicted SEP Peak Intensity (Onset Peak) Time'
+                            dataframe_sepval = pd.read_csv(file_to_read_in_sepval)
+                            obs_sepval = dataframe_sepval[observed_label]
+                            pred_sepval = dataframe_sepval[predicted_label]
+                        else:
+                            pred_sepval = []
+                            obs_sepval = []
+                            obs_sb = []
+                            pred_sb = []
+                            
+                        file_to_read_in_sb = './Scoreboard/' + forecasts + '_selections_' + names + '_'+ energy_thresh + '.csv'
+                        if os.path.isfile(file_to_read_in_sb):
+                            if forecasts == 'peak_intensity_max':
+                                predicted_label = 'Predicted SEP Peak Intensity (Onset Peak)'
+                            elif forecasts == 'peak_intensity_max_time':
+                                predicted_label = 'Predicted SEP Peak Intensity (Onset Peak) Time'
+                            dataframe_sb = pd.read_csv(file_to_read_in_sb)
+                            obs_sb = dataframe_sb[observed_label]
+                            pred_sb = dataframe_sb[predicted_label]
+                        else:
+                            obs_sb = []
+                            pred_sb = []
+                        
+                # ".\SEPVAL\peak_intensity_max_selections_COMESEP flare+CME _min.10.0.max.-1.0.units.MeV_threshold_10.0.csv"
+                # "./SEPVAL/peak_intensity_max_selections_COMESEP flare+CME_min.10.0.max.-1.0.units.MeV_threshold_10.0.csv"
+                else:
+                    observed_label = observed_dictionary[forecasts]
+                    predicted_label = forecast_dictionary[forecasts]
+                    file_to_read_in_sepval = './SEPVAL/' + forecasts + '_selections_' + names +'_' + energy_thresh + '.csv'
+                    file_to_read_in_sb = './Scoreboard/' + forecasts + '_selections_' + names + '_' + energy_thresh + '.csv'
+                    print(file_to_read_in_sb, )
+                    if os.path.isfile(file_to_read_in_sepval):
+                        dataframe_sepval = pd.read_csv(file_to_read_in_sepval)
+                        obs_sepval = dataframe_sepval[observed_label]
+                        pred_sepval = dataframe_sepval[predicted_label]
+                    else:
+                        pred_sepval = []
+                        obs_sepval = []
+            
+                    if os.path.isfile(file_to_read_in_sb):
+                            dataframe_sb = pd.read_csv(file_to_read_in_sb)
+                            obs_sb = dataframe_sb[observed_label]
+                            pred_sb = dataframe_sb[predicted_label]
+                    else:
+                            obs_sb = []
+                            pred_sb = []
+              
+                        # "./SEPVAL/peak_intensity_max_selections_COMESEP flare+CME _min.10.0.max.-1.0.units.MeV_threshold_10.0.csv"
+                        # ".\SEPVAL\peak_intensity_max_selections_COMESEP flare+CME _min.10.0.max.-1.0.units.MeV_threshold_10.0.csv"
+                # print(file_to_read_in_sepval)
+                # print(len(pred_sepval), len(pred_sb), len(obs_sepval), len(obs_sb))
+                if len(pred_sepval) == 0 and len(pred_sb) == 0:
+                    print('nothing found bro')
+                    pass
+                else:
+                    
+                    for scores in metrics_list:
+                        
+                        if 'time' in forecasts and scores == 'ALE': 
+                            i = 0
+                            j = 0
+                            metric_label = 'Absolute Error'
+                            # print(pred_sepval)
+                            # print(obs_sepval)
+                            metric_sepval = []
+                            metric_sb = []
+                            metric_sepval_clean = []
+                            metric_sb_clean = []
+                            for i in range(len(pred_sepval)):
+                                foo = np.abs(datetime.fromisoformat(pred_sepval[i]) - datetime.fromisoformat(obs_sepval[i]))
+                                metric_sepval.append(foo.total_seconds()/(60*60)) #convert to hours
+                                metric_sepval_clean.append(foo.total_seconds()/(60*60)) #convert to hours
+                            if len(pred_sb) == 0:
+                                n_sb = 0
+                                pass
+                            else:
+                                for j in range(len(pred_sb)) :
+                                    foo = (np.abs(datetime.fromisoformat(pred_sb[j]) - datetime.fromisoformat(obs_sb[j])))
+                                    metric_sb.append(foo.total_seconds()/(60*60)) #convert to hours
+                                    metric_sb_clean.append(foo.total_seconds()/(60*60)) #convert to hours
+                                    n_sb = len(metric_sb_clean)                            
+
+                            n_sepval = len(metric_sepval_clean)
+                            
+                        elif 'time' in forecasts and scores == 'LE':
+                            i = 0
+                            j = 0
+                            metric_label = 'Error'
+                            # print(pred_sepval)
+                            # print(obs_sepval)
+                            metric_sepval = []
+                            metric_sb = []
+                            metric_sepval_clean = []
+                            metric_sb_clean = []
+
+                            for i in range(len(pred_sepval)):
+                                foo = (datetime.fromisoformat(pred_sepval[i]) - datetime.fromisoformat(obs_sepval[i]))
+                                metric_sepval.append(foo.total_seconds()/(60*60)) #convert to hours
+                                metric_sepval_clean.append(foo.total_seconds()/(60*60)) #convert to hours
+                            if len(pred_sb) != 0:
+
+                                for j in range(len(pred_sb)) :
+                                    foo = (datetime.fromisoformat(pred_sb[j]) - datetime.fromisoformat(obs_sb[j]))
+                                    metric_sb.append(foo.total_seconds()/(60*60)) #convert to hours
+                                    metric_sb_clean.append(foo.total_seconds()/(60*60)) #convert to hours
+                                    n_sb = len(metric_sb_clean)
+                            else:
+                                n_sb = 0
+                                pass
+                            n_sepval = len(metric_sepval_clean)
+                            
+                        elif 'duration' in forecasts:
+                            obs_sepval_clean, pred_sepval_clean = metrics.remove_zero(obs_sepval, pred_sepval)
+                            if scores == 'LE':
+                                metric_label = "Error"
+                                metric_sepval_clean = metrics.switch_error_func('E', obs_sepval_clean, pred_sepval_clean)
+                                metric_sepval = metrics.switch_error_func('E', obs_sepval, pred_sepval)
+                                obs_sb_clean, pred_sb_clean = metrics.remove_zero(obs_sb, pred_sb)
+                                metric_sb_clean = metrics.switch_error_func('E', obs_sb_clean, pred_sb_clean)
+                                metric_sb = metrics.switch_error_func('E', obs_sb, pred_sb)
+                            elif scores == 'ALE':
+                                metric_label = 'Absolute Error'
+                                metric_sepval_clean = metrics.switch_error_func('AE', obs_sepval_clean, pred_sepval_clean)
+                                metric_sepval = metrics.switch_error_func('AE', obs_sepval, pred_sepval)
+                                obs_sb_clean, pred_sb_clean = metrics.remove_zero(obs_sb, pred_sb)
+                                metric_sb_clean = metrics.switch_error_func('AE', obs_sb_clean, pred_sb_clean)
+                                metric_sb = metrics.switch_error_func('AE', obs_sb, pred_sb)
+                            
+                            # if all(metric_sepval_clean) == None:
+                            #     metric_sepval_clean = 0
+                            # if all(metric_sb_clean) == None:
+                            #     metric_sb_clean = 0
+                            
+                            try:
+                                n_sepval = len(metric_sepval_clean)
+                            except:
+                                n_sepval = 0
+                            try:
+                                n_sb = len(metric_sb_clean)
+                            except:
+                                n_sb = 0 
+                            
+                        else:
+                            metric_label = scores
+                            obs_sepval_clean, pred_sepval_clean = metrics.remove_zero(obs_sepval, pred_sepval)
+                            metric_sepval_clean = metrics.switch_error_func(scores, obs_sepval_clean, pred_sepval_clean)
+                            metric_sepval = metrics.switch_error_func(scores, obs_sepval, pred_sepval)
+                            try:
+                                if metric_sepval_clean == None:
+                                    metric_sepval_clean = 0
+                            except:
+                                pass
+                            try:
+                                n_sepval = len(metric_sepval_clean)
+                            except:
+                                n_sepval = 0
+                            metric_sb = 0
+                            if len(pred_sb) != 0:
+                                obs_sb_clean, pred_sb_clean = metrics.remove_zero(obs_sb, pred_sb)
+                                metric_sb_clean = metrics.switch_error_func(scores, obs_sb_clean, pred_sb_clean)
+                                metric_sb = metrics.switch_error_func(scores, obs_sb, pred_sb)
+                                n_sb = len(metric_sb_clean)
+                            else:
+                                n_sb = 0 
+                                metric_sb_clean = None
+                                metric_sb = None
+                                pass
+
+                        # calculating what's within an order of magnitude
+                        if 'A' in scores:
+                            count = 0
+                            print('duration' in forecasts, 'time' not in forecasts)
+                            if 'time' not in forecasts and 'duration' not in forecasts:
+                                bins_hist = [0,0.5,1,1.5,2,2.5,3,3.5,4,4.5,5]
+                                bins_cdf = [0,0.5,1,1.5,2,2.5,3,3.5,4,4.5,5]
+                            else:
+                                # print('SHould hit this')
+                                try:
+                                    if type(metric_sb) != int and len(metric_sb_clean) != 0:
+                                        
+                                        bin_max = np.round(np.max([np.max(metric_sepval_clean), np.max(metric_sb_clean)]))
+                                        bin_min = np.round(np.min([np.min(metric_sepval_clean), np.min(metric_sb_clean)]))
+
+
+                                        four_hour_bins = np.arange(-200, 200, 4)
+                                        bins_hist = []
+                                        for x in range(len(four_hour_bins)):
+                                            if four_hour_bins[x] >= 0 and four_hour_bins[x] <= bin_max+4:
+                                                bins_hist.append(four_hour_bins[x])
+                                            else:
+                                                pass
+                                        # bins_hist.append(x in four_hour_bins )
+                                        # bins_hist =  np.arange(0, bin_max, 4)
+
+                                        # bins_hist = np.arange(bin_min, bin_max, 4)
+                                        print(bins_hist)
+                                        bins_cdf = np.arange(bin_min, bin_max, 1)
+
+                                    elif len(metric_sepval_clean) != 0:
+                                        
+                                        bin_max = np.round(np.max(metric_sepval_clean))
+                                        bin_min = np.round(np.min(metric_sepval_clean))
+                                        four_hour_bins = np.arange(-200, 200, 4)
+                                        bins_hist = []
+                                        for x in range(len(four_hour_bins)):
+                                            if four_hour_bins[x] >= 0 and four_hour_bins[x] <= bin_max+4:
+                                                bins_hist.append(four_hour_bins[x])
+                                            else:
+                                                pass
+                                        # bins_hist = np.arange(bin_min, bin_max, 4)
+                                        # print(bins_hist)
+                                        bins_cdf = np.arange(bin_min, bin_max, 1)
+                                    else:
+                                        pass
+                                except:
+                                    pass
+                            i = 0
+                            j = 0
+                            # ['Model', 'Dataset', 'Energy Channel Key', 'Observed SEP Threshold Crossing Time', 'Observed SEP Peak Intensity Max (Max Flux)', \
+                            # 'Observed SEP Peak Intensity Max (Max Flux) Time', 'Predicted SEP Start Time', 'Predicted SEP Peak Intensity Max (Max Flux)', \
+                            # 'Predicted SEP Peak Intensity Max (Max Flux) Time', 'Reason for Outlier', 'Metric Name', 'Result', 'Forecast Source']
+                            # for i in range(len(metric_sepval)):
+                            #     if metric_sepval[i] >= outliers_dictionary[forecasts] or metric_sepval[i] <= -outliers_dictionary[forecasts]:
+                            #         if 'start' in forecasts:
+                            #             outliers.append([dataframe_sepval['Model'][i], 'SEPVAL', energy_thresh, dataframe_sepval['Observed SEP Start Time'][i], None, \
+                            #                 None, dataframe_sepval['Predicted SEP Start Time'][i], None, \
+                            #                 None, 'Start Time', metric_label, metric_sepval[i], dataframe_sepval['Forecast Source'][i]])
+                            #         elif 'max_time' in forecasts:
+                            #             outliers.append([dataframe_sepval['Model'][i], 'SEPVAL', energy_thresh, dataframe_sepval['Observed SEP Threshold Crossing Time'][i], None, \
+                            #                 dataframe_sepval['Observed SEP Peak Intensity Max (Max Flux) Time'][i], None, None, \
+                            #                 pred_sepval[i], 'Max Peak Time', metric_label, metric_sepval[i], dataframe_sepval['Forecast Source'][i]])
+                            #         else:
+                            #             outliers.append([dataframe_sepval['Model'][i], 'SEPVAL', energy_thresh, dataframe_sepval['Observed SEP Threshold Crossing Time'][i], dataframe_sepval['Observed SEP Peak Intensity Max (Max Flux)'][i], \
+                            #                 None, None, pred_sepval[i],\
+                            #                 None, 'Max Peak Flux', metric_label, metric_sepval[i], dataframe_sepval['Forecast Source'][i]])
+                            
+                            # if type(metric_sb) != int:
+                            #     for j in range(len(metric_sb)):
+                            #         if metric_sb[j] >= outliers_dictionary[forecasts] or metric_sb[j] <= -outliers_dictionary[forecasts]:
+                            #             if 'start' in forecasts:
+                            #                 outliers.append([dataframe_sb['Model'][j], 'Scoreboard', energy_thresh, dataframe_sb['Observed SEP Start Time'][j], None, \
+                            #                     None, dataframe_sb['Predicted SEP Start Time'][j], None, \
+                            #                     None, 'Start Time', metric_label, metric_sb[j], dataframe_sb['Forecast Source'][j]])
+                            #             elif 'max_time' in forecasts:
+                            #                 outliers.append([dataframe_sb['Model'][j], 'Scoreboard', energy_thresh, dataframe_sb['Observed SEP Threshold Crossing Time'][j], None, \
+                            #                     dataframe_sb['Observed SEP Peak Intensity Max (Max Flux) Time'][j], None, None, \
+                            #                     pred_sb[j], 'Max Peak Time', metric_label, metric_sb[j], dataframe_sb['Forecast Source'][j]])
+                            #             else:
+                            #                 outliers.append([dataframe_sb['Model'][j], 'Scoreboard', energy_thresh, dataframe_sb['Observed SEP Threshold Crossing Time'][j], dataframe_sb['Observed SEP Peak Intensity Max (Max Flux)'][j], \
+                            #                     None, None, pred_sb[j], \
+                            #                     None, 'Max Peak Flux', metric_label, metric_sb[j], dataframe_sb['Forecast Source'][j]])      
+                            # else:
+                            #     pass
+                            # # m_sepval = str(count/n_sepval)
+                            # count = 0
+                            # i = 0
+                            # for i in range(n_sb):
+                            #     print(i, range(n_sb))
+                            #     if metric_sb[i] >= 0 and metric_sb[i] <= 1:
+                            #         count += 1  
+                            # # m_sb = str(count/n_sb)
+                        else:
+                            i = 0
+                            j = 0
+                            # ['Model', 'Dataset', 'Energy Channel Key', 'Observed SEP Threshold Crossing Time', 'Observed SEP Peak Intensity Max (Max Flux)', \
+                            # 'Observed SEP Peak Intensity Max (Max Flux) Time', 'Predicted SEP Start Time', 'Predicted SEP Peak Intensity Max (Max Flux)', \
+                            # 'Predicted SEP Peak Intensity Max (Max Flux) Time', 'Reason for Outlier', 'Metric Name', 'Result', 'Forecast Source']
+                            # for i in range(len(metric_sepval)):
+                            #     # if metric_sepval[i] >= outliers_dictionary[forecasts] or metric_sepval[i] <= -outliers_dictionary[forecasts]:
+                            #     if 'start' in forecasts:
+                            #         outliers.append([dataframe_sepval['Model'][i], 'SEPVAL', energy_thresh, dataframe_sepval['Observed SEP Start Time'][i], None, \
+                            #             None, dataframe_sepval['Predicted SEP Start Time'][i], None, \
+                            #             None, 'Start Time', metric_label, metric_sepval[i], dataframe_sepval['Forecast Source'][i]])
+                            #     elif 'max_time' in forecasts:
+                            #         outliers.append([dataframe_sepval['Model'][i], 'SEPVAL', energy_thresh, dataframe_sepval['Observed SEP Threshold Crossing Time'][i], None, \
+                            #             dataframe_sepval['Observed SEP Peak Intensity Max (Max Flux) Time'][i], None, None, \
+                            #             pred_sepval[i], 'Max Peak Time', metric_label, metric_sepval[i], dataframe_sepval['Forecast Source'][i]])
+                            #     else:
+                            #         outliers.append([dataframe_sepval['Model'][i], 'SEPVAL', energy_thresh, dataframe_sepval['Observed SEP Threshold Crossing Time'][i], dataframe_sepval['Observed SEP Peak Intensity Max (Max Flux)'][i], \
+                            #             None, None, pred_sepval[i],\
+                            #             None, 'Max Peak Flux', metric_label, metric_sepval[i], dataframe_sepval['Forecast Source'][i]])
+                            # if type(metric_sb) != int:
+                            #     for j in range(len(metric_sb)):
+                            #         # if metric_sb[j] >= outliers_dictionary[forecasts] or metric_sb[j] <= -outliers_dictionary[forecasts]:
+                            #         if 'start' in forecasts:
+                            #             outliers.append([dataframe_sb['Model'][j], 'Scoreboard', energy_thresh, dataframe_sb['Observed SEP Start Time'][j], None, \
+                            #                 None, dataframe_sb['Predicted SEP Start Time'][j], None, \
+                            #                 None, 'Start Time', metric_label, metric_sb[j], dataframe_sb['Forecast Source'][j]])
+                            #         elif 'max_time' in forecasts:
+                            #             outliers.append([dataframe_sb['Model'][j], 'Scoreboard', energy_thresh, dataframe_sb['Observed SEP Threshold Crossing Time'][j], None, \
+                            #                 dataframe_sb['Observed SEP Peak Intensity Max (Max Flux) Time'][j], None, None, \
+                            #                 pred_sb[j], 'Max Peak Time', metric_label, metric_sb[j], dataframe_sb['Forecast Source'][j]])
+                            #         else:
+                            #             outliers.append([dataframe_sb['Model'][j], 'Scoreboard', energy_thresh, dataframe_sb['Observed SEP Threshold Crossing Time'][j], dataframe_sb['Observed SEP Peak Intensity Max (Max Flux)'][j], \
+                            #                 None, None, pred_sb[j], \
+                            #                 None, 'Max Peak Flux', metric_label, metric_sb[j], dataframe_sb['Forecast Source'][j]])      
+                            # else:
+                            #     pass
+                            if 'time' not in forecasts and 'duration' not in forecasts:
+                                bins_hist = [-4,-3.5,-3,-2.5,-2,-1.5,-1,-0.5,0,0.5,1,1.5,2,2.5,3,3.5,4]
+                                bins_cdf = [-4,-3.5,-3,-2.5,-2,-1.5,-1,-0.5,0,0.5,1,1.5,2,2.5,3,3.5,4]
+                            else:
+                                # print(metric_sepval_clean)
+                                # print(len(metric_sb_clean))
+                                # print(len(metric_sb))
+                                if type(metric_sb) != int and len(metric_sb_clean) != 0:
+                                    
+                                    bin_max = np.round(np.max([np.max(metric_sepval_clean), np.max(metric_sb_clean)]))
+                                    bin_min = np.round(np.min([np.min(metric_sepval_clean), np.min(metric_sb_clean)]))
+                                    four_hour_bins = np.arange(-200, 200, 4)
+                                    bins_hist = []
+                                    for x in range(len(four_hour_bins)):
+                                        if four_hour_bins[x] >= bin_min and four_hour_bins[x] <= bin_max+4:
+                                            bins_hist.append(four_hour_bins[x])
+                                        else:
+                                            pass
+                                    
+                                    print(bins_hist)
+                                    bins_cdf = np.arange(bin_min, bin_max, 1)
+                                elif len(metric_sepval_clean) != 0:
+                                    
+                                    bin_max = np.round(np.max(metric_sepval_clean))
+                                    bin_min = np.round(np.min(metric_sepval_clean))
+                                    four_hour_bins = np.arange(-200, 200, 4)
+                                    bins_hist = []
+                                    for x in range(len(four_hour_bins)):
+                                        if four_hour_bins[x] >= bin_min and four_hour_bins[x] <= bin_max+4:
+                                            bins_hist.append(four_hour_bins[x])
+                                        else:
+                                            pass
+                                    
+                                    # bins_hist = np.arange(bin_min, bin_max, 4)
+                                    print(bins_hist)
+                                    bins_cdf = np.arange(bin_min, bin_max, 1)
+                                else:
+                                    pass
+                            if 'peak_intensity' in forecasts and 'time' not in forecasts:
+                                count = 0
+                                count_over = 0
+                                count_under = 0
+                                count_fact_2 = 0
+                                i = 0
+                                for i in range(n_sepval):
+                                    
+                                    if metric_sepval_clean[i] >= -1 and metric_sepval_clean[i] <= 1:
+                                        count += 1
+                                    elif metric_sepval_clean[i] < -1:
+                                        count_under +=1
+                                    elif metric_sepval_clean[i] > 1:
+                                        count_over += 1  
+                                    if metric_sepval_clean[i] >= -np.log10(2) and metric_sepval_clean[i] <= np.log10(2):
+                                        count_fact_2 += 1
+                                    
+                                if n_sepval == 0:
+                                    m_sepval = 0
+                                else:
+                                    m_sepval = str(count/n_sepval)
+
+                                    print('Within OOM SEPVAL = ', count, count/n_sepval)
+                                    # print('Under = ', count_under, count_under/n_sepval)
+                                    # print('Over = ', count_over, count_over/n_sepval)
+                                    print('within a factor of 2', count_fact_2, count_fact_2/n_sepval)
+                                    # print(count+count_under+count_over, n_sepval)
+                                if type(metric_sb) != int:
+                                    count = 0
+                                    count_over = 0
+                                    count_under = 0
+                                    count_fact_2 = 0
+                                    i = 0
+                                    for i in range(n_sb):
+                                        if metric_sb_clean[i] >= -1 and metric_sb_clean[i] <= 1:
+                                            count += 1  
+                                        elif metric_sb_clean[i] < -1:
+                                            count_under +=1
+                                        elif metric_sb_clean[i] > 1:
+                                            count_over += 1
+                                        if metric_sb_clean[i] >= -np.log10(2) and metric_sb_clean[i] <= np.log10(2):
+                                            count_fact_2 += 1  
+                                    if n_sb != 0:
+                                        m_sb = str(count/n_sb)
+                                        print('Within OOM SB = ', count, count/n_sb)
+                                        # print('Under = ', count_under, count_under/n_sb)
+                                        # print('Over = ', count_over, count_over/n_sb)
+                                        print('within a factor of 2 SB', count_fact_2, count_fact_2/n_sb)
+                                        # print(count+count_under+count_over, n_sb)
+                                    else:
+                                        m_sb = 0
+
+                                    
+                                else:
+                                    pass                        
+                        if 'peak_intensity' in forecasts and 'time' not in forecasts and scores == 'LE' and '100' not in energy:
+                            i = 0
+                            j = 0
+                            # for i in range(len(metric_sepval)):
+                            #     event_list_sepval.append([dataframe_sepval['Model'][i], 'SEPVAL', energy_thresh, dataframe_sepval['Observed SEP Threshold Crossing Time'][i], metric_sepval[i]])
+                            # if type(metric_sb) != int:
+                            #     for j in range(len(metric_sb)):
+                            #         event_list_sb.append([dataframe_sb['Model'][j], 'Scoreboard', energy_thresh, dataframe_sb['Observed SEP Threshold Crossing Time'][j], metric_sb[j]])
+                            # else:
+                            #     pass
+                        # print(metric_sepval_clean)
+                        sepval_hist, _ = np.histogram(metric_sepval_clean, bins = 100) # Easy way to give counts in each bin
+                        
+                        
+                        
+                        
+                        
+                        # Histogram Plots *****************************************************************************************************************
+                        print(type(None))
+                        if type(metric_sb) != int or metric_sb_clean is not None:
+                            # print(metric_sb_clean, type(metric_sb_clean))
+                            try:
+                                sb_hist, _ = np.histogram(metric_sb_clean, bins = 100)
+                            except:
+                                pass
+                        else:
+                            pass
+                        # for m in range(length(bins)):
+
+                        # print(sepval_hist, sum(sepval_hist), names, scores)
+                        # print(bins)
+                        # print('Making Histos')
+                        fig0, ax = plt.subplots()
+                        # print('bins', bins_hist)
+                        # plt.bar(sepval_edges[:-1],sepval_hist, alpha=0.5, label = 'SEPVAL N= ' + str(n_sepval) + ', M = ' + m_sepval)
+                        # plt.bar(sb_edges[:-1],sb_hist, alpha=0.5, label = 'Scoreboard N= ' + str(n_sb) + ', M = ' + m_sb)
+                        plt.hist(metric_sepval_clean, bins = bins_hist, alpha=0.5, label = 'SEPVAL N= ' + str(n_sepval))
+                        try:
+                            if type(metric_sb) != int or type(metric_sb) != type(None):
+                                plt.hist(metric_sb_clean, bins = bins_hist, alpha=0.5, label = 'Scoreboard N= ' + str(n_sb))
+                                plt.title(name_dictionary[names] + ' ' + forecast_label[forecasts] + ' ' + metric_label + ' \nDistribution for SEPVAL and Scoreboard')
+                                figname = './plots/' + forecast_label[forecasts] + '_' +names + '_' + metric_label + '_' + energy + '_Scoreboard.png'
+                    
+                            else:
+                                print('In this loop')
+                                plt.title(name_dictionary[names] + ' ' + forecast_label[forecasts] + ' ' + metric_label + ' \nDistribution for SEPVAL')
+                                figname = './plots/' + forecast_label[forecasts] + '_' +names + '_' + metric_label + '_' + energy + '_SEPVAL.png'
+                        except:
+                            print('In this loop')
+                            plt.title(name_dictionary[names] + ' ' + forecast_label[forecasts] + ' ' + metric_label + ' \nDistribution for SEPVAL')
+                            figname = './plots/' + forecast_label[forecasts] + '_' +names + '_' + metric_label + '_' + energy + '_SEPVAL.png'
+                            pass
+                        plt.legend()
+                        # if 'A' not in scores or 'time' not in forecasts: # Didn't like this much
+                        #     plt.axvline(-1)
+                        #     plt.axvline(1)
+                        if 'time' in forecasts:
+                            ax.xaxis.set_major_locator(MultipleLocator(8))
+                            ax.xaxis.set_minor_locator(MultipleLocator(4))
+                        plt.xlabel(forecast_label[forecasts] + ' ' + metric_label)
+                        plt.ylabel('Counts')
+                        
+                        plt.savefig(figname)
+                        plt.close()
+
+                        fig1, ax = plt.subplots()
+                        
+                        plt.hist(metric_sepval_clean, bins = bins_hist, alpha=0.5, label = 'SEPVAL N= ' + str(n_sepval))
+                        
+                    
+                        plt.xlabel(forecast_label[forecasts] + ' ' + metric_label)
+                        plt.title(name_dictionary[names] + ' ' + forecast_label[forecasts] + ' ' + metric_label + ' \nDistribution for SEPVAL')
+                        if 'time' in forecasts:
+                            ax.xaxis.set_major_locator(MultipleLocator(8))
+                            ax.xaxis.set_minor_locator(MultipleLocator(4))
+                        plt.ylabel('Counts')
+                        plt.legend()
+                        figname = './plots/' + forecast_label[forecasts] + '_' +names + '_' + metric_label + '_' + energy + '_SEPVAL.png'
+                        plt.savefig(figname)
+                        plt.close()
+                        
+                       
+
+                        # print(bins_hist)
+                        if n_sb != 0:
+                            hist_range = (np.min(bins_hist), np.max(bins_hist))
+                            # print(hist_range)
+                            bin_edges = [-4, -3.5, -3.0, -2.5, -2.0, -2, -1.5, -1, -0.5, 0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4]
+                            # bin_edges = np.linspace(hist_range[0], hist_range[1], 21)
+                            print('bin_edges', bin_edges)
+                            vert_hist = np.histogram(metric_sb_clean, range = hist_range, bins=17)[0]/n_sb
+                            # print('vert_hist', vert_hist)
+                            binned_maximums = np.max(vert_hist)
+                            
+                            
+                            
+                            heights = np.diff(bin_edges)
+                            centers = bin_edges[:-1]  + heights / 2
+                            # big_ax.barh(metric_sb_clean, bins = bins_hist, alpha=0.5, label = 'Scoreboard N= ' + str(n_sb))
+                            # print(centers, heights, vert_hist)
+                            lefts = x_loc
+
+                            big_ax.barh(centers, vert_hist, height=heights, left = lefts, label = name_dictionary[names])
+                            # plt.rcParams['axes.prop_cycle'] = plt.cycler(color=plt.cm.tab20.colors)
+
+                            
+                            # labels.append()
+                            # x_locations.append(x_loc)
+                            print('x_loc', x_loc)
+                            x_loc = x_loc + binned_maximums + 0.25
+                            plot_iter = plot_iter + 1
+                        
+                        # plt.show()
+                        # CDF Plots *****************************************************************************************************************************************
+                        # if scores == 'ALE' and 'time' in forecasts:
+                        #     # print('Making CDF')
+                        #     fig3 = plt.figure()
+                        
+                        #     try:
+                        #         plt.hist(metric_sepval_clean, bins = bins_cdf, alpha=0.5, density=True, cumulative=True, histtype="step", label = 'SEPVAL N= ' + str(n_sepval))
+                        #     except:
+                        #         plt.hist(metric_sepval_clean, label = 'SEPVAL N= ' + str(n_sepval))
+                        #     # print(metric_sb, type(metric_sb))
+                        #     if type(metric_sb) != int or len(metric_sb) != 0:
+                        #         # print('We shouldnt be here')
+                        #         plt.hist(metric_sb_clean, bins = bins_cdf, alpha=0.5, density=True, cumulative=True, histtype="step", label = 'Scoreboard N= ' + str(n_sb))
+                        #         plt.title(name_dictionary[names] + ' ' + forecast_label[forecasts] + ' ' + metric_label + ' Cumulative \nDistribution for SEPVAL and Scoreboard')
+                        #         figname = './plots/' + 'ALE_CDF_' + names + '_' + forecast_label[forecasts] + '_' + energy + '.png'
+                        #     else:
+                        #         plt.title(name_dictionary[names] + ' ' + forecast_label[forecasts] + ' ' + metric_label + ' Cumulative \nDistribution for SEPVAL')
+                        #         figname = './plots/' + 'ALE_CDF_' + names + '_' + forecast_label[forecasts] + '_' + energy + '.png'
+                        #     plt.ylabel('Frequency')
+                        #     plt.xlabel(forecast_label[forecasts] + ' ' + metric_label)
+                        #     plt.legend(loc = 'lower right')
+                        #     plt.savefig(figname)
+                        #     plt.close()
+
+                        #     fig4 = plt.figure()
+                        
+                        #     plt.hist(metric_sepval_clean, bins = bins_cdf, alpha=0.5, density=True, cumulative=True, histtype="step", label = 'SEPVAL N= ' + str(n_sepval))
+                        #     if type(metric_sb) != int or len(metric_sb) != 0:
+                        #         plt.hist(metric_sb_clean, bins = bins_cdf, alpha=0.5, density=True, cumulative=True, histtype="step", label = 'Scoreboard N= ' + str(n_sb))
+                        #         plt.title(name_dictionary[names] + ' ' + forecast_label[forecasts] + ' ' + metric_label + ' Cumulative \nDistribution for SEPVAL and Scoreboard')
+                        #         figname = './plots/' + 'ALE_CDF_' + names + '_' + forecast_label[forecasts] + '_' + energy + '24hrcut.png'
+                        #     else:
+                        #         plt.title(name_dictionary[names] + ' ' + forecast_label[forecasts] + ' ' + metric_label + ' Cumulative \nDistribution for SEPVAL')
+                        #         figname = './plots/' + 'ALE_CDF_' + names + '_' + forecast_label[forecasts] + '_' + energy + '24hrcut.png'
+                        #     plt.ylabel('Frequency')
+                        #     plt.xlabel(forecast_label[forecasts] + ' ' + metric_label)
+                        #     plt.xlim(0, 24)
+                        #     plt.legend(loc = 'lower right')
+                        #     plt.savefig(figname)
+                        #     plt.close()
+
+                        # if 'peak' in forecasts and 'time' in forecasts:
+                        #     # print('Making Scatter')
+                        #     # dataframe_sepval = pd.read_csv(file_to_read_in_sepval)
+                        #     obs_start_sepval = dataframe_sepval['Observed SEP Threshold Crossing Time']
+                        #     obs_peak_sepval = dataframe_sepval['Observed SEP Peak Intensity Max (Max Flux) Time']  
+                            
+                        #     i = 0
+                        #     j = 0
+                        #     rise_time_sepval = []
+                        #     rise_time_sb = []
+                        #     for i in range(len(obs_start_sepval)):
+                        #         foo = (datetime.fromisoformat(obs_peak_sepval[i]) - datetime.fromisoformat(obs_start_sepval[i]))
+                        #         rise_time_sepval.append(foo.total_seconds()/(60*60)) #convert to hours
+                        #     fig5 = plt.figure()
+                        #     plt.scatter(rise_time_sepval, metric_sepval, label = 'SEPVAL')
+                        #     if type(metric_sb) != int:
+                        #         # dataframe_sb = pd.read_csv(file_to_read_in_sb)
+                        #         obs_start_sb = dataframe_sb['Observed SEP Threshold Crossing Time']
+                        #         obs_peak_sb = dataframe_sb['Observed SEP Peak Intensity Max (Max Flux) Time']
+                        #         for j in range(len(obs_start_sb)) :
+                        #             foo = (datetime.fromisoformat(obs_peak_sb[j]) - datetime.fromisoformat(obs_start_sb[j]))
+                        #             rise_time_sb.append(foo.total_seconds()/(60*60)) #convert to hours
+                        #         plt.scatter(rise_time_sb, metric_sb, label = 'Scoreboard')
+                        #     else:
+                        #         pass
+
+                            
+                            
+                        #     # plt.axhline(0, linestyle = 'dashed', label = 'Perfect Forecast') # Didn't like how this looked
+                        #     plt.xlabel('Observed Rise Time (hours)')
+                        #     plt.ylabel('Timing Error (' + metric_label +') in Max Peak Flux (hours)')
+                        #     plt.title(names + ' ' + energy)
+                        #     plt.legend(loc = 'upper right')
+                        #     figname = './plots/' + 'error_risetime_' + names + '_' + forecast_label[forecasts] + '_' + metric_label + '_' + energy + '.png'
+                        #     plt.savefig(figname)
+                        #     plt.close()
+
+
+
+                        # if forecasts == 'peak_intensity_max_time':
+                        #     mixed_rise_sepval = []
+                        #     mixed_rise_sb = []
+                        #     i = 0
+                        #     j = 0
+                        #     print('Mixed Rise Plot')
+                        #     for i in range(len(obs_start_sepval)):
+                                
+                        #         foo = (datetime.fromisoformat(pred_sepval[i]) - datetime.fromisoformat(obs_start_sepval[i]))
+                        #         mixed_rise_sepval.append(foo.total_seconds()/(60*60)) #convert to hours
+                        #     fig = plt.figure()
+                        #     plt.scatter(rise_time_sepval, mixed_rise_sepval, label = 'SEPVAL')
+                        #     if type(metric_sb) != int:
+                        #         for j in range(len(obs_start_sb)) :
+                        #             foo = (datetime.fromisoformat(pred_sb[j]) - datetime.fromisoformat(obs_start_sb[j]))
+                        #             mixed_rise_sb.append(foo.total_seconds()/(60*60)) #convert to hours
+                        #         plt.scatter(rise_time_sb, mixed_rise_sb, label = 'Scoreboard')
+                        #     plt.axline((0, 0), slope=1, linestyle = 'dashed', label = 'Perfect Forecast')
+                        #     plt.xlabel('Observed Rise Time (hours)')
+                        #     plt.ylabel('Model Peak Time - Observed Start (hours)')
+                        #     plt.title(names + ' ' + energy)
+                        #     plt.legend(loc = 'upper right')
+                        #     figname = './plots/' + 'mixedrise_' + names + '_' + forecast_label[forecasts] + '_' + energy + '.png'
+                        #     plt.savefig(figname)
+                        #     plt.close()
+
+
+
+            # big_ax.set_xticks(x_locations, labels, fontsize=16)
+            big_ax.yaxis.set_minor_locator(matplotlib.ticker.AutoMinorLocator(2))
+            plt.grid(visible=True, which='major', axis='y')
+            plt.xticks([])
+            big_ax.set_ylabel("Log Error")
+            big_ax.set_xlabel("Models")
+            big_ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+            plt.title('Scoreboard ' + forecast_label[forecasts] + ' ' + metric_label + ' Distribution Histograms for >' + energy + ' MeV')
+            figname = './plots/all_scoreboard' + forecast_label[forecasts] + '_' + metric_label + '_' + energy + '.png'
+            plt.savefig(figname, dpi=600, bbox_inches='tight')
+            # plt.savefig(figname)
+            # print(labels)
+            # plt.show()
+            plt.close()
+
+
+    # outliers_file = 'outliers_file.csv'
+    # output_dataframe = pd.DataFrame(outliers, columns=fields_outlier)
+    # output_dataframe.to_csv(outliers_file, sep=',', header = True)
+
+
+    # events_dataframe = pd.DataFrame(event_list_sepval, columns=event_fields)
+    
+
+    
+    # fig = plt.figure()
+    # for models in model_names:
+    #     # print(events_dataframe['Model'])
+    #     print(models)
+    #     if models == 'SEPSTER2D':
+    #         models = 'SEPSTER2D CME'
+        
+    #     # print(events_dataframe.loc[events_dataframe['Model'] == models, ['Observed SEP Threshold Crossing Time']])
+    #     foo = events_dataframe.loc[events_dataframe['Model'] == models, ['Observed SEP Threshold Crossing Time']]
+    #     foo = foo.values.tolist()
+        
+    #     boo = events_dataframe.loc[events_dataframe['Model'] == models, ['Metric Calculation']]
+    #     boo = boo.values.tolist()
+    #     x = []
+    #     y = []
+    #     it = 0
+    #     for it in range(len(foo)):
+    #         try:
+    #             x.append(datetime.fromisoformat(str(foo[it][0])))
+    #             y.append(boo[it])
+    #         except:
+    #             # date_object = datetime.strptime(date_string, "%Y-%m-%d")
+    #             month = str(foo[it][0]).rsplit('/')[0]
+    #             if len(month) == 1:
+    #                 month = '0'+month
+    #             day= str(foo[it][0]).rsplit('/')[1]
+    #             if len(day) == 1:
+    #                 day = '0' + day
+    #             year = str(foo[it][0]).rsplit('/')[2].rsplit(' ')[0]
+    #             hour = str(foo[it][0]).rsplit('/')[2].rsplit(' ')[1].rsplit(':')[0]
+    #             if len(hour) == 1:
+    #                 hour = '0' + hour
+    #             minute = str(foo[it][0]).rsplit('/')[2].rsplit(' ')[1].rsplit(':')[1]
+    #             if len(minute) == 1:
+    #                 minute = '0' + minute
+    #             time = month + '/' + day + '/' + year + ' ' + hour + ':' + minute
+    #             print(time)
+    #             x.append(datetime.strptime(time, "%m/%d/%Y %H:%M"))
+    #             y.append(boo[it])
+
+    #     plt.scatter(x, y , label= models, marker = 'o')
+    # plt.legend()
+    # plt.minorticks_on()
+    # plt.xlabel('Date of Event')
+    # plt.ylabel('Log Error of Max Peak Flux')
+    # figname = './plots/' + 'events_grid.png'
+    # plt.savefig(figname)
+
+    # plt.close()
+    # events_dataframe = events_dataframe.sort_values(by=['Observed SEP Threshold Crossing Time'], ascending=False)
+    # events_dataframe.to_csv('sepval_test_redo.csv', sep=',', header = True)
+    # print(events_dataframe)
+
+
+
+    ##### Reliability Plot section *************************************************************************************************
+    prob_models = ['MAG4_LOS_FEr', 'MAG4_LOS_r', 'MAG4_SHARP_HMI', 'MAG4_SHARP_FE', 'MAG4_SHARP', 'SWPC Day 1', 'GSU All clear', 'SAWS-ASPECS flare', '']
+    plt.rcParams['font.size'] = 18
+    for model_names in prob_models:
+        fig, ax1 = plt.subplots(figsize=(14, 12))
+        file_to_read_in_sb = './Scoreboard/probability_selections_' + model_names + '_min.10.0.max.-1.0.units.MeV_threshold_10.0.csv'
+        dataframe_sepval = pd.read_csv(file_to_read_in_sb)
+        obs_sepval = dataframe_sepval['Observed SEP Probability']
+        pred_sepval = dataframe_sepval['Predicted SEP Probability']
+
+        # from sklearn.datasets import make_classification
+        # from sklearn.model_selection import train_test_split
+        # from sklearn.linear_model import LogisticRegression
+        bins = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+        from sklearn.calibration import calibration_curve, CalibrationDisplay
+
+        
+        prob_true, prob_pred = calibration_curve(obs_sepval, pred_sepval, n_bins = 10)
+        print(prob_true)
+        print(prob_pred)
+        disp = CalibrationDisplay(prob_true, prob_pred, pred_sepval)
+        ax1.plot(prob_pred, prob_true, linestyle = '-', marker = 'o')
+        plt.title(model_names + ' Reliability Diagram')
+        plt.ylim(0, 1)
+        ax1.plot([0, 1], [0, 1], label = 'Perfectly Calibrated', color = 'black', linestyle = 'dashed')
+        plt.legend()
+        ax1.set_ylabel('Observed Relative Frequency')
+        ax1.set_xlabel('Predicted Probability')
+        ax2 = ax1.twinx()
+        ax2.hist(pred_sepval, bins = bins, alpha=0.35, density=False)
+        ax2.set_yscale('log')
+        ax2.set_ylabel('Histogram Count Numbers')
+        
+        plt.savefig('reliability_scoreboard_' + model_names + '.png')
+
+    return
+
+
+make_histograms()
             nonevent_st=date_range_st, nonevent_end=date_range_end, split=split,
             write_grid=False)
 
