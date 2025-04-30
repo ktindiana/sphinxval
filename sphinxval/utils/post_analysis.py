@@ -788,7 +788,7 @@ def make_box_plots(df, path, quantity, anonymous, highlight, scoreboard,
         OUTPUT:
         
         Figure(s) with box plots will be written to the
-        path/output/plots/. directory
+        path/output/output/plots/. directory
     
     """
     if quantity == 'All Clear':
@@ -1895,7 +1895,7 @@ def probability_deoverlap(csv_path, models, energy_min, energy_max, threshold,
             roc_curve_plt.plot()
             skill_line = np.linspace(0.0, 1.0, num=10) # Constructing a diagonal line that represents no skill/random guess
             plt.plot(skill_line, skill_line, '--', label = 'Random Guess')
-            figname = csv_path + '/../plots/ROC_curve_' \
+            figname = csv_path + '/../output/plots/ROC_curve_' \
                     + model + "_" + energy_key.strip() + "_" + thresh_key
 
             figname += "_deoverlap_" + type + ".pdf"
@@ -2184,7 +2184,7 @@ def make_histograms():
                     if '2D' in names:
                         observed_label = observed_dictionary[forecasts]
                         predicted_label = forecast_dictionary[forecasts]
-                        file_to_read_in = './output/' + forecasts + '_selections_' + names +' CME_' + energy_thresh + '.csv'
+                        file_to_read_in = './output/csv/' + forecasts + '_selections_' + names +' CME_' + energy_thresh + '.csv'
                         if os.path.isfile(file_to_read_in):
                             if forecasts == 'peak_intensity_max':
                                 predicted_label = 'Predicted SEP Peak Intensity (Onset Peak)'
@@ -2213,7 +2213,7 @@ def make_histograms():
                     elif 'UMASEP' in names:
                         observed_label = observed_dictionary[forecasts]
                         predicted_label = forecast_dictionary[forecasts]
-                        file_to_read_in = './output/' + forecasts + '_selections_' + names +'_' + energy_thresh + '_First.csv'
+                        file_to_read_in = './output/csv/' + forecasts + '_selections_' + names +'_' + energy_thresh + '_First.csv'
                         if os.path.isfile(file_to_read_in):
                             if forecasts == 'peak_intensity_max':
                                 predicted_label = 'Predicted SEP Peak Intensity (Onset Peak)'
@@ -2239,7 +2239,7 @@ def make_histograms():
                     else:
                         observed_label = observed_dictionary[forecasts]
                         predicted_label = forecast_dictionary[forecasts]
-                        file_to_read_in = './output/' + forecasts + '_selections_' + names +'_' + energy_thresh + '.csv'
+                        file_to_read_in = './output/csv/' + forecasts + '_selections_' + names +'_' + energy_thresh + '.csv'
                         if os.path.isfile(file_to_read_in):
                             if forecasts == 'peak_intensity_max':
                                 predicted_label = 'Predicted SEP Peak Intensity (Onset Peak)'
@@ -2272,7 +2272,7 @@ def make_histograms():
                 else:
                     observed_label = observed_dictionary[forecasts]
                     predicted_label = forecast_dictionary[forecasts]
-                    file_to_read_in = './output/' + forecasts + '_selections_' + names +'_' + energy_thresh + '.csv'
+                    file_to_read_in = './output/csv/' + forecasts + '_selections_' + names +'_' + energy_thresh + '.csv'
                     if os.path.isfile(file_to_read_in):
                         dataframe_sepval = pd.read_csv(file_to_read_in)
                         obs_sepval = dataframe_sepval[observed_label]
@@ -2692,16 +2692,16 @@ def make_histograms():
                         #     if type(metric_sb) != int or type(metric_sb) != type(None):
                         #         plt.hist(metric_sb_clean, bins = bins_hist, alpha=0.5, label = 'Scoreboard N= ' + str(n_sb))
                         #         plt.title(name_dictionary[names] + ' ' + forecast_label[forecasts] + ' ' + metric_label + ' \nDistribution for SEPVAL and Scoreboard')
-                        #         figname = './plots/' + forecast_label[forecasts] + '_' +names + '_' + metric_label + '_' + energy + '_Scoreboard.png'
+                        #         figname = './output/plots/' + forecast_label[forecasts] + '_' +names + '_' + metric_label + '_' + energy + '_Scoreboard.png'
                     
                         #     else:
                         #         print('In this loop')
                         #         plt.title(name_dictionary[names] + ' ' + forecast_label[forecasts] + ' ' + metric_label + ' \nDistribution for SEPVAL')
-                        #         figname = './plots/' + forecast_label[forecasts] + '_' +names + '_' + metric_label + '_' + energy + '_SEPVAL.png'
+                        #         figname = './output/plots/' + forecast_label[forecasts] + '_' +names + '_' + metric_label + '_' + energy + '_SEPVAL.png'
                         # except:
                         #     print('In this loop')
                         #     plt.title(name_dictionary[names] + ' ' + forecast_label[forecasts] + ' ' + metric_label + ' \nDistribution for SEPVAL')
-                        #     figname = './plots/' + forecast_label[forecasts] + '_' +names + '_' + metric_label + '_' + energy + '_SEPVAL.png'
+                        #     figname = './output/plots/' + forecast_label[forecasts] + '_' +names + '_' + metric_label + '_' + energy + '_SEPVAL.png'
                         #     pass
                         # plt.legend()
                         # # if 'A' not in scores or 'time' not in forecasts: # Didn't like this much
@@ -2728,7 +2728,7 @@ def make_histograms():
                             ax.xaxis.set_minor_locator(MultipleLocator(4))
                         plt.ylabel('Counts')
                         plt.legend()
-                        figname = './plots/' + forecast_label[forecasts] + '_' +names + '_' + metric_label + '_' + energy + '_SEPVAL.png'
+                        figname = './output/plots/' + forecast_label[forecasts] + '_' +names + '_' + metric_label + '_' + energy + '_SEPVAL.png'
                         plt.savefig(figname)
                         plt.close()
                         
@@ -2778,10 +2778,10 @@ def make_histograms():
                         #         # print('We shouldnt be here')
                         #         plt.hist(metric_sb_clean, bins = bins_cdf, alpha=0.5, density=True, cumulative=True, histtype="step", label = 'Scoreboard N= ' + str(n_sb))
                         #         plt.title(name_dictionary[names] + ' ' + forecast_label[forecasts] + ' ' + metric_label + ' Cumulative \nDistribution for SEPVAL and Scoreboard')
-                        #         figname = './plots/' + 'ALE_CDF_' + names + '_' + forecast_label[forecasts] + '_' + energy + '.png'
+                        #         figname = './output/plots/' + 'ALE_CDF_' + names + '_' + forecast_label[forecasts] + '_' + energy + '.png'
                         #     else:
                         #         plt.title(name_dictionary[names] + ' ' + forecast_label[forecasts] + ' ' + metric_label + ' Cumulative \nDistribution for SEPVAL')
-                        #         figname = './plots/' + 'ALE_CDF_' + names + '_' + forecast_label[forecasts] + '_' + energy + '.png'
+                        #         figname = './output/plots/' + 'ALE_CDF_' + names + '_' + forecast_label[forecasts] + '_' + energy + '.png'
                         #     plt.ylabel('Frequency')
                         #     plt.xlabel(forecast_label[forecasts] + ' ' + metric_label)
                         #     plt.legend(loc = 'lower right')
@@ -2794,10 +2794,10 @@ def make_histograms():
                         #     if type(metric_sb) != int or len(metric_sb) != 0:
                         #         plt.hist(metric_sb_clean, bins = bins_cdf, alpha=0.5, density=True, cumulative=True, histtype="step", label = 'Scoreboard N= ' + str(n_sb))
                         #         plt.title(name_dictionary[names] + ' ' + forecast_label[forecasts] + ' ' + metric_label + ' Cumulative \nDistribution for SEPVAL and Scoreboard')
-                        #         figname = './plots/' + 'ALE_CDF_' + names + '_' + forecast_label[forecasts] + '_' + energy + '24hrcut.png'
+                        #         figname = './output/plots/' + 'ALE_CDF_' + names + '_' + forecast_label[forecasts] + '_' + energy + '24hrcut.png'
                         #     else:
                         #         plt.title(name_dictionary[names] + ' ' + forecast_label[forecasts] + ' ' + metric_label + ' Cumulative \nDistribution for SEPVAL')
-                        #         figname = './plots/' + 'ALE_CDF_' + names + '_' + forecast_label[forecasts] + '_' + energy + '24hrcut.png'
+                        #         figname = './output/plots/' + 'ALE_CDF_' + names + '_' + forecast_label[forecasts] + '_' + energy + '24hrcut.png'
                         #     plt.ylabel('Frequency')
                         #     plt.xlabel(forecast_label[forecasts] + ' ' + metric_label)
                         #     plt.xlim(0, 24)
@@ -2838,7 +2838,7 @@ def make_histograms():
                         #     plt.ylabel('Timing Error (' + metric_label +') in Max Peak Flux (hours)')
                         #     plt.title(names + ' ' + energy)
                         #     plt.legend(loc = 'upper right')
-                        #     figname = './plots/' + 'error_risetime_' + names + '_' + forecast_label[forecasts] + '_' + metric_label + '_' + energy + '.png'
+                        #     figname = './output/plots/' + 'error_risetime_' + names + '_' + forecast_label[forecasts] + '_' + metric_label + '_' + energy + '.png'
                         #     plt.savefig(figname)
                         #     plt.close()
 
@@ -2866,7 +2866,7 @@ def make_histograms():
                         #     plt.ylabel('Model Peak Time - Observed Start (hours)')
                         #     plt.title(names + ' ' + energy)
                         #     plt.legend(loc = 'upper right')
-                        #     figname = './plots/' + 'mixedrise_' + names + '_' + forecast_label[forecasts] + '_' + energy + '.png'
+                        #     figname = './output/plots/' + 'mixedrise_' + names + '_' + forecast_label[forecasts] + '_' + energy + '.png'
                         #     plt.savefig(figname)
                         #     plt.close()
 
@@ -2880,7 +2880,7 @@ def make_histograms():
             big_ax.set_xlabel("Models")
             big_ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
             plt.title('Scoreboard ' + forecast_label[forecasts] + ' ' + metric_label + ' Distribution Histograms for >' + energy + ' MeV')
-            figname = './plots/all_scoreboard' + forecast_label[forecasts] + '_' + metric_label + '_' + energy + '.png'
+            figname = './output/plots/all_scoreboard' + forecast_label[forecasts] + '_' + metric_label + '_' + energy + '.png'
             plt.savefig(figname, dpi=600, bbox_inches='tight')
             # plt.savefig(figname)
             # print(labels)
@@ -2942,7 +2942,7 @@ def make_histograms():
     # plt.minorticks_on()
     # plt.xlabel('Date of Event')
     # plt.ylabel('Log Error of Max Peak Flux')
-    # figname = './plots/' + 'events_grid.png'
+    # figname = './output/plots/' + 'events_grid.png'
     # plt.savefig(figname)
 
     # plt.close()
@@ -2957,7 +2957,7 @@ def make_histograms():
     plt.rcParams['font.size'] = 18
     for model_names in prob_models:
         fig, ax1 = plt.subplots(figsize=(14, 12))
-        file_to_read_in = './output/probability_selections_' + model_names + '_min.10.0.max.-1.0.units.MeV_threshold_10.0.csv'
+        file_to_read_in = './output/csv/probability_selections_' + model_names + '_min.10.0.max.-1.0.units.MeV_threshold_10.0.csv'
         dataframe_sepval = pd.read_csv(file_to_read_in)
         obs_sepval = dataframe_sepval['Observed SEP Probability']
         pred_sepval = dataframe_sepval['Predicted SEP Probability']
