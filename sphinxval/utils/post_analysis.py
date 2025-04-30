@@ -2184,20 +2184,20 @@ def make_histograms():
                     if '2D' in names:
                         observed_label = observed_dictionary[forecasts]
                         predicted_label = forecast_dictionary[forecasts]
-                        file_to_read_in_sepval = './output/' + forecasts + '_selections_' + names +' CME_' + energy_thresh + '.csv'
-                        if os.path.isfile(file_to_read_in_sepval):
+                        file_to_read_in = './output/' + forecasts + '_selections_' + names +' CME_' + energy_thresh + '.csv'
+                        if os.path.isfile(file_to_read_in):
                             if forecasts == 'peak_intensity_max':
                                 predicted_label = 'Predicted SEP Peak Intensity (Onset Peak)'
                             elif forecasts == 'peak_intensity_max_time':
                                 predicted_label = 'Predicted SEP Peak Intensity (Onset Peak) Time'
-                            dataframe_sepval = pd.read_csv(file_to_read_in_sepval)
+                            dataframe_sepval = pd.read_csv(file_to_read_in)
                             obs_sepval = dataframe_sepval[observed_label]
                             pred_sepval = dataframe_sepval[predicted_label]
                             
                             
 
 
-                        #     file_to_read_in_sb = './Scoreboard/' + forecasts + '_selections_' + names + '_' + energy_thresh + '.csv'
+                        
                         #     if os.path.isfile(file_to_read_in_sb):
                         #         dataframe_sb = pd.read_csv(file_to_read_in_sb)
                         #         obs_sb = dataframe_sb[observed_label]
@@ -2213,13 +2213,13 @@ def make_histograms():
                     elif 'UMASEP' in names:
                         observed_label = observed_dictionary[forecasts]
                         predicted_label = forecast_dictionary[forecasts]
-                        file_to_read_in_sepval = './output/' + forecasts + '_selections_' + names +'_' + energy_thresh + '_First.csv'
-                        if os.path.isfile(file_to_read_in_sepval):
+                        file_to_read_in = './output/' + forecasts + '_selections_' + names +'_' + energy_thresh + '_First.csv'
+                        if os.path.isfile(file_to_read_in):
                             if forecasts == 'peak_intensity_max':
                                 predicted_label = 'Predicted SEP Peak Intensity (Onset Peak)'
                             elif forecasts == 'peak_intensity_max_time':
                                 predicted_label = 'Predicted SEP Peak Intensity (Onset Peak) Time'
-                            dataframe_sepval = pd.read_csv(file_to_read_in_sepval)
+                            dataframe_sepval = pd.read_csv(file_to_read_in)
                             obs_sepval = dataframe_sepval[observed_label]
                             pred_sepval = dataframe_sepval[predicted_label]
                             
@@ -2239,13 +2239,13 @@ def make_histograms():
                     else:
                         observed_label = observed_dictionary[forecasts]
                         predicted_label = forecast_dictionary[forecasts]
-                        file_to_read_in_sepval = './output/' + forecasts + '_selections_' + names +'_' + energy_thresh + '.csv'
-                        if os.path.isfile(file_to_read_in_sepval):
+                        file_to_read_in = './output/' + forecasts + '_selections_' + names +'_' + energy_thresh + '.csv'
+                        if os.path.isfile(file_to_read_in):
                             if forecasts == 'peak_intensity_max':
                                 predicted_label = 'Predicted SEP Peak Intensity (Onset Peak)'
                             elif forecasts == 'peak_intensity_max_time':
                                 predicted_label = 'Predicted SEP Peak Intensity (Onset Peak) Time'
-                            dataframe_sepval = pd.read_csv(file_to_read_in_sepval)
+                            dataframe_sepval = pd.read_csv(file_to_read_in)
                             obs_sepval = dataframe_sepval[observed_label]
                             pred_sepval = dataframe_sepval[predicted_label]
                         else:
@@ -2272,11 +2272,9 @@ def make_histograms():
                 else:
                     observed_label = observed_dictionary[forecasts]
                     predicted_label = forecast_dictionary[forecasts]
-                    file_to_read_in_sepval = './output/' + forecasts + '_selections_' + names +'_' + energy_thresh + '.csv'
-                    file_to_read_in_sb = './Scoreboard/' + forecasts + '_selections_' + names + '_' + energy_thresh + '.csv'
-                    print(file_to_read_in_sb, )
-                    if os.path.isfile(file_to_read_in_sepval):
-                        dataframe_sepval = pd.read_csv(file_to_read_in_sepval)
+                    file_to_read_in = './output/' + forecasts + '_selections_' + names +'_' + energy_thresh + '.csv'
+                    if os.path.isfile(file_to_read_in):
+                        dataframe_sepval = pd.read_csv(file_to_read_in)
                         obs_sepval = dataframe_sepval[observed_label]
                         pred_sepval = dataframe_sepval[predicted_label]
                     else:
@@ -2293,7 +2291,7 @@ def make_histograms():
               
                         # "./SEPVAL/peak_intensity_max_selections_COMESEP flare+CME _min.10.0.max.-1.0.units.MeV_threshold_10.0.csv"
                         # ".\SEPVAL\peak_intensity_max_selections_COMESEP flare+CME _min.10.0.max.-1.0.units.MeV_threshold_10.0.csv"
-                # print(file_to_read_in_sepval)
+                # print(file_to_read_in)
                 # print(len(pred_sepval), len(pred_sb), len(obs_sepval), len(obs_sb))
                 if len(pred_sepval) == 0: # and len(pred_sb) == 0:
                     print('nothing found bro')
@@ -2340,7 +2338,8 @@ def make_histograms():
                             metric_sb_clean = []
 
                             for i in range(len(pred_sepval)):
-                                foo = (datetime.fromisoformat(pred_sepval[i]) - datetime.fromisoformat(obs_sepval[i]))
+                                # print(pred_sepval[i], obs_sepval[i], type(pred_sepval[i]), type(obs_sepval[i]))
+                                foo = (datetime.datetime.fromisoformat(pred_sepval[i]) - datetime.datetime.fromisoformat(obs_sepval[i]))
                                 metric_sepval.append(foo.total_seconds()/(60*60)) #convert to hours
                                 metric_sepval_clean.append(foo.total_seconds()/(60*60)) #convert to hours
                             # if len(pred_sb) != 0:
@@ -2808,7 +2807,7 @@ def make_histograms():
 
                         # if 'peak' in forecasts and 'time' in forecasts:
                         #     # print('Making Scatter')
-                        #     # dataframe_sepval = pd.read_csv(file_to_read_in_sepval)
+                        #     # dataframe_sepval = pd.read_csv(file_to_read_in)
                         #     obs_start_sepval = dataframe_sepval['Observed SEP Threshold Crossing Time']
                         #     obs_peak_sepval = dataframe_sepval['Observed SEP Peak Intensity Max (Max Flux) Time']  
                             
@@ -2958,8 +2957,8 @@ def make_histograms():
     plt.rcParams['font.size'] = 18
     for model_names in prob_models:
         fig, ax1 = plt.subplots(figsize=(14, 12))
-        file_to_read_in_sb = './Scoreboard/probability_selections_' + model_names + '_min.10.0.max.-1.0.units.MeV_threshold_10.0.csv'
-        dataframe_sepval = pd.read_csv(file_to_read_in_sb)
+        file_to_read_in = './output/probability_selections_' + model_names + '_min.10.0.max.-1.0.units.MeV_threshold_10.0.csv'
+        dataframe_sepval = pd.read_csv(file_to_read_in)
         obs_sepval = dataframe_sepval['Observed SEP Probability']
         pred_sepval = dataframe_sepval['Predicted SEP Probability']
 
@@ -2986,7 +2985,7 @@ def make_histograms():
         ax2.set_yscale('log')
         ax2.set_ylabel('Histogram Count Numbers')
         
-        plt.savefig('reliability_scoreboard_' + model_names + '.png')
+        plt.savefig('./output/reliability_scoreboard_' + model_names + '.png')
 
     return
 
