@@ -622,7 +622,9 @@ def initialize_flux_dict():
             "Mean Accuracy Ratio (MAR)": [],
             "Root Mean Square Error (RMSE)": [],
             "Root Mean Square Log Error (RMSLE)": [],
-            "Median Symmetric Accuracy (MdSA)": []
+            "Median Symmetric Accuracy (MdSA)": [],
+            "Percentage within an Order of Magnitude (%)": [],
+            "Percentage within a factor of 2 (%)": []
             }
     
     return dict
@@ -794,7 +796,7 @@ def fill_flux_metrics_dict(dict, model, energy_key, thresh_key,
     pred_energy_key, pred_thresh_key, figname,
     slope, yint, r_lin, r_log, s_lin, ME, MedE, MLE, MedLE, MAE,
     MedAE, MALE, MedALE, MPE, MAPE, MSPE, SMAPE,
-    MAR, RMSE, RMSLE, MdSA,timeprofplot=None):
+    MAR, RMSE, RMSLE, MdSA, fact10, fact2, timeprofplot=None):
     """ Put flux-related metrics into metrics dictionary.
     
     """
@@ -825,6 +827,8 @@ def fill_flux_metrics_dict(dict, model, energy_key, thresh_key,
     dict["Root Mean Square Error (RMSE)"].append(RMSE)
     dict["Root Mean Square Log Error (RMSLE)"].append(RMSLE)
     dict["Median Symmetric Accuracy (MdSA)"].append(MdSA)
+    dict["Percentage within an Order of Magnitude (%)"].append(fact10)
+    dict["Percentage within a factor of 2 (%)"].append(fact2)
 
 
     if timeprofplot is not None:
@@ -1752,6 +1756,7 @@ def point_intensity_intuitive_metrics(df, dict, model, energy_key, thresh_key,
     ME, MedE, MAE, MedAE, MLE, MedLE, MALE, MedALE, MPE, MAPE, MSPE, SMAPE,\
     MAR, RMSE, RMSLE, MdSA = calc_all_flux_metrics(obs, pred)
 
+
     ####METRICS
     fill_flux_metrics_dict(dict, model, energy_key, thresh_key,
         pred_energy_key, pred_thresh_key, figname,
@@ -1853,13 +1858,23 @@ def peak_intensity_intuitive_metrics(df, dict, model, energy_key, thresh_key,
     ME, MedE, MAE, MedAE, MLE, MedLE, MALE, MedALE, MPE, MAPE, MSPE, SMAPE,\
     MAR, RMSE, RMSLE, MdSA = calc_all_flux_metrics(obs, pred)
 
+    temp = metrics.switch_error_func('LE',obs,pred)
+    count = 0
+    count_fact_2 = 0
+    for i in range(len(temp)):     
+        if temp[i] >= -1 and temp[i] <= 1:
+            count += 1
+        if temp[i] >= -np.log10(2) and temp[i] <= np.log10(2):
+            count_fact_2 += 1
 
+    fact10 = count / len(temp)
+    fact2 = count_fact_2 / len(temp)
     ####METRICS
     fill_flux_metrics_dict(dict, model, energy_key, thresh_key,
         pred_energy_key, pred_thresh_key, figname,
         slope, yint, r_lin, r_log, s_lin, ME, MedE, MLE, MedLE, MAE,
         MedAE, MALE, MedALE, MPE, MAPE, MSPE, SMAPE,
-        MAR, RMSE, RMSLE, MdSA)
+        MAR, RMSE, RMSLE, MdSA, fact10, fact2)
 
 
 
@@ -1998,12 +2013,23 @@ def peak_intensity_max_intuitive_metrics(df, dict, model, energy_key,
     ME, MedE, MAE, MedAE, MLE, MedLE, MALE, MedALE, MPE, MAPE, MSPE, SMAPE,\
     MAR, RMSE, RMSLE, MdSA = calc_all_flux_metrics(obs, pred)
 
+    temp = metrics.switch_error_func('LE',obs,pred)
+    count = 0
+    count_fact_2 = 0
+    for i in range(len(temp)):     
+        if temp[i] >= -1 and temp[i] <= 1:
+            count += 1
+        if temp[i] >= -np.log10(2) and temp[i] <= np.log10(2):
+            count_fact_2 += 1
+
+    fact10 = count / len(temp)
+    fact2 = count_fact_2 / len(temp)
     ####METRICS
     fill_flux_metrics_dict(dict, model, energy_key, thresh_key,
         pred_energy_key, pred_thresh_key, figname,
         slope, yint, r_lin, r_log, s_lin, ME, MedE, MLE, MedLE, MAE,
         MedAE, MALE, MedALE, MPE, MAPE, MSPE, SMAPE,
-        MAR, RMSE, RMSLE, MdSA)
+        MAR, RMSE, RMSLE, MdSA, fact10, fact2)
 
 
 
@@ -2133,12 +2159,23 @@ def max_flux_in_pred_win_metrics(df, dict, model, energy_key,
     ME, MedE, MAE, MedAE, MLE, MedLE, MALE, MedALE, MPE, MAPE, MSPE, SMAPE,\
     MAR, RMSE, RMSLE, MdSA = calc_all_flux_metrics(obs, pred)
 
+    temp = metrics.switch_error_func('LE',obs,pred)
+    count = 0
+    count_fact_2 = 0
+    for i in range(len(temp)):     
+        if temp[i] >= -1 and temp[i] <= 1:
+            count += 1
+        if temp[i] >= -np.log10(2) and temp[i] <= np.log10(2):
+            count_fact_2 += 1
+
+    fact10 = count / len(temp)
+    fact2 = count_fact_2 / len(temp)
     ####METRICS
     fill_flux_metrics_dict(dict, model, energy_key, thresh_key,
         pred_energy_key, pred_thresh_key, figname,
         slope, yint, r_lin, r_log, s_lin, ME, MedE, MLE, MedLE, MAE,
         MedAE, MALE, MedALE, MPE, MAPE, MSPE, SMAPE,
-        MAR, RMSE, RMSLE, MdSA)
+        MAR, RMSE, RMSLE, MdSA, fact10, fact2)
 
 
 
@@ -2235,12 +2272,23 @@ def fluence_intuitive_metrics(df, dict, model, energy_key,
     ME, MedE, MAE, MedAE, MLE, MedLE, MALE, MedALE, MPE, MAPE, MSPE, SMAPE,\
     MAR, RMSE, RMSLE, MdSA = calc_all_flux_metrics(obs, pred)
 
+    temp = metrics.switch_error_func('LE',obs,pred)
+    count = 0
+    count_fact_2 = 0
+    for i in range(len(temp)):     
+        if temp[i] >= -1 and temp[i] <= 1:
+            count += 1
+        if temp[i] >= -np.log10(2) and temp[i] <= np.log10(2):
+            count_fact_2 += 1
+
+    fact10 = count / len(temp)
+    fact2 = count_fact_2 / len(temp)
     ####METRICS
     fill_flux_metrics_dict(dict, model, energy_key, thresh_key,
         pred_energy_key, pred_thresh_key, figname,
         slope, yint, r_lin, r_log, s_lin, ME, MedE, MLE, MedLE, MAE,
         MedAE, MALE, MedALE, MPE, MAPE, MSPE, SMAPE,
-        MAR, RMSE, RMSLE, MdSA)
+        MAR, RMSE, RMSLE, MdSA, fact10, fact2)
 
 
 
@@ -2748,6 +2796,8 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
     sepRlin = []
     sepRlog= []
     sepSlin = []
+    sepfact10 = []
+    sepfact2 = []
     
 
     tp_plotnames = ""
@@ -2842,6 +2892,20 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
             SPE1 = statistics.mean(metrics.switch_error_func('SPE',obs,pred))
             SAPE1 = statistics.mean(metrics.switch_error_func('SAPE',obs,pred))
 
+
+            temp = metrics.switch_error_func('LE',obs,pred)
+            count = 0
+            count_fact_2 = 0
+            for j in range(len(temp)):
+                if temp[j] >= -1 and temp[j] <= 1:
+                    count += 1
+                if temp[j] >= -np.log10(2) and temp[j] <= np.log10(2):
+                    count_fact_2 += 1
+
+            
+            fact10 = count / len(temp)
+            fact2 = count_fact_2 / len(temp)
+
             sepE.append(E1)
             sepAE.append(AE1)
             sepLE.append(LE1)
@@ -2854,6 +2918,8 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
             sepPE.append(PE1)
             sepSPE.append(SPE1)
             sepSAPE.append(SAPE1)
+            sepfact10.append(fact10)
+            sepfact2.append(fact2)
 
 
             #In some cases, the predicted time profile can be constant, i.e.
@@ -2916,6 +2982,8 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
     Slin = None
     slope = None
     yint = None
+    fact10_ = None
+    fact2_ = None
     
     if len(sepE) > 1:
         ME = statistics.mean(sepE)
@@ -2934,6 +3002,8 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
         MPE = statistics.mean(sepPE)
         MSPE = statistics.mean(sepSPE)
         SMAPE = statistics.mean(sepSAPE)
+        fact10_ = statistics.mean(sepfact10)
+        fact2_ = statistics.mean(sepfact2)
 
     if len(sepE) == 1:
         ME = sepE[0]
@@ -2952,6 +3022,8 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
         MPE = sepPE[0]
         MSPE = sepSPE[0]
         SMAPE = sepSAPE[0]
+        fact10_ = sepfact10[0]
+        fact2_ = sepfact2[0]
 
     if len(sepRlin) > 1:
         Rlin = statistics.mean(sepRlin)
@@ -2963,12 +3035,15 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
         Rlog = sepRlog[0]
         Slin = sepSlin[0]
 
+
+   
+    
     ####METRICS
     fill_flux_metrics_dict(dict, model, energy_key, thresh_key,
         pred_energy_key, pred_thresh_key, figname,
         slope, yint, Rlin, Rlog, Slin, ME, MedE, MLE, MedLE, MAE,
         MedAE, MALE, MedALE, MPE, MAPE, MSPE, SMAPE,
-        MAR, RMSE, RMSLE, MdSA, tp_plotnames)
+        MAR, RMSE, RMSLE, MdSA, fact10_, fact2_, tp_plotnames)
 
 
 
