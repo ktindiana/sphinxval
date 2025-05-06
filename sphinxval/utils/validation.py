@@ -1757,12 +1757,23 @@ def point_intensity_intuitive_metrics(df, dict, model, energy_key, thresh_key,
     MAR, RMSE, RMSLE, MdSA = calc_all_flux_metrics(obs, pred)
 
 
+    temp = metrics.switch_error_func('LE',obs,pred)
+    count = 0
+    count_fact_2 = 0
+    for i in range(len(temp)):     
+        if temp[i] >= -1 and temp[i] <= 1:
+            count += 1
+        if temp[i] >= -np.log10(2) and temp[i] <= np.log10(2):
+            count_fact_2 += 1
+
+    fact10 = count / len(temp)
+    fact2 = count_fact_2 / len(temp)
     ####METRICS
     fill_flux_metrics_dict(dict, model, energy_key, thresh_key,
         pred_energy_key, pred_thresh_key, figname,
         slope, yint, r_lin, r_log, s_lin, ME, MedE, MLE, MedLE, MAE,
         MedAE, MALE, MedALE, MPE, MAPE, MSPE, SMAPE,
-        MAR, RMSE, RMSLE, MdSA, tp_plotnames)
+        MAR, RMSE, RMSLE, MdSA, fact10, fact2)
 
 
 
