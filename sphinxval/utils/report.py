@@ -183,7 +183,7 @@ def add_collapsible_segment_nest(header_list, text_list, depth=0):
 
 def build_info_string_header(value, limit_message, selections_filename):
     info_string = 'Instruments and observed values used in validation.<br>'
-    info_string += 'Extracted from: ' + os.path.abspath(selections_filename) + '<br>\n'
+    info_string += 'Extracted from: ' + selections_filename + '<br>\n'
     info_string += 'N = ' + str(value) + '<br>\n'
     info_string += limit_message
     return info_string
@@ -278,6 +278,7 @@ def build_all_clear_skill_scores_section(filename, model, sphinx_dataframe, appe
         text += add_collapsible_segment_start('All Clear Skill Scores', '')
     skill_score_start_index = 9
     skill_score_table_labels = list(column_labels[skill_score_start_index:])
+    n_total = 0
     for i in range(0, number_rows):
         threshold_string, energy_threshold, obs_threshold, pred_threshold, mismatch_allowed_string = build_threshold_string(data, i)
         hits = data.iloc[i]["All Clear 'True Positives' (Hits)"]
@@ -290,6 +291,7 @@ def build_all_clear_skill_scores_section(filename, model, sphinx_dataframe, appe
         subset_list = ['Prediction Window Start', 'Prediction Window End']
         subset_list = append_subset_list(selections_filename, subset_list, 'Prediction Window End', 'Units')
         info_string_, n_events, limit_message, subset = build_info_events_table(selections_filename, sphinx_dataframe, subset_list, {})
+        n_total += n_events
         info_string = build_info_string_header(sum(contingency_table_values), limit_message, selections_filename)
         info_string += info_string_
         skill_score_table_values = data.iloc[i, skill_score_start_index:]
@@ -301,7 +303,10 @@ def build_all_clear_skill_scores_section(filename, model, sphinx_dataframe, appe
         text += add_collapsible_segment('Skill Scores Table', skill_score_table_string)
         text += add_collapsible_segment_end()
     text += add_collapsible_segment_end()
-    return text
+    if n_total == 0:
+        return ''
+    else:
+        return text
 
 def build_metrics_table(data, current_index, metric_index_start, skip_label_list):
     metrics_table_string = ''
@@ -417,6 +422,7 @@ def build_section_awt(filename, model, sphinx_dataframe, metric_label_start, sec
         text += add_collapsible_segment_start(section_title + ' Metrics', '')
 
     awt_string_list = ['Predicted SEP All Clear', 'Predicted SEP Peak Intensity (Onset Peak)', 'Predicted SEP Peak Intensity Max (Max Flux)']
+    n_total = 0
     for i in range(0, number_rows):
         threshold_string, energy_threshold, obs_threshold, pred_threshold, mismatch_allowed_string = build_threshold_string(data, i)
         metrics_string = metrics_description_string + '\n' 
@@ -431,6 +437,7 @@ def build_section_awt(filename, model, sphinx_dataframe, metric_label_start, sec
             if os.path.exists(selections_filename):            
                 subset_list = append_subset_list(selections_filename, subset_list, 'Prediction Window End', 'Units')
                 info_string_, n_events, limit_message, subset = build_info_events_table(selections_filename, sphinx_dataframe, subset_list, rename_dict)
+                n_total += n_events
                 info_string = build_info_string_header(n_events, limit_message, selections_filename)
                 info_string += info_string_
                 text += add_collapsible_segment('Validation Info - ' + awt_string, info_string)
@@ -438,7 +445,10 @@ def build_section_awt(filename, model, sphinx_dataframe, metric_label_start, sec
         text += plot_subsection(plot_string_list)
         text += add_collapsible_segment_end()
     text += add_collapsible_segment_end()
-    return text
+    if n_total == 0:
+        return ''
+    else:
+        return text
 
 def build_section(filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, skip_label_list=[], rename_dict={}, appendage=''):
     data = pd.read_pickle(filename)
@@ -450,12 +460,14 @@ def build_section(filename, model, sphinx_dataframe, metric_label_start, section
     awt_index = 0
     if number_rows > 0:
         text += add_collapsible_segment_start(section_title + ' Metrics', '')
+    n_total = 0
     for i in range(0, number_rows):
         threshold_string, energy_threshold, obs_threshold, pred_threshold, mismatch_allowed_string = build_threshold_string(data, i)
         selections_filename = os.path.join(output_dir__, section_tag + '_selections_' + model + '_' + data.iloc[i]['Energy Channel'] + '_threshold_' + obs_threshold.rstrip(' pfu') + mismatch_allowed_string + appendage + '.pkl')
         subset_list = ['Prediction Window Start', 'Prediction Window End']
         subset_list = append_subset_list(selections_filename, subset_list, 'Prediction Window End', 'Units')
         info_string_, n_events, limit_message, subset = build_info_events_table(selections_filename, sphinx_dataframe, subset_list, rename_dict)
+        n_total += n_events
         info_string = build_info_string_header(n_events, limit_message, selections_filename)
         info_string += info_string_
         metrics_string = metrics_description_string + '' 
@@ -468,7 +480,10 @@ def build_section(filename, model, sphinx_dataframe, metric_label_start, section
         text += plot_subsection(plot_string_list, subset)
         text += add_collapsible_segment_end()
     text += add_collapsible_segment_end()
-    return text
+    if n_total == 0:
+        return ''
+    else:
+        return text
     
 def build_validation_reference_section(text, filename1, filename2, filename3=None):
     data = pd.read_csv(filename1, skiprows=1)
@@ -692,7 +707,8 @@ def add_tab(appendage, markdown_text, model):
     return text
 
 def add_index_link():
-    return '<a href="' + os.path.abspath(os.path.join(config.reportpath, 'index.html')) + '">&#8592; Other Reports</a>\n'
+    href_path = 'index.html'
+    return '<a href="' + href_path + '">&#8592; Other Reports</a>\n'
 
 def convert_markdown_to_html(text, model, validation_reference=False):
     
@@ -719,7 +735,7 @@ def convert_markdown_to_html(text, model, validation_reference=False):
         text_final += text[i]
         
     # FINALIZE
-    html = markdown.markdown(text_final)        
+    html = markdown.markdown(text_final)
 
     return html
       
@@ -880,7 +896,7 @@ def report(output_dir, relative_path_plots, sphinx_dataframe=None): ### ADD OPTI
             info_text = 'Date of Report: ' + datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d' + 'T' + '%H:%M:%S UTC') + '<br>'
             info_text += 'Report generated by SPHINX<br>'
             info_text += 'This code may be publicly accessed at: ' + '[' + config.git_repo_url + '](' + config.git_repo_url + ')<br>'
-            info_text += 'Specific git commit SHA used to generate this report: [' + config.git_commit_sha + '](https://github.com/search?q=' + config.git_commit_sha + ')<br>'
+            info_text += 'Specific git commit SHA used to generate this report: [' + config.git_commit_sha + '](' + os.path.join(config.git_repo_url, 'tree', config.git_commit_sha) + ')<br>'
             if config.git_is_dirty:
                 git_info = ''
                 git_info += '&nbsp;&nbsp;&nbsp;&nbsp;The sphinxval code used to generate this report has changed since the commit listed above.<br>'
