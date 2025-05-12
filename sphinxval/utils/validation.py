@@ -176,6 +176,7 @@ def initialize_sphinx_dict():
             "Time Difference between Inputs and SEP End": [],
             "Prediction Window Overlap with Observed SEP Event": [],
             "Ongoing SEP Event": [],
+            "Time Difference between Last Data and Observed SEP Threshold Crossing Time": [],
             "Original Model Short Name": []
             
             }
@@ -528,6 +529,43 @@ def fill_sphinx_dict_row(sphinx, dict, energy_key, thresh_key, profname_dict):
         dict["Ongoing SEP Event"].append(str(sphinx.observed_ongoing_events[thresh_key]))
     except:
         dict["Ongoing SEP Event"].append(None)
+    
+    try:
+        last_input = np.nan
+        if not pd.isnull(sphinx.last_eruption_time) and not pd.isnull(sphinx.last_trigger_time) and not pd.isnull(sphinx.last_input_time):
+            if sphinx.last_eruption_time >= sphinx.last_trigger_time and sphinx.last_eruption_time >= sphinx.last_input_time:
+                last_input = sphinx.last_eruption_time
+            elif sphinx.last_trigger_time >= sphinx.last_eruption_time and sphinx.last_trigger_time >= sphinx.last_input_time:
+                last_input = sphinx.last_trigger_time
+            else:
+                last_input = sphinx.last_input_time
+        elif not pd.isnull(sphinx.last_eruption_time) and not pd.isnull(sphinx.last_trigger_time) and pd.isnull(sphinx.last_input_time):
+            if sphinx.last_eruption_time >= sphinx.last_trigger_time:
+                last_input = sphinx.last_eruption_time
+            elif sphinx.last_trigger_time >= sphinx.last_eruption_time:
+                last_input = sphinx.last_trigger_time
+        elif not pd.isnull(sphinx.last_eruption_time) and not pd.isnull(sphinx.last_input_time) and pd.isnull(sphinx.last_trigger_time):
+            if sphinx.last_eruption_time >= sphinx.last_input_time:
+                last_input = sphinx.last_eruption_time
+            elif sphinx.last_input_time >= sphinx.last_eruption_time:
+                last_input = sphinx.last_input_time
+        elif not pd.isnull(sphinx.last_input_time) and not pd.isnull(sphinx.last_trigger_time) and pd.isnull(sphinx.last_eruption_time):
+            if sphinx.last_input_time >= sphinx.last_trigger_time:
+                last_input = sphinx.last_input_time
+            elif sphinx.last_trigger_time >= sphinx.last_input_time:
+                last_input = sphinx.last_input_time
+        elif not pd.isnull(sphinx.last_eruption_time) and pd.isnull(sphinx.last_trigger_time) and pd.isnull(sphinx.last_input_time):
+            last_input = sphinx.last_eruption_time
+        elif not pd.isnull(sphinx.last_trigger_time) and pd.isnull(sphinx.last_eruption_time) and pd.isnull(sphinx.last_input_time):
+            last_input = sphinx.last_trigger_time
+        elif not pd.isnull(sphinx.last_input_time) and pd.isnull(sphinx.last_trigger_time) and pd.isnull(sphinx.last_eruption_time):
+            last_input = sphinx.last_input_time
+        time_diff = sphinx.observed_threshold_crossing[thresh_key].crossing_time - last_input
+        total_seconds = time_diff.total_seconds()
+        time_diff = total_seconds / 3600
+        dict["Time Difference between Last Data and Observed SEP Threshold Crossing Time"].append(time_diff)
+    except:
+        dict["Time Difference between Last Data and Observed SEP Threshold Crossing Time"].append('NaT')
 
     dict["Original Model Short Name"].append(sphinx.prediction.original_short_name)
 
@@ -662,6 +700,7 @@ def initialize_awt_dict():
             "Median AWT for Predicted SEP All Clear to Observed SEP Threshold Crossing Time": [],
             "Mean AWT for Predicted SEP All Clear to Observed SEP Start Time": [],
             "Median AWT for Predicted SEP All Clear to Observed SEP Start Time": [],
+            "Mean AWT Percent Error for Predicted SEP All Clear to Observed SEP Threshold Crossing Time": [],
 
 #            #Probability Forecasts - cannot without an explicit threshold
 #            "Mean AWT for Probability to Observed Threshold Crossing Time": [],
@@ -674,12 +713,14 @@ def initialize_awt_dict():
             "Median AWT for Predicted SEP Threshold Crossing Time to Observed SEP Threshold Crossing Time": [],
             "Mean AWT for Predicted SEP Threshold Crossing Time to Observed SEP Start Time": [],
             "Median AWT for Predicted SEP Threshold Crossing Time to Observed SEP Start Time": [],
+            "Mean AWT Percent Error for Predicted SEP Threshold Crossing Time to Observed SEP Threshold Crossing Time": [],
 
             #Start Time Forecasts
             "Mean AWT for Predicted SEP Start Time to Observed SEP Threshold Crossing Time": [],
             "Median AWT for Predicted SEP Start Time to Observed SEP Threshold Crossing Time": [],
             "Mean AWT for Predicted SEP Start Time to Observed SEP Start Time": [],
             "Median AWT for Predicted SEP Start Time to Observed SEP Start Time": [],
+            "Mean AWT Percent Error for Predicted SEP Start Time to Observed SEP Threshold Crossing Time": [],
  
 #             #Point Intensity Forecasts
 #            "Mean AWT for Predicted Point Intensity to Observed SEP Threshold Crossing Time": [],
@@ -3103,7 +3144,8 @@ def extract_awt_sub(df, model, energy_key, thresh_key, pred_key, match_key, obs_
                 'Forecast Source', 'Forecast Issue Time',
                 'Prediction Window Start', 'Prediction Window End',
                 'Observed SEP Threshold Crossing Time',
-                'Observed SEP Start Time',
+                'Observed SEP Start Time', 
+                'Time Difference between Last Data and Observed SEP Threshold Crossing Time',
                 obs_key, pred_key, match_key]]
     else:
         sub = sub[['Model','Energy Channel Key', 'Threshold Key',
@@ -3112,7 +3154,8 @@ def extract_awt_sub(df, model, energy_key, thresh_key, pred_key, match_key, obs_
                 'Forecast Source', 'Forecast Issue Time',
                 'Prediction Window Start', 'Prediction Window End',
                 'Observed SEP Threshold Crossing Time',
-                'Observed SEP Start Time',
+                'Observed SEP Start Time', 
+                'Time Difference between Last Data and Observed SEP Threshold Crossing Time',
                 pred_key, match_key]]
 
     sub = sub.loc[sub[match_key] == "SEP Event"]
@@ -3238,7 +3281,9 @@ def awt_metrics(df, dict, model, energy_key, thresh_key, validation_type):
                     median_key = "Median AWT for " + ftype['pred_key'] + " to " + key
                     dict[mean_key].append(None)
                     dict[median_key].append(None)
-               
+                if ftype['obs_key'] == '':
+                    dict['Mean AWT Percent Error for ' + ftype['pred_key'] + ' to ' + time_keys[0]].append(np.nan)
+                
                 continue
         
         #For each SEP event, identify the first forecast for that SEP event.
@@ -3271,16 +3316,13 @@ def awt_metrics(df, dict, model, energy_key, thresh_key, validation_type):
                 continue
             
             row = sep_sub.iloc[idx].to_list()
-            logger.info(str(ftype))
-            logger.info(row)
             #Calculate AWT
             issue_time = sep_sub.iloc[idx]['Forecast Issue Time']
-            logger.info(type(issue_time))
+
             if pd.isnull(issue_time):
                 continue
             
             tct = sep_sub.iloc[idx]['Observed SEP Threshold Crossing Time']
-            logger.info(type(tct))
             tc_awt = (tct - issue_time).total_seconds()/(60.*60.) #hours
             #If issue time is more than 7 days later than the threshold crossing time,
             #the assume this is not a realistic issue time and ignore
@@ -3306,15 +3348,14 @@ def awt_metrics(df, dict, model, energy_key, thresh_key, validation_type):
                 row.append(obs_awt)
 
             if ftype['obs_key'] == '': 
-                time_between_trigger_and_thresh_cross = sep_sub.iloc[idx]['Time between Last Data and Observed SEP Threshold Crossing Time']
-                if pd.isnull(time_between_trigger_and_thresh_cross):
+                time_between_trigger_and_thresh_cross = sep_sub.iloc[idx]["Time Difference between Last Data and Observed SEP Threshold Crossing Time"]
+                if pd.isnull(tc_awt) or time_between_trigger_and_thresh_cross == 'NaT':
                     awtpe = 0.0
                 else:
                     awtpe = tc_awt / time_between_trigger_and_thresh_cross
                 
                 row.append(awtpe) # 
-
-
+            
 
                 # Only calculating the awtpe for things related to SEP Start or Threshcrossing
                 # Calculation for AWT Percent Error - which is based upon
@@ -3326,10 +3367,6 @@ def awt_metrics(df, dict, model, energy_key, thresh_key, validation_type):
                 # that feels needless. If multiple of these times are given, find the 
                 # latest time and use that. 
             
-
-            
-
-            logger.info(row)
             #Insert value into dataframe to save AWT calculations for each SEP
             sel_df.loc[len(sel_df)] = row
 
