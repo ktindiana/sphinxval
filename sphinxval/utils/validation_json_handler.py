@@ -202,6 +202,13 @@ def identify_all_energy_channels_per_json(json, kind):
     obs = json[key1][key2]
     for block in obs:
         energy_channel = block['energy_channel']
+
+        #Convert to floats and astropy units
+        units = energy_channel['units']
+        energy_channel['units'] = vunits.convert_string_to_units(units)
+        energy_channel['min'] = float(energy_channel['min'])
+        energy_channel['max'] = float(energy_channel['max'])
+        
         json_energy_channels.append(energy_channel)
     
     return json_energy_channels
@@ -380,14 +387,15 @@ def load_objects_from_json(data_list, model_list):
 
         channel_overlap, fcast_energy_channels = energy_channel_overlap(json, short_name, all_energy_channels)
         if not channel_overlap:
-            logger.warning("REMOVED FROM ANALYSIS: No overlap between forecasted "
-                "and observed energy channels for "
-                f"{json['filename']}, {fcast_energy_channels}")
-            obj, is_good = forecast_object_from_json(json, fcast_energy_channels[0])
-            obj.valid = False
-            obj.invalid_reason = f"Predicted energy channels not present in observations, {fcast_energy_channels}"
-            removed_model_objs.append(obj)
-            continue
+            if not cfg.do_mismatch or (cfg.mm_model not in short_name):
+                logger.warning("REMOVED FROM ANALYSIS: No overlap between forecasted "
+                    "and observed energy channels for "
+                    f"{json['filename']}, {fcast_energy_channels}")
+                obj, is_good = forecast_object_from_json(json, fcast_energy_channels[0])
+                obj.valid = False
+                obj.invalid_reason = f"Predicted energy channels not present in observations, {fcast_energy_channels}"
+                removed_model_objs.append(obj)
+                continue
 
 
         for channel in all_energy_channels:
@@ -1201,6 +1209,11 @@ def dict_to_fluence(event, fl_dict):
     
     if 'threshold' in event:
         threshold = event['threshold']
+        if isinstance(threshold, str):
+            threshold = float(threshold)
+
+    if 'threshold_start' in event:
+        threshold = event['threshold_start']
         if isinstance(threshold, str):
             threshold = float(threshold)
 
