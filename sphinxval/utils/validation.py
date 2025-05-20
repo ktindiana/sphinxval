@@ -1773,7 +1773,7 @@ def point_intensity_intuitive_metrics(df, dict, model, energy_key, thresh_key,
         pred_energy_key, pred_thresh_key, figname,
         slope, yint, r_lin, r_log, s_lin, ME, MedE, MLE, MedLE, MAE,
         MedAE, MALE, MedALE, MPE, MAPE, MSPE, SMAPE,
-        MAR, RMSE, RMSLE, MdSA, fact10, fact2)
+        MAR, RMSE, RMSLE, MdSA, fact10, fact2, tp_plotnames)
 
 
 
