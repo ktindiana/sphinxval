@@ -7,7 +7,7 @@ SPHINX is developed via community challenges through the SHINE, ISWAT, ESWW, and
 
 Reminder to Windows users: change your system PYTHONPATH environment variable such that your `../sphinxval/` directory is included.
 
-![logo/sphinx-logo-official.png](SPHINX Logo)
+![SPHINX Logo](logo/sphinx-logo-official.png)
 
 ## Run SPHINX
 The exectuables for SPHINX are in the bin directory. 
