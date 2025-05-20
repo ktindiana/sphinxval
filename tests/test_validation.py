@@ -82,6 +82,8 @@ def initialize_flux_dict():
             "Pearson Correlation Coefficient (Linear)": [],
             "Pearson Correlation Coefficient (Log)": [],
             "Spearman Correlation Coefficient (Linear)": [],
+            'Mean Ratio': [],
+            'Median Ratio': [],
             "Mean Error (ME)": [],
             "Median Error (MedE)": [],
             "Mean Log Error (MLE)": [],
@@ -460,6 +462,8 @@ def fill_peak_intensity_max_dict(dict, self):
     dict["Pearson Correlation Coefficient (Linear)"].append(np.nan)
     dict["Pearson Correlation Coefficient (Log)"].append(np.nan)
     dict["Spearman Correlation Coefficient (Linear)"].append(np.nan)
+    dict['Mean Ratio'].append('1.0')
+    dict['Median Ratio'].append('1.0')
     dict["Mean Error (ME)"].append('0.0')
     dict["Median Error (MedE)"].append('0.0')
     dict["Mean Log Error (MLE)"].append('0.0')
@@ -496,6 +500,8 @@ def fill_peak_intensity_max_mult_dict(dict, self):
     dict["Pearson Correlation Coefficient (Linear)"].append(np.nan)
     dict["Pearson Correlation Coefficient (Log)"].append(np.nan)
     dict["Spearman Correlation Coefficient (Linear)"].append(np.nan)
+    dict['Mean Ratio'].append('0.5005')
+    dict['Median Ratio'].append('0.5005')
     dict["Mean Error (ME)"].append('-4.995')
     dict["Median Error (MedE)"].append('-4.995')
     dict["Mean Log Error (MLE)"].append('-1.5')
@@ -531,6 +537,8 @@ def fill_peak_intensity_dict(dict, self):
     dict["Pearson Correlation Coefficient (Linear)"].append(np.nan)
     dict["Pearson Correlation Coefficient (Log)"].append(np.nan)
     dict["Spearman Correlation Coefficient (Linear)"].append(np.nan)
+    dict['Mean Ratio'].append('1.0')
+    dict['Median Ratio'].append('1.0')
     dict["Mean Error (ME)"].append('0.0')
     dict["Median Error (MedE)"].append('0.0')
     dict["Mean Log Error (MLE)"].append('0.0')
@@ -567,6 +575,8 @@ def fill_peak_intensity_mult_dict(dict, self):
     dict["Pearson Correlation Coefficient (Linear)"].append(np.nan)
     dict["Pearson Correlation Coefficient (Log)"].append(np.nan)
     dict["Spearman Correlation Coefficient (Linear)"].append(np.nan)
+    dict['Mean Ratio'].append('0.5005')
+    dict['Median Ratio'].append('0.5005')
     dict["Mean Error (ME)"].append('-4.995')
     dict["Median Error (MedE)"].append('-4.995')
     dict["Mean Log Error (MLE)"].append('-1.5')
@@ -627,6 +637,8 @@ def fill_peak_intensity_metrics_dict_all(dict, self):
     dict["Pearson Correlation Coefficient (Linear)"].append(np.nan)
     dict["Pearson Correlation Coefficient (Log)"].append(np.nan)
     dict["Spearman Correlation Coefficient (Linear)"].append(np.nan)
+    dict['Mean Ratio'].append('1.05')
+    dict['Median Ratio'].append('1.05')
     dict["Mean Error (ME)"].append('0.5')
     dict["Median Error (MedE)"].append('0.5')
     dict["Mean Log Error (MLE)"].append('0.02069634257911257')
@@ -662,6 +674,8 @@ def fill_time_profile_dict_all(dict, self):
     dict["Pearson Correlation Coefficient (Linear)"].append('-0.16603070802422484')
     dict["Pearson Correlation Coefficient (Log)"].append('-5.551115123125783e-17')
     dict["Spearman Correlation Coefficient (Linear)"].append('0.0')
+    dict['Mean Ratio'].append('1.240429661021668')
+    dict['Median Ratio'].append('1.240429661021668')
     dict["Mean Error (ME)"].append('0.26338502445434836')
     dict["Median Error (MedE)"].append('0.26338502445434836')
     dict["Mean Log Error (MLE)"].append('-0.1884057971014493')
@@ -834,6 +848,8 @@ def fill_max_flux_in_pred_win_metrics_dict_all(dict, self):
     dict["Pearson Correlation Coefficient (Linear)"].append(np.nan)
     dict["Pearson Correlation Coefficient (Log)"].append(np.nan)
     dict["Spearman Correlation Coefficient (Linear)"].append(np.nan)
+    dict['Mean Ratio'].append('1.05')
+    dict['Median Ratio'].append('1.05')
     dict["Mean Error (ME)"].append('0.5')
     dict["Median Error (MedE)"].append('0.5')
     dict["Mean Log Error (MLE)"].append('0.02069634257911257')
@@ -878,6 +894,8 @@ def fill_peak_intensity_max_metrics_dict_all(dict, self):
     dict["Pearson Correlation Coefficient (Linear)"].append(np.nan)
     dict["Pearson Correlation Coefficient (Log)"].append(np.nan)
     dict["Spearman Correlation Coefficient (Linear)"].append(np.nan)
+    dict['Mean Ratio'].append('1.05')
+    dict['Median Ratio'].append('1.05')
     dict["Mean Error (ME)"].append('0.5')
     dict["Median Error (MedE)"].append('0.5')
     dict["Mean Log Error (MLE)"].append('0.02069634257911257')
@@ -952,6 +970,8 @@ def fill_fluence_dict_all(dict, self):
     dict["Pearson Correlation Coefficient (Linear)"].append(np.nan)
     dict["Pearson Correlation Coefficient (Log)"].append(np.nan)
     dict["Spearman Correlation Coefficient (Linear)"].append(np.nan)
+    dict['Mean Ratio'].append('0.0567996494613068')
+    dict['Median Ratio'].append('0.0567996494613068')
     dict["Mean Error (ME)"].append('-90152088.20071295')
     dict["Median Error (MedE)"].append('-90152088.20071295')
     dict["Mean Log Error (MLE)"].append('-1.2456543445264794')
@@ -1340,12 +1360,6 @@ class TestPeakIntensityMult(unittest.TestCase):
         csv_filename = os.path.join(config.outpath, 'csv', 'peak_intensity_metrics.csv')
         utils.assert_equal_table(self, csv_filename, test_dict)
 
-
-
-
-    
-
-    
 
     def utility_print_docstring(self, function):
         if self.verbosity == 2:
@@ -1850,10 +1864,6 @@ class TestShortNameChanger(unittest.TestCase):
             except Exception as e:
                 self.fail("{} failed ({}: {})".format(step, type(e), e))
         utils.utility_delete_output()
-
-
-
-
 
 
 
