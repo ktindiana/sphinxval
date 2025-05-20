@@ -21,9 +21,13 @@ import os.path
 import numpy as np
 import sklearn.metrics as skl
 import matplotlib.pylab as plt
+from scipy import stats 
+from statsmodels.distributions.empirical_distribution import ECDF
+import math
 
 scoreboard_models = ["ASPECS", "iPATH", "MagPy", "SEPMOD",
-                    "SEPSTER", "SPRINTS", "UMASEP"]
+                    "SEPSTER", "SPRINTS", "UMASEP", "GSU",
+                    "MAG4", "REleASE"]
 
 
 #If not empty, add metrics to the contingency metrics analysis
@@ -784,7 +788,7 @@ def make_box_plots(df, path, quantity, anonymous, highlight, scoreboard,
         OUTPUT:
         
         Figure(s) with box plots will be written to the
-        path/output/plots/. directory
+        path/output/output/plots/. directory
     
     """
     if quantity == 'All Clear':
@@ -913,6 +917,270 @@ def make_box_plots(df, path, quantity, anonymous, highlight, scoreboard,
                     x_label="Metric", y_label="Value", title=title,
                     save=figname, uselog=False, showplot=showplot, \
                     closeplot=False, saveplot=saveplot)
+
+
+############# SPHINX OUTPUT STATS ############
+def forecast_coverage(df, start_date, end_date):
+    """ Daily coverage of forecasts. 
+        Counts the number of days in the total time range where forecasts
+        were issued. Returns the number of days no forecasts were issued
+        
+        INPUT: 
+        
+            :df: (pandas DataFrame) SPHINX dataframe for only one model, 
+                (an probabily energy channel, and threshold combination)
+            :start_date: (datetime) Start of date range checking for coverage
+            :end_date: (datetime) End of date range checking for coverage
+                
+        OUTPUT:
+        
+            :N_no_data: (int) number of days with no forecasts
+            :N_data: (int) number of days with forecasts
+        
+    """
+
+    sub = df.loc[(df['Prediction Window Start'] >= start_date) & (df['Prediction Window End'] <= end_date)]
+    td24 = datetime.timedelta(hours=24)
+    
+    start_day = datetime.datetime(start_date.year,start_date.month,start_date.day)
+    end_day = datetime.datetime(end_date.year,end_date.month,end_date.day)
+    Ndays = int((end_day - start_day)/td24) + 1 #+1 to include the end_day
+    
+    N_no_data = 0
+    N_data = 0
+
+    for i in range(Ndays):
+        check_day = start_day + i*td24
+        check_day_end = check_day + td24
+        sub_range = sub.loc[(sub['Prediction Window Start'] >= check_day) & (sub['Prediction Window Start'] < check_day_end)]
+        
+        if sub_range.empty:
+            N_no_data += 1
+        else:
+            N_data += 1
+        
+    return N_no_data, N_data
+
+
+
+def forecast_stats(fname):
+    """ Read in a SPHINX dataframe (SPHINX_evaluated, SPHINX_removed) and 
+        calculate stats related to the forecasts within.
+        
+        INPUT:
+        
+            :fname: csv file for a SPHINX dataframe
+            
+        OUTPUT:
+        
+            Stats file written out to same directory of the dataframe.
+        
+    """
+    
+    dict = {'Model': [],
+            'Energy Channel': [],
+            'Threshold': [],
+            'Prediction Energy Channel': [],
+            'Prediction Threshold': [],
+            'First Issue Time': [],
+            'Last Issue Time': [],
+            'N Issue Time Days': [],
+            'First Prediction Window Start': [],
+            'Last Prediction Window End': [],
+            'N Prediction Days': [],
+            'N Days with Forecasts': [],
+            'N Days without Forecasts': [],
+            'N Days with SEP Event Onsets': [],
+            'Imbalance (Days)': [],
+            'Total Number of Forecasts': [],
+            'Total Number of Forecasts with SEP Events': [],
+            'Imbalance (Forecasts)': [],
+            }
+    
+    df = pd.read_csv(fname, parse_dates=['Forecast Issue Time', 'Prediction Window Start',
+                            'Prediction Window End', 'Observed SEP Threshold Crossing Time',
+                            'Observed SEP End Time'])
+                            
+    models = resume.identify_unique(df, 'Model')
+    
+    #Extract all forecasts per model
+    for model in models:
+        df_model = df.loc[df['Model'] == model]
+        energy_keys = resume.identify_unique(df_model, 'Energy Channel Key')
+ 
+        #Extract all forecasts per energy channel
+        for ek in energy_keys:
+            sub = df_model.loc[(df_model['Energy Channel Key'] == ek)]
+            if sub.empty: continue
+            thresholds = resume.identify_unique(sub, 'Threshold Key')
+
+            for tk in thresholds:
+                sub = df_model.loc[(df_model['Energy Channel Key'] == ek) & (df_model['Threshold Key'] == tk)]
+                if sub.empty: continue
+                pred_energy_keys = resume.identify_unique(sub, 'Prediction Energy Channel Key')
+                
+                for pek in pred_energy_keys:
+                    sub = df_model.loc[(df_model['Energy Channel Key'] == ek) & (df_model['Threshold Key'] == tk)
+                            & (df_model['Prediction Energy Channel Key'] == pek)]
+                    if sub.empty: continue
+                    pred_thresholds = resume.identify_unique(sub, 'Prediction Threshold Key')
+                    
+                    for ptk in pred_thresholds:
+                        sub = df_model.loc[(df_model['Energy Channel Key'] == ek) & (df_model['Threshold Key'] == tk)
+                            & (df_model['Prediction Energy Channel Key'] == pek) & (df_model['Prediction Threshold Key'] == ptk)]
+                        if sub.empty: continue
+                        
+                        #Calculate stats for unique model configuration
+                        td24 = datetime.timedelta(hours=24)
+                        
+                        #Total number of days producing forecasts assuming real time forecasting
+                        #starts with first timestamp and finishes at last timestamp
+                        first_pred_win_st = sub['Prediction Window Start'].min()
+                        last_pred_win_end = sub['Prediction Window End'].max()
+                        Ndays = math.ceil((last_pred_win_end - first_pred_win_st)/td24)
+                        
+                        #Total number of days using issue time
+                        issue_st = sub['Forecast Issue Time'].min()
+                        issue_end = sub['Forecast Issue Time'].max()
+                        Ndays_issue = math.ceil((issue_end - issue_st)/td24)
+                        
+                        #Total number of Forecasts
+                        Nforecasts = len(sub)
+                        
+                        #Number of days with Forecasts issued and without Forecasts issued
+                        N_no_data, N_data = forecast_coverage(sub, first_pred_win_st, last_pred_win_end)
+                        
+                        #Number of SEP events
+                        sub_sep = sub.dropna(subset=['Observed SEP Threshold Crossing Time'])
+                        Nsep_forecasts = len(sub_sep)
+                        sep = resume.identify_unique(sub, 'Observed SEP Threshold Crossing Time')
+                        Nsep = len(sep)
+                        
+                        #Imbalance
+                        if Nsep_forecasts != 0:
+                            fcast_imbalance = (Nforecasts - Nsep_forecasts)/Nsep_forecasts
+                        else:
+                            fcast_imbalance = 0
+                            
+                        if Nsep != 0:
+                            days_imbalance = (N_data - Nsep)/Nsep
+                        else:
+                            days_imbalance = 0
+                
+#                        print(f"Model: {model} \n"
+#                              f"Energy Channel: {ek} \n"
+#                              f"Threshold: {tk} \n"
+#                              f"Prediction Energy Channel: {pek} \n"
+#                              f"Prediction Threshold: {ptk} \n"
+#                              f"First Issue Time: {issue_st} \n"
+#                              f"Last Issue Time: {issue_end} \n"
+#                              f"N Issue Time Days: {Ndays_issue} \n"
+#                              f"First Prediction Window Start: {first_pred_win_st} \n"
+#                              f"Last Prediction Window End: {last_pred_win_end} \n"
+#                              f"N Prediction Days: {Ndays} \n"
+#                              f"N Days with Forecasts: {N_data} \n"
+#                              f"N Days without Forecasts: {N_no_data} \n"
+#                              f"N Days with SEP Event Onsets: {Nsep} \n"
+#                              f"Imbalance (Days): {days_imbalance} \n"
+#                              f"Total Number of Forecasts: {Nforecasts} \n"
+#                              f"Total Number of Forecasts with SEP Events: {Nsep_forecasts} \n"
+#                              f"Imbalance (Forecasts): {fcast_imbalance} \n" )
+                              
+                
+                
+                        dict['Model'].append(model)
+                        dict['Energy Channel'].append(ek)
+                        dict['Threshold'].append(tk)
+                        dict['Prediction Energy Channel'].append(pek)
+                        dict['Prediction Threshold'].append(ptk)
+                        dict['First Prediction Window Start'].append(first_pred_win_st)
+                        dict['Last Prediction Window End'].append(last_pred_win_end)
+                        dict['N Prediction Days'].append(Ndays)
+                        dict['First Issue Time'].append(issue_st)
+                        dict['Last Issue Time'].append(issue_end)
+                        dict['N Issue Time Days'].append(Ndays_issue)
+                        dict['N Days with Forecasts'].append(N_data)
+                        dict['N Days without Forecasts'].append(N_no_data)
+                        dict['N Days with SEP Event Onsets'].append(Nsep)
+                        dict['Imbalance (Days)'].append(days_imbalance)
+                        dict['Total Number of Forecasts'].append(Nforecasts)
+                        dict['Total Number of Forecasts with SEP Events'].append(Nsep_forecasts)
+                        dict['Imbalance (Forecasts)'].append(fcast_imbalance)
+                        
+
+    df_stats = pd.DataFrame(dict)
+    df_stats = df_stats.sort_values(by=['Model', 'Energy Channel'])
+    outfname = fname.split('.csv')
+    outfname = outfname[0] + '_stats.csv'
+    df_stats.to_csv(outfname, index=False)
+
+
+############ DEOVERLAPPING ###################
+
+def create_date_range(first_date, last_date, td = datetime.timedelta(hours=24)):
+    """ Create a date range between first_date and last_date with timedelta
+        of td, default 24 hours.
+        
+        INPUTS:
+        
+            :first_date: (datetime) starting time for date range
+            :last_date: (datetime) ending time for date range
+            :td: (datetime timedelta) duration of each time range
+            
+        OUTPUT:
+        
+            :date_range_st: (datetime list) starting date of each time period
+                in the range
+            :date_range_end: (datetime list) ending date of each time period 
+                in the range. e.g. the first period is:
+                date_range_st[0] to date_range_end[0] 
+                Also date_range_end[0] == date_range_st[1], but two lists are
+                output for convenience
+
+    """
+
+    #Specify date range covered by prediction windows
+    start_date = pd.Timestamp(year=first_date.year, month=first_date.month, day=first_date.day)
+    end_date = pd.Timestamp(year=last_date.year, month=last_date.month, day=last_date.day)
+        
+    #Create a range of daily time stamps from the start date to the end date
+    date_range_st = pd.date_range(start=start_date, end=end_date-td, freq=td)
+    date_range_end = date_range_st + td
+
+
+    date_range_st = date_range_st.to_list()
+    date_range_end = date_range_end.to_list()
+    
+    return date_range_st, date_range_end
+
+
+def create_date_range_df(dates_file, seps, nonevent_st, nonevent_end):
+    """ Contains dates of SEP events and specific non-event time periods.
+        SEP Event, Non-Event Start, Non-Event End
+        
+    """
+    df_dates = pd.DataFrame()
+    if dates_file != '':
+        df_dates = pd.read_csv(dates_file, parse_dates=['SEP Events','Non-Event Start','Non-Event End'])
+        print(f"all_clear_grid: Read in dates from file {dates_file}.")
+    else:
+        print(f"all_clear_grid: Using input date range for seps and nonevents.")
+        #seps and nonevent arrays have to be same length to create a dataframe
+        if len(seps) > len(nonevent_st):
+            nmore = len(seps) - len(nonevent_st)
+            nonevent_st = nonevent_st + [pd.NaT]*nmore
+            nonevent_end = nonevent_end + [pd.NaT]*nmore
+        if len(seps) < len(nonevent_st):
+            nmore = len(nonevent_st) - len(seps)
+            seps = seps + [pd.NaT]*nmore
+        temp = {'SEP Events': seps, 'Non-Event Start': nonevent_st, 'Non-Event End': nonevent_end}
+        df_dates = pd.DataFrame(temp)
+        df_dates['SEP Events'] = pd.to_datetime(df_dates['SEP Events'])
+        df_dates['Non-Event Start'] = pd.to_datetime(df_dates['Non-Event Start'])
+        df_dates['Non-Event End'] = pd.to_datetime(df_dates['Non-Event End'])
+
+    return df_dates
+
 
 
 def associated_forecasts(df, date_st, date_end, split):
@@ -1056,7 +1324,7 @@ def all_clear_all(df, obs, pred):
 
 
 
-def all_clear_grid(csv_path, models, energy_min, energy_max, threshold,
+def all_clear_deoverlap(csv_path, models, energy_min, energy_max, threshold,
     dates_file='',seps=[], nonevent_st=[], nonevent_end=[], split=False,
     write_grid=True):
     """ For a list of models, reads in all_clear_selections files output
@@ -1108,24 +1376,7 @@ def all_clear_grid(csv_path, models, energy_min, energy_max, threshold,
     #models that need to be deoverlapped.
     print(f"all_clear_grid: Reading in dates file {dates_file}.")
     
-    if dates_file != '':
-        df_dates = pd.read_csv(dates_file, parse_dates=['SEP Events','Non-Event Start','Non-Event End'])
-        print(f"all_clear_grid: Read in dates from file {dates_file}.")
-    else:
-        print(f"all_clear_grid: Using input date range for seps and nonevents.")
-        #seps and nonevent arrays have to be same length to create a dataframe
-        if len(seps) > len(nonevent_st):
-            nmore = len(seps) - len(nonevent_st)
-            nonevent_st = nonevent_st + [pd.NaT]*nmore
-            nonevent_end = nonevent_end + [pd.NaT]*nmore
-        if len(seps) < len(nonevent_st):
-            nmore = len(nonevent_st) - len(seps)
-            seps = seps + [pd.NaT]*nmore
-        temp = {'SEP Events': seps, 'Non-Event Start': nonevent_st, 'Non-Event End': nonevent_end}
-        df_dates = pd.DataFrame(temp)
-        df_dates['SEP Events'] = pd.to_datetime(df_dates['SEP Events'])
-        df_dates['Non-Event Start'] = pd.to_datetime(df_dates['Non-Event Start'])
-        df_dates['Non-Event End'] = pd.to_datetime(df_dates['Non-Event End'])
+    df_dates = create_date_range_df(dates_file, seps, nonevent_st, nonevent_end)
 
 
     #Dictionaries needed to create visual grids
@@ -1213,6 +1464,19 @@ def all_clear_grid(csv_path, models, energy_min, energy_max, threshold,
                 
                 if sub.empty:
                     sep_outcome = 'No Data'
+                    #Record info for deoverlapping
+                    dict['Start Date'].append(sep)
+                    dict['End Date'].append(pd.NaT)
+                    dict['Observed SEP Threshold Crossing Time'].append(sep)
+                    dict['Observed SEP All Clear'].append(False)
+                    dict['Predicted SEP All Clear'].append(sep_outcome)
+                    dict['Total Forecasts'].append(np.nan)
+                    dict['Total Hits'].append(np.nan)
+                    dict['Total Misses'].append(np.nan)
+                    dict['Total False Alarms'].append(np.nan)
+                    dict['Total Correct Negatives'].append(np.nan)
+                    dict['First Prediction Window'].append(pd.NaT)
+                    dict['Last Prediction Window'].append(pd.NaT)
                 else:
                     sub.sort_values(by='Prediction Window Start', inplace=True)
                     pred_win_first = sub['Prediction Window Start'].iloc[0]
@@ -1276,6 +1540,19 @@ def all_clear_grid(csv_path, models, energy_min, energy_max, threshold,
  
                 if sub.empty:
                     nonsep_outcome = 'No Data'
+                    #Record info for deoverlapping
+                    dict['Start Date'].append(non_st)
+                    dict['End Date'].append(non_end)
+                    dict['Observed SEP Threshold Crossing Time'].append(pd.NaT)
+                    dict['Observed SEP All Clear'].append(True)
+                    dict['Predicted SEP All Clear'].append(nonsep_outcome)
+                    dict['Total Forecasts'].append(np.nan)
+                    dict['Total Hits'].append(np.nan)
+                    dict['Total Misses'].append(np.nan)
+                    dict['Total False Alarms'].append(np.nan)
+                    dict['Total Correct Negatives'].append(np.nan)
+                    dict['First Prediction Window'].append(pd.NaT)
+                    dict['Last Prediction Window'].append(pd.NaT)
                 else:
                     sub.sort_values(by='Prediction Window Start', inplace=True)
                     pred_win_first = sub['Prediction Window Start'].iloc[0]
@@ -1326,7 +1603,7 @@ def all_clear_grid(csv_path, models, energy_min, energy_max, threshold,
         #Deoverlapped dataframe
         df_do = pd.DataFrame(dict)
         df_do = df_do.sort_values('Start Date')
-        fnameout = fname.replace('.csv','_grid.csv')
+        fnameout = fname.replace('.csv','_deoverlap.csv')
         df_do.to_csv(fnameout, index=False)
         print(f"Wrote out {fnameout}.")
 
@@ -1337,7 +1614,10 @@ def all_clear_grid(csv_path, models, energy_min, energy_max, threshold,
     df_sep['Total Misses'] = df_sep_drop.apply(lambda x: x.str.contains('Miss')).sum(axis=1)
     df_sep['Total No Data'] = df_sep_drop.apply(lambda x: x.str.contains('No Data')).sum(axis=1)
     if write_grid:
-        df_sep.to_csv(os.path.join(csv_path,f"all_clear_grid_SEP_{energy_key}_{thresh_key}.csv"), index=False)
+        gridname = f"all_clear_deoverlap_SEP_{energy_key}_{thresh_key}.csv"
+        if len(models) == 1:
+            gridname = f"all_clear_deoverlap_SEP_{models[0]}_{energy_key}_{thresh_key}.csv"
+        df_sep.to_csv(os.path.join(csv_path,gridname), index=False)
 
     df_nonsep = pd.DataFrame(nonsep_results)
     df_nonsep_drop = df_nonsep.drop(columns=['Non-Event Start', 'Non-Event End'], axis=1)
@@ -1345,15 +1625,340 @@ def all_clear_grid(csv_path, models, energy_min, energy_max, threshold,
     df_nonsep['Total False Alarms'] = df_nonsep_drop.apply(lambda x: x.str.contains('FA')).sum(axis=1)
     df_nonsep['Total No Data'] = df_nonsep_drop.apply(lambda x: x.str.contains('No Data')).sum(axis=1)
     if write_grid:
-        df_nonsep.to_csv(os.path.join(csv_path,f"all_clear_grid_NonEvent_{energy_key}_{thresh_key}.csv"), index=False)
+        gridname = f"all_clear_deoverlap_NonEvent_{energy_key}_{thresh_key}.csv"
+        if len(models) == 1:
+            gridname = f"all_clear_deoverlap_NonEvent_{models[0]}_{energy_key}_{thresh_key}.csv"
+        df_nonsep.to_csv(os.path.join(csv_path,gridname), index=False)
 
     df_scores = pd.DataFrame(all_clear_dict)
-    df_scores.to_csv(os.path.join(csv_path,f"all_clear_grid_metrics_{energy_key}_{thresh_key}.csv"), index=False)
+    gridname = f"all_clear_deoverlap_metrics_{energy_key}_{thresh_key}.csv"
+    if len(models) == 1:
+        gridname = f"all_clear_deoverlap_metrics_{models[0]}_{energy_key}_{thresh_key}.csv"
+    df_scores.to_csv(os.path.join(csv_path,gridname), index=False)
 
 
 
 
-def deoverlap_all_clear(csv_path, model, energy_min, energy_max, threshold,
+
+def probability_deoverlap(csv_path, models, energy_min, energy_max, threshold,
+    dates_file='',seps=[], nonevent_st=[], nonevent_end=[], split=False,
+    write_grid=True):
+    """ For a list of models, reads in probability_selections files output
+        by sphinx and extracts the maximum probability predicted for a set of dates, 
+        stored in df_dates.
+        
+        User may enter a file containing SEP and non-event dates.
+        df_dates is expected to consist of two columns, labeled 
+        "SEP Events" and "Non-Events".
+        
+        Or user may enter a list of SEP dates, a list of non-event start times, 
+        and a list of non-event end times.
+        
+        This subroutine uses the original all_clear_selections files.
+        
+        INPUT:
+        
+            :csv_path: (string) path the all_clear_selections csv files.
+            :models: (list) list of models to be included in the grid; 
+                model names must exactly match the short_name field in 
+                the forecast jsons or SPHINX output files.
+            :dates_file: (string) csv file containing list of dates that want to use to 
+                generate grids with a column titled "SEP Events" with the 
+                SEP start times and columns titled "Non-Event Start" 
+                and "Non-Event End". 
+            :energy_min: (float) low edge of energy channel of interest
+            :energy_max: (float) high edge of energy channel of interest (-1)
+                for infinity (>10 MeV -> energy_min = 10, energy_max = -1)
+            :threshold: (float) threshold applied for SEP event definition
+                (e.g. >10 MeV exceeds 10 pfu -> threshold = 10)
+            :split: (bool) 
+                If True, for forecasts with prediction windows that cross dates, 
+                    they will be associated with the date with the most overlap 
+                    with their prediction window.
+                If False, then forecasts with the prediction_window_start inside of 
+                    the non-event time period will be evaluated.
+            :write_grid: (bool) if True, will write out visual grid csv file
+                
+        OUTPUT:
+        
+            Write out two csv files containing desired grid with 
+            dates on one axis, models on other axis, and outcomes
+            as the entries. "No Data" entries indicate a forecast
+            was not provided for a given date.
+            
+            Write out recalculated probability metrics and plots.
+         
+    """
+    
+    #Find date range that fully spans SEP event and non-event periods for
+    #models that need to be deoverlapped.
+    print(f"probability_deoverlap: Reading in dates file {dates_file}.")
+    
+    df_dates = create_date_range_df(dates_file, seps, nonevent_st, nonevent_end)
+
+
+    #Dictionaries needed to create visual grids
+    sep_results_max = {"SEP Events": df_dates["SEP Events"].to_list()}
+    nonsep_results_max = {"Non-Event Start": df_dates["Non-Event Start"].to_list(),
+        "Non-Event End": df_dates["Non-Event End"].to_list()}
+
+    sep_results_mean = {"SEP Events": df_dates["SEP Events"].to_list()}
+    nonsep_results_mean = {"Non-Event Start": df_dates["Non-Event Start"].to_list(),
+        "Non-Event End": df_dates["Non-Event End"].to_list()}
+
+
+    #Probability metrics
+    probability_dict = validation.initialize_probability_dict()
+
+    #Find first and last date out of all the dates
+    max_date = df_dates.max().max()
+    min_date = df_dates.min().min()
+    
+    print(f"probability_deoverlap: Models will be deoverlapped between {min_date} and {max_date}.")
+
+    energy_key = f"min.{float(energy_min):.1f}.max.{float(energy_max):.1f}.units.MeV"
+    print(f"Energy channel: {energy_key}")
+    thresh_key = f"threshold_{float(threshold):.1f}"
+    print(f"Threshold: {thresh_key}")
+
+    for model in models:
+        #Counts of forecasts associated with each date range output to file
+        dict = {'Start Date': [], 'End Date': [],
+                'Observed SEP Threshold Crossing Time': [],
+                'Observed SEP Probability': [],
+                'Predicted SEP Probability Max': [],
+                'Predicted SEP Probability Mean': [],
+                'Total Forecasts': [],
+                'First Prediction Window': [],
+                'Last Prediction Window': []}
+
+
+        #Store Max, Mean probability
+        sep_max = []
+        sep_mean = []
+        #Store False Alarm/Correct Negative/No Data
+        nonsep_max = []
+        nonsep_mean = []
+        
+        fname = os.path.join(csv_path,
+            f"probability_selections_{model}_{energy_key}_{thresh_key}.csv")
+
+        if 'UNSPELL' in model: #should be revised to generally account for mismatch
+            if energy_min == 10:
+                fname = os.path.join(csv_path,
+                "probability_selections_UNSPELL flare_min.10.0.max.-1.0.units.MeV_min.5.0.max.-1.0.units.MeV_threshold_10.0_mm.csv")
+        
+        if not os.path.isfile(fname):
+            print(f"probability_deoverlap: File does not exist. Check model and csv_path. {fname}. Skipping model.")
+            continue
+
+        print(f"probability_deoverlap: Reading in file {fname}.")
+        
+        df = pd.read_csv(fname, parse_dates=['Observed SEP Threshold Crossing Time','Prediction Window Start','Prediction Window End'])
+
+        #Date columns indicating SEP range
+        key_st = 'Prediction Window Start'
+        key_end = 'Prediction Window End'
+
+        #Go through SEP Events and Non-Events and record results
+        for sep, non_st, non_end in df_dates.itertuples(index=False):
+
+            #SEP EVENTS
+            #For each SEP event, get Hit/Miss/No Data
+            sep_outcome_max = np.nan
+            sep_outcome_mean = np.nan
+            nsepcasts = np.nan
+            maxprob = np.nan
+            nnoncasts = np.nan
+            if not pd.isnull(sep):
+                #Get results for a single SEP event
+                sub = df[df['Observed SEP Threshold Crossing Time'] == sep]
+                
+                if sub.empty:
+                    #Record info for deoverlapping
+                    dict['Start Date'].append(sep)
+                    dict['End Date'].append(pd.NaT)
+                    dict['Observed SEP Threshold Crossing Time'].append(sep)
+                    dict['Observed SEP Probability'].append(1.0)
+                    dict['Predicted SEP Probability Max'].append(np.nan)
+                    dict['Predicted SEP Probability Mean'].append(np.nan)
+                    dict['Total Forecasts'].append(np.nan)
+                    dict['First Prediction Window'].append(pd.NaT)
+                    dict['Last Prediction Window'].append(pd.NaT)
+                else:
+                    sub.sort_values(by='Prediction Window Start', inplace=True)
+                    pred_win_first = sub['Prediction Window Start'].iloc[0]
+                    pred_win_last = sub['Prediction Window Start'].iloc[len(sub['Prediction Window End'])-1]
+
+                    nsepcasts = len(sub) #total forecasts associated with the SEP event
+                    print(f"{nsepcasts} {model} forecasts associated with {sep}")
+                    #Desire max probability forecast for the SEP event
+                    sep_outcome_max = sub['Predicted SEP Probability'].max()
+                    sep_outcome_mean = sub['Predicted SEP Probability'].mean()
+
+                    #Record info for deoverlapping
+                    dict['Start Date'].append(sep)
+                    dict['End Date'].append(pd.NaT)
+                    dict['Observed SEP Threshold Crossing Time'].append(sep)
+                    dict['Observed SEP Probability'].append(1.0)
+                    dict['Predicted SEP Probability Max'].append(sep_outcome_max)
+                    dict['Predicted SEP Probability Mean'].append(sep_outcome_mean)
+                    dict['Total Forecasts'].append(nsepcasts)
+                    dict['First Prediction Window'].append(pred_win_first)
+                    dict['Last Prediction Window'].append(pred_win_last)
+
+            sep_max.append(sep_outcome_max)
+            sep_mean.append(sep_outcome_mean)
+            
+            #NON-EVENTS
+            #For each non-event, get False Alarm/Correct Negative/No Data
+            #Here we need to extract the appropriate columns
+            #All forecasts with prediction windows that start at the
+            #Non-Event Start dates and all predictions with start timess all the
+            #way through to the End date
+            nonsep_outcome_max = np.nan
+            nonsep_outcome_mean = np.nan
+            if not pd.isnull(non_st):
+                sub = associated_forecasts(df, non_st, non_end, split)
+                #Remove any forecasts in sub that are associated to a SEP
+                #event (Observed SEP All Clear False), because those should
+                #not be considered to be part of the non-event time period
+                sub = sub[sub['Observed SEP Probability']==0.0]
+ 
+                if sub.empty:
+                    #Record info for deoverlapping
+                    dict['Start Date'].append(non_st)
+                    dict['End Date'].append(non_end)
+                    dict['Observed SEP Threshold Crossing Time'].append(pd.NaT)
+                    dict['Observed SEP Probability'].append(0.0)
+                    dict['Predicted SEP Probability Max'].append(np.nan)
+                    dict['Predicted SEP Probability Mean'].append(np.nan)
+                    dict['Total Forecasts'].append(np.nan)
+                    dict['First Prediction Window'].append(pd.NaT)
+                    dict['Last Prediction Window'].append(pd.NaT)
+                else:
+                    sub.sort_values(by='Prediction Window Start', inplace=True)
+                    pred_win_first = sub['Prediction Window Start'].iloc[0]
+                    pred_win_last = sub['Prediction Window Start'].iloc[len(sub['Prediction Window End'])-1]
+
+                    nnoncasts = len(sub) #total number of forecasts
+                    print(f"{nnoncasts} {model} forecasts associated with {non_st} to {non_end}")
+                
+                    nonsep_outcome_max = sub['Predicted SEP Probability'].max()
+                    nonsep_outcome_mean = sub['Predicted SEP Probability'].mean()
+                    
+                    #Record info for deoverlapping
+                    dict['Start Date'].append(non_st)
+                    dict['End Date'].append(non_end)
+                    dict['Observed SEP Threshold Crossing Time'].append(pd.NaT)
+                    dict['Observed SEP Probability'].append(0.0)
+                    dict['Predicted SEP Probability Max'].append(nonsep_outcome_max)
+                    dict['Predicted SEP Probability Mean'].append(nonsep_outcome_mean)
+                    dict['Total Forecasts'].append(nnoncasts)
+                    dict['First Prediction Window'].append(pred_win_first)
+                    dict['Last Prediction Window'].append(pred_win_last)
+
+            nonsep_max.append(nonsep_outcome_max)
+            nonsep_mean.append(nonsep_outcome_mean)
+
+        #Save aggregated max, mean probabilities per model
+        sep_results_max.update({model: sep_max})
+        nonsep_results_max.update({model: nonsep_max})
+
+        sep_results_mean.update({model: sep_mean})
+        nonsep_results_mean.update({model: nonsep_mean})
+
+        #Write out deoverlapped dataframe per model
+        df_do_all = pd.DataFrame(dict)
+        df_do_all = df_do_all.sort_values('Start Date')
+        fnameout = fname.replace('.csv','_deoverlap.csv')
+        df_do_all.to_csv(fnameout, index=False)
+        print(f"Wrote out {fnameout}.")
+
+
+        for type in ['Max','Mean']:
+            key = 'Predicted SEP Probability ' + type
+
+            #Recalculate probability metrics and plots using the deoverlapped max probability
+            #Drop time periods with No Data
+            df_do = df_do_all.dropna(subset=['Observed SEP Probability', key])
+            obs = df_do['Observed SEP Probability'].to_list()
+            pred = df_do[key].to_list()
+
+            #Calculate metrics
+            brier_score = metrics.calc_brier(obs, pred)
+            brier_skill = metrics.calc_brier_skill(obs, pred)
+            rank_corr_coeff = metrics.calc_spearman(obs, pred)
+
+            roc_auc, roc_curve_plt = metrics.receiver_operator_characteristic(obs, pred, model)
+            
+            roc_curve_plt.plot()
+            skill_line = np.linspace(0.0, 1.0, num=10) # Constructing a diagonal line that represents no skill/random guess
+            plt.plot(skill_line, skill_line, '--', label = 'Random Guess')
+            figname = csv_path + '/../output/plots/ROC_curve_' \
+                    + model + "_" + energy_key.strip() + "_" + thresh_key
+
+            figname += "_deoverlap_" + type + ".pdf"
+            plt.legend(loc="lower right")
+            roc_curve_plt.figure_.savefig(figname, dpi=300, bbox_inches='tight')
+            plt.close(roc_curve_plt.figure_)
+            
+            #Save to dict (ultimately dataframe)
+            probability_dict['Model'].append(model + ' ' + type)
+            probability_dict['Energy Channel'].append(energy_key)
+            probability_dict['Threshold'].append(thresh_key)
+            probability_dict['Prediction Energy Channel'].append(energy_key)
+            probability_dict['Prediction Threshold'].append(thresh_key)
+            probability_dict['ROC Curve Plot'].append(figname)
+            probability_dict['Brier Score'].append(brier_score)
+            probability_dict['Brier Skill Score'].append(brier_skill)
+            probability_dict['Spearman Correlation Coefficient'].append(rank_corr_coeff)
+            probability_dict['Area Under ROC Curve'].append(roc_auc)
+
+    
+    df_sep_max = pd.DataFrame(sep_results_max)
+    df_sep_mean = pd.DataFrame(sep_results_mean)
+    if write_grid:
+        #MAX results
+        gridname = f"probability_grid_SEP_{energy_key}_{thresh_key}_Max.csv"
+        if len(models) == 1:
+            gridname = f"probability_grid_SEP_{models[0]}_{energy_key}_{thresh_key}_Max.csv"
+        df_sep_max.to_csv(os.path.join(csv_path,gridname), index=False)
+        
+        #MEAN results
+        gridname = f"probability_grid_SEP_{energy_key}_{thresh_key}_Mean.csv"
+        if len(models) == 1:
+            gridname = f"probability_grid_SEP_{models[0]}_{energy_key}_{thresh_key}_Mean.csv"
+        df_sep_mean.to_csv(os.path.join(csv_path,gridname), index=False)
+
+
+    df_nonsep_max = pd.DataFrame(nonsep_max)
+    df_nonsep_mean = pd.DataFrame(nonsep_mean)
+    if write_grid:
+        #MAX results
+        gridname = f"probability_grid_NonEvent_{energy_key}_{thresh_key}_Max.csv"
+        if len(models) == 1:
+            gridname = f"probability_grid_NonEvent_{models[0]}_{energy_key}_{thresh_key}_Max.csv"
+        df_nonsep_max.to_csv(os.path.join(csv_path,gridname), index=False)
+
+        #MEAN results
+        gridname = f"probability_grid_NonEvent_{energy_key}_{thresh_key}_Mean.csv"
+        if len(models) == 1:
+            gridname = f"probability_grid_NonEvent_{models[0]}_{energy_key}_{thresh_key}_Mean.csv"
+        df_nonsep_mean.to_csv(os.path.join(csv_path,gridname), index=False)
+
+
+
+    df_scores = pd.DataFrame(probability_dict)
+    gridname = f"probability_metrics_deoverlap_{energy_key}_{thresh_key}.csv"
+    if len(models) == 1:
+        gridname = f"probability_metrics_deoverlap_{models[0]}_{energy_key}_{thresh_key}.csv"
+    df_scores.to_csv(os.path.join(csv_path,gridname), index=False)
+
+
+
+
+def deoverlap_forecasts(quantity, csv_path, model, energy_min, energy_max, threshold,
     date_range_st = None, date_range_end=None, td=pd.NaT, split=True):
     """ For models that produce continuous forecasts on a set cadence 
         with overlapping prediction windows, deoverlap by getting a 
@@ -1369,8 +1974,9 @@ def deoverlap_all_clear(csv_path, model, energy_min, energy_max, threshold,
         
         INPUT:
         
+            :quantity: (string) "All Clear", "all clear", "probability, "Probability"
             :csv_path: (string) path to the csv directory containing all_clear_selections_*.csv
-                files output by SPHINX.
+                or probability_selections_*.csv files output by SPHINX.
             :model: (string) one model name to deoverlap; must exactly match model
                 short_name used in the all_clear_selections files
             :date_range_st: (pd date_range series) start of time periods of interest. May include a continuous time period or a set of specific time
@@ -1392,10 +1998,8 @@ def deoverlap_all_clear(csv_path, model, energy_min, energy_max, threshold,
                 
         OUTPUT:
         
-            Rederived contingency table and metrics
-            :df_do: (dataframe) deoverlapped all clear values
-            :all_clear_metrics_df: (dateframe) contains metrics derived
-                from the deoverlapped results
+            For All Clear: Rederived contingency table and metrics written to file
+            For probability: Rederived probability metrics and ROC curve written to file
         
     """
     energy_key = f"min.{float(energy_min):.1f}.max.{float(energy_max):.1f}.units.MeV"
@@ -1428,23 +2032,516 @@ def deoverlap_all_clear(csv_path, model, energy_min, energy_max, threshold,
     #If start times provided, but not end times, then apply td
     if not pd.isnull(date_range_st) and pd.isnull(date_range_end):
         date_range_end = date_range_st + td
+        date_range_st = date_range_st.to_list()
+        date_range_end = date_range_end.to_list()
 
     #If no date range provided, then create a continuous date range
     #between the first and last date in the provided forecasts
     if pd.isnull(date_range_st):
-        #Specify date range covered by prediction windows
-        start_date = pd.Timestamp(year=first_date.year, month=first_date.month, day=first_date.day)
-        end_date = pd.Timestamp(year=last_date.year, month=last_date.month, day=last_date.day)
+        date_range_st, date_range_end = create_date_range(first_date, last_date, td)
+
+    if quantity == "All Clear" or quantity == "all clear":
+        all_clear_deoverlap(csv_path, [model], energy_min, energy_max, threshold, seps=sep_events,
+            nonevent_st=date_range_st, nonevent_end=date_range_end, split=split,
+            write_grid=False)
+
+    if quantity == "Probability" or quantity == "probability":
+        probability_deoverlap(csv_path, [model], energy_min, energy_max, threshold, seps=sep_events,
+            nonevent_st=date_range_st, nonevent_end=date_range_end, split=split,
+            write_grid=False)
+        
+def make_histograms():
+    from matplotlib.ticker import MultipleLocator
+    import matplotlib
+    
+    
+    plt.rcParams['font.size'] = 16
+    plt.rcParams['font.family'] = 'sans-serif'
+    plt.rcParams['font.sans-serif'] = 'Arial'
+   
+    model_names = ['SAWS-ASPECS 0-6 hrs 50%', 'SAWS-ASPECS 0-6 hrs 90%', 'SAWS-ASPECS 50%', 'SAWS-ASPECS 90%', 'SAWS-ASPECS flare 50%', 'SAWS-ASPECS flare 90%', \
+    'SEPMOD', 'SEPSTER (Parker Spiral)', 'SEPSTER (WSA-ENLIL)', 'SEPSTER2D', 'UMASEP-100', 'ZEUS+iPATH_CME']
+    
+    # Choosing metrics here for time metrics these will be interpreted as not the log values 
+    metrics_list = ['LE'] #Also sometimes ALE
+    # list this out as it appears in the _selections files
+    forecast_quantity = ['peak_intensity_max', 'start_time', 'peak_intensity_max_time', 'peak_intensity', 'duration']
+    name_dictionary = {
+        'SEPMOD': 'SEPMOD',
+        'ZEUS+iPATH_CME': 'iPATH',
+        'SEPSTER2D': 'SEPSTER2D',
+        'SEPSTER (Parker Spiral)': 'SEPSTER (PS)',
+        'SEPSTER (WSA-ENLIL)': 'SEPSTER (WE)',
+        'UMASEP-100': 'UMASEP-100',
+        'COMESEP flare only': 'COMESEP flare only',
+        'COMESEP flare+CME ': 'COMESEP flare+CME',
+        'MFLAMPA': 'MFLAMPA',
+        'STAT': 'STAT',
+        'SFS-Update': 'SFS Update',
+        'ADEPT-AFRL 1hr' :'ADEPT 1hr',
+        'ADEPT-AFRL 6hr': 'ADEPT 6hr',
+        'SPREAdFAST': 'SPREAdFAST',
+        'SEPSAT': 'SEPSAT',
+        'SAWS-ASPECS 0-6 hrs 50%': 'SAWS-ASPECS 0-6 hrs 50%',
+        'SAWS-ASPECS 0-6 hrs 90%': 'SAWS-ASPECS 0-6 hrs 90%',
+        'SAWS-ASPECS 50%': 'SAWS-ASPECS 50%',
+        'SAWS-ASPECS 90%': 'SAWS-ASPECS 90%',
+        'SAWS-ASPECS CME (SOHO) 50%': 'ASPECS CME 50%',
+        'SAWS-ASPECS CME (SOHO) electrons 50%': 'ASPECS CME electrons 50%' ,
+        'SAWS-ASPECS flare + CME (SOHO) 50%': 'ASPECS CME + flare 50%',
+        'SAWS-ASPECS flare 50%': 'ASPECS flare 50%', 
+        'SAWS-ASPECS flare electrons 50%': 'ASPECS flare electrons 50%',
+        'SAWS-ASPECS CME (SOHO) 90%': 'ASPECS CME 90%',
+        'SAWS-ASPECS CME (SOHO) electrons 90%': 'ASPECS CME electrons 90%' ,
+        'SAWS-ASPECS flare + CME (SOHO) 90%': 'ASPECS CME + flare 90%',
+        'SAWS-ASPECS flare 90%': 'ASPECS flare 90%', 
+        'SAWS-ASPECS flare electrons 90%': 'ASPECS flare electrons 90%',
+        'UMASEP-10': 'UMASEP-10'
+    }
+    forecast_label = {
+        'peak_intensity_max': 'SEP Max Peak Flux',
+        'start_time': 'SEP Start Time',
+        'peak_intensity_max_time': 'SEP Max Peak Flux Time',
+        'peak_intensity': 'SEP Onset Peak Flux',
+        'duration': 'SEP Event Duration'
+    }
+    observed_dictionary = {
+        'peak_intensity_max': 'Observed SEP Peak Intensity Max (Max Flux)',
+        'start_time': 'Observed SEP Start Time',
+        'peak_intensity_max_time': 'Observed SEP Peak Intensity Max (Max Flux) Time',
+        'peak_intensity': 'Observed SEP Peak Intensity (Onset Peak)',
+        'duration': 'Observed SEP Duration'
+    }
+    forecast_dictionary = {
+        'peak_intensity_max': 'Predicted SEP Peak Intensity Max (Max Flux)',
+        'start_time': 'Predicted SEP Start Time',
+        'peak_intensity_max_time': 'Predicted SEP Peak Intensity Max (Max Flux) Time',
+        'peak_intensity': 'Predicted SEP Peak Intensity (Onset Peak)',
+        'duration': 'Predicted SEP Duration'
+    }
+    # These 'outliers' are subject to change based on want we decide is best
+    outliers_dictionary = {
+        'peak_intensity_max': 2.0,
+        'start_time': 10.0,
+        'peak_intensity_max_time': 24.0,
+        'peak_intensity': 2.0,
+        'duration': 24.0
+    }
+    metric_units = {
+        'peak_intensity': ' (pfu)',
+        'peak_intensity_max': ' (pfu)',
+        'start_time': ' (hours)',
+        'peak_intensity_max_time': ' (hours)',
+        'peak_intensity_time': ' (hours)',
+        'duration': ' (hours)'
+    }
+    # setting up a list to be used in the outliers output file as the column names for the dataframe
+    fields_outlier = ['Model', 'Dataset', 'Energy Channel Key', 'Observed SEP Threshold Crossing Time', 'Observed SEP Peak Intensity Max (Max Flux)', \
+        'Observed SEP Peak Intensity Max (Max Flux) Time', 'Predicted SEP Start Time', 'Predicted SEP Peak Intensity Max (Max Flux)', \
+            'Predicted SEP Peak Intensity Max (Max Flux) Time', 'Observed SEP Onset Peak Flux', 'Predicted SEP Onset Peak Flux', 'Reason for Outlier', 'Metric Name', 'Metric Calculation', 'Forecast Source']
+    outliers = []
+    event_list_sepval = []
+    event_fields = ['Model', 'Dataset', 'Energy Channel Key', 'Observed SEP Threshold Crossing Time', 'Metric Calculation']
+    energy_list = ['10', '100']
+    
+    # 
+    # jet_cmap = plt.cm.get_cmap('jet')
+    # mapping = []
+    # for i in range(len(model_names)):
+    #     mapping.append(jet_cmap(i*12))
+    
+    
+    # There's probably a better way to do this but I was short on time to prepare this analysis. Histograms are made looping
+    # over energy, forecast quantity and then lastly by model, which ia all based on the lists and dictionaries above
+
+    # To do this for multiple datasets (i.e. SEPVAL and Scoreboard) on the same plot, repeat the reading in step
+    # for the other dataset and recalculate the metrics for the second dataset
+    for energy in energy_list:
+        print('Energy Channel', energy)
+        if energy == '10':
+            energy_thresh = 'min.10.0.max.-1.0.units.MeV_threshold_10.0'
+        else:
+            energy_thresh = 'min.100.0.max.-1.0.units.MeV_threshold_1.0'
+        for forecasts in forecast_quantity:
+            print(forecasts)
+            print(len(model_names))
+            labels = []
+            x_locations = []
+            x_loc = 0
+            big_fig, big_ax = plt.subplots(figsize=(14, 12))
+            plot_iter = 0
+            big_ax.set_prop_cycle(color=plt.cm.tab20.colors)
+            for names in model_names:
+                if 'UMASEP' in names:
+                    if energy == '10':
+                        names = 'UMASEP-10'
+                    else:
+                        names = 'UMASEP-100'
+                print(names)
+                if 'SEPSTER' in names or 'UMASEP' in names or 'COMESEP' in names or 'SFS' in names or 'ADEPT' in names:
+                    if '2D' in names:
+                        observed_label = observed_dictionary[forecasts]
+                        predicted_label = forecast_dictionary[forecasts]
+                        file_to_read_in = './output/csv/' + forecasts + '_selections_' + names +' CME_' + energy_thresh + '.csv'
+                        if os.path.isfile(file_to_read_in):
+                            if forecasts == 'peak_intensity_max':
+                                predicted_label = 'Predicted SEP Peak Intensity (Onset Peak)'
+                            elif forecasts == 'peak_intensity_max_time':
+                                predicted_label = 'Predicted SEP Peak Intensity (Onset Peak) Time'
+                            dataframe_sepval = pd.read_csv(file_to_read_in)
+                            obs_sepval = dataframe_sepval[observed_label]
+                            pred_sepval = dataframe_sepval[predicted_label]
+   
+                    elif 'UMASEP' in names:
+                        observed_label = observed_dictionary[forecasts]
+                        predicted_label = forecast_dictionary[forecasts]
+                        file_to_read_in = './output/csv/' + forecasts + '_selections_' + names +'_' + energy_thresh + '_First.csv'
+                        if os.path.isfile(file_to_read_in):
+                            if forecasts == 'peak_intensity_max':
+                                predicted_label = 'Predicted SEP Peak Intensity (Onset Peak)'
+                            elif forecasts == 'peak_intensity_max_time':
+                                predicted_label = 'Predicted SEP Peak Intensity (Onset Peak) Time'
+                            dataframe_sepval = pd.read_csv(file_to_read_in)
+                            obs_sepval = dataframe_sepval[observed_label]
+                            pred_sepval = dataframe_sepval[predicted_label]
+                
+                    else:
+                        observed_label = observed_dictionary[forecasts]
+                        predicted_label = forecast_dictionary[forecasts]
+                        file_to_read_in = './output/csv/' + forecasts + '_selections_' + names +'_' + energy_thresh + '.csv'
+                        if os.path.isfile(file_to_read_in):
+                            if forecasts == 'peak_intensity_max':
+                                predicted_label = 'Predicted SEP Peak Intensity (Onset Peak)'
+                            elif forecasts == 'peak_intensity_max_time':
+                                predicted_label = 'Predicted SEP Peak Intensity (Onset Peak) Time'
+                            dataframe_sepval = pd.read_csv(file_to_read_in)
+                            obs_sepval = dataframe_sepval[observed_label]
+                            pred_sepval = dataframe_sepval[predicted_label]
+                        else:
+                            pred_sepval = []
+                            obs_sepval = []
+                            obs_sb = []
+                            pred_sb = []
+                            
+                    
+                else:
+                    observed_label = observed_dictionary[forecasts]
+                    predicted_label = forecast_dictionary[forecasts]
+                    file_to_read_in = './output/csv/' + forecasts + '_selections_' + names +'_' + energy_thresh + '.csv'
+                    if os.path.isfile(file_to_read_in):
+                        dataframe_sepval = pd.read_csv(file_to_read_in)
+                        obs_sepval = dataframe_sepval[observed_label]
+                        pred_sepval = dataframe_sepval[predicted_label]
+                    else:
+                        pred_sepval = []
+                        obs_sepval = []
             
-        #Create a range of daily time stamps from the start date to the end date
-        date_range_st = pd.date_range(start=start_date, end=end_date-td, freq=td)
-        date_range_end = date_range_st + td
+                  
+                if len(pred_sepval) == 0: 
+                    pass
+                else:
+                    
+                    for scores in metrics_list:
+                        
+                        if 'time' in forecasts and scores == 'ALE': 
+                            i = 0
+                            j = 0
+                            metric_label = 'Absolute Error'
+                            metric_sepval = []
+                            metric_sb = []
+                            metric_sepval_clean = []
+                            metric_sb_clean = []
+                            for i in range(len(pred_sepval)):
+                                foo = np.abs(datetime.fromisoformat(pred_sepval[i]) - datetime.fromisoformat(obs_sepval[i]))
+                                metric_sepval.append(foo.total_seconds()/(60*60)) #convert to hours
+                                metric_sepval_clean.append(foo.total_seconds()/(60*60)) #convert to hours
+                           
+                            n_sepval = len(metric_sepval_clean)
+                            
+                        elif 'time' in forecasts and scores == 'LE':
+                            i = 0
+                            j = 0
+                            metric_label = 'Error'
+                            metric_sepval = []
+                            metric_sb = []
+                            metric_sepval_clean = []
+                            metric_sb_clean = []
+
+                            for i in range(len(pred_sepval)):
+                                foo = (datetime.datetime.fromisoformat(pred_sepval[i]) - datetime.datetime.fromisoformat(obs_sepval[i]))
+                                metric_sepval.append(foo.total_seconds()/(60*60)) #convert to hours
+                                metric_sepval_clean.append(foo.total_seconds()/(60*60)) #convert to hours
+                            
+                            n_sepval = len(metric_sepval_clean)
+                            
+                        elif 'duration' in forecasts:
+                            obs_sepval_clean, pred_sepval_clean = metrics.remove_zero(obs_sepval, pred_sepval)
+                            if scores == 'LE':
+                                metric_label = "Error"
+                                metric_sepval_clean = metrics.switch_error_func('E', obs_sepval_clean, pred_sepval_clean)
+                                metric_sepval = metrics.switch_error_func('E', obs_sepval, pred_sepval)
+                              
+                            elif scores == 'ALE':
+                                metric_label = 'Absolute Error'
+                                metric_sepval_clean = metrics.switch_error_func('AE', obs_sepval_clean, pred_sepval_clean)
+                                metric_sepval = metrics.switch_error_func('AE', obs_sepval, pred_sepval)
+                            
+                            if all(metric_sepval_clean) == None:
+                                metric_sepval_clean = 0
+                            
+                            try:
+                                n_sepval = len(metric_sepval_clean)
+                            except:
+                                n_sepval = 0
+                           
+                        else:
+                            metric_label = scores
+                            obs_sepval_clean, pred_sepval_clean = metrics.remove_zero(obs_sepval, pred_sepval)
+                            metric_sepval_clean = metrics.switch_error_func(scores, obs_sepval_clean, pred_sepval_clean)
+                            metric_sepval = metrics.switch_error_func(scores, obs_sepval, pred_sepval)
+                            try:
+                                if metric_sepval_clean == None:
+                                    metric_sepval_clean = 0
+                            except:
+                                pass
+                            try:
+                                n_sepval = len(metric_sepval_clean)
+                            except:
+                                n_sepval = 0
+                            
+                        # calculating what's within an order of magnitude
+                        if 'A' in scores:
+                            count = 0
+                            print('duration' in forecasts, 'time' not in forecasts)
+                            if 'time' not in forecasts and 'duration' not in forecasts:
+                                bins_hist = [0,0.5,1,1.5,2,2.5,3,3.5,4,4.5,5]
+                                bins_cdf = [0,0.5,1,1.5,2,2.5,3,3.5,4,4.5,5]
+                            else:
+                                try:
+
+                                    if len(metric_sepval_clean) != 0:
+                                        
+                                        bin_max = np.round(np.max(metric_sepval_clean))
+                                        bin_min = np.round(np.min(metric_sepval_clean))
+                                        four_hour_bins = np.arange(-200, 200, 4)
+                                        bins_hist = []
+                                        for x in range(len(four_hour_bins)):
+                                            if four_hour_bins[x] >= 0 and four_hour_bins[x] <= bin_max+4:
+                                                bins_hist.append(four_hour_bins[x])
+                                            else:
+                                                pass
+                                        # bins_hist = np.arange(bin_min, bin_max, 4)
+                                        # print(bins_hist)
+                                        bins_cdf = np.arange(bin_min, bin_max, 1)
+                                    else:
+                                        pass
+                                except:
+                                    pass
+                            i = 0
+                            j = 0
+                            # Keeping this here, it is the loops for making an outlier file which may be helpful 
+                            # ['Model', 'Dataset', 'Energy Channel Key', 'Observed SEP Threshold Crossing Time', 'Observed SEP Peak Intensity Max (Max Flux)', \
+                            # 'Observed SEP Peak Intensity Max (Max Flux) Time', 'Predicted SEP Start Time', 'Predicted SEP Peak Intensity Max (Max Flux)', \
+                            # 'Predicted SEP Peak Intensity Max (Max Flux) Time', 'Reason for Outlier', 'Metric Name', 'Result', 'Forecast Source']
+                            # for i in range(len(metric_sepval)):
+                            #     if metric_sepval[i] >= outliers_dictionary[forecasts] or metric_sepval[i] <= -outliers_dictionary[forecasts]:
+                            #         if 'start' in forecasts:
+                            #             outliers.append([dataframe_sepval['Model'][i], 'SEPVAL', energy_thresh, dataframe_sepval['Observed SEP Start Time'][i], None, \
+                            #                 None, dataframe_sepval['Predicted SEP Start Time'][i], None, \
+                            #                 None, 'Start Time', metric_label, metric_sepval[i], dataframe_sepval['Forecast Source'][i]])
+                            #         elif 'max_time' in forecasts:
+                            #             outliers.append([dataframe_sepval['Model'][i], 'SEPVAL', energy_thresh, dataframe_sepval['Observed SEP Threshold Crossing Time'][i], None, \
+                            #                 dataframe_sepval['Observed SEP Peak Intensity Max (Max Flux) Time'][i], None, None, \
+                            #                 pred_sepval[i], 'Max Peak Time', metric_label, metric_sepval[i], dataframe_sepval['Forecast Source'][i]])
+                            #         else:
+                            #             outliers.append([dataframe_sepval['Model'][i], 'SEPVAL', energy_thresh, dataframe_sepval['Observed SEP Threshold Crossing Time'][i], dataframe_sepval['Observed SEP Peak Intensity Max (Max Flux)'][i], \
+                            #                 None, None, pred_sepval[i],\
+                            #                 None, 'Max Peak Flux', metric_label, metric_sepval[i], dataframe_sepval['Forecast Source'][i]])
+                            
+                            
+                        else:
+                        
+                            if 'time' not in forecasts and 'duration' not in forecasts:
+                                bins_hist = [-4,-3.5,-3,-2.5,-2,-1.5,-1,-0.5,0,0.5,1,1.5,2,2.5,3,3.5,4]
+                                bins_cdf = [-4,-3.5,-3,-2.5,-2,-1.5,-1,-0.5,0,0.5,1,1.5,2,2.5,3,3.5,4]
+                            else:            
+                                if all(metric_sepval_clean) == None or metric_sepval_clean == []:
+                                    metric_sepval_clean = 0
+                                
+                                
+                                if type(metric_sepval_clean) != int:
+                                    
+                                    bin_max = np.round(np.max(metric_sepval_clean))
+                                    bin_min = np.round(np.min(metric_sepval_clean))
+                                    four_hour_bins = np.arange(-200, 200, 4)
+                                    bins_hist = []
+                                    for x in range(len(four_hour_bins)):
+                                        if four_hour_bins[x] >= bin_min and four_hour_bins[x] <= bin_max+4:
+                                            bins_hist.append(four_hour_bins[x])
+                                        else:
+                                            pass
+                                    
+                                    bins_cdf = np.arange(bin_min, bin_max, 1)
+                
+                                    
+                            if 'peak_intensity' in forecasts and 'time' not in forecasts:
+                                count = 0
+                                count_over = 0
+                                count_under = 0
+                                count_fact_2 = 0
+                                i = 0
+                                for i in range(n_sepval):
+                                    
+                                    if metric_sepval_clean[i] >= -1 and metric_sepval_clean[i] <= 1:
+                                        count += 1
+                                    elif metric_sepval_clean[i] < -1:
+                                        count_under +=1
+                                    elif metric_sepval_clean[i] > 1:
+                                        count_over += 1  
+                                    if metric_sepval_clean[i] >= -np.log10(2) and metric_sepval_clean[i] <= np.log10(2):
+                                        count_fact_2 += 1
+                                    
+                                if n_sepval == 0:
+                                    m_sepval = 0
+                                else:
+                                    m_sepval = str(count/n_sepval)
+
+                                    print('Within OOM SEPVAL = ', count, count/n_sepval)
+                                 
+                                    print('within a factor of 2', count_fact_2, count_fact_2/n_sepval)
+                              
+                        if 'peak_intensity' in forecasts and 'time' not in forecasts and scores == 'LE' and '100' not in energy:
+                            i = 0
+                            j = 0
+                            
+                        sepval_hist, _ = np.histogram(metric_sepval_clean, bins = 100) # Easy way to give counts in each bin
+                        
+                        
+                        
+                        
+                        
+                        # Histogram Plots *****************************************************************************************************************
+                        fig1, ax = plt.subplots(figsize=(14, 12))
+                        
+                        plt.hist(metric_sepval_clean, bins = bins_hist, alpha=0.5, label = 'SEPVAL N= ' + str(n_sepval))
+                        
+                    
+                        plt.xlabel(forecast_label[forecasts] + ' ' + metric_label + metric_units[forecasts])
+                        plt.title(name_dictionary[names] + ' ' + forecast_label[forecasts] + ' ' + metric_label + ' \nDistribution for SEPVAL')
+                        if 'time' in forecasts:
+                            ax.xaxis.set_major_locator(MultipleLocator(8))
+                            ax.xaxis.set_minor_locator(MultipleLocator(4))
+                        plt.ylabel('Counts')
+                        plt.legend()
+                        figname = './output/plots/' + forecast_label[forecasts] + '_' +names + '_' + metric_label + '_' + energy + '_SEPVAL.png'
+                        plt.savefig(figname)
+                        plt.close()
+                        
+                       
+
+                       
+                            
+                            
+                        hist_range = (np.min(bins_hist), np.max(bins_hist))
+                        
+                        bin_edges = [-4, -3.5, -3.0, -2.5, -2.0, -2, -1.5, -1, -0.5, 0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4]
+                        
+                        # bin_edges = np.linspace(hist_range[0], hist_range[1], 18)
+                        vert_hist = np.histogram(metric_sepval_clean, range = hist_range, bins=17)[0]/n_sepval
+                        
+                        binned_maximums = np.max(vert_hist)
+                        heights = np.diff(bin_edges)
+                        centers = bin_edges[:-1]  + heights / 2
+                        # big_ax.barh(metric_sepval_clean, bins = bins_hist, alpha=0.5, label = 'SEPVAL N= ' + str(n_sepval))
+                        
+                        lefts = x_loc
+
+                        big_ax.barh(centers, vert_hist, height=heights, left = lefts, label = name_dictionary[names])
+                        plt.rcParams['axes.prop_cycle'] = plt.cycler(color=plt.cm.tab20.colors)
+                        
+                        x_loc = x_loc + binned_maximums + 0.25
+                            
+                        
+                        
+                        
+                        # CDF Plots *****************************************************************************************************************************************
+                        # if scores == 'LE' and 'time' in forecasts:
+                        #     fig3 = plt.figure()
+                        
+                        #     try:
+                        #         plt.hist(metric_sepval_clean, bins = bins_cdf, alpha=0.5, density=True, cumulative=True, histtype="step", label = 'SEPVAL N= ' + str(n_sepval))
+                        #     except:
+                        #         plt.hist(metric_sepval_clean, label = 'SEPVAL N= ' + str(n_sepval))
+                        #     # print(metric_sb, type(metric_sb))
+                            
+                        #     plt.title(name_dictionary[names] + ' ' + forecast_label[forecasts] + ' ' + metric_label + ' Cumulative \nDistribution for SEPVAL')
+                        #     figname = './output/plots/' + 'ALE_CDF_' + names + '_' + forecast_label[forecasts] + '_' + energy + '.png'
+                        #     plt.ylabel('Frequency')
+                        #     plt.xlabel(forecast_label[forecasts] + ' ' + metric_label)
+                        #     plt.legend(loc = 'lower right')
+                        #     plt.savefig(figname)
+                        #     plt.close()
+
+                        
+           
+            big_ax.yaxis.set_minor_locator(matplotlib.ticker.AutoMinorLocator(2))
+            plt.grid(visible=True, which='major', axis='y')
+            plt.xticks([])
+            big_ax.set_ylabel("Log Error")
+            big_ax.set_xlabel("Models")
+            big_ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+            plt.title('Scoreboard ' + forecast_label[forecasts] + ' ' + metric_label + ' Distribution Histograms for >' + energy + ' MeV')
+            figname = './output/plots/all_scoreboard' + forecast_label[forecasts] + '_' + metric_label + '_' + energy + '.png'
+            plt.savefig(figname, dpi=600, bbox_inches='tight')
+            plt.close()
 
 
-    date_range_st = date_range_st.to_list()
-    date_range_end = date_range_end.to_list()
+    # outliers_file = 'outliers_file.csv'
+    # output_dataframe = pd.DataFrame(outliers, columns=fields_outlier)
+    # output_dataframe.to_csv(outliers_file, sep=',', header = True)
 
-    all_clear_grid(csv_path, [model], energy_min, energy_max, threshold, seps=sep_events,
-        nonevent_st=date_range_st, nonevent_end=date_range_end, split=split,
-        write_grid=False)
 
+   
+    
+
+    
+   
+    ##### Reliability Plot section *************************************************************************************************
+    prob_models = ['MAG4_LOS_FEr', 'MAG4_LOS_r', 'MAG4_SHARP_HMI', 'MAG4_SHARP_FE', 'MAG4_SHARP', 'SWPC Day 1', 'GSU All clear', 'SAWS-ASPECS flare']
+    plt.rcParams['font.size'] = 18
+    for model_names in prob_models:
+        fig, ax1 = plt.subplots(figsize=(14, 12))
+        file_to_read_in = './output/csv/probability_selections_' + model_names + '_min.10.0.max.-1.0.units.MeV_threshold_10.0.csv'
+        dataframe_sepval = pd.read_csv(file_to_read_in)
+        obs_sepval = dataframe_sepval['Observed SEP Probability']
+        pred_sepval = dataframe_sepval['Predicted SEP Probability']
+
+        # from sklearn.datasets import make_classification
+        # from sklearn.model_selection import train_test_split
+        # from sklearn.linear_model import LogisticRegression
+        bins = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+        from sklearn.calibration import calibration_curve, CalibrationDisplay
+
+        
+        prob_true, prob_pred = calibration_curve(obs_sepval, pred_sepval, n_bins = 10)
+        print(prob_true)
+        print(prob_pred)
+        disp = CalibrationDisplay(prob_true, prob_pred, pred_sepval)
+        ax1.plot(prob_pred, prob_true, linestyle = '-', marker = 'o')
+        plt.title(model_names + ' Reliability Diagram')
+        plt.ylim(0, 1)
+        ax1.plot([0, 1], [0, 1], label = 'Perfectly Calibrated', color = 'black', linestyle = 'dashed')
+        plt.legend()
+        ax1.set_ylabel('Observed Relative Frequency')
+        ax1.set_xlabel('Predicted Probability')
+        ax2 = ax1.twinx()
+        ax2.hist(pred_sepval, bins = bins, alpha=0.35, density=False)
+        ax2.set_yscale('log')
+        ax2.set_ylabel('Histogram Count Numbers')
+        
+        plt.savefig('./output/reliability_scoreboard_' + model_names + '.png')
+
+    return
+
+
+make_histograms()
