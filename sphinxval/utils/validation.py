@@ -530,37 +530,8 @@ def fill_sphinx_dict_row(sphinx, dict, energy_key, thresh_key, profname_dict):
     except:
         dict["Ongoing SEP Event"].append(None)
     
-    try:
-        last_input = np.nan
-        if not pd.isnull(sphinx.last_eruption_time) and not pd.isnull(sphinx.last_trigger_time) and not pd.isnull(sphinx.last_input_time):
-            if sphinx.last_eruption_time >= sphinx.last_trigger_time and sphinx.last_eruption_time >= sphinx.last_input_time:
-                last_input = sphinx.last_eruption_time
-            elif sphinx.last_trigger_time >= sphinx.last_eruption_time and sphinx.last_trigger_time >= sphinx.last_input_time:
-                last_input = sphinx.last_trigger_time
-            else:
-                last_input = sphinx.last_input_time
-        elif not pd.isnull(sphinx.last_eruption_time) and not pd.isnull(sphinx.last_trigger_time) and pd.isnull(sphinx.last_input_time):
-            if sphinx.last_eruption_time >= sphinx.last_trigger_time:
-                last_input = sphinx.last_eruption_time
-            elif sphinx.last_trigger_time >= sphinx.last_eruption_time:
-                last_input = sphinx.last_trigger_time
-        elif not pd.isnull(sphinx.last_eruption_time) and not pd.isnull(sphinx.last_input_time) and pd.isnull(sphinx.last_trigger_time):
-            if sphinx.last_eruption_time >= sphinx.last_input_time:
-                last_input = sphinx.last_eruption_time
-            elif sphinx.last_input_time >= sphinx.last_eruption_time:
-                last_input = sphinx.last_input_time
-        elif not pd.isnull(sphinx.last_input_time) and not pd.isnull(sphinx.last_trigger_time) and pd.isnull(sphinx.last_eruption_time):
-            if sphinx.last_input_time >= sphinx.last_trigger_time:
-                last_input = sphinx.last_input_time
-            elif sphinx.last_trigger_time >= sphinx.last_input_time:
-                last_input = sphinx.last_input_time
-        elif not pd.isnull(sphinx.last_eruption_time) and pd.isnull(sphinx.last_trigger_time) and pd.isnull(sphinx.last_input_time):
-            last_input = sphinx.last_eruption_time
-        elif not pd.isnull(sphinx.last_trigger_time) and pd.isnull(sphinx.last_eruption_time) and pd.isnull(sphinx.last_input_time):
-            last_input = sphinx.last_trigger_time
-        elif not pd.isnull(sphinx.last_input_time) and pd.isnull(sphinx.last_trigger_time) and pd.isnull(sphinx.last_eruption_time):
-            last_input = sphinx.last_input_time
-        time_diff = sphinx.observed_threshold_crossing[thresh_key].crossing_time - last_input
+    try:    
+        time_diff = sphinx.observed_threshold_crossing[thresh_key].crossing_time - sphinx.prediction.last_data_time_to_issue_time()
         total_seconds = time_diff.total_seconds()
         time_diff = total_seconds / 3600
         dict["Time Difference between Last Data and Observed SEP Threshold Crossing Time"].append(time_diff)
