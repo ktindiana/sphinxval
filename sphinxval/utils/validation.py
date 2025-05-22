@@ -176,7 +176,7 @@ def initialize_sphinx_dict():
             "Time Difference between Inputs and SEP End": [],
             "Prediction Window Overlap with Observed SEP Event": [],
             "Ongoing SEP Event": [],
-            "Time Difference between Last Data and Observed SEP Threshold Crossing Time": [],
+            "Trigger Advance Time": [],
             "Original Model Short Name": []
             
             }
@@ -534,9 +534,9 @@ def fill_sphinx_dict_row(sphinx, dict, energy_key, thresh_key, profname_dict):
         time_diff = sphinx.observed_threshold_crossing[thresh_key].crossing_time - sphinx.prediction.last_data_time_to_issue_time()
         total_seconds = time_diff.total_seconds()
         time_diff = total_seconds / 3600
-        dict["Time Difference between Last Data and Observed SEP Threshold Crossing Time"].append(time_diff)
+        dict["Trigger Advance Time"].append(time_diff)
     except:
-        dict["Time Difference between Last Data and Observed SEP Threshold Crossing Time"].append('NaT')
+        dict["Trigger Advance Time"].append('NaT')
 
     dict["Original Model Short Name"].append(sphinx.prediction.original_short_name)
 
@@ -671,7 +671,7 @@ def initialize_awt_dict():
             "Median AWT for Predicted SEP All Clear to Observed SEP Threshold Crossing Time": [],
             "Mean AWT for Predicted SEP All Clear to Observed SEP Start Time": [],
             "Median AWT for Predicted SEP All Clear to Observed SEP Start Time": [],
-            "Mean AWT Percent Error for Predicted SEP All Clear to Observed SEP Threshold Crossing Time": [],
+            "Mean AWT Efficiency for Predicted SEP All Clear to Observed SEP Threshold Crossing Time": [],
 
 #            #Probability Forecasts - cannot without an explicit threshold
 #            "Mean AWT for Probability to Observed Threshold Crossing Time": [],
@@ -684,14 +684,14 @@ def initialize_awt_dict():
             "Median AWT for Predicted SEP Threshold Crossing Time to Observed SEP Threshold Crossing Time": [],
             "Mean AWT for Predicted SEP Threshold Crossing Time to Observed SEP Start Time": [],
             "Median AWT for Predicted SEP Threshold Crossing Time to Observed SEP Start Time": [],
-            "Mean AWT Percent Error for Predicted SEP Threshold Crossing Time to Observed SEP Threshold Crossing Time": [],
+            "Mean AWT Efficiency for Predicted SEP Threshold Crossing Time to Observed SEP Threshold Crossing Time": [],
 
             #Start Time Forecasts
             "Mean AWT for Predicted SEP Start Time to Observed SEP Threshold Crossing Time": [],
             "Median AWT for Predicted SEP Start Time to Observed SEP Threshold Crossing Time": [],
             "Mean AWT for Predicted SEP Start Time to Observed SEP Start Time": [],
             "Median AWT for Predicted SEP Start Time to Observed SEP Start Time": [],
-            "Mean AWT Percent Error for Predicted SEP Start Time to Observed SEP Threshold Crossing Time": [],
+            "Mean AWT Efficiency for Predicted SEP Start Time to Observed SEP Threshold Crossing Time": [],
  
 #             #Point Intensity Forecasts
 #            "Mean AWT for Predicted Point Intensity to Observed SEP Threshold Crossing Time": [],
@@ -3116,7 +3116,7 @@ def extract_awt_sub(df, model, energy_key, thresh_key, pred_key, match_key, obs_
                 'Prediction Window Start', 'Prediction Window End',
                 'Observed SEP Threshold Crossing Time',
                 'Observed SEP Start Time', 
-                'Time Difference between Last Data and Observed SEP Threshold Crossing Time',
+                'Trigger Advance Time',
                 obs_key, pred_key, match_key]]
     else:
         sub = sub[['Model','Energy Channel Key', 'Threshold Key',
@@ -3126,7 +3126,7 @@ def extract_awt_sub(df, model, energy_key, thresh_key, pred_key, match_key, obs_
                 'Prediction Window Start', 'Prediction Window End',
                 'Observed SEP Threshold Crossing Time',
                 'Observed SEP Start Time', 
-                'Time Difference between Last Data and Observed SEP Threshold Crossing Time',
+                'Trigger Advance Time',
                 pred_key, match_key]]
 
     sub = sub.loc[sub[match_key] == "SEP Event"]
@@ -3231,7 +3231,7 @@ def awt_metrics(df, dict, model, energy_key, thresh_key, validation_type):
         cols.append('AWT to Observed SEP Threshold Crossing Time')
         cols.append('AWT to Observed SEP Start Time')
         if ftype['obs_key'] == '':
-            cols.append('AWT Percent Error to Observed SEP Threshold Crossing Time')
+            cols.append('AWT Efficiency to Observed SEP Threshold Crossing Time')
         if ftype['obs_key'] != '':
             cols.append('AWT to ' + ftype['obs_key'])
         sel_df = pd.DataFrame(columns=cols) #Selected forecasts and AWT results
@@ -3253,7 +3253,7 @@ def awt_metrics(df, dict, model, energy_key, thresh_key, validation_type):
                     dict[mean_key].append(None)
                     dict[median_key].append(None)
                 if ftype['obs_key'] == '':
-                    dict['Mean AWT Percent Error for ' + ftype['pred_key'] + ' to ' + time_keys[0]].append(np.nan)
+                    dict['Mean AWT Efficiency for ' + ftype['pred_key'] + ' to ' + time_keys[0]].append(np.nan)
                 
                 continue
         
@@ -3319,22 +3319,22 @@ def awt_metrics(df, dict, model, energy_key, thresh_key, validation_type):
                 row.append(obs_awt)
 
             if ftype['obs_key'] == '': 
-                time_between_trigger_and_thresh_cross = sep_sub.iloc[idx]["Time Difference between Last Data and Observed SEP Threshold Crossing Time"]
-                if pd.isnull(tc_awt) or time_between_trigger_and_thresh_cross == 'NaT':
-                    awtpe = 0.0
+                tc_tat = sep_sub.iloc[idx]["Trigger Advance Time"]
+                if pd.isnull(tc_awt) or tc_tat == 'NaT':
+                    awteff = 0.0
                 else:
-                    awtpe = tc_awt / time_between_trigger_and_thresh_cross
+                    awteff = tc_awt / tc_tat
                 
-                row.append(awtpe) # 
+                row.append(awteff) # 
             
 
-                # Only calculating the awtpe for things related to SEP Start or Threshcrossing
-                # Calculation for AWT Percent Error - which is based upon
+                # Only calculating the awteff for things related to SEP Start or Threshcrossing
+                # Calculation for AWT Efficiency - which is based upon
                 # AWT / (Time between threshold crossing and corresponding trigger time)
                 # The denominator (gonna call it ptcl transit time for now) here 
                 # needs to account for whichever trigger the 
                 # forecasting model includes (eruption/trigger/input) but
-                # I don't want to calculate this AWTPE for each trigger this could be,
+                # I don't want to calculate this awteff for each trigger this could be,
                 # that feels needless. If multiple of these times are given, find the 
                 # latest time and use that. 
             
@@ -3353,7 +3353,7 @@ def awt_metrics(df, dict, model, energy_key, thresh_key, validation_type):
                 dict[mean_key].append(np.nan)
                 dict[median_key].append(np.nan)
             if ftype['obs_key'] == '':
-                dict['Mean AWT Percent Error for ' + ftype['pred_key'] + ' to ' + time_keys[0]].append(np.nan)
+                dict['Mean AWT Efficiency for ' + ftype['pred_key'] + ' to ' + time_keys[0]].append(np.nan)
 
             continue
 
@@ -3400,12 +3400,12 @@ def awt_metrics(df, dict, model, energy_key, thresh_key, validation_type):
             dict[mean_key].append(mean_awt)
             dict[median_key].append(median_awt)
         if ftype['obs_key'] == '':
-            awtpes = sel_df['AWT Percent Error to Observed SEP Threshold Crossing Time'].to_list()
+            awteffs = sel_df['AWT Efficiency to Observed SEP Threshold Crossing Time'].to_list()
             if len(awts) >= 1:
-                mean_awtpe = statistics.mean(awtpes)
+                mean_awteff = statistics.mean(awteffs)
             else:
-                mean_awtpe = None
-            dict['Mean AWT Percent Error for ' + ftype['pred_key'] + ' to ' + time_keys[0]].append(mean_awtpe)
+                mean_awteff = None
+            dict['Mean AWT Efficiency for ' + ftype['pred_key'] + ' to ' + time_keys[0]].append(mean_awteff)
 
     return
 
