@@ -1276,7 +1276,7 @@ def contingency_scores(h,m,f,c):
         Prevalence = (h+m)/n
         Matthew Correlation Coefficient = (h*c-f*m)/Sqrt((h+f)*(h+m)*(c+f)*(c+m))
         Informedness = h/(h+m) + c/(f+c) - 1
-        Markedness = h/(h+f) + c/(f+c) - 1
+        Markedness = h/(h+f) + c/(m+c) - 1
         Prevalence Threshold = (Sqrt(h/(h+m)*f/(f+c))-(f/(f+c))) / (h/(h+m)-f/(f+c))
         Balanced Accuracy = (1/2)*(h/(h+m)+c/(f+c)
         Fowlkes-Mallows Index = Sqrt((h/(h+f))*(h/(h+m)))
@@ -1317,7 +1317,7 @@ def contingency_scores(h,m,f,c):
     'PREV': check_div(h+m, n),                         # Prevalence 
     'MCC': calc_MCC(h, m, f, c),                       # Matthew Correlation Coefficient, Phi Coefficient
     'INFORM': check_div(h, h+m) + check_div(c, f+c) - 1, # Informedness
-    'MARK': check_div(h, h+f) + check_div(c, f+c) - 1,  # Markedness
+    'MARK': check_div(h, h+f) + check_div(c, m+c) - 1,  # Markedness
     'PT': calc_PT(h, m, f ,c),                         # Prevalence Threshold
     'BA': check_div(check_div(h, h+m)+check_div(c, f+c), 2), # Balanced Accuracy
     'FM': np.sqrt(check_div(h, h+f)*check_div(h, h+m))  # Fowlkes-Mallows Index (Geometric mean of precision and recall)
