@@ -2548,6 +2548,9 @@ def manual_sphinx(sphinx_file):
     '''
     Writing a sub-routine that will run SPHINX validation suite for a pre-existing SPHINX dataframe,
     since there is currently no way to do that.
+    Inputs:
+    sphinx_file: string, the path from the base sphinxval directory to the location of the dataframe
+        that you want to run. 
     '''
     setup_logging()
     logger = logging.getLogger(__name__)
@@ -2565,14 +2568,14 @@ def manual_sphinx(sphinx_file):
             all_energy_channels.append(df['Energy Channel Key'][i])
             if df['Threshold Key'][i] not in all_observed_thresholds:
                 all_observed_thresholds[df['Energy Channel Key'][i]] = [df['Threshold Key'][i]]
-    print(model_names, all_energy_channels, all_observed_thresholds)
+    # print(model_names, all_energy_channels, all_observed_thresholds)
     # print('Actually made it here', df)
     validation_type = ["All", "First", "Last", "Max", "Mean"]
     for type in validation_type:
         logger.info("-----------Starting validation of " + type +" forecasts-------------")
         validation.calculate_intuitive_metrics(df, model_names, all_energy_channels,
                 all_observed_thresholds, type)
-        print('Looping')
+        # print('Looping')
     #Record explanatory information to the log
     validation.validation_explanation()
     
