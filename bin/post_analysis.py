@@ -57,7 +57,7 @@ parser.add_argument("--showplot",
         help=("Show plots to screen."),
         action="store_true")
 parser.add_argument('--manual_run', type=str, default = '', 
-        help=("Use to run sphinx for an already existing sphinx dataframe"))
+        help=("Use to run sphinx for an already existing sphinx dataframe, this is the path to that file"))
 
 
 args = parser.parse_args()
