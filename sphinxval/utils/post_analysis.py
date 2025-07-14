@@ -2544,4 +2544,37 @@ def make_histograms():
     return
 
 
-make_histograms()
+def manual_sphinx(sphinx_file):
+    '''
+    Writing a sub-routine that will run SPHINX validation suite for a pre-existing SPHINX dataframe,
+    since there is currently no way to do that.
+    '''
+    setup_logging()
+    logger = logging.getLogger(__name__)
+    df = pd.read_csv(sphinx_file)
+    model_names = []
+    all_energy_channels = []
+    all_observed_thresholds = {}
+
+
+
+    for i in range(len(df)):
+        if df['Model'][i] not in model_names:
+            model_names.append(df['Model'][i])
+        if df['Energy Channel Key'][i] not in all_energy_channels:
+            all_energy_channels.append(df['Energy Channel Key'][i])
+            if df['Threshold Key'][i] not in all_observed_thresholds:
+                all_observed_thresholds[df['Energy Channel Key'][i]] = [df['Threshold Key'][i]]
+    print(model_names, all_energy_channels, all_observed_thresholds)
+    # print('Actually made it here', df)
+    validation_type = ["All", "First", "Last", "Max", "Mean"]
+    for type in validation_type:
+        logger.info("-----------Starting validation of " + type +" forecasts-------------")
+        validation.calculate_intuitive_metrics(df, model_names, all_energy_channels,
+                all_observed_thresholds, type)
+        print('Looping')
+    #Record explanatory information to the log
+    validation.validation_explanation()
+    
+    logger.info("intuitive_validation: Validation process complete.")
+
