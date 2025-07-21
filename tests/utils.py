@@ -26,6 +26,7 @@ import logging.config
 import pathlib
 import json
 from datetime import datetime
+import numpy as np
 
 from unittest.mock import patch
 import shutil # using this to delete the contents of the output folder each run - since the unittest is based on the existence/creation of certain files each loop
@@ -509,8 +510,11 @@ def attributes_of_sphinx_obj(keyword, sphinx_obj, energy_channel_key, threshold_
             else:
                 attribute = str([str(datetime.strptime(str(attribute[0]), '%Y-%m-%d %H:%M:%S') )])
     
+    
         return attribute
 
+    elif keyword == 'Trigger Advance Time':
+        return 'NaT'
 
 
 def assert_equal_table(self, filename, test_dict):
@@ -536,6 +540,7 @@ def assert_equal_table(self, filename, test_dict):
                     elif isinstance(reading.iloc[rows][keywords], str):
                         self.assertEqual(reading.iloc[rows][keywords], test_dict[keywords][0], msg = 'This is the keyword ' + keywords) 
                     else:
+                        print(keywords)
                         self.assertAlmostEqual(reading.iloc[rows][keywords], float(test_dict[keywords][0]), msg = 'This is the keyword ' + keywords)
                         
                                

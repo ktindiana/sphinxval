@@ -177,6 +177,7 @@ def mock_df_populate(dict):
     dict["All Threshold Crossing Times"].append([np.datetime64('NaT')])
     dict["Eruption in Range"].append([True])
     dict["Original Model Short Name"].append("Test_model_resume_old")
+    dict['Trigger Advance Time'].append(['NaT'])
 
     return dict
 
