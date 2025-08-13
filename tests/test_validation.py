@@ -99,7 +99,9 @@ def initialize_flux_dict():
             "Mean Accuracy Ratio (MAR)": [],
             "Root Mean Square Error (RMSE)": [],
             "Root Mean Square Log Error (RMSLE)": [],
-            "Median Symmetric Accuracy (MdSA)": []
+            "Median Symmetric Accuracy (MdSA)": [],
+            "Percentage within an Order of Magnitude (%)":[],
+            "Percentage within a factor of 2 (%)":[]
             }
     
     return dict
@@ -139,18 +141,21 @@ def initialize_awt_dict():
             "Median AWT for Predicted SEP All Clear to Observed SEP Threshold Crossing Time": [],
             "Mean AWT for Predicted SEP All Clear to Observed SEP Start Time": [],
             "Median AWT for Predicted SEP All Clear to Observed SEP Start Time": [],
+            "Mean AWT Efficiency for Predicted SEP All Clear to Observed SEP Threshold Crossing Time": [],
 
             #Threshold Crossing Time Forecasts
             "Mean AWT for Predicted SEP Threshold Crossing Time to Observed SEP Threshold Crossing Time": [],
             "Median AWT for Predicted SEP Threshold Crossing Time to Observed SEP Threshold Crossing Time": [],
             "Mean AWT for Predicted SEP Threshold Crossing Time to Observed SEP Start Time": [],
             "Median AWT for Predicted SEP Threshold Crossing Time to Observed SEP Start Time": [],
+            "Mean AWT Efficiency for Predicted SEP Threshold Crossing Time to Observed SEP Threshold Crossing Time": [],
 
             #Start Time Forecasts
             "Mean AWT for Predicted SEP Start Time to Observed SEP Threshold Crossing Time": [],
             "Median AWT for Predicted SEP Start Time to Observed SEP Threshold Crossing Time": [],
             "Mean AWT for Predicted SEP Start Time to Observed SEP Start Time": [],
             "Median AWT for Predicted SEP Start Time to Observed SEP Start Time": [],
+            "Mean AWT Efficiency for Predicted SEP Start Time to Observed SEP Threshold Crossing Time": [],
  
             #Peak Intensity Forecasts
             "Mean AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Threshold Crossing Time": [],
@@ -364,18 +369,21 @@ def fill_awt_dict(dict, self):
     dict["Median AWT for Predicted SEP All Clear to Observed SEP Threshold Crossing Time"].append('1.0')
     dict["Mean AWT for Predicted SEP All Clear to Observed SEP Start Time"].append('1.0')
     dict["Median AWT for Predicted SEP All Clear to Observed SEP Start Time"].append('1.0')
+    dict["Mean AWT Efficiency for Predicted SEP All Clear to Observed SEP Threshold Crossing Time"].append('0.0')
 
             #Threshold Crossing Time Forecasts
     dict["Mean AWT for Predicted SEP Threshold Crossing Time to Observed SEP Threshold Crossing Time"].append(np.nan)
     dict["Median AWT for Predicted SEP Threshold Crossing Time to Observed SEP Threshold Crossing Time"].append(np.nan)
     dict["Mean AWT for Predicted SEP Threshold Crossing Time to Observed SEP Start Time"].append(np.nan)
     dict["Median AWT for Predicted SEP Threshold Crossing Time to Observed SEP Start Time"].append(np.nan)
+    dict['Mean AWT Efficiency for Predicted SEP Threshold Crossing Time to Observed SEP Threshold Crossing Time'].append(np.nan)
 
             #Start Time Forecasts
     dict["Mean AWT for Predicted SEP Start Time to Observed SEP Threshold Crossing Time"].append(np.nan)
     dict["Median AWT for Predicted SEP Start Time to Observed SEP Threshold Crossing Time"].append(np.nan)
     dict["Mean AWT for Predicted SEP Start Time to Observed SEP Start Time"].append(np.nan)
     dict["Median AWT for Predicted SEP Start Time to Observed SEP Start Time"].append(np.nan)
+    dict["Mean AWT Efficiency for Predicted SEP Start Time to Observed SEP Threshold Crossing Time"].append(np.nan)
  
             #Peak Intensity Forecasts
     dict["Mean AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Threshold Crossing Time"].append(np.nan)
@@ -480,6 +488,8 @@ def fill_peak_intensity_max_dict(dict, self):
     dict["Root Mean Square Error (RMSE)"].append('0.0')
     dict["Root Mean Square Log Error (RMSLE)"].append('0.0')
     dict["Median Symmetric Accuracy (MdSA)"].append('0.0')
+    dict["Percentage within an Order of Magnitude (%)"].append('1.0')
+    dict["Percentage within a factor of 2 (%)"].append('1.0')
     dict.update({"Time Profile Selection Plot": [np.nan]})
 
     return dict
@@ -518,6 +528,8 @@ def fill_peak_intensity_max_mult_dict(dict, self):
     dict["Root Mean Square Error (RMSE)"].append('7.06399674405361')
     dict["Root Mean Square Log Error (RMSLE)"].append('2.1213203435596424')
     dict["Median Symmetric Accuracy (MdSA)"].append('30.62277660168379')
+    dict["Percentage within an Order of Magnitude (%)"].append('0.5')
+    dict["Percentage within a factor of 2 (%)"].append('0.5')
     dict.update({"Time Profile Selection Plot": [np.nan]})
 
     return dict
@@ -555,6 +567,8 @@ def fill_peak_intensity_dict(dict, self):
     dict["Root Mean Square Error (RMSE)"].append('0.0')
     dict["Root Mean Square Log Error (RMSLE)"].append('0.0')
     dict["Median Symmetric Accuracy (MdSA)"].append('0.0')
+    dict["Percentage within an Order of Magnitude (%)"].append('1.0')
+    dict["Percentage within a factor of 2 (%)"].append('1.0')
     dict.update({"Time Profile Selection Plot": [np.nan]})
 
     return dict
@@ -593,6 +607,8 @@ def fill_peak_intensity_mult_dict(dict, self):
     dict["Root Mean Square Error (RMSE)"].append('7.06399674405361')
     dict["Root Mean Square Log Error (RMSLE)"].append('2.1213203435596424')
     dict["Median Symmetric Accuracy (MdSA)"].append('30.62277660168379')
+    dict["Percentage within an Order of Magnitude (%)"].append('0.5')
+    dict["Percentage within a factor of 2 (%)"].append('0.5')
     dict.update({"Time Profile Selection Plot": [np.nan]})
     return dict
 
@@ -655,6 +671,8 @@ def fill_peak_intensity_metrics_dict_all(dict, self):
     dict["Root Mean Square Error (RMSE)"].append('0.7071067811865476')
     dict["Root Mean Square Log Error (RMSLE)"].append('0.02926904836690076')
     dict["Median Symmetric Accuracy (MdSA)"].append('0.04880884817015163')
+    dict["Percentage within an Order of Magnitude (%)"].append('1.0')
+    dict["Percentage within a factor of 2 (%)"].append('1.0')
     dict.update({"Time Profile Selection Plot": [np.nan]})
 
     return dict
@@ -692,6 +710,8 @@ def fill_time_profile_dict_all(dict, self):
     dict["Root Mean Square Error (RMSE)"].append('4.860100002974809')
     dict["Root Mean Square Log Error (RMSLE)"].append('0.5505339105281907')
     dict["Median Symmetric Accuracy (MdSA)"].append('2.0078825180431')
+    dict["Percentage within an Order of Magnitude (%)"].append('1.0')
+    dict["Percentage within a factor of 2 (%)"].append('0.3333333333333333')
     dict.update({"Time Profile Selection Plot": ['./tests/output/plots/Time_Profile_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_20000101T000000.pdf;./tests/output/plots/Time_Profile_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_20000101T000000.pdf']})
 
     return dict
@@ -760,18 +780,21 @@ def fill_awt_dict_all(dict, self):
     dict["Median AWT for Predicted SEP All Clear to Observed SEP Threshold Crossing Time"].append('1.0')
     dict["Mean AWT for Predicted SEP All Clear to Observed SEP Start Time"].append('1.0')
     dict["Median AWT for Predicted SEP All Clear to Observed SEP Start Time"].append('1.0')
+    dict["Mean AWT Efficiency for Predicted SEP All Clear to Observed SEP Threshold Crossing Time"].append('0.0')
 
             #Threshold Crossing Time Forecasts
     dict["Mean AWT for Predicted SEP Threshold Crossing Time to Observed SEP Threshold Crossing Time"].append('1.0')
     dict["Median AWT for Predicted SEP Threshold Crossing Time to Observed SEP Threshold Crossing Time"].append('1.0')
     dict["Mean AWT for Predicted SEP Threshold Crossing Time to Observed SEP Start Time"].append('1.0')
     dict["Median AWT for Predicted SEP Threshold Crossing Time to Observed SEP Start Time"].append('1.0')
+    dict['Mean AWT Efficiency for Predicted SEP Threshold Crossing Time to Observed SEP Threshold Crossing Time'].append('0.0')
 
             #Start Time Forecasts
     dict["Mean AWT for Predicted SEP Start Time to Observed SEP Threshold Crossing Time"].append('1.0')
     dict["Median AWT for Predicted SEP Start Time to Observed SEP Threshold Crossing Time"].append('1.0')
     dict["Mean AWT for Predicted SEP Start Time to Observed SEP Start Time"].append('1.0')
     dict["Median AWT for Predicted SEP Start Time to Observed SEP Start Time"].append('1.0')
+    dict["Mean AWT Efficiency for Predicted SEP Start Time to Observed SEP Threshold Crossing Time"].append('0.0')
   
             #Peak Intensity Forecasts
     dict["Mean AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Threshold Crossing Time"].append('1.0')
@@ -866,6 +889,8 @@ def fill_max_flux_in_pred_win_metrics_dict_all(dict, self):
     dict["Root Mean Square Error (RMSE)"].append('0.7071067811865476')
     dict["Root Mean Square Log Error (RMSLE)"].append('0.02926904836690076')
     dict["Median Symmetric Accuracy (MdSA)"].append('0.04880884817015163')
+    dict["Percentage within an Order of Magnitude (%)"].append('1.0')
+    dict["Percentage within a factor of 2 (%)"].append('1.0')
     dict.update({"Time Profile Selection Plot": ['./tests/output/plots/Time_Profile_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_20000101T000000.pdf']})
 
     return dict
@@ -912,6 +937,8 @@ def fill_peak_intensity_max_metrics_dict_all(dict, self):
     dict["Root Mean Square Error (RMSE)"].append('0.7071067811865476')
     dict["Root Mean Square Log Error (RMSLE)"].append('0.02926904836690076')
     dict["Median Symmetric Accuracy (MdSA)"].append('0.04880884817015163')
+    dict["Percentage within an Order of Magnitude (%)"].append('1.0')
+    dict["Percentage within a factor of 2 (%)"].append('1.0')
     dict.update({"Time Profile Selection Plot": [np.nan]})
 
     return dict
@@ -988,6 +1015,8 @@ def fill_fluence_dict_all(dict, self):
     dict["Root Mean Square Error (RMSE)"].append('90152088.20071295')
     dict["Root Mean Square Log Error (RMSLE)"].append('1.2456543445264794')
     dict["Median Symmetric Accuracy (MdSA)"].append('16.605742455879447')
+    dict["Percentage within an Order of Magnitude (%)"].append('0.0')
+    dict["Percentage within a factor of 2 (%)"].append('0.0')
     dict.update({"Time Profile Selection Plot": ['./tests/output/plots/Time_Profile_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_20000101T000000.pdf']})
 
     return dict

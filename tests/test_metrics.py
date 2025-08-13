@@ -1366,8 +1366,8 @@ class ContigencyMetricsTestCase(unittest.TestCase):
                 self.assertTrue(math.isnan(result[score]))
                 # Informedness = h/(h+m) + c/(f+c) - 1 = 0/(0+0) + 0/(1+0) - 1
             elif score == 'MARK':
-                self.assertAlmostEqual(result[score], -1)
-                # Markedness = h/(h+f) + c/(f+c) - 1 = 0/(0+1) + 0/(1+0) - 1
+                self.assertTrue(math.isnan(result[score]))
+                # Markedness = h/(h+f) + c/(m+c) - 1 = 0/(0+1) + 0/(0+0) - 1
             elif score == 'PT':
                 self.assertTrue(math.isnan(result[score]))
                 # Prevalence Threshold = (Sqrt(h/(h+m)*f/(f+c))-(f/(f+c))) / (h/(h+m)-f/(f+c)) = (Sqrt(0/(0+0)*1/(1+0))-(1/(1+0))) / (0/(0+0)-1/(1+0))
@@ -1685,8 +1685,8 @@ class ContigencyMetricsTestCase(unittest.TestCase):
                 self.assertAlmostEqual(result[score], -2/21)
                 # Informedness = h/(h+m) + c/(f+c) - 1 = 1/(1+2) + 4/(3+4) - 1= 1/3 + 4/7 - 1 = 7/21 + 12/21 - 1 = 19/21 - 1
             elif score == 'MARK':
-                self.assertAlmostEqual(result[score], -5/28)
-                # Markedness = h/(h+f) + c/(f+c) - 1 = 1/(1+3) + 4/(3+4) - 1 = 1/4 + 4/7 - 1 = 7/28 + 16/28 - 1 = 23/28 - 1
+                self.assertAlmostEqual(result[score], -2/24)
+                # Markedness = h/(h+f) + c/(m+c) - 1 = 1/(1+3) + 4/(2+4) - 1 = 1/4 + 4/6 - 1 = 6/24 + 16/24 - 1 = 22/24 - 1
             elif score == 'PT':
                 self.assertAlmostEqual(result[score], (np.sqrt(3/21)- 3/7)/(-2/21))
                 # Prevalence Threshold = (Sqrt(h/(h+m)*f/(f+c))-(f/(f+c))) / (h/(h+m)-f/(f+c)) = (Sqrt(1/(1+2)*3/(3+4))-(3/(3+4))) / (1/(1+2)-3/(3+4))
