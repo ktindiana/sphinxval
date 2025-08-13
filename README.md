@@ -1,22 +1,25 @@
-# sphinxval
+<img src="https://github.com/lukestegeman/sphinxval/blob/a9692f89426f35f9bcdcf38f2cfa851aed75ce80/logo/sphinx-logo-official.png?raw=true" width="250" align="right"/>
+
+### sphinxval
 SPHINX validation code for solar energetic particle models
 
-This SPHINX code is not associated with sphinx-doc, the automated documentation building code.
+> [!warning]  
+>  This SPHINX code is not associated with sphinx-doc, the automated documentation building code.
 
 SPHINX is developed via community challenges through the SHINE, ISWAT, ESWW, and SEPVAL conferences and in support of the SEP Scoreboards.
 
-Reminder to Windows users: change your system PYTHONPATH environment variable such that your `../sphinxval/` directory is included.
+> [!note]
+> Reminder to Windows users: change your system PYTHONPATH environment variable such that your `../sphinxval/` directory is included.
 
-![SPHINX Logo](logo/sphinx-logo-official.png)
 
 ## Run SPHINX
-The exectuables for SPHINX are in the bin directory. 
+The executables for SPHINX are in the `bin` directory. 
 
-`ModelList`: Required. Text list of model forecast jsons (full or relative path to sphinxval required, typically in a subdirectory in sphinxval/model/)
+`ModelList`: __Required__. Text list of model forecast jsons (full or relative path to sphinxval required, typically in a subdirectory in sphinxval/model/)
 
-`DataList`: Required. Text list of observation jsons prepared with [fetchsep](https://github.com/ktindiana/fetchsep) (full or relative path to sphinxval required, typically in a subdirectory in sphinxval/data/)
+`DataList`: __Required__. Text list of observation jsons prepared with [fetchsep](https://github.com/ktindiana/fetchsep) (full or relative path to sphinxval required, typically in a subdirectory in sphinxval/data/)
 
-`TopDirectory`: Optional. For models that produce time profiles in txt files, if the forecast jsons and time profile txt files are in different directories, then SPHINX searches through the directories on the user computer to find the location of the txt files starting at TopDirectory. TopDirectory needs to be general enough to find all txt files needed for the validation, but specific enough to avoid searching through unnecessary directories or directories that may contain copies of the same files. 
+`TopDirectory`: _Optional_. For models that produce time profiles in txt files, if the forecast jsons and time profile txt files are in different directories, then SPHINX searches through the directories on the user computer to find the location of the txt files starting at TopDirectory. TopDirectory needs to be general enough to find all txt files needed for the validation, but specific enough to avoid searching through unnecessary directories or directories that may contain copies of the same files. 
 
 Forecast files, observations files, and lists of these files can be stored anywhere on the user computer (or accessible drive) as long as full paths are provided to SPHINX.
 
