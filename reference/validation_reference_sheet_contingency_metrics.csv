@@ -17,7 +17,7 @@ F-Scores,Classification, ((1+ Beta^2)* Hits) / ((1+Beta^2)*Hits + Beta^2 * Misse
 Prevalence,Event List Statistic, (Hits + Misses) / Total, 0 to 1,,,
 Matthew Correlation Coefficient,Association,(Hits*Correct Negatives-False Alarms*Misses)/Sqrt((Hits+False Alarms)*(Hits+Misses)*(Correct Negatives+False Alarms)*(Correct Negatives+Misses)),-1 to 1, 1,Phi Coefficient,
 Informedness,,Hits/(Hits+Misses) + Correct Negatives/(False Alarms+Correct Negatives) - 1,0 to 1,1,Youden's J Statistic & Youden's Index,
-Markedness,,Hits/(Hits+False Alarms) + Correct Negatives/(False Alarms+Correct Negatives) - 1, 0 to 1,1,DeltaP,
+Markedness,,Hits/(Hits+False Alarms) + Correct Negatives/(Misses+Correct Negatives) - 1, 0 to 1,1,DeltaP,
 Prevalence Threshold,Percentage,(Sqrt(Hits/(Hits+Misses)*False Alarms/(False Alarms+Correct Negatives))-(False Alarms/(False Alarms+Correct Negatives)))/(Hits/(Hits+Misses)-False Alarms/(False Alarms+Correct Negatives)),0 to inf,,,
 Balanced Accuracy,,(1/2)*(Hits/(Hits+Misses)+Correct Negatives/(False Alarms+Correct Negatives),,,,
 Fowlkes-Mallows Index,Classification/Clustering,Sqrt((Hits/(Hits+False Alarms))*(Hits/(Hits+Misses))),0 to 1,1,,
