@@ -56,6 +56,8 @@ parser.add_argument("--saveplot",
 parser.add_argument("--showplot",
         help=("Show plots to screen."),
         action="store_true")
+parser.add_argument('--manual_run', type=str, default = '', 
+        help=("Use to run sphinx for an already existing sphinx dataframe, this is the path to that file"))
 
 
 args = parser.parse_args()
@@ -71,13 +73,17 @@ highlight = args.Highlight
 scoreboard = args.Scoreboard
 saveplot = args.saveplot
 showplot = args.showplot
+manual_run = args.manual_run
 
 exclude = args.Exclude.strip().split(",")
 include = args.Include.strip().split(",")
 
-bin = args.EnergyBin.strip().split(",")
-energy_min = float(bin[0])
-energy_max = float(bin[1])
+# bin = args.EnergyBin.strip().split(",")
+# energy_min = float(bin[0])
+# energy_max = float(bin[1])
+
+
+
 
 if acfa_filename != '':
     pa.export_all_clear_incorrect(acfa_filename, threshold, doplot=True)
@@ -101,4 +107,9 @@ if quantity != '':
     df = pa.read_in_metrics(path, quantity, include, exclude)
     pa.make_box_plots(df, path, quantity, anonymous, highlight, scoreboard,
         saveplot, showplot)
+
+if manual_run != '':
+    sphinx_filename = manual_run
+    print(sphinx_filename)
+    pa.manual_sphinx(sphinx_filename)
 
