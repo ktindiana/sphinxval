@@ -3675,26 +3675,31 @@ def profile_output(sphinx_dataframe, resume_obs, resume_model):
     
     u_model_profs = resume.identify_unique(sphinx_dataframe, 'Predicted Time Profile')
     
-    print(u_obs_profs)
-    input()
+  
 
     observed_profs = {}
     model_profs = {}
     for i in range(len(u_obs_profs)):
-        if ',' in u_obs_profs[i]:
-            temp = u_obs_profs[i].rsplit(',')
-            for j in range(len(temp)):
-                obs_dates, obs_profiles = profile.read_single_time_profile(temp[j])
-                obs_dates = [x.strftime('%Y-%m-%dT%H:%M:%SZ') for x in obs_dates]
-                observed_profs[temp[j]] = {'dates': obs_dates, 'fluxes': obs_profiles}
+        if resume_obs is not None and u_obs_profs[i] in resume_obs:
+            continue
         else:
-            obs_dates, obs_profiles = profile.read_single_time_profile(u_obs_profs[i])
-            obs_dates = [x.strftime('%Y-%m-%dT%H:%M:%SZ') for x in obs_dates]
-            observed_profs[u_obs_profs[i]] = {'dates': obs_dates, 'fluxes': obs_profiles}
+            if ',' in u_obs_profs[i]:
+                temp = u_obs_profs[i].rsplit(',')
+                for j in range(len(temp)):
+                    obs_dates, obs_profiles = profile.read_single_time_profile(temp[j])
+                    obs_dates = [x.strftime('%Y-%m-%dT%H:%M:%SZ') for x in obs_dates]
+                    observed_profs[temp[j]] = {'dates': obs_dates, 'fluxes': obs_profiles}
+            else:
+                obs_dates, obs_profiles = profile.read_single_time_profile(u_obs_profs[i])
+                obs_dates = [x.strftime('%Y-%m-%dT%H:%M:%SZ') for x in obs_dates]
+                observed_profs[u_obs_profs[i]] = {'dates': obs_dates, 'fluxes': obs_profiles}
     for j in range(len(u_model_profs)):
-        model_dates, model_profiles = profile.read_single_time_profile(u_model_profs[j])
-        model_dates = [x.strftime('%Y-%m-%dT%H:%M:%SZ') for x in model_dates]
-        model_profs[u_model_profs[j]] = {'dates': model_dates, 'fluxes': model_profiles}
+        if resume_model is not None and u_model_profs[j] in resume_model:
+            continue
+        else:
+            model_dates, model_profiles = profile.read_single_time_profile(u_model_profs[j])
+            model_dates = [x.strftime('%Y-%m-%dT%H:%M:%SZ') for x in model_dates]
+            model_profs[u_model_profs[j]] = {'dates': model_dates, 'fluxes': model_profiles}
 
 
     if resume_obs is not None:
@@ -3702,8 +3707,7 @@ def profile_output(sphinx_dataframe, resume_obs, resume_model):
     if resume_model is not None:
         model_profs = resume_model | model_profs
 
-    print(observed_profs)
-    input()
+ 
     obs_file_path = config.outpath + '/json/observed_profiles.json'
     with open(obs_file_path, 'w+') as json_file:
         json.dump(observed_profs, json_file, indent = 4)
