@@ -2135,9 +2135,9 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
 
     def step_19_profiledicts(self):
 
-        validate.profile_output(test_dict, None, None, model_names, all_energy_channels, all_observed_thresholds) 
+        validate.profile_output(self.dataframe, None, None)
         self.assertTrue(os.path.isfile('./tests/output/json/model_profiles.json'), msg = 'model_profiles.json does not exist, check the file is output correctly')
-        self.assertTrue(os.path.isfile('./tests/output/json/observerd_profiles.json'), msg = 'observed_profiles.json does not exist, check the file is output correctly')
+        self.assertTrue(os.path.isfile('./tests/output/json/observed_profiles.json'), msg = 'observed_profiles.json does not exist, check the file is output correctly')
 
 
     def utility_print_docstring(self, function):

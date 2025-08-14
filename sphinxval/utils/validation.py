@@ -3668,13 +3668,15 @@ def pretty(d, indent=0):
          print('\t' * (indent+1) + str(value))
 
 
-def profile_output(sphinx_dataframe, resume_obs, resume_model, model_names, all_energy_channels, all_observed_thresholds):
+def profile_output(sphinx_dataframe, resume_obs, resume_model):
     
     # Is there a point to 'resume' for the profiles? 
     u_obs_profs = resume.identify_unique(sphinx_dataframe, 'Observed Time Profile')
     
     u_model_profs = resume.identify_unique(sphinx_dataframe, 'Predicted Time Profile')
     
+    print(u_obs_profs)
+    input()
 
     observed_profs = {}
     model_profs = {}
@@ -3700,6 +3702,8 @@ def profile_output(sphinx_dataframe, resume_obs, resume_model, model_names, all_
     if resume_model is not None:
         model_profs = resume_model | model_profs
 
+    print(observed_profs)
+    input()
     obs_file_path = config.outpath + '/json/observed_profiles.json'
     with open(obs_file_path, 'w+') as json_file:
         json.dump(observed_profs, json_file, indent = 4)
@@ -4027,7 +4031,7 @@ def intuitive_validation(evaluated_sphinx, removed_sphinx, model_names,
     
     
 
-    profile_output(df, r_obs, r_mod, model_names, all_energy_channels, all_observed_thresholds)
+    profile_output(df, r_obs, r_mod)
 
     logger.info("intuitive_validation: Validation process complete.")
 
