@@ -436,6 +436,7 @@ class Test_Resume(unittest.TestCase):
         self.assertTrue(os.path.isfile(obs_prof_filename), msg = obs_prof_filename + ' does not exist, check the file is output correctly')
         self.assertTrue(os.path.isfile(model_prof_filename), msg = model_prof_filename + ' does not exist, check the file is output correctly')
         
+        
     
     def utility_print_docstring(self, function):
         if self.verbosity == 2:

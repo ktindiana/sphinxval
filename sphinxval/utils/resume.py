@@ -141,7 +141,7 @@ def read_in_profile_dicts(resume_obs, resume_model):
         
     except:
         logger.error("Cannot open pickle file containing "
-            f"input dataframe. Please check the filename: {resume_obs}")
+            f"input observed profile dictionary. Please check the filename: {resume_obs}")
         sys.exit()
     
     try:
@@ -149,6 +149,6 @@ def read_in_profile_dicts(resume_obs, resume_model):
         model_prof_df = pickle.load(pklfile)
     except:
         logger.error("Cannot open pickle file containing "
-            f"input dataframe. Please check the filename: {resume_model}")
+            f"input model profile dictionary. Please check the filename: {resume_model}")
         sys.exit()
     return obs_prof_df, model_prof_df

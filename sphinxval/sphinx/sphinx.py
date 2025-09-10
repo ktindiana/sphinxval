@@ -64,6 +64,7 @@ def validate(data_list, model_list, top=None, Resume=None, resume_obs = None, re
         logger.info("RESUME: Reading in previous dataframe: "
             + Resume)
         r_df = resume.read_in_df(Resume)
+    if resume_obs is not None and resume_model is not None:
         r_obs_prof, r_model_prof = resume.read_in_profile_dicts(resume_obs, resume_model)
 
     #Create Observation and Forecast objects from jsons (edge cases)

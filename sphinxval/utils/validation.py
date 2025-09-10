@@ -3679,27 +3679,37 @@ def profile_output(sphinx_dataframe, resume_obs, resume_model):
 
     observed_profs = {}
     model_profs = {}
-    for i in range(len(u_obs_profs)):
-        if resume_obs is not None and u_obs_profs[i] in resume_obs:
+    for u in u_obs_profs:
+        print(u)
+        if resume_obs is not None and u in resume_obs:
             continue
         else:
-            if ',' in u_obs_profs[i]:
-                temp = u_obs_profs[i].rsplit(',')
-                for j in range(len(temp)):
-                    obs_dates, obs_profiles = profile.read_single_time_profile(temp[j])
-                    obs_dates = [x.strftime('%Y-%m-%dT%H:%M:%SZ') for x in obs_dates]
-                    observed_profs[temp[j]] = {'dates': obs_dates, 'fluxes': obs_profiles}
-            else:
-                obs_dates, obs_profiles = profile.read_single_time_profile(u_obs_profs[i])
+            for u_i in u.rsplit(','):
+                obs_dates, obs_profiles = profile.read_single_time_profile(u_i)
                 obs_dates = [x.strftime('%Y-%m-%dT%H:%M:%SZ') for x in obs_dates]
-                observed_profs[u_obs_profs[i]] = {'dates': obs_dates, 'fluxes': obs_profiles}
-    for j in range(len(u_model_profs)):
-        if resume_model is not None and u_model_profs[j] in resume_model:
+                observed_profs[u_i] = {'dates': obs_dates, 'fluxes': obs_profiles}
+        # if resume_obs is not None and u_obs_profs[i] in resume_obs:
+        #     continue
+        # else:
+        #     if ',' in u_obs_profs[i]:
+        #         temp = u_obs_profs[i].rsplit(',')
+        #         for j in range(len(temp)):
+        #             obs_dates, obs_profiles = profile.read_single_time_profile(temp[j])
+        #             obs_dates = [x.strftime('%Y-%m-%dT%H:%M:%SZ') for x in obs_dates]
+        #             observed_profs[temp[j]] = {'dates': obs_dates, 'fluxes': obs_profiles}
+        #     else:
+        #         obs_dates, obs_profiles = profile.read_single_time_profile(u_obs_profs[i])
+        #         obs_dates = [x.strftime('%Y-%m-%dT%H:%M:%SZ') for x in obs_dates]
+        #         observed_profs[u_obs_profs[i]] = {'dates': obs_dates, 'fluxes': obs_profiles}
+    for um in u_model_profs:
+        print(um)
+        if resume_model is not None and um in resume_model:
             continue
         else:
-            model_dates, model_profiles = profile.read_single_time_profile(u_model_profs[j])
-            model_dates = [x.strftime('%Y-%m-%dT%H:%M:%SZ') for x in model_dates]
-            model_profs[u_model_profs[j]] = {'dates': model_dates, 'fluxes': model_profiles}
+            for um_i in um.rsplit(','):
+                model_dates, model_profiles = profile.read_single_time_profile(um_i)
+                model_dates = [x.strftime('%Y-%m-%dT%H:%M:%SZ') for x in model_dates]
+                model_profs[um_i] = {'dates': model_dates, 'fluxes': model_profiles}
 
 
     if resume_obs is not None:
@@ -3708,18 +3718,18 @@ def profile_output(sphinx_dataframe, resume_obs, resume_model):
         model_profs = resume_model | model_profs
 
  
-    obs_file_path = config.outpath + '/json/observed_profiles.json'
+    obs_file_path = os.path.join(config.outpath,'/json/observed_profiles.json')
     with open(obs_file_path, 'w+') as json_file:
         json.dump(observed_profs, json_file, indent = 4)
-    pickle_file_path = config.outpath + '/pkl/observed_profiles.pkl' # Desired name for your pickle file
+    pickle_file_path = os.path.join(config.outpath, '/pkl/observed_profiles.pkl') # Desired name for your pickle file
     with open(pickle_file_path, 'wb') as f:
         pickle.dump(observed_profs, f)
     
 
-    model_file_path = config.outpath + '/json/model_profiles.json'
+    model_file_path = os.path.join(config.outpath, '/json/model_profiles.json')
     with open(model_file_path, 'w+') as json_file:
         json.dump(model_profs, json_file, indent = 4)
-    pickle_file_path = config.outpath + '/pkl/model_profiles.pkl' # Desired name for your pickle file
+    pickle_file_path = os.path.join(config.outpath, '/pkl/model_profiles.pkl') # Desired name for your pickle file
     with open(pickle_file_path, 'wb') as f:
         pickle.dump(model_profs, f)
 

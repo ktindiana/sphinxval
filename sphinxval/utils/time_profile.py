@@ -56,7 +56,7 @@ def read_generic_time_profile(filename):
         readCSV = csv.reader(csvfile, delimiter=',')
         #Define arrays that hold dates
         for row in readCSV:
-            print(row)
+           
             if row == '': continue
             row[0] = row[0].strip()
             if row[0][0] == '#': continue

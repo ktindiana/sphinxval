@@ -20,8 +20,8 @@ parser.add_argument("--Resume", type=str, default=None,
         help=("Specify filename of existing Pandas DataFrame containing the results of a previous SPHINX run (pkl) to add forecasts to an existing "
             "dataframe and recalculate metrics."))
 parser.add_argument("--ResumeProfiles", nargs = '+', default=None,
-        help=("Specify filename of existing Pandas DataFrame containing the results of a previous SPHINX run (pkl) to add forecasts to an existing "
-            "dataframe and recalculate metrics."))
+        help=("Specify the path and filename of existing profile dictionaries (as pkl) containing the observed and model profiles. "
+            "This is in the form of two strings seperated by a space"))
 parser.add_argument("--RelativePathPlots", type=bool, default=True, \
         help=("Generate reports with relative paths for plots"))
 
