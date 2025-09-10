@@ -56,13 +56,14 @@ def read_generic_time_profile(filename):
         readCSV = csv.reader(csvfile, delimiter=',')
         #Define arrays that hold dates
         for row in readCSV:
+           
             if row == '': continue
             row[0] = row[0].strip()
             if row[0][0] == '#': continue
   
             #Read values into lists
             dates.append(datetime.datetime.strptime(row[0],
-                                        "%Y-%m-%d %H:%M:%S"))
+                                        "%Y-%m-%dT%H:%M:%SZ"))
             if not profiles:
                 profiles = [[]]*len(row[1:])
             vals = []

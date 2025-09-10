@@ -128,3 +128,27 @@ def last_prediction_windows(df):
                 df_pred_win = pd.concat([df_pred_win,sub_p], ignore_index=True)
                     
     return df_pred_win
+
+
+def read_in_profile_dicts(resume_obs, resume_model):
+    """ Read in pickle files containing the observed profile dictionary
+    and the model profile dictionary.
+    
+    """
+    try:
+        pklfile = open(resume_obs,"rb")
+        obs_prof_df = pickle.load(pklfile)
+        
+    except:
+        logger.error("Cannot open pickle file containing "
+            f"input observed profile dictionary. Please check the filename: {resume_obs}")
+        sys.exit()
+    
+    try:
+        pklfile = open(resume_model,"rb")
+        model_prof_df = pickle.load(pklfile)
+    except:
+        logger.error("Cannot open pickle file containing "
+            f"input model profile dictionary. Please check the filename: {resume_model}")
+        sys.exit()
+    return obs_prof_df, model_prof_df

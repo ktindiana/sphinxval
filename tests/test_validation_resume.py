@@ -87,7 +87,7 @@ def mock_df_populate(dict):
     dict["Flare NOAA AR"].append("")
     dict["Observatory"].append("GOES-16,GOES-16")
     dict["Observed Time Profile"].append("./tests/files/observations/validation/resume/GOES-16_integral.2022-04-02T000000Z.10MeV.txt,./tests/files/observations/validation/resume/GOES-16_integral.2022-04-05T034500Z.10MeV.txt") #string of comma
-                                          #separated filenames ".\tests\files\observations\validation\resume\GOES-16_integral.2022-04-05T034500Z.10MeV.txt"
+    #separated filenames ".\tests\files\observations\validation\resume\GOES-16_integral.2022-04-05T034500Z.10MeV.txt"
     dict["Observed SEP All Clear"].append("False")
     dict["Observed SEP Probability"].append(1.0)
     dict["Observed SEP Threshold Crossing Time"].append(datetime(year = 2022, month = 4, day = 2,  hour = 14, minute = 40))
@@ -181,6 +181,97 @@ def mock_df_populate(dict):
 
     return dict
 
+def mock_profile_output():
+    """
+    Creating a pair of dictionaries that are fed into the Resume structure
+    and added to the observed_profiles.json and model_profiles.json
+    outputs. 
+    """
+    observed_profile_dict = {
+        "./tests/files/observations/validation/resume/GOES-16_integral.2022-04-02T000000Z.10MeV.txt": {
+            "dates": [
+                    "I'm",
+                    "Cheating",
+                    "Out",
+                    "of",
+                    "Laziness",
+                    "No",
+                    "One",
+                    "Looks",
+                    "Here",
+                    "Anyway"
+                ],
+            "fluxes":
+                [
+                    0.0,
+                    0.1,
+                    0.2,
+                    8,
+                    6,
+                    7,
+                    5,
+                    3,
+                    0,
+                    9
+                ]
+
+        },
+        "./tests/files/observations/validation/resume/GOES-16_integral.2022-04-05T034500Z.10MeV.txt": {
+            "dates": [
+                "This is a date",
+                "This is a different date",
+                "Oh look another date"
+            ],
+            "fluxes":[
+                0,
+                1,
+                2,
+            ]
+        }
+    }
+
+
+    model_profile_dict = {
+        "./tests/files/forecasts/validation/resume/SEPMOD.2022-04-02T000000Z.2022-04-02T174804Z.10mev.txt":{
+            "dates": [
+                'the',
+                'actual',
+                'content',
+                'here',
+                'doesnt',
+                'matter',
+                'since',
+                'im',
+                'just',
+                'checking',
+                'existence',
+                'and',
+                'that',
+                'it',
+                'works',
+                'not',
+                'actually',
+                'running',
+                'on',
+                'this'
+            ],
+            'fluxes': [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10
+            ]
+        }
+    }
+
+    return observed_profile_dict, model_profile_dict
 
 
 class Test_Resume(unittest.TestCase):
@@ -296,6 +387,7 @@ class Test_Resume(unittest.TestCase):
         validate.write_df(self.df, "SPHINX_dataframe")
         logger.debug("Completed writing SPHINX_dataframe to file.")
         self.assertAlmostEqual(len(self.df), len(r_df)+len(self.dataframe), msg = 'The dataframe from the resume feature is not equal to the "old" dataframe and the new dataframe')
+    
     def step_3(self):
         """
         step 3 uses the step 2 dataframe to follow the rest of the normal validation workflow.
@@ -332,7 +424,18 @@ class Test_Resume(unittest.TestCase):
                         self.assertTrue(os.path.isfile(pkl_filename), msg = pkl_filename + ' does not exist, check the file is output correctly')
                         self.assertTrue(os.path.isfile(csv_filename), msg = csv_filename + ' does not exist, check the file is output correctly')
                             
+    def step_4(self):
+        self.r_obs_prof, self.r_model_prof = mock_profile_output()
 
+
+        # self.r_obs
+        # self.r_mod
+        validate.profile_output(self.df, self.r_obs_prof, self.r_model_prof)
+        obs_prof_filename = './output/json/observed_profiles.json'
+        model_prof_filename = './output/json/model_profiles.json'
+        self.assertTrue(os.path.isfile(obs_prof_filename), msg = obs_prof_filename + ' does not exist, check the file is output correctly')
+        self.assertTrue(os.path.isfile(model_prof_filename), msg = model_prof_filename + ' does not exist, check the file is output correctly')
+        
         
     
     def utility_print_docstring(self, function):
