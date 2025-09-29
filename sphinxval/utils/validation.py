@@ -3680,7 +3680,6 @@ def profile_output(sphinx_dataframe, resume_obs, resume_model):
     observed_profs = {}
     model_profs = {}
     for u in u_obs_profs:
-        print(u)
         if resume_obs is not None and u in resume_obs:
             continue
         else:
@@ -3702,7 +3701,6 @@ def profile_output(sphinx_dataframe, resume_obs, resume_model):
         #         obs_dates = [x.strftime('%Y-%m-%dT%H:%M:%SZ') for x in obs_dates]
         #         observed_profs[u_obs_profs[i]] = {'dates': obs_dates, 'fluxes': obs_profiles}
     for um in u_model_profs:
-        print(um)
         if resume_model is not None and um in resume_model:
             continue
         else:

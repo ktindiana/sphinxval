@@ -66,6 +66,9 @@ def validate(data_list, model_list, top=None, Resume=None, resume_obs = None, re
         r_df = resume.read_in_df(Resume)
     if resume_obs is not None and resume_model is not None:
         r_obs_prof, r_model_prof = resume.read_in_profile_dicts(resume_obs, resume_model)
+    elif resume_obs is not None and resume_model is None or resume_model is not None and resume_obs is None:
+        logger.error("Cannot use resume on the profiles without specifying both files")
+        sys.exit()
 
     #Create Observation and Forecast objects from jsons (edge cases)
     #Unique identifier - issue time, triggers, prediction window - ignore for now

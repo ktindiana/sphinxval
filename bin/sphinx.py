@@ -21,7 +21,7 @@ parser.add_argument("--Resume", type=str, default=None,
             "dataframe and recalculate metrics."))
 parser.add_argument("--ResumeProfiles", nargs = '+', default=None,
         help=("Specify the path and filename of existing profile dictionaries (as pkl) containing the observed and model profiles. "
-            "This is in the form of two strings seperated by a space"))
+            "This is in the form of two strings seperated by a space, each string with a set of quotes around it"))
 parser.add_argument("--RelativePathPlots", type=bool, default=True, \
         help=("Generate reports with relative paths for plots"))
 
