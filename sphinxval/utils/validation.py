@@ -3687,19 +3687,6 @@ def profile_output(sphinx_dataframe, resume_obs, resume_model):
                 obs_dates, obs_profiles = profile.read_single_time_profile(u_i)
                 obs_dates = [x.strftime('%Y-%m-%dT%H:%M:%SZ') for x in obs_dates]
                 observed_profs[u_i] = {'dates': obs_dates, 'fluxes': obs_profiles}
-        # if resume_obs is not None and u_obs_profs[i] in resume_obs:
-        #     continue
-        # else:
-        #     if ',' in u_obs_profs[i]:
-        #         temp = u_obs_profs[i].rsplit(',')
-        #         for j in range(len(temp)):
-        #             obs_dates, obs_profiles = profile.read_single_time_profile(temp[j])
-        #             obs_dates = [x.strftime('%Y-%m-%dT%H:%M:%SZ') for x in obs_dates]
-        #             observed_profs[temp[j]] = {'dates': obs_dates, 'fluxes': obs_profiles}
-        #     else:
-        #         obs_dates, obs_profiles = profile.read_single_time_profile(u_obs_profs[i])
-        #         obs_dates = [x.strftime('%Y-%m-%dT%H:%M:%SZ') for x in obs_dates]
-        #         observed_profs[u_obs_profs[i]] = {'dates': obs_dates, 'fluxes': obs_profiles}
     for um in u_model_profs:
         if resume_model is not None and um in resume_model:
             continue
