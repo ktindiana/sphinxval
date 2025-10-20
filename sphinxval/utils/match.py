@@ -3109,6 +3109,7 @@ def match_all_forecasts(all_energy_channels, model_names, obs_objs,
                             sphinx.trigger_input_start[thresh_key][i],
                             sphinx.threshold_crossed_in_pred_win[thresh_key][i],
                             sphinx.observed_ongoing_events[thresh_key][i])
+
                         #Save observed SEP event
                         if sep_status == True:
                             if sphinx.observed_threshold_crossing[thresh_key].crossing_time\

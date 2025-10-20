@@ -183,7 +183,12 @@ def fill_forecast_dict_row(index, prediction, dict):
     pred_fl_units = repr(sorted([fl.units for fl in prediction.fluences]))
 
     #Fluence spectra
-    pred_fl_spec = repr(sorted([flsp.fluence_spectrum for flsp in prediction.fluence_spectra]))
+    spec = []
+    for flsp in prediction.fluence_spectra:
+        vals = [fl['fluence'] for fl in flsp.fluence_spectrum]
+        spec = spec + vals
+
+    pred_fl_spec = repr(sorted(spec))
     pred_flsp_units = repr(sorted([flsp.fluence_units for flsp in prediction.fluence_spectra]))
 
     #Point intensity

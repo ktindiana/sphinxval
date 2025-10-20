@@ -87,7 +87,7 @@ peak_flux_cut = 8e-1
 #predicted energy channels and thresholds, but not exactly the same.
 #Only one excepted case allowed in current version.
 #Set do_mismatch = True to allow comparison of mismatched energy channels and thresholds
-do_mismatch = True
+do_mismatch = False
 
 #mm stands for "mismatch"
 #WRITE UNITS IN SAME FORMAT AS REQUESTED FOR SEP SCOREBOARDS
