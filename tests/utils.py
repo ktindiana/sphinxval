@@ -415,7 +415,7 @@ def attributes_of_sphinx_obj(keyword, sphinx_obj, energy_channel_key, threshold_
                 if keyword == 'Observatory':
                     attribute += getattr(sphinx_obj.prediction_observation_windows_overlap[i], "short_name", None)
                 else:
-                    attribute += getattr(sphinx_obj, "observed_sep_profiles", None)[i]
+                    attribute += getattr(sphinx_obj, "observed_sep_profiles", None)[i]        
         return attribute    
     elif keyword == "Observed SEP All Clear":
         return getattr(sphinx_obj.observed_all_clear, 'all_clear_boolean', None)

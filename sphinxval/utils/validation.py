@@ -20,6 +20,7 @@ import sklearn.metrics as skl
 import os.path
 import logging
 import pickle
+import json
 
 __author__ = "Katie Whitman"
 __maintainer__ = "Katie Whitman"
@@ -546,7 +547,7 @@ def fill_sphinx_dict_row(sphinx, dict, energy_key, thresh_key, profname_dict):
 def prepare_outdirs():
     if not os.path.isdir(config.outpath):
         os.mkdir(config.outpath)
-    for datafmt in ('pkl', 'csv', 'plots'):
+    for datafmt in ('pkl', 'csv', 'plots', 'json'):
         outdir = os.path.join(config.outpath, datafmt)
         if not os.path.isdir(outdir):
             os.mkdir(outdir) 
@@ -3697,6 +3698,61 @@ def pretty(d, indent=0):
          print('\t' * (indent+1) + str(value))
 
 
+def profile_output(sphinx_dataframe, resume_obs, resume_model):
+    
+    # Is there a point to 'resume' for the profiles? 
+    u_obs_profs = resume.identify_unique(sphinx_dataframe, 'Observed Time Profile')
+    
+    u_model_profs = resume.identify_unique(sphinx_dataframe, 'Predicted Time Profile')
+    
+  
+
+    observed_profs = {}
+    model_profs = {}
+    for u in u_obs_profs:
+        if resume_obs is not None and u in resume_obs:
+            continue
+        else:
+            for u_i in u.rsplit(','):
+                obs_dates, obs_profiles = profile.read_single_time_profile(u_i)
+                obs_dates = [x.strftime('%Y-%m-%dT%H:%M:%SZ') for x in obs_dates]
+                observed_profs[u_i] = {'dates': obs_dates, 'fluxes': obs_profiles}
+    for um in u_model_profs:
+        if resume_model is not None and um in resume_model:
+            continue
+        else:
+            for um_i in um.rsplit(','):
+                model_dates, model_profiles = profile.read_single_time_profile(um_i)
+                model_dates = [x.strftime('%Y-%m-%dT%H:%M:%SZ') for x in model_dates]
+                model_profs[um_i] = {'dates': model_dates, 'fluxes': model_profiles}
+
+
+    if resume_obs is not None:
+        observed_profs = resume_obs | observed_profs
+    if resume_model is not None:
+        model_profs = resume_model | model_profs
+
+ 
+    obs_file_path = os.path.join(config.outpath,'/json/observed_profiles.json')
+    with open(obs_file_path, 'w+') as json_file:
+        json.dump(observed_profs, json_file, indent = 4)
+    pickle_file_path = os.path.join(config.outpath, '/pkl/observed_profiles.pkl') # Desired name for your pickle file
+    with open(pickle_file_path, 'wb') as f:
+        pickle.dump(observed_profs, f)
+    
+
+    model_file_path = os.path.join(config.outpath, '/json/model_profiles.json')
+    with open(model_file_path, 'w+') as json_file:
+        json.dump(model_profs, json_file, indent = 4)
+    pickle_file_path = os.path.join(config.outpath, '/pkl/model_profiles.pkl') # Desired name for your pickle file
+    with open(pickle_file_path, 'wb') as f:
+        pickle.dump(model_profs, f)
+
+
+
+    return
+
+
 def calculate_intuitive_metrics(df, model_names, all_energy_channels,
     all_observed_thresholds, validation_type="All"):
     """ Calculate metrics appropriate to each quantity and
@@ -3891,7 +3947,7 @@ def validation_explanation():
 
 def intuitive_validation(evaluated_sphinx, removed_sphinx, model_names,
     all_energy_channels, all_observed_thresholds, observed_sep_events,
-    profname_dict, r_df=None):
+    profname_dict, r_df=None, r_obs= None, r_mod= None):
     """ In the intuitive_validation subroutine, forecasts are validated in a
         way similar to which people would interpret forecasts.
     
@@ -4002,6 +4058,10 @@ def intuitive_validation(evaluated_sphinx, removed_sphinx, model_names,
     #Record explanatory information to the log
     validation_explanation()
     
+    
+
+    profile_output(df, r_obs, r_mod)
+
     logger.info("intuitive_validation: Validation process complete.")
 
     return df   
