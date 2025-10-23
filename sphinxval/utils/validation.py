@@ -3733,18 +3733,18 @@ def profile_output(sphinx_dataframe, resume_obs, resume_model):
         model_profs = resume_model | model_profs
 
  
-    obs_file_path = os.path.join(config.outpath,'/json/observed_profiles.json')
+    obs_file_path = os.path.join(config.outpath,os.path.join('json', 'observed_profiles.json'))
     with open(obs_file_path, 'w+') as json_file:
         json.dump(observed_profs, json_file, indent = 4)
-    pickle_file_path = os.path.join(config.outpath, '/pkl/observed_profiles.pkl') # Desired name for your pickle file
+    pickle_file_path = os.path.join(config.outpath, os.path.join('pkl', 'observed_profiles.pkl')) # Desired name for your pickle file
     with open(pickle_file_path, 'wb') as f:
         pickle.dump(observed_profs, f)
     
 
-    model_file_path = os.path.join(config.outpath, '/json/model_profiles.json')
+    model_file_path = os.path.join(config.outpath, os.path.join('json', 'model_profiles.json'))
     with open(model_file_path, 'w+') as json_file:
         json.dump(model_profs, json_file, indent = 4)
-    pickle_file_path = os.path.join(config.outpath, '/pkl/model_profiles.pkl') # Desired name for your pickle file
+    pickle_file_path = os.path.join(config.outpath, os.path.join('pkl', 'model_profiles.pkl')) # Desired name for your pickle file
     with open(pickle_file_path, 'wb') as f:
         pickle.dump(model_profs, f)
 

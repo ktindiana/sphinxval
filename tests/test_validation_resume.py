@@ -431,8 +431,8 @@ class Test_Resume(unittest.TestCase):
         # self.r_obs
         # self.r_mod
         validate.profile_output(self.df, self.r_obs_prof, self.r_model_prof)
-        obs_prof_filename = './output/json/observed_profiles.json'
-        model_prof_filename = './output/json/model_profiles.json'
+        obs_prof_filename = './tests/output/json/observed_profiles.json'
+        model_prof_filename = './tests/output/json/model_profiles.json'
         self.assertTrue(os.path.isfile(obs_prof_filename), msg = obs_prof_filename + ' does not exist, check the file is output correctly')
         self.assertTrue(os.path.isfile(model_prof_filename), msg = model_prof_filename + ' does not exist, check the file is output correctly')
         
