@@ -51,6 +51,7 @@ def initialize_sphinx_dict():
     
 
     dict = {"Model": [],
+            "Observatory": [],
             "Energy Channel Key": [],
             "Threshold Key": [],
             "Mismatch Allowed": [],
@@ -62,94 +63,120 @@ def initialize_sphinx_dict():
             "Forecast Issue Time":[],
             "Prediction Window Start": [],
             "Prediction Window End": [],
+            "Observed SEP Event": [], #If an SEP event was matched, list start time for convenience
             
-            #OBSERVATIONS
-            "Number of CMEs": [],
-            "CME Start Time": [], #Timestamp of 1st
-                #coronagraph image CME is visible in
-            "CME Liftoff Time": [], #Timestamp of coronagraph
-                #image with 1st indication of CME liftoff (used by
-                #CACTUS)
-            "CME Latitude": [],
-            "CME Longitude": [],
-            "CME Speed": [],
-            "CME Half Width": [],
-            "CME PA": [],
-            "CME Catalog": [],
-            "Number of Flares": [],
-            "Flare Latitude": [],
-            "Flare Longitude": [],
-            "Flare Start Time": [],
-            "Flare Peak Time": [],
-            "Flare End Time": [],
-            "Flare Last Data Time": [],
-            "Flare Intensity": [],
-            "Flare Integrated Intensity": [],
-            "Flare NOAA AR": [],
-            "Observatory": [],
-            "Observed Time Profile": [], #string of comma
-                                          #separated filenames
-            "Observed SEP All Clear": [],
-            "Observed SEP Probability": [],
-            "Observed SEP Threshold Crossing Time": [],
-            "Observed SEP Start Time":[],
-            "Observed SEP End Time": [],
-            "Observed SEP Duration": [],
-            "Observed SEP Fluence": [],
-            "Observed SEP Fluence Units": [],
-            "Observed SEP Fluence Spectrum": [],
-            "Observed SEP Fluence Spectrum Units": [],
-            "Observed SEP Peak Intensity (Onset Peak)": [],
-            "Observed SEP Peak Intensity (Onset Peak) Units": [],
-            "Observed SEP Peak Intensity (Onset Peak) Time": [],
-            "Observed SEP Peak Intensity Max (Max Flux)": [],
-            "Observed SEP Peak Intensity Max (Max Flux) Units": [],
-            "Observed SEP Peak Intensity Max (Max Flux) Time": [],
+            #FORECAST TRIGGERS
+            "Prediction Number of CMEs": [],
+            "Prediction CME Start Time": [], #Timestamp of 1st coronagraph image CME is visible in
+            "Prediction CME Liftoff Time": [], #Timestamp of coronagraph
+                #image with 1st indication of CME liftoff (used by CACTUS)
+            "Prediction CME Latitude": [],
+            "Prediction CME Longitude": [],
+            "Prediction CME Speed": [],
+            "Prediction CME Half Width": [],
+            "Prediction CME PA": [],
+            "Prediction CME Catalog": [],
+            "Prediction Number of Flares": [],
+            "Prediction Flare Latitude": [],
+            "Prediction Flare Longitude": [],
+            "Prediction Flare Start Time": [],
+            "Prediction Flare Peak Time": [],
+            "Prediction Flare End Time": [],
+            "Prediction Flare Last Data Time": [],
+            "Prediction Flare Intensity": [],
+            "Prediction Flare Integrated Intensity": [],
+            "Prediction Flare NOAA AR": [],
 
-            "Observed Point Intensity": [],
-            "Observed Point Intensity Units": [],
-            "Observed Point Intensity Time": [],
+            #KNOWN OBSERVED SEP TRIGGERS
+            "Observed SEP CME Start Time": [], #Timestamp of 1st coronagraph image CME is visible in
+            "Observed SEP CME Liftoff Time": [], #Timestamp of coronagraph
+                #image with 1st indication of CME liftoff (used by CACTUS)
+            "Observed SEP CME Latitude": [],
+            "Observed SEP CME Longitude": [],
+            "Observed SEP CME Speed": [],
+            "Observed SEP CME Half Width": [],
+            "Observed SEP CME PA": [],
+            "Observed SEP CME Catalog": [],
+            "Observed SEP Flare Latitude": [],
+            "Observed SEP Flare Longitude": [],
+            "Observed SEP Flare Start Time": [],
+            "Observed SEP Flare Peak Time": [],
+            "Observed SEP Flare End Time": [],
+            "Observed SEP Flare Intensity": [],
+            "Observed SEP Flare Integrated Intensity": [],
+            "Observed SEP Flare NOAA AR": [],
+
+            #USEFUL SUPPLEMENTARY INFORMATION
+            "Last Data Time to Issue Time": [],
             "Observed Max Flux in Prediction Window": [],
             "Observed Max Flux in Prediction Window Units": [],
             "Observed Max Flux in Prediction Window Time": [],
-            
-            #PREDICTIONS
-            "Predicted SEP All Clear": [],
-            "Predicted SEP All Clear Probability Threshold": [],
+
+            #MATCHED PREDICTED AND OBSERVED INFORMATION
+            "Time Profile Match Status": [],
+            "Predicted Time Profile": [],
+            "Observed Time Profile": [], #string of comma separated filenames
+
             "All Clear Match Status": [],
-            "Predicted SEP Probability": [],
+            "Predicted SEP All Clear Probability Threshold": []
+            "Predicted SEP All Clear": [],,
+            "Observed SEP All Clear": [],
+
             "Probability Match Status": [],
-            "Predicted SEP Threshold Crossing Time": [],
+            "Predicted SEP Probability": [],
+            "Observed SEP Probability": [],
+
             "Threshold Crossing Time Match Status": [],
-            "Predicted SEP Start Time":[],
+            "Predicted SEP Threshold Crossing Time": [],
+            "Observed SEP Threshold Crossing Time": [],
+            
             "Start Time Match Status": [],
-            "Predicted SEP End Time": [],
-            "End Time Match Status": [],
-            "Predicted SEP Duration": [],
-            "Duration Match Status": [],
-            "Predicted SEP Fluence": [],
-            "Predicted SEP Fluence Units": [],
-            "Fluence Match Status": [],
-            "Predicted SEP Fluence Spectrum": [],
-            "Predicted SEP Fluence Spectrum Units": [],
-            "Fluence Spectrum Match Status": [],
+            "Predicted SEP Start Time":[],
+            "Observed SEP Start Time":[],
+ 
+            "Peak Intensity Match Status": [],
             "Predicted SEP Peak Intensity (Onset Peak)": [],
             "Predicted SEP Peak Intensity (Onset Peak) Units": [],
             "Predicted SEP Peak Intensity (Onset Peak) Time": [],
-            "Peak Intensity Match Status": [],
+            "Observed SEP Peak Intensity (Onset Peak)": [],
+            "Observed SEP Peak Intensity (Onset Peak) Units": [],
+            "Observed SEP Peak Intensity (Onset Peak) Time": [],
+
+            "Peak Intensity Max Match Status": [],
             "Predicted SEP Peak Intensity Max (Max Flux)": [],
             "Predicted SEP Peak Intensity Max (Max Flux) Units": [],
             "Predicted SEP Peak Intensity Max (Max Flux) Time": [],
-            "Peak Intensity Max Match Status": [],
+            "Observed SEP Peak Intensity Max (Max Flux)": [],
+            "Observed SEP Peak Intensity Max (Max Flux) Units": [],
+            "Observed SEP Peak Intensity Max (Max Flux) Time": [],
+ 
+            "End Time Match Status": [],
+            "Predicted SEP End Time": [],
+            "Observed SEP End Time": [],
             
+            "Duration Match Status": [],
+            "Predicted SEP Duration": [],
+            "Observed SEP Duration": [],
+            
+            "Fluence Match Status": [],
+            "Predicted SEP Fluence": [],
+            "Predicted SEP Fluence Units": [],
+            "Observed SEP Fluence": [],
+            "Observed SEP Fluence Units": [],
+
+            "Fluence Spectrum Match Status": [],
+            "Predicted SEP Fluence Spectrum": [],
+            "Predicted SEP Fluence Spectrum Units": [],
+            "Observed SEP Fluence Spectrum": [],
+            "Observed SEP Fluence Spectrum Units": [],
+
             "Predicted Point Intensity": [],
             "Predicted Point Intensity Units": [],
             "Predicted Point Intensity Time": [],
+            "Observed Point Intensity": [],
+            "Observed Point Intensity Units": [],
+            "Observed Point Intensity Time": [],
 
-            "Predicted Time Profile": [],
-            "Time Profile Match Status": [],
-            
-            "Last Data Time to Issue Time": [],
             
             #MATCHING INFORMATION
             "All Thresholds in Prediction": [],
@@ -209,6 +236,7 @@ def fill_sphinx_dict_row(sphinx, dict, energy_key, thresh_key, profname_dict):
         
     """
 
+    #CMEs THAT TRIGGERED PREDICTION
     ncme = len(sphinx.prediction.cmes)
     if ncme > 0:
         cme_start = sphinx.prediction.cmes[-1].start_time
@@ -229,6 +257,7 @@ def fill_sphinx_dict_row(sphinx, dict, energy_key, thresh_key, profname_dict):
         cme_speed = np.nan
         cme_catalog = None
         
+    #FLARES THAT TRIGGERED PREDICTIONS
     nfl = len(sphinx.prediction.flares)
     if nfl > 0:
         fl_lat = sphinx.prediction.flares[-1].lat
@@ -250,6 +279,31 @@ def fill_sphinx_dict_row(sphinx, dict, energy_key, thresh_key, profname_dict):
         fl_intensity = np.nan
         fl_integrated_intensity = np.nan
         fl_AR = None
+
+
+    #CME ASSOCIATED WITH OBSERVED SEP
+    #Null values already set if no CME
+    obs_cme_start = sphinx.observed_sep_cme.start_time
+    obs_cme_liftoff = sphinx.observed_sep_cme.liftoff_time
+    obs_cme_lat = sphinx.observed_sep_cme.lat
+    obs_cme_lon = sphinx.observed_sep_cme.lon
+    obs_cme_pa = sphinx.observed_sep_cme.pa
+    obs_cme_half_width = sphinx.observed_sep_cme.half_width
+    obs_cme_speed = sphinx.observed_sep_cme.speed
+    obs_cme_catalog = sphinx.observed_sep_cme.catalog
+
+    #FLARE ASSOCIATED WITH OBSERVED SEP
+    #Null values already set if no flare
+    obs_fl_lat = sphinx.observed_sep_flare.lat
+    obs_fl_lon = sphinx.observed_sep_flare.lon
+    obs_fl_last_data_time = sphinx.observed_sep_flare.last_data_time
+    obs_fl_start_time = sphinx.observed_sep_flare.start_time
+    obs_fl_peak_time = sphinx.observed_sep_flare.peak_time
+    obs_fl_end_time = sphinx.observed_sep_flare.end_time
+    obs_fl_intensity = sphinx.observed_sep_flare.intensity
+    obs_fl_integrated_intensity = sphinx.observed_sep_flare.integrated_intensity
+    obs_fl_AR = sphinx.observed_sep_flare.noaa_region
+
 
     observatory = ""
     obs_time_prof = ""
@@ -326,28 +380,51 @@ def fill_sphinx_dict_row(sphinx, dict, energy_key, thresh_key, profname_dict):
     dict["Forecast Issue Time"].append(sphinx.prediction.issue_time)
     dict["Prediction Window Start"].append(sphinx.prediction.prediction_window_start)
     dict["Prediction Window End"].append(sphinx.prediction.prediction_window_end)
-    dict["Number of CMEs"].append(ncme)
-    dict["CME Start Time"].append(cme_start) #Timestamp of 1st
+    dict["Prediction Number of CMEs"].append(ncme)
+    dict["Prediction CME Start Time"].append(cme_start) #Timestamp of 1st
             #coronagraph image CME is visible in
-    dict["CME Liftoff Time"].append(cme_liftoff) #Timestamp of coronagraph
+    dict["Prediction CME Liftoff Time"].append(cme_liftoff) #Timestamp of coronagraph
             #image with 1st indication of CME liftoff (used by
             #CACTUS)
-    dict["CME Latitude"].append(cme_lat)
-    dict["CME Longitude"].append(cme_lon)
-    dict["CME Speed"].append(cme_speed)
-    dict["CME Half Width"].append(cme_half_width)
-    dict["CME PA"].append(cme_pa)
-    dict["CME Catalog"].append(cme_catalog)
-    dict["Number of Flares"].append(nfl)
-    dict["Flare Latitude"].append(fl_lat)
-    dict["Flare Longitude"].append(fl_lon)
-    dict["Flare Start Time"].append(fl_start_time)
-    dict["Flare Peak Time"].append(fl_peak_time)
-    dict["Flare End Time"].append(fl_end_time)
-    dict["Flare Last Data Time"].append(fl_last_data_time)
-    dict["Flare Intensity"].append(fl_intensity)
-    dict["Flare Integrated Intensity"].append(fl_integrated_intensity)
-    dict["Flare NOAA AR"].append(fl_AR)
+    dict["Prediction CME Latitude"].append(cme_lat)
+    dict["Prediction CME Longitude"].append(cme_lon)
+    dict["Prediction CME Speed"].append(cme_speed)
+    dict["Prediction CME Half Width"].append(cme_half_width)
+    dict["Prediction CME PA"].append(cme_pa)
+    dict["Prediction CME Catalog"].append(cme_catalog)
+    dict["Prediction Number of Flares"].append(nfl)
+    dict["Prediction Flare Latitude"].append(fl_lat)
+    dict["Prediction Flare Longitude"].append(fl_lon)
+    dict["Prediction Flare Start Time"].append(fl_start_time)
+    dict["Prediction Flare Peak Time"].append(fl_peak_time)
+    dict["Prediction Flare End Time"].append(fl_end_time)
+    dict["Prediction Flare Last Data Time"].append(fl_last_data_time)
+    dict["Prediction Flare Intensity"].append(fl_intensity)
+    dict["Prediction Flare Integrated Intensity"].append(fl_integrated_intensity)
+    dict["Prediction Flare NOAA AR"].append(fl_AR)
+    
+
+    dict["Observed SEP CME Start Time"].append(obs_cme_start) #Timestamp of 1st
+            #coronagraph image CME is visible in
+    dict["Observed SEP CME Liftoff Time"].append(obs_cme_liftoff) #Timestamp of coronagraph
+            #image with 1st indication of CME liftoff (used by
+            #CACTUS)
+    dict["Observed SEP CME Latitude"].append(obs_cme_lat)
+    dict["Observed SEP CME Longitude"].append(obs_cme_lon)
+    dict["Observed SEP CME Speed"].append(obs_cme_speed)
+    dict["Observed SEP CME Half Width"].append(obs_cme_half_width)
+    dict["Observed SEP CME PA"].append(obs_cme_pa)
+    dict["Observed SEP CME Catalog"].append(obs_cme_catalog)
+    dict["Observed SEP Flare Latitude"].append(obs_fl_lat)
+    dict["Observed SEP Flare Longitude"].append(obs_fl_lon)
+    dict["Observed SEP Flare Start Time"].append(obs_fl_start_time)
+    dict["Observed SEP Flare Peak Time"].append(obs_fl_peak_time)
+    dict["Observed SEP Flare End Time"].append(obs_fl_end_time)
+    dict["Observed SEP Flare Last Data Time"].append(obs_fl_last_data_time)
+    dict["Observed SEP Flare Intensity"].append(obs_fl_intensity)
+    dict["Observed SEP Flare Integrated Intensity"].append(obs_fl_integrated_intensity)
+    dict["Observed SEP Flare NOAA AR"].append(obs_fl_AR)
+
     dict["Observatory"].append(observatory)
     dict["Observed Time Profile"].append(obs_time_prof) #string of comma
                               #separated filenames
