@@ -1715,11 +1715,11 @@ class SPHINX:
         
         # MATCHING CRITERIA INITIALIZATION
         self.is_win_overlap = []
+        self.is_source_flare = []
+        self.is_source_cme = []
         self.is_eruption_in_range = {}
         self.trigger_input_start = {}
         self.trigger_input_end = {}
-        self.is_source_flare = {}
-        self.is_source_cme = {}
 
         return
 

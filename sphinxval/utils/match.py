@@ -260,7 +260,14 @@ def create_matched_model_array(objs, threshold):
         sphinx_index.append(i)
         #If matching was done by explicitly comparing flare/CME know to be
         #the source of an observed SEP event, don't want to revise
-        if obj.match_how == "Known SEP Trigger": continue
+        if obj.match_how == "Known SEP Trigger":
+            matched_obs.append([None])
+            matched_sep_source.append(None)
+            observed_thresh_cross.append(pd.NaT)
+            td_eruption_thresh_cross.append(np.nan)
+            prediction_cmes.append(None)
+            prediction_flares.append(None)
+            continue
         
         try:
             obs_arr = obj.prediction_observation_windows_overlap
@@ -960,17 +967,17 @@ def before_threshold_crossing(sphinx, fcast, obs_values, observation_objs,
         obs_values, 'threshold_crossing_time', energy_key, thresh)
 
     if sphinx.overlapping_indices:
+    
         for ix in sphinx.overlapping_indices:
             sphinx.triggers_before_threshold_crossing[thresh_key].append(is_trigger_before_start[ix])
             sphinx.time_difference_triggers_threshold_crossing[thresh_key].append(td_trigger_thresh_cross[ix])
             #logging
+            logger.debug(observation_objs[ix].source)
             logger.debug("Triggers before threshold crossing and time difference:  " +
                 str(sphinx.triggers_before_threshold_crossing[thresh_key][-1]))
             logger.debug("  " +
                 str(sphinx.time_difference_triggers_threshold_crossing[thresh_key][-1]))
-            threshold_crossing_time = \
-            objh.get_threshold_crossing_time(observation_objs[ix],
-                thresh)
+            threshold_crossing_time = objh.get_threshold_crossing_time(observation_objs[ix], thresh)
             logger.debug("  Observed threshold crossing time: "
                 + str(threshold_crossing_time))
 
@@ -1179,11 +1186,11 @@ def is_source_flare(sphinx, fcast, obs_values, observation_objs, energy_key, thr
         observed_flare = None
         any_farside = None
         for ix in sphinx.overlapping_indices:
-            if observations_objs[ix].farside is not None:
-                any_farside = any_farside or observations_objs[ix].farside #default True
+            if observation_objs[ix].farside is not None:
+                any_farside = any_farside or observation_objs[ix].farside #default True
             for flare in fcast.flares:
                 if peak_ix != -1: continue #if found a flare peak time match, don't consider any other flares
-                for obs_flare in observations_objs[ix].flares: #Match any flares associated with observation?
+                for obs_flare in observation_objs[ix].flares: #Match any flares associated with observation?
                     n_obs_flares = n_obs_flares + 1
                     #Compare flare peak times
                     if not pd.isnull(flare.peak_time) and not pd.isnull(obs_flare.peak_time):
@@ -1205,32 +1212,32 @@ def is_source_flare(sphinx, fcast, obs_values, observation_objs, energy_key, thr
         for ix in sphinx.overlapping_indices:
             #Prediction doesn't use flare triggers
             if len(fcast.flares) == 0:
-                sphinx.is_source_flare[thresh_key].append(None)
+                sphinx.is_source_flare.append(None)
                 sphinx.observed_sep_farside = any_farside
 
             #Found prediction flare peak match with one of the observation flares
             elif peak_ix != -1:
                 if ix == peak_ix:
-                    sphinx.is_source_flare[thresh_key].append(True)
-                    sphinx.observed_sep_farside = observations_objs[ix].farside
+                    sphinx.is_source_flare.append(True)
+                    sphinx.observed_sep_farside = observation_objs[ix].farside
                 else:
-                    sphinx.is_source_flare[thresh_key].append(False)
+                    sphinx.is_source_flare.append(False)
 
             #Found prediction flare start match, but not peak match with one of the flares
             #(e.g. because peak time may not have been specified)
             elif start_ix != -1:
                 if ix == start_ix:
-                    sphinx.is_source_flare[thresh_key].append(True)
-                    sphinx.observed_sep_farside = observations_objs[ix].farside
+                    sphinx.is_source_flare.append(True)
+                    sphinx.observed_sep_farside = observation_objs[ix].farside
                 else:
-                    sphinx.is_source_flare[thresh_key].append(False)
+                    sphinx.is_source_flare.append(False)
 
             #Prediction does use flare triggers, but none were found to be
             #associated with the observations, because...
             elif len(fcast.flares) > 0:
                 #... the event was farsided?
                 if any_farside is not None or n_obs_flares > 0:
-                    sphinx.is_source_flare[thresh_key].append(False)
+                    sphinx.is_source_flare.append(False)
                     sphinx.observed_sep_farside = any_farside
 
                 #... there were no flares or triggers at all with the observations;
@@ -1238,7 +1245,11 @@ def is_source_flare(sphinx, fcast, obs_values, observation_objs, energy_key, thr
                 #may be a SEP period without triggers included in the prepared observations.
                 #Then default to old matching logic
                 elif any_farside is None or n_obs_flares == 0:
-                    sphinx.is_source_flare[thresh_key].append(None)
+                    sphinx.is_source_flare.append(None)
+
+    logger.debug(f"Is source flare?: {sphinx.is_source_flare}")
+    logger.debug(f"Which flare: {sphinx.observed_sep_flare.intensity}")
+    logger.debug(f"Farside?: {sphinx.observed_sep_farside}")
     
     return
 
@@ -1311,11 +1322,11 @@ def is_source_cme(sphinx, fcast, obs_values, observation_objs, energy_key, thres
         any_farside = None
         #First round, check for the same CME catalogs
         for ix in sphinx.overlapping_indices:
-            if observations_objs[ix].farside is not None:
-                any_farside = any_farside or observations_objs[ix].farside #default True
+            if observation_objs[ix].farside is not None:
+                any_farside = any_farside or observation_objs[ix].farside #default True
             for cme in fcast.cmes:
                 if cme_ix != -1: continue #if found a cme match, don't consider any other cmes
-                for obs_cme in observations_objs[ix].cmes: #Match any CMEs associated with observation?
+                for obs_cme in observation_objs[ix].cmes: #Match any CMEs associated with observation?
                     n_obs_cme = n_obs_cme + 1
                     #Check for values from the same CME catalog
                     if obs_cme.catalog == cme.catalog:
@@ -1326,12 +1337,12 @@ def is_source_cme(sphinx, fcast, obs_values, observation_objs, energy_key, thres
                                 cme_ix = ix
                                 observed_cme = obs_cme
                         #Compare CME start times and find (almost) exact matches
-                        elif is_same_cme(cme.start_time, obs_cme.start_time, catalog_tolerance)
+                        elif is_same_cme(cme.start_time, obs_cme.start_time, catalog_tolerance):
                             cme_ix = ix
                             if observed_cme is None:
                                 observed_cme = obs_cme
                         #CACTUS has liftoff times
-                        elif is_same_cme(cme.liftoff_time, obs_cme.liftoff_time, catalog_tolerance)
+                        elif is_same_cme(cme.liftoff_time, obs_cme.liftoff_time, catalog_tolerance):
                             cme_ix = ix
                             if observed_cme is None:
                                 observed_cme = obs_cme
@@ -1340,15 +1351,15 @@ def is_source_cme(sphinx, fcast, obs_values, observation_objs, energy_key, thres
         if cme_ix == -1 and not same_catalog:
             for cme in fcast.cmes:
                 if cme_ix != -1: continue #if found a cme match, don't consider any other cmes
-                for obs_cme in observations_objs[ix].cmes: #Match any CMEs associated with observation?
+                for obs_cme in observation_objs[ix].cmes: #Match any CMEs associated with observation?
                     #Compare CME start times and find (almost) exact matches
-                    if is_same_cme(cme.start_time, obs_cme.start_time, start_tolerance)
+                    if is_same_cme(cme.start_time, obs_cme.start_time, start_tolerance):
                         cme_ix = ix
                         if observed_cme is None:
                             observed_cme = obs_cme
 
                     #CACTUS has liftoff times
-                    elif is_same_cme(cme.liftoff_time, obs_cme.liftoff_time, start_tolerance)
+                    elif is_same_cme(cme.liftoff_time, obs_cme.liftoff_time, start_tolerance):
                         cme_ix = ix
                         if observed_cme is None:
                             observed_cme = obs_cme
@@ -1362,22 +1373,22 @@ def is_source_cme(sphinx, fcast, obs_values, observation_objs, energy_key, thres
         for ix in sphinx.overlapping_indices:
             #Prediction doesn't use CME triggers
             if len(fcast.cmes) == 0:
-                sphinx.is_source_cme[thresh_key].append(None)
+                sphinx.is_source_cme.append(None)
                 sphinx.observed_sep_farside = any_farside
 
             #Found match with one of the observation cmes
             if cme_ix != -1:
                 if ix == cme_ix:
-                    sphinx.is_source_cme[thresh_key].append(True)
-                    sphinx.observed_sep_farside = observations_objs[ix].farside
+                    sphinx.is_source_cme.append(True)
+                    sphinx.observed_sep_farside = observation_objs[ix].farside
                 else:
-                    sphinx.is_source_cme[thresh_key].append(False)
+                    sphinx.is_source_cme.append(False)
 
             #No matches found for forecast cme
             elif len(fcast.cmes) > 0:
                 #There were CMEs specified with the observations, but no match
                 if n_obs_cme > 0:
-                    sphinx.is_source_cme[thresh_key].append(False)
+                    sphinx.is_source_cme.append(False)
                     sphinx.observed_sep_farside = any_farside
 
                 #There were no CMEs with the observations.
@@ -1385,8 +1396,11 @@ def is_source_cme(sphinx, fcast, obs_values, observation_objs, energy_key, thres
                 #may be a SEP period without triggers included in the prepared observations.
                 #Then default to old matching logic
                 else:
-                    sphinx.is_source_cme[thresh_key].append(None)
-    
+                    sphinx.is_source_cme.append(None)
+ 
+    logger.debug(f"Is source CME?: {sphinx.is_source_cme}")
+    logger.debug(f"Which CME: {sphinx.observed_sep_cme.speed}")
+ 
     return
 
 
@@ -1717,7 +1731,7 @@ def match_observed_onset_peak(sphinx, observation_obj, is_win_overlap,
         peak_criteria = is_source
         if is_source is False:
             sphinx.peak_intensity_match_status = "Trigger not associated with observed SEP"
-        self.match_how = "Known SEP Trigger"
+        sphinx.match_how = "Known SEP Trigger"
 
     #If not triggered model or don't have flare/CME info stored with observations
     else:
@@ -1727,7 +1741,8 @@ def match_observed_onset_peak(sphinx, observation_obj, is_win_overlap,
             peak_criteria = is_eruption_in_range
             if not is_eruption_in_range:
                 sphinx.peak_intensity_match_status = "Eruption Out of Range"
-            
+
+    logger.debug(sphinx.peak_intensity_match_status)
  
     if peak_criteria:
         #logging
@@ -1810,7 +1825,7 @@ def match_observed_max_flux(sphinx, observation_obj, is_win_overlap,
         max_criteria = is_source
         if is_source is False:
             sphinx.peak_intensity_max_match_status = "Trigger not associated with observed SEP"
-        self.match_how = "Known SEP Trigger"
+        sphinx.match_how = "Known SEP Trigger"
 
     #If not triggered model or don't have flare/CME info stored with observations
     else:
@@ -1821,6 +1836,7 @@ def match_observed_max_flux(sphinx, observation_obj, is_win_overlap,
             if not is_eruption_in_range:
                 sphinx.peak_intensity_max_match_status = "Eruption Out of Range"
 
+    logger.debug(sphinx.peak_intensity_max_match_status)
 
     if max_criteria:
         sphinx.observed_match_peak_intensity_max_source = observation_obj.source
@@ -1936,7 +1952,7 @@ def match_all_clear(sphinx, observation_obj, is_win_overlap,
         #If known that this forecast and observation are a match because they are
         #both associated with the same flare or same CME
         elif is_source is not None:
-            self.match_how = "Known SEP Trigger"
+            sphinx.match_how = "Known SEP Trigger"
             if is_source:
                 #Observed all clear is False
                 sphinx.all_clear_match_status = "SEP Event"
@@ -1967,6 +1983,8 @@ def match_all_clear(sphinx, observation_obj, is_win_overlap,
     logger.debug("Observed all_clear matched:")
     logger.debug("  " + observation_obj.source)
     logger.debug("  " + str(all_clear_status))
+    logger.debug(sphinx.all_clear_match_status)
+
 
     sphinx.observed_match_all_clear_source = observation_obj.source
     sphinx.observed_all_clear.all_clear_boolean = all_clear_status
@@ -2082,7 +2100,7 @@ def match_sep_quantities(sphinx, observation_obj, thresh, is_win_overlap,
         #If known that this forecast and observation are a match because they are
         #both associated with the same flare or same CME
         elif is_source is not None:
-            self.match_how = "Known SEP Trigger"
+            sphinx.match_how = "Known SEP Trigger"
             if is_source:
                 sphinx.sep_match_status[thresh_key] = "SEP Event"
                 prob.probability_value = 1.0
@@ -2133,7 +2151,8 @@ def match_sep_quantities(sphinx, observation_obj, thresh, is_win_overlap,
     #All clear status
     logger.debug("Observed SEP event matched:")
     logger.debug("  " + observation_obj.source)
-    
+    logger.debug(sphinx.sep_match_status)
+
     #FOR IDENTIFIED SEP EVENTS;  match status = "SEP Event"
     #Threshold Crossing
     threshold_crossing_time = pd.NaT
@@ -2157,7 +2176,8 @@ def match_sep_quantities(sphinx, observation_obj, thresh, is_win_overlap,
 
 
 def match_sep_end_time(sphinx, observation_obj, thresh, is_win_overlap,
-    is_eruption_in_range, trigger_input_end, is_pred_sep_overlap):
+    is_eruption_in_range, trigger_input_end, is_pred_sep_overlap,
+    is_source_flare, is_source_cme):
     """ Apply criteria to determine if a forecast occurs prior to SEP
         end time and extract observed end time.
                
@@ -2230,21 +2250,21 @@ def match_sep_end_time(sphinx, observation_obj, thresh, is_win_overlap,
     #If known that this forecast and observation are a match because they are
     #both associated with the same flare or same CME
     elif is_source is not None:
-        self.match_how = "Known SEP Trigger"
+        sphinx.match_how = "Known SEP Trigger"
         if is_source:
             sphinx.end_time_match_status[thresh_key] = "SEP Event"
             end_status = True
         else:
             end_status = None
             sphinx.end_time_match_status[thresh_key] = "Trigger not associated with observed SEP"
-            return sep_status
+            return end_status
 
     #If there is an SEP event, the eruption must occur in the right time range
     elif is_source is None and is_eruption_in_range is not None:
         if not is_eruption_in_range:
-            sep_status = None
+            end_status = None
             sphinx.end_time_match_status[thresh_key] = "Eruption Out of Range"
-            return sep_status
+            return end_status
         else:
             end_status = True
             sphinx.end_time_match_status[thresh_key] = "SEP Event"
@@ -2260,7 +2280,8 @@ def match_sep_end_time(sphinx, observation_obj, thresh, is_win_overlap,
     #Matched End Time
     logger.debug("Observed SEP end time matched:")
     logger.debug("  " + observation_obj.source)
- 
+    logger.debug(sphinx.end_time_match_status)
+
     #Start time and channel fluence and duraction
     end_time = pd.NaT
     for i in range(len(observation_obj.event_lengths)):
@@ -2862,7 +2883,7 @@ def revise_eruption_matches(evaluated_sphinx, all_energy_channels, obs_values,
                 #same SEP event.
                 thresh_key = objh.threshold_to_key(threshold)
                 obs_sep = observed_sep_events[model][energy_key][thresh_key]
-                if not obs_sep: continue
+                if len(obs_sep) == 0: continue
 
                 #Create a dataframe containing info from all forecasts for a
                 #single model, energy channel, and threshold. To allow easy
@@ -3104,7 +3125,7 @@ def setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_o
  
         observation_objs = obs_objs[energy_key] #Observation objects
         forecasts = model_objs[energy_key] #all forecasts for channel
- 
+
         n_tot = len(forecasts)
         ii = 0
         setup_start_time = datetime.datetime.now()
@@ -3147,8 +3168,7 @@ def setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_o
                 logger.debug("Mismatched channel allowed.")
 
             #Get Trigger and Input information
-            sphinx.last_eruption_time, sphinx.last_trigger_time =\
-                fcast.last_trigger_time()
+            sphinx.last_eruption_time, sphinx.last_trigger_time = fcast.last_trigger_time()
             
             sphinx.last_input_time = fcast.last_input_time()
 
@@ -3283,7 +3303,7 @@ def setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_o
                 #in contains_thresh_cross and is_*_before* arrays
                 #will be in an array in the same order as the
                 #thresholds
-                sphinx.thresholds.append(fcast_thresh) #threshold in observation
+                sphinx.thresholds.append(fcast_thresh) #threshold in observations
                 sphinx.add_threshold(fcast_thresh)
                 thresh_key = objh.threshold_to_key(fcast_thresh)
 
@@ -3529,8 +3549,8 @@ def match_all_forecasts(all_energy_channels, model_names, obs_objs,
                             sphinx.triggers_before_peak_intensity[i],
                             sphinx.inputs_before_peak_intensity[i],
                             sphinx.prediction_window_sep_overlap[thresh_key][i],
-                            sphinx.is_source_flare[thresh_key][i],
-                            sphinx.is_source_cme[thresh_key][i])
+                            sphinx.is_source_flare[i],
+                            sphinx.is_source_cme[i])
                         
                        
                         #MAX FLUX
@@ -3542,8 +3562,8 @@ def match_all_forecasts(all_energy_channels, model_names, obs_objs,
                             sphinx.triggers_before_peak_intensity_max[i],
                             sphinx.inputs_before_peak_intensity_max[i],
                             sphinx.prediction_window_sep_overlap[thresh_key][i],
-                            sphinx.is_source_flare[thresh_key][i],
-                            sphinx.is_source_cme[thresh_key][i])
+                            sphinx.is_source_flare[i],
+                            sphinx.is_source_cme[i])
                         
                         
                         #ALL CLEAR
@@ -3556,8 +3576,8 @@ def match_all_forecasts(all_energy_channels, model_names, obs_objs,
                             sphinx.trigger_input_start[thresh_key][i],
                             sphinx.threshold_crossed_in_pred_win[thresh_key][i],
                             sphinx.observed_ongoing_events[thresh_key][i],
-                            sphinx.is_source_flare[thresh_key][i],
-                            sphinx.is_source_cme[thresh_key][i])
+                            sphinx.is_source_flare[i],
+                            sphinx.is_source_cme[i])
 
                         #SEP QUANTITIES RELATED TO START TIME
                         sep_status = match_sep_quantities(sphinx, observation_objs[obs_idx],
@@ -3566,8 +3586,8 @@ def match_all_forecasts(all_energy_channels, model_names, obs_objs,
                             sphinx.trigger_input_start[thresh_key][i],
                             sphinx.threshold_crossed_in_pred_win[thresh_key][i],
                             sphinx.observed_ongoing_events[thresh_key][i],
-                            sphinx.is_source_flare[thresh_key][i],
-                            sphinx.is_source_cme[thresh_key][i])
+                            sphinx.is_source_flare[i],
+                            sphinx.is_source_cme[i])
 
                         #Save observed SEP event
                         if sep_status == True:
@@ -3582,8 +3602,8 @@ def match_all_forecasts(all_energy_channels, model_names, obs_objs,
                             sphinx.is_eruption_in_range[thresh_key][i],
                             sphinx.trigger_input_end[thresh_key][i],
                             sphinx.prediction_window_sep_overlap[thresh_key][i],
-                            sphinx.is_source_flare[thresh_key][i],
-                            sphinx.is_source_cme[thresh_key][i])
+                            sphinx.is_source_flare[i],
+                            sphinx.is_source_cme[i])
 
                         derived_status = calculate_derived_quantities(sphinx)
 
@@ -3607,8 +3627,7 @@ def match_all_forecasts(all_energy_channels, model_names, obs_objs,
     logger.info("Initial forecast-to-observation matching complete.")
     #Print uniquely identified observed SEP events
     #Redundant as info is in output files. Use for debugging.
-    sep_report(all_energy_channels, obs_values, model_names,
-        observed_sep_events)
+    sep_report(all_energy_channels, obs_values, model_names, observed_sep_events)
 
     logger.info("Checking forecasts to determine if revisions should be made "
             "in matches to observed SEP events. Revising for all predictions "

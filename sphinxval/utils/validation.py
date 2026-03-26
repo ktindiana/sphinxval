@@ -63,6 +63,9 @@ def initialize_sphinx_dict():
             "Forecast Issue Time":[],
             "Prediction Window Start": [],
             "Prediction Window End": [],
+            "Last Trigger Time": [],
+            "Last Input Time": [],
+            "Last Eruption Time": [], #Last time for flare/CME
             "Observed SEP Event": [], #If an SEP event was matched, list start time for convenience
             
             #FORECAST TRIGGERS
@@ -118,8 +121,8 @@ def initialize_sphinx_dict():
             "Observed Time Profile": [], #string of comma separated filenames
 
             "All Clear Match Status": [],
-            "Predicted SEP All Clear Probability Threshold": []
-            "Predicted SEP All Clear": [],,
+            "Predicted SEP All Clear Probability Threshold": [],
+            "Predicted SEP All Clear": [],
             "Observed SEP All Clear": [],
 
             "Probability Match Status": [],
@@ -180,9 +183,6 @@ def initialize_sphinx_dict():
             
             #MATCHING INFORMATION
             "All Thresholds in Prediction": [],
-            "Last Eruption Time": [], #Last time for flare/CME
-            "Last Trigger Time": [],
-            "Last Input Time": [],
             "Threshold Crossed in Prediction Window": [],
             "All Threshold Crossing Times": [],
             "Eruption before Threshold Crossed": [],
@@ -420,7 +420,6 @@ def fill_sphinx_dict_row(sphinx, dict, energy_key, thresh_key, profname_dict):
     dict["Observed SEP Flare Start Time"].append(obs_fl_start_time)
     dict["Observed SEP Flare Peak Time"].append(obs_fl_peak_time)
     dict["Observed SEP Flare End Time"].append(obs_fl_end_time)
-    dict["Observed SEP Flare Last Data Time"].append(obs_fl_last_data_time)
     dict["Observed SEP Flare Intensity"].append(obs_fl_intensity)
     dict["Observed SEP Flare Integrated Intensity"].append(obs_fl_integrated_intensity)
     dict["Observed SEP Flare NOAA AR"].append(obs_fl_AR)
@@ -441,8 +440,10 @@ def fill_sphinx_dict_row(sphinx, dict, energy_key, thresh_key, profname_dict):
         dict["Observed SEP Threshold Crossing Time"].append(pd.NaT)
 
     try:
+        dict["Observed SEP Event"].append(sphinx.observed_start_time[thresh_key])
         dict["Observed SEP Start Time"].append(sphinx.observed_start_time[thresh_key])
     except:
+        dict["Observed SEP Event"].append(pd.NaT)
         dict["Observed SEP Start Time"].append(pd.NaT)
 
     try:
@@ -651,7 +652,7 @@ def fill_sphinx_df(evaluated_sphinx, all_obs_thresholds, profname_dict):
         organized by model and energy channel.
     """
     #sorted by model, quantity, energy channel, threshold
-    dict = initialize_sphinx_dict()
+    sphinx_dict = initialize_sphinx_dict()
 
     #Loop through the forecasts for each model and fill in quantity_dict
     #as appropriate
@@ -662,16 +663,14 @@ def fill_sphinx_df(evaluated_sphinx, all_obs_thresholds, profname_dict):
             for sphinx in evaluated_sphinx[model][ek]:
                 logger.debug(sphinx.prediction.source)
                 
-                try:
+                try: ####FIX BUG###
                     for tk in all_obs_thresholds[ek]:
-                        fill_sphinx_dict_row(sphinx, dict, ek, tk, profname_dict)
+                        fill_sphinx_dict_row(sphinx, sphinx_dict, ek, tk, profname_dict)
                 except:
-                    #In the case a new energy channel with added to
-                    #removed_sphinx
-                    fill_sphinx_dict_row(sphinx, dict, ek, None, profname_dict)
-                
+                    #In the case a new energy channel was added to removed_sphinx
+                    fill_sphinx_dict_row(sphinx, sphinx_dict, ek, None, profname_dict)
     
-    df = pd.DataFrame(dict)
+    df = pd.DataFrame(sphinx_dict)
     #Sort by prediction window start so in time order for AWT, etc
     df = df.sort_values(by=["Model","Energy Channel Key","Threshold Key","Prediction Window Start", "Forecast Issue Time"],ascending=[True, True, True, True, True])
     
