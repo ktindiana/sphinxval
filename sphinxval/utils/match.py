@@ -3303,7 +3303,7 @@ def setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_o
                 #in contains_thresh_cross and is_*_before* arrays
                 #will be in an array in the same order as the
                 #thresholds
-                sphinx.thresholds.append(fcast_thresh) #threshold in observations
+                sphinx.thresholds.append(fcast_thresh) #predicted threshold also found in observations
                 sphinx.add_threshold(fcast_thresh)
                 thresh_key = objh.threshold_to_key(fcast_thresh)
 

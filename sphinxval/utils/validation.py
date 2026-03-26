@@ -63,11 +63,16 @@ def initialize_sphinx_dict():
             "Forecast Issue Time":[],
             "Prediction Window Start": [],
             "Prediction Window End": [],
+            "Observed SEP Event": [], #If an SEP event was matched, list start time for convenience
+
+            #TRIGGER/INPUT SUMMARY TIMING INFORMATION
             "Last Trigger Time": [],
             "Last Input Time": [],
             "Last Eruption Time": [], #Last time for flare/CME
-            "Observed SEP Event": [], #If an SEP event was matched, list start time for convenience
-            
+
+            #USEFUL SUPPLEMENTARY INFORMATION
+            "Last Data Time to Issue Time": [],
+
             #FORECAST TRIGGERS
             "Prediction Number of CMEs": [],
             "Prediction CME Start Time": [], #Timestamp of 1st coronagraph image CME is visible in
@@ -109,17 +114,7 @@ def initialize_sphinx_dict():
             "Observed SEP Flare Integrated Intensity": [],
             "Observed SEP Flare NOAA AR": [],
 
-            #USEFUL SUPPLEMENTARY INFORMATION
-            "Last Data Time to Issue Time": [],
-            "Observed Max Flux in Prediction Window": [],
-            "Observed Max Flux in Prediction Window Units": [],
-            "Observed Max Flux in Prediction Window Time": [],
-
             #MATCHED PREDICTED AND OBSERVED INFORMATION
-            "Time Profile Match Status": [],
-            "Predicted Time Profile": [],
-            "Observed Time Profile": [], #string of comma separated filenames
-
             "All Clear Match Status": [],
             "Predicted SEP All Clear Probability Threshold": [],
             "Predicted SEP All Clear": [],
@@ -152,7 +147,11 @@ def initialize_sphinx_dict():
             "Observed SEP Peak Intensity Max (Max Flux)": [],
             "Observed SEP Peak Intensity Max (Max Flux) Units": [],
             "Observed SEP Peak Intensity Max (Max Flux) Time": [],
- 
+
+            "Observed Max Flux in Prediction Window": [],
+            "Observed Max Flux in Prediction Window Units": [],
+            "Observed Max Flux in Prediction Window Time": [],
+
             "End Time Match Status": [],
             "Predicted SEP End Time": [],
             "Observed SEP End Time": [],
@@ -172,6 +171,10 @@ def initialize_sphinx_dict():
             "Predicted SEP Fluence Spectrum Units": [],
             "Observed SEP Fluence Spectrum": [],
             "Observed SEP Fluence Spectrum Units": [],
+
+            "Time Profile Match Status": [],
+            "Predicted Time Profile": [],
+            "Observed Time Profile": [], #string of comma separated filenames
 
             "Predicted Point Intensity": [],
             "Predicted Point Intensity Units": [],
@@ -664,7 +667,9 @@ def fill_sphinx_df(evaluated_sphinx, all_obs_thresholds, profname_dict):
                 logger.debug(sphinx.prediction.source)
                 
                 try: ####FIX BUG###
-                    for tk in all_obs_thresholds[ek]:
+                    for thresh in sphinx.thresholds:
+                        tk = objh.threshold_to_key(thresh)
+                    #for tk in all_obs_thresholds[ek]:
                         fill_sphinx_dict_row(sphinx, sphinx_dict, ek, tk, profname_dict)
                 except:
                     #In the case a new energy channel was added to removed_sphinx
