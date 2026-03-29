@@ -275,6 +275,9 @@ class TestMatchObservedOnsetPeak(LoadMatch):
         all_forecast_thresholds = forecast.identify_all_thresholds()
         sphinx, _ = self.load_sphinx_and_inputs(forecast, all_forecast_thresholds)
         function_evaluations = []
+        #KW - set new is_source_flare, is_source_cme to None to default to old matching behavior
+        is_source_flare = None
+        is_source_cme = None
         for forecast_threshold_index in range(len(all_forecast_thresholds)):
             forecast_threshold = all_forecast_thresholds[forecast_threshold_index]
             forecast_threshold_key = objh.threshold_to_key(forecast_threshold)
@@ -286,7 +289,8 @@ class TestMatchObservedOnsetPeak(LoadMatch):
                                                                     sphinx.is_eruption_in_range[forecast_threshold_key][i],
                                                                     sphinx.triggers_before_peak_intensity[i],
                                                                     sphinx.inputs_before_peak_intensity[i],
-                                                                    sphinx.prediction_window_sep_overlap[forecast_threshold_key][i])
+                                                                    sphinx.prediction_window_sep_overlap[forecast_threshold_key][i],
+                                                                    is_source_flare, is_source_cme)
                 function_evaluations.append(function_evaluation)
         self.utility_print_outputs(sphinx, function_evaluations)
         return sphinx, function_evaluations 
@@ -536,6 +540,9 @@ class TestMatchObservedMaxFlux(LoadMatch):
         all_forecast_thresholds = forecast.identify_all_thresholds()
         sphinx, _ = self.load_sphinx_and_inputs(forecast, all_forecast_thresholds)
         function_evaluations = []
+        #KW - set new is_source_flare, is_source_cme to None to default to old matching behavior
+        is_source_flare = None
+        is_source_cme = None
         for forecast_threshold_index in range(len(all_forecast_thresholds)):
             forecast_threshold = all_forecast_thresholds[forecast_threshold_index]
             forecast_threshold_key = objh.threshold_to_key(forecast_threshold)
@@ -547,7 +554,8 @@ class TestMatchObservedMaxFlux(LoadMatch):
                                                                     sphinx.is_eruption_in_range[forecast_threshold_key][i],
                                                                     sphinx.triggers_before_peak_intensity_max[i],
                                                                     sphinx.inputs_before_peak_intensity_max[i],
-                                                                    sphinx.prediction_window_sep_overlap[forecast_threshold_key][i])
+                                                                    sphinx.prediction_window_sep_overlap[forecast_threshold_key][i],
+                                                                    is_source_flare, is_source_cme)
                 function_evaluations.append(function_evaluation)
         self.utility_print_outputs(sphinx, function_evaluations)
         return sphinx, function_evaluations 
@@ -819,6 +827,9 @@ class TestMatchAllClear(LoadMatch):
         all_forecast_thresholds = forecast.identify_all_thresholds()
         sphinx, _ = self.load_sphinx_and_inputs(forecast, all_forecast_thresholds)
         function_evaluations = []
+        #KW - set new is_source_flare, is_source_cme to None to default to old matching behavior
+        is_source_flare = None
+        is_source_cme = None
         for forecast_threshold_index in range(len(all_forecast_thresholds)):
             forecast_threshold = all_forecast_thresholds[forecast_threshold_index]
             forecast_threshold_key = objh.threshold_to_key(forecast_threshold)
@@ -830,7 +841,8 @@ class TestMatchAllClear(LoadMatch):
                                                             sphinx.is_eruption_in_range[forecast_threshold_key][i],
                                                             sphinx.trigger_input_start[forecast_threshold_key][i],
                                                             sphinx.threshold_crossed_in_pred_win[forecast_threshold_key][i],
-                                                            sphinx.observed_ongoing_events[forecast_threshold_key][i])
+                                                            sphinx.observed_ongoing_events[forecast_threshold_key][i],
+                                                            is_source_flare, is_source_cme)
                 function_evaluations.append(function_evaluation)
         self.utility_print_outputs(sphinx, function_evaluations)
         return sphinx, function_evaluations
@@ -1203,6 +1215,9 @@ class TestMatchSEPQuantities(LoadMatch):
         all_forecast_thresholds = forecast.identify_all_thresholds()
         sphinx, _ = self.load_sphinx_and_inputs(forecast, all_forecast_thresholds)
         function_evaluations = []
+        #KW - set new is_source_flare, is_source_cme to None to default to old matching behavior
+        is_source_flare = None
+        is_source_cme = None
         for forecast_threshold_index in range(len(all_forecast_thresholds)):
             forecast_threshold = all_forecast_thresholds[forecast_threshold_index]
             forecast_threshold_key = objh.threshold_to_key(forecast_threshold)
@@ -1215,7 +1230,8 @@ class TestMatchSEPQuantities(LoadMatch):
                                                                  sphinx.is_eruption_in_range[forecast_threshold_key][i],
                                                                  sphinx.trigger_input_start[forecast_threshold_key][i],
                                                                  sphinx.threshold_crossed_in_pred_win[forecast_threshold_key][i],
-                                                                 sphinx.observed_ongoing_events[forecast_threshold_key][i])
+                                                                 sphinx.observed_ongoing_events[forecast_threshold_key][i],
+                                                                 is_source_flare, is_source_cme)
                 function_evaluations.append(function_evaluation)
         self.utility_print_outputs(sphinx, function_evaluations)
         return sphinx, function_evaluations
@@ -1416,6 +1432,9 @@ class TestMatchSEPEndTime(LoadMatch):
         all_forecast_thresholds = forecast.identify_all_thresholds()
         sphinx, _ = self.load_sphinx_and_inputs(forecast, all_forecast_thresholds)
         function_evaluations = []
+        #KW - set new is_source_flare, is_source_cme to None to default to old matching behavior
+        is_source_flare = None
+        is_source_cme = None
         for forecast_threshold_index in range(len(all_forecast_thresholds)):
             forecast_threshold = all_forecast_thresholds[forecast_threshold_index]
             forecast_threshold_key = objh.threshold_to_key(forecast_threshold)
@@ -1427,7 +1446,8 @@ class TestMatchSEPEndTime(LoadMatch):
                                                                sphinx.is_win_overlap[i],
                                                                sphinx.is_eruption_in_range[forecast_threshold_key][i],
                                                                sphinx.trigger_input_end[forecast_threshold_key][i],
-                                                               sphinx.prediction_window_sep_overlap[forecast_threshold_key][i])
+                                                               sphinx.prediction_window_sep_overlap[forecast_threshold_key][i],
+                                                               is_source_flare, is_source_cme)
                 function_evaluations.append(function_evaluation)
         self.utility_print_outputs(sphinx, function_evaluations)
         return sphinx, function_evaluations
@@ -1642,6 +1662,9 @@ class TestCalculateDerivedQuantities(LoadMatch):
         function_evaluations = []
         forecast_threshold_list = []
         forecasts = []
+        #KW - set new is_source_flare, is_source_cme to None to default to old matching behavior
+        is_source_flare = None
+        is_source_cme = None
         for i in range(0, len(forecast_jsons)):
             forecast = utility_load_forecast(forecast_jsons[i], self.energy_channel)
             forecasts.append(forecast)
@@ -1679,24 +1702,28 @@ class TestCalculateDerivedQuantities(LoadMatch):
                         sphinx.is_eruption_in_range[thresh_key][i],
                         sphinx.triggers_before_peak_intensity[i],
                         sphinx.inputs_before_peak_intensity[i], 
-                        sphinx.prediction_window_sep_overlap[thresh_key][i])
+                        sphinx.prediction_window_sep_overlap[thresh_key][i],
+                        is_source_flare, is_source_cme)
                     max_criteria = match.match_observed_max_flux(sphinx,
                         observation_objs[i], sphinx.is_win_overlap[i],
                         sphinx.is_eruption_in_range[thresh_key][i], 
                         sphinx.triggers_before_peak_intensity_max[i],
                         sphinx.triggers_before_peak_intensity_max[i], 
-                        sphinx.prediction_window_sep_overlap[thresh_key][i])
+                        sphinx.prediction_window_sep_overlap[thresh_key][i],
+                        is_source_flare, is_source_cme)
                     all_clear_status = match.match_all_clear(sphinx,
                         observation_objs[i], sphinx.is_win_overlap[i],
                         sphinx.is_eruption_in_range[thresh_key][i], 
                         sphinx.trigger_input_start[thresh_key][i],
                         sphinx.threshold_crossed_in_pred_win[thresh_key][i], 
-                        sphinx.observed_ongoing_events[thresh_key][i])
+                        sphinx.observed_ongoing_events[thresh_key][i],
+                        is_source_flare, is_source_cme)
                     sep_status = match.match_sep_quantities(sphinx, observation_objs[i], fcast_thresh, sphinx.is_win_overlap[i],
                         sphinx.is_eruption_in_range[thresh_key][i], 
                         sphinx.trigger_input_start[thresh_key][i],
                         sphinx.threshold_crossed_in_pred_win[thresh_key][i], 
-                        sphinx.observed_ongoing_events[thresh_key][i])
+                        sphinx.observed_ongoing_events[thresh_key][i],
+                        is_source_flare, is_source_cme)
                     if sep_status == True:
                         if sphinx.observed_threshold_crossing[thresh_key].crossing_time\
                         not in observed_sep_events[fcast.short_name][energy_key][thresh_key]:
@@ -1706,7 +1733,8 @@ class TestCalculateDerivedQuantities(LoadMatch):
                         sphinx.is_win_overlap[i],
                         sphinx.is_eruption_in_range[thresh_key][i], 
                         sphinx.trigger_input_end[thresh_key][i],
-                        sphinx.prediction_window_sep_overlap[thresh_key][i])
+                        sphinx.prediction_window_sep_overlap[thresh_key][i],
+                        is_source_flare, is_source_cme)
                     function_evaluation = match.calculate_derived_quantities(sphinx)
                     function_evaluations.append(function_evaluation)
             evaluated_sphinx[fcast.short_name][energy_key][forecast_index] = sphinx
@@ -1799,6 +1827,9 @@ class TestReviseEruptionMatches(LoadMatch):
         self.utility_print_docstring(function)
         forecast_threshold_list = []
         forecasts = []
+        #KW - set new is_source_flare, is_source_cme to None to default to old matching behavior
+        is_source_flare = None
+        is_source_cme = None
         for i in range(0, len(forecast_jsons)):
             forecast = utility_load_forecast(forecast_jsons[i], self.energy_channel)
             forecasts.append(forecast)
@@ -1835,24 +1866,28 @@ class TestReviseEruptionMatches(LoadMatch):
                         sphinx.is_eruption_in_range[thresh_key][i],
                         sphinx.triggers_before_peak_intensity[i],
                         sphinx.inputs_before_peak_intensity[i], 
-                        sphinx.prediction_window_sep_overlap[thresh_key][i])
+                        sphinx.prediction_window_sep_overlap[thresh_key][i],
+                        is_source_flare, is_source_cme)
                     max_criteria = match.match_observed_max_flux(sphinx,
                         observation_objs[i], sphinx.is_win_overlap[i],
                         sphinx.is_eruption_in_range[thresh_key][i], 
                         sphinx.triggers_before_peak_intensity_max[i],
                         sphinx.triggers_before_peak_intensity_max[i], 
-                        sphinx.prediction_window_sep_overlap[thresh_key][i])
+                        sphinx.prediction_window_sep_overlap[thresh_key][i],
+                        is_source_flare, is_source_cme)
                     all_clear_status = match.match_all_clear(sphinx,
                         observation_objs[i], sphinx.is_win_overlap[i],
                         sphinx.is_eruption_in_range[thresh_key][i], 
                         sphinx.trigger_input_start[thresh_key][i],
                         sphinx.threshold_crossed_in_pred_win[thresh_key][i], 
-                        sphinx.observed_ongoing_events[thresh_key][i])
+                        sphinx.observed_ongoing_events[thresh_key][i],
+                        is_source_flare, is_source_cme)
                     sep_status = match.match_sep_quantities(sphinx, observation_objs[i], fcast_thresh, sphinx.is_win_overlap[i],
                         sphinx.is_eruption_in_range[thresh_key][i], 
                         sphinx.trigger_input_start[thresh_key][i],
                         sphinx.threshold_crossed_in_pred_win[thresh_key][i], 
-                        sphinx.observed_ongoing_events[thresh_key][i])
+                        sphinx.observed_ongoing_events[thresh_key][i],
+                        is_source_flare, is_source_cme)
                     if sep_status == True:
                         if sphinx.observed_threshold_crossing[thresh_key].crossing_time\
                         not in observed_sep_events[fcast.short_name][self.energy_key][thresh_key]:
@@ -1862,7 +1897,8 @@ class TestReviseEruptionMatches(LoadMatch):
                         sphinx.is_win_overlap[i],
                         sphinx.is_eruption_in_range[thresh_key][i], 
                         sphinx.trigger_input_end[thresh_key][i],
-                        sphinx.prediction_window_sep_overlap[thresh_key][i])
+                        sphinx.prediction_window_sep_overlap[thresh_key][i],
+                        is_source_flare, is_source_cme)
                     derived_status = match.calculate_derived_quantities(sphinx)
             evaluated_sphinx[fcast.short_name][self.energy_key][forecast_index] = sphinx
             last_fcast_shortname = fcast.short_name + ''

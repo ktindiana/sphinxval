@@ -84,6 +84,21 @@ def initialize_sphinx_dict():
             "Prediction CME Half Width": [],
             "Prediction CME PA": [],
             "Prediction CME Catalog": [],
+            "Prediction CME Catalog ID": [],
+
+            #KNOWN OBSERVED SEP TRIGGERS
+            "Observed SEP CME Start Time": [], #Timestamp of 1st coronagraph image CME is visible in
+            "Observed SEP CME Liftoff Time": [], #Timestamp of coronagraph
+                #image with 1st indication of CME liftoff (used by CACTUS)
+            "Observed SEP CME Latitude": [],
+            "Observed SEP CME Longitude": [],
+            "Observed SEP CME Speed": [],
+            "Observed SEP CME Half Width": [],
+            "Observed SEP CME PA": [],
+            "Observed SEP CME Catalog": [],
+            "Observed SEP CME Catalog ID": [],
+
+            #FORECAST TRIGGERS
             "Prediction Number of Flares": [],
             "Prediction Flare Latitude": [],
             "Prediction Flare Longitude": [],
@@ -96,15 +111,6 @@ def initialize_sphinx_dict():
             "Prediction Flare NOAA AR": [],
 
             #KNOWN OBSERVED SEP TRIGGERS
-            "Observed SEP CME Start Time": [], #Timestamp of 1st coronagraph image CME is visible in
-            "Observed SEP CME Liftoff Time": [], #Timestamp of coronagraph
-                #image with 1st indication of CME liftoff (used by CACTUS)
-            "Observed SEP CME Latitude": [],
-            "Observed SEP CME Longitude": [],
-            "Observed SEP CME Speed": [],
-            "Observed SEP CME Half Width": [],
-            "Observed SEP CME PA": [],
-            "Observed SEP CME Catalog": [],
             "Observed SEP Flare Latitude": [],
             "Observed SEP Flare Longitude": [],
             "Observed SEP Flare Start Time": [],
@@ -190,6 +196,11 @@ def initialize_sphinx_dict():
             "All Threshold Crossing Times": [],
             "Eruption before Threshold Crossed": [],
             "Time Difference between Eruption and Threshold Crossing": [],
+            "Farside": [],
+            "Source Flare": [],
+            "All Flare Peak Times": [],
+            "Source CME": [],
+            "All CME Start Times": [],
             "Eruption in Range": [],
             "Triggers before Threshold Crossing": [],
             "Inputs before Threshold Crossing": [],
@@ -250,6 +261,7 @@ def fill_sphinx_dict_row(sphinx, dict, energy_key, thresh_key, profname_dict):
         cme_half_width = sphinx.prediction.cmes[-1].half_width
         cme_speed = sphinx.prediction.cmes[-1].speed
         cme_catalog = sphinx.prediction.cmes[-1].catalog
+        cme_catalog_id = sphinx.prediction.cmes[-1].catalog_id
     else:
         cme_start = pd.NaT
         cme_liftoff = pd.NaT
@@ -259,6 +271,7 @@ def fill_sphinx_dict_row(sphinx, dict, energy_key, thresh_key, profname_dict):
         cme_half_width = np.nan
         cme_speed = np.nan
         cme_catalog = None
+        cme_catalog_id = None
         
     #FLARES THAT TRIGGERED PREDICTIONS
     nfl = len(sphinx.prediction.flares)
@@ -294,6 +307,7 @@ def fill_sphinx_dict_row(sphinx, dict, energy_key, thresh_key, profname_dict):
     obs_cme_half_width = sphinx.observed_sep_cme.half_width
     obs_cme_speed = sphinx.observed_sep_cme.speed
     obs_cme_catalog = sphinx.observed_sep_cme.catalog
+    obs_cme_catalog_id = sphinx.observed_sep_cme.catalog_id
 
     #FLARE ASSOCIATED WITH OBSERVED SEP
     #Null values already set if no flare
@@ -395,6 +409,7 @@ def fill_sphinx_dict_row(sphinx, dict, energy_key, thresh_key, profname_dict):
     dict["Prediction CME Half Width"].append(cme_half_width)
     dict["Prediction CME PA"].append(cme_pa)
     dict["Prediction CME Catalog"].append(cme_catalog)
+    dict["Prediction CME Catalog ID"].append(cme_catalog_id)
     dict["Prediction Number of Flares"].append(nfl)
     dict["Prediction Flare Latitude"].append(fl_lat)
     dict["Prediction Flare Longitude"].append(fl_lon)
@@ -418,6 +433,7 @@ def fill_sphinx_dict_row(sphinx, dict, energy_key, thresh_key, profname_dict):
     dict["Observed SEP CME Half Width"].append(obs_cme_half_width)
     dict["Observed SEP CME PA"].append(obs_cme_pa)
     dict["Observed SEP CME Catalog"].append(obs_cme_catalog)
+    dict["Observed SEP CME Catalog ID"].append(obs_cme_catalog_id)
     dict["Observed SEP Flare Latitude"].append(obs_fl_lat)
     dict["Observed SEP Flare Longitude"].append(obs_fl_lon)
     dict["Observed SEP Flare Start Time"].append(obs_fl_start_time)
@@ -555,7 +571,15 @@ def fill_sphinx_dict_row(sphinx, dict, energy_key, thresh_key, profname_dict):
     except:
         dict["Threshold Crossed in Prediction Window"].append(None)
         dict["All Threshold Crossing Times"].append(None)
-        
+ 
+    dict["Farside"].append(sphinx.observed_sep_farside)
+    dict["Source Flare"].append(str(sphinx.is_source_flare))
+    flare_times = [flare.peak_time for flare in sphinx.all_observed_flares]
+    dict["All Flare Peak Times"].append(str(flare_times))
+    dict["Source CME"].append(str(sphinx.is_source_cme))
+    cme_times = [cme.start_time for cme in sphinx.all_observed_cmes]
+    dict["All CME Start Times"].append(str(cme_times))
+ 
     try:
         dict["Eruption before Threshold Crossed"].append(str(sphinx.eruptions_before_threshold_crossing[thresh_key]))
         dict["Time Difference between Eruption and Threshold Crossing"].append(str(sphinx.time_difference_eruptions_threshold_crossing[thresh_key]))

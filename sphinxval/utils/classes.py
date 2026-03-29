@@ -1596,8 +1596,10 @@ class SPHINX:
 
         self.observed_sep_flare = Flare("obs", pd.NaT, pd.NaT, pd.NaT,
                 pd.NaT, None, np.nan, np.nan, np.nan, np.nan, np.nan)
+        self.all_observed_flares = []
         self.observed_sep_cme = CME("obs", pd.NaT, pd.NaT, np.nan, np.nan, np.nan,
                     np.nan, None, np.nan, None, None)
+        self.all_observed_cmes = []
         self.observed_sep_farside = None
         
         #MATCHING INFORMATION

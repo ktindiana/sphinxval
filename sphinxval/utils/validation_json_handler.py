@@ -665,7 +665,7 @@ def dict_to_cme(cmeD):
         catalog = cmeD['catalog']
  
     if 'catalog_id' in cmeD:
-        catalog = cmeD['catalog_id']
+        catalog_id = cmeD['catalog_id']
 
 
     return start_time, liftoff_time, lat, lon, pa, half_width, speed,\
