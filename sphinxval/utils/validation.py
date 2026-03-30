@@ -191,16 +191,19 @@ def initialize_sphinx_dict():
 
             
             #MATCHING INFORMATION
+            "Overlapping Observations": [],
             "All Thresholds in Prediction": [],
             "Threshold Crossed in Prediction Window": [],
             "All Threshold Crossing Times": [],
             "Eruption before Threshold Crossed": [],
             "Time Difference between Eruption and Threshold Crossing": [],
             "Farside": [],
-            "Source Flare": [],
-            "All Flare Peak Times": [],
-            "Source CME": [],
-            "All CME Start Times": [],
+            "Is Source Flare": [],
+            "All Observation Flare Peak Times": [],
+            "All Prediction Flares": [],
+            "Is Source CME": [],
+            "All Observation CME Start Times": [],
+            "All Prediction CMEs": [],
             "Eruption in Range": [],
             "Triggers before Threshold Crossing": [],
             "Inputs before Threshold Crossing": [],
@@ -559,6 +562,8 @@ def fill_sphinx_dict_row(sphinx, dict, energy_key, thresh_key, profname_dict):
     #MATCHING INFORMATION - cast all matching info to strings to avoid problems
     #with read/write. Kept mainly for human reference and traceability. Not used
     #in the validation process.
+    overlap_fnames = [obj.source for obj in sphinx.prediction_observation_windows_overlap]
+    dict["Overlapping Observations"].append(str(overlap_fnames))
     dict["All Thresholds in Prediction"].append(str(sphinx.prediction.all_thresholds))
     dict["Last Eruption Time"].append(str(sphinx.last_eruption_time))
     dict["Last Trigger Time"].append(str(sphinx.last_trigger_time))
@@ -573,13 +578,20 @@ def fill_sphinx_dict_row(sphinx, dict, energy_key, thresh_key, profname_dict):
         dict["All Threshold Crossing Times"].append(None)
  
     dict["Farside"].append(sphinx.observed_sep_farside)
-    dict["Source Flare"].append(str(sphinx.is_source_flare))
+    dict["Is Source Flare"].append(str(sphinx.is_source_flare))
     flare_times = [flare.peak_time for flare in sphinx.all_observed_flares]
-    dict["All Flare Peak Times"].append(str(flare_times))
-    dict["Source CME"].append(str(sphinx.is_source_cme))
-    cme_times = [cme.start_time for cme in sphinx.all_observed_cmes]
-    dict["All CME Start Times"].append(str(cme_times))
- 
+    dict["All Observation Flare Peak Times"].append(str(flare_times))
+    
+    flare_dicts = [pflare.to_dict() for pflare in sphinx.prediction.flares]
+    dict["All Prediction Flares"].append(str(flare_dicts))
+    
+    dict["Is Source CME"].append(str(sphinx.is_source_cme))
+    cme_times = [pcme.start_time for pcme in sphinx.all_observed_cmes]
+    dict["All Observation CME Start Times"].append(str(cme_times))
+
+    cme_dicts = [cme.to_dict() for cme in sphinx.prediction.cmes]
+    dict["All Prediction CMEs"].append(str(cme_dicts))
+
     try:
         dict["Eruption before Threshold Crossed"].append(str(sphinx.eruptions_before_threshold_crossing[thresh_key]))
         dict["Time Difference between Eruption and Threshold Crossing"].append(str(sphinx.time_difference_eruptions_threshold_crossing[thresh_key]))

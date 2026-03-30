@@ -82,6 +82,23 @@ class CME:
         
         return
 
+    def to_dict(self):
+        """ Provide output in dictionary form """
+        cme_dict = {
+            "start_time": self.start_time,
+            "liftoff_time": self.liftoff_time,
+            "lat": self.lat,
+            "lon": self.lon,
+            "pa": self.pa,
+            "half_width": self.half_width,
+            "speed": self.speed,
+            "coordinates": self.coordinates,
+            "catalog": self.catalog,
+            "catalog_id": self.catalog_id
+        }
+        return cme_dict
+
+
 
 class CME_Simulation:
     def __init__(self, cmesim_id, model, sim_completion_time):
@@ -159,7 +176,23 @@ class Flare:
         self.noaa_region = noaa_region
         
         return
-            
+
+    def to_dict(self):
+        """ Provide output in dictionary form """
+        flare_dict = {
+            "last_data_time": self.last_data_time,
+            "start_time": self.start_time,
+            "peak_time": self.peak_time,
+            "end_time": self.end_time,
+            "location": self.location,
+            "lat": self.lat,
+            "lon": self.lon,
+            "intensity": self.intensity,
+            "integrated_intensity": self.integrated_intensity,
+            "noaa_region": self.noaa_region
+        }
+        return flare_dict
+        
 
 class Particle_Intensity:
     def __init__(self, part_id, observatory, instrument, last_data_time,
@@ -1716,6 +1749,7 @@ class SPHINX:
         self.observed_probability = {} #Probability object
         
         # MATCHING CRITERIA INITIALIZATION
+        self.overlapping_observations = []
         self.is_win_overlap = []
         self.is_source_flare = []
         self.is_source_cme = []
