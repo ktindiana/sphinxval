@@ -275,9 +275,6 @@ class TestMatchObservedOnsetPeak(LoadMatch):
         all_forecast_thresholds = forecast.identify_all_thresholds()
         sphinx, observed_sep_events = self.load_sphinx_and_inputs(forecast, all_forecast_thresholds)
         function_evaluations = []
-        #KW - set new is_source_flare, is_source_cme to None to default to old matching behavior
-        # is_source_flare = match.is_source_flare(sphinx, forecast, self.observation_values[self.energy_key]['dataframes'][0], self.observation_objects[self.energy_key])
-        # is_source_cme = match.is_source_cme(sphinx, forecast, self.observation_values[self.energy_key]['dataframes'][0], self.observation_objects[self.energy_key])
         
         for forecast_threshold_index in range(len(all_forecast_thresholds)):
             forecast_threshold = all_forecast_thresholds[forecast_threshold_index]
