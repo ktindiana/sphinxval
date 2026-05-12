@@ -234,7 +234,6 @@ class TestMatchObservedOnsetPeak(LoadMatch):
     Unit test class for match_observed_onset_peak function in match.py
     """
     def setUp(self):
-        print('setting up')
         energy_channel = {'min': 10, 'max': -1, 'units': 'MeV'}
         observation_json = './tests/files/observations/match/match_observed_onset_peak/match_observed_onset_peak.json'
         self.load_verbosity()
@@ -288,7 +287,6 @@ class TestMatchObservedOnsetPeak(LoadMatch):
                 self.utility_print_inputs(sphinx, forecast_threshold_key, i)
                 function_evaluation = match.match_observed_onset_peak(sphinx,
                                                                     self.observation_objects[self.energy_key][i],
-                                                                    #sphinx.is_win_overlap[i],
                                                                     sphinx.is_eruption_in_range[forecast_threshold_key][i],
                                                                     sphinx.triggers_before_peak_intensity[i],
                                                                     sphinx.inputs_before_peak_intensity[i],
@@ -579,7 +577,6 @@ class TestMatchObservedMaxFlux(LoadMatch):
                 self.utility_print_inputs(sphinx, forecast_threshold_key, i)
                 function_evaluation = match.match_observed_max_flux(sphinx,
                                                                     self.observation_objects[self.energy_key][i],
-                                                                    #sphinx.is_win_overlap[i],
                                                                     sphinx.is_eruption_in_range[forecast_threshold_key][i],
                                                                     sphinx.triggers_before_peak_intensity_max[i],
                                                                     sphinx.inputs_before_peak_intensity_max[i],
@@ -971,7 +968,7 @@ class TestMatchAllClear(LoadMatch):
            -- The threshold crossing was observed within the prediction window
                 threshold crossing:       2000-01-01T00:15:00Z
         The function should evaluate to [None]
-        sphinx.all_clear_match_status should be 'Trigger/Input observed after Phenomenon'
+        sphinx.all_clear_match_status should be 'Trigger/Input after Observed Phenomenon'
         """
         forecast_json = './tests/files/forecasts/match/match_all_clear/match_all_clear_3.json'
         sphinx, function_evaluations = self.utility_test_match_all_clear(this, forecast_json)
@@ -1360,7 +1357,7 @@ class TestMatchSEPQuantities(LoadMatch):
            -- The threshold crossing was observed within the prediction window
                 threshold crossing:       2000-01-01T00:15:00Z
         The function should evaluate to [None]
-        sphinx.sep_match_status[self.threshold_key] should be 'Eruption Out of Range'
+        sphinx.sep_match_status[self.threshold_key] should be 'Trigger/Input after Observed Phenomenon' 
         """
         forecast_json = './tests/files/forecasts/match/match_sep_quantities/match_sep_quantities_3.json'
         sphinx, function_evaluations = self.utility_test_match_sep_quantities(this, forecast_json)
