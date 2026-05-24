@@ -1087,8 +1087,7 @@ def before_sep_end(sphinx, fcast, obs_values, observation_objs,
                 str(sphinx.time_difference_inputs_sep_end[thresh_key][-1]))
 
     return
- 
- 
+
 
 
 def eruption_before_threshold_crossing(sphinx, fcast, obs_values,
@@ -1142,6 +1141,97 @@ def eruption_before_threshold_crossing(sphinx, fcast, obs_values,
     return
 
 
+
+def extend_compared_observations(sphinx, fcast, obs_values):
+    """ Give a flare/CME that triggered a prediction, do a larger search
+        of the prepared observations to ensure that the SEP associated
+        with the flare/CME is compared to the prediction.
+        
+        INPUTS:
+        
+            :sphinx: (SPHINX object) 
+            :fcast: (datetime) prediction
+            :obs_values: (pandas Dataframe) dataframe of all prepared observations
+            
+        OUTPUTS:
+            
+            NONE
+            Extend sphinx.overlapping_indices with any indices corresponding the 
+            indices of observations in obs_values that are within timeframe of flare/CME
+            AND contain an SEP event
+        
+    """
+    #Looking at the benchmark dataset:
+    #  -- proton threshold crossings occur up to 30 minutes BEFORE the flare peak
+    #  -- proton threshold crossings occur up to almost 3 days after the flare peak
+    #Looking at the benchmark dataset:
+    #  -- proton threshold crossings occur up to ## before the CME (must be true because
+    #       SC 23 had events where protons crossed threshold before flare peak. However
+    #       there are no cases of this in the DONKI catalog)
+    #  -- proton threshold crossings occur up to almost 3 days after the CME start
+    #There is one very unusual event with the threshold crossing 5 days 08:32:00 after
+    #the CME. This will not be correctly matched in this scheme.
+    #5 days 08:32:00, >10 MeV protons: 2025-08-26 16:55:00, CME: 2025-08-21 08:23:00
+    #
+    #Pull forecasts with observation windows starting up to 72 after the flare/CME to
+    #ensure that the observed SEP record with the flare/CME of interest is included
+    #in the observations compared to the prediction.
+    td = datetime.timedelta(hours=72)
+
+    ####Cast a net for flares
+    flare_obs_ix = []
+    for flare in fcast.flares:
+        is_within_range = [False]*len(obs_values)
+        trigger_time = flare.peak_time
+        if pd.isnull(trigger_time):
+            trigger_time = flare.start_time
+        
+        if not pd.isnull(trigger_time):
+            is_within_range = (obs_values['observation_window_start'] <= (trigger_time + td)) & (obs_values['observation_window_end'] > trigger_time)
+
+        sub = obs_values[is_within_range]
+        sub = sub.dropna(subset=['start_time']) #Only SEP events
+        if not sub.empty:
+            flare_obs_ix = flare_obs_ix + sub.index.tolist()
+            #index label matches numerical index - want numerical index location in obs_values
+
+
+    ####Cast a net for CMEs
+    cme_obs_ix = []
+    for cme in fcast.cmes:
+        trigger_time = cme.start_time
+        if pd.isnull(trigger_time):
+            trigger_time = cme.liftoff_time
+        
+        if not pd.isnull(trigger_time):
+            is_within_range = (obs_values['observation_window_start'] <= (trigger_time + td)) & (obs_values['observation_window_end'] > trigger_time)
+
+        sub = obs_values[is_within_range]
+        sub = sub.dropna(subset=['start_time']) #Only SEP events
+        if not sub.empty:
+            cme_obs_ix = cme_obs_ix + sub.index.tolist()
+            #index label matches numerical index - want numerical index location in obs_values
+
+    #Any additional nearby observations found containing a SEP?
+    #Add to sphinx.overlapping_indices
+    check_indices = []
+    check_indices = check_indices + sphinx.overlapping_indices
+    if len(flare_obs_ix) > 0:
+        for ix in flare_obs_ix:
+            if ix not in check_indices:
+                check_indices.append(ix)
+                logger.debug(f"Extending observations near flare: {ix}, {obs_values['start_time'].iloc[ix]}")
+
+    if len(cme_obs_ix) > 0:
+        for ix in cme_obs_ix:
+            if ix not in check_indices:
+                check_indices.append(ix)
+                logger.debug(f"Extending observations near CME: {ix}, {obs_values['start_time'].iloc[ix]}")
+
+    sphinx.overlapping_indices = check_indices
+
+
+
 def is_source_flare(sphinx, fcast, obs_values, observation_objs):
     """ Calculate the boolean arrays to indicate if the eruption (flare)
         is the source of the observed SEP event, as indicated by the triggers
@@ -1189,46 +1279,23 @@ def is_source_flare(sphinx, fcast, obs_values, observation_objs):
     #Other catalogs may have similar uncertainties in start time.
     start_tolerance = datetime.timedelta(minutes=130)
 
-    obs_ix = []
-    for flare in fcast.flares:
-        is_within_range = [False]*len(obs_values)
-        #Extract the observations that could be associated with the flare
-        td = datetime.timedelta(hours=24) #possible that observation window with SEP event starts
-                                          #after the flare time
-        if not pd.isnull(flare.peak_time):
-            is_within_range = (obs_values['observation_window_start'] <= (flare.peak_time-td)) & (obs_values['observation_window_end'] > flare.peak_time)
- 
-        elif not pd.isnull(flare.start_time):
-            is_within_range = (obs_values['observation_window_start'] <= (flare.start_time - td)) & (obs_values['observation_window_end'] > flare.start_time)
-
-        #Get indices of
-        sub = obs_values[is_within_range]
-        sub = sub.dropna(subset=['start_time']) #Only SEP events
-        if not sub.empty:
-            obs_ix = sub.index.tolist()
-
-    ###### MATCHING: CHECK IF FLARE USED FOR FORECAST IS SAME AS SOURCE OF SEP #####
-    check_indices = []
-    check_indices = check_indices + sphinx.overlapping_indices
-    if len(obs_ix) > 0:
-        for ix in obs_ix:
-            if ix not in check_indices:
-                check_indices.append(ix)
-    if len(check_indices) > 0:
+    ###### CHECK IF FLARE USED FOR FORECAST IS SAME AS SOURCE OF SEP #####
+    if len(sphinx.overlapping_indices) > 0:
         peak_ix = -1
         start_ix = -1
         n_obs_flares = 0
         matched_flare = None #If found flare match
         observed_flares = [] #If no flare match, but flare info was provided with the observations
         any_farside = None
+        ###FIRST FLARE SEARCH USING STRICT CRITERIA
         for flare in fcast.flares:
-            for ix in check_indices:
+            for ix in sphinx.overlapping_indices:
                 if observation_objs[ix].farside is not None:
                     any_farside = any_farside or observation_objs[ix].farside #default True
                 for obs_flare in observation_objs[ix].flares: #Match any flares associated with observation?
-                    if peak_ix != -1: continue #if found a flare peak time match, don't consider any other flares
                     n_obs_flares = n_obs_flares + 1
                     observed_flares.append(obs_flare)
+                    if peak_ix != -1: continue #if found a flare peak time match, don't consider any other flares
                     #Compare flare peak times
                     if not pd.isnull(flare.peak_time) and not pd.isnull(obs_flare.peak_time):
                         if abs(flare.peak_time - obs_flare.peak_time) <= peak_tolerance:
@@ -1242,9 +1309,10 @@ def is_source_flare(sphinx, fcast, obs_values, observation_objs):
                             if matched_flare is None:
                                 matched_flare = obs_flare
                     
-        sphinx.all_observed_flares = observed_flares
+        sphinx.all_observed_flares = observed_flares #save for reference
         if matched_flare is not None:
             sphinx.observed_sep_flare = matched_flare
+        ###SECOND OPPORTUNITY FOR FLARE SEARCH USING LOOSER CRITERIA
         else:
             #Find the forecasted flare that is closest in time to the flares in the
             #observations and save that value for the observations. Not a match, but
@@ -1269,13 +1337,7 @@ def is_source_flare(sphinx, fcast, obs_values, observation_objs):
 
         #Fill in True/False flare match values for each observation
         #Create arrays with results for each observation object.
-        final_check_indices = sphinx.overlapping_indices
-        if peak_ix != -1 and peak_ix not in sphinx.overlapping_indices:
-            final_check_indices = check_indices
-        elif start_ix != -1 and start_ix not in sphinx.overlapping_indices:
-             final_check_indices = check_indices
-
-        for ix in final_check_indices:
+        for ix in sphinx.overlapping_indices:
             #Prediction doesn't use flare triggers
             if len(fcast.flares) == 0:
                 sphinx.is_source_flare.append(None)
@@ -1318,6 +1380,7 @@ def is_source_flare(sphinx, fcast, obs_values, observation_objs):
     logger.debug(f"Farside?: {sphinx.observed_sep_farside}")
     
     return peak_ix, start_ix
+
 
 def is_same_cme(cme_time1, cme_time2, tolerance):
     """ Check timing to determine if two CMEs are the same """
@@ -1375,37 +1438,11 @@ def is_source_cme(sphinx, fcast, obs_values, observation_objs):
     #Assume this is the case for CACTUS compared to CDAW and DONKI, as well.
     speed_tolerance = 1000
 
-
-    obs_ix = []
-    for cme in fcast.cmes:
-        is_within_range = [False]*len(obs_values)
-        #Extract the observations that could be associated with the flare
-        td = datetime.timedelta(hours=24) #possible that observation window with SEP event starts
-                                          #after the flare time
-        if not pd.isnull(cme.start_time):
-            is_within_range = (obs_values['observation_window_start'] <= (cme.start_time-td)) & (obs_values['observation_window_end'] > cme.start_time)
- 
-        elif not pd.isnull(cme.liftoff_time):
-            is_within_range = (obs_values['observation_window_start'] <= (cme.liftoff_time - td)) & (obs_values['observation_window_end'] > cme.liftoff_time)
-
-        #Get indices of
-        sub = obs_values[is_within_range]
-        sub = sub.dropna(subset=['start_time']) #Only SEP events
-        if not sub.empty:
-            obs_ix = sub.index.tolist()
-
-    check_indices = []
-    check_indices = check_indices + sphinx.overlapping_indices
-    if len(obs_ix) > 0:
-        for ix in obs_ix:
-            if ix not in check_indices:
-                check_indices.append(ix)
-
     ###### MATCHING: CHECK IF CME USED FOR FORECAST IS SAME AS SOURCE OF SEP #####
     #If can compare CME values from the same catalog, then can be more sure and strict in the
     #comparison. If across catalogs, the timing is most likely to be consistent.
     #CME ID if DONKI CATALOG
-    if len(check_indices) > 0:
+    if len(sphinx.overlapping_indices) > 0:
         cme_ix = -1
         same_catalog = False
         n_obs_cme = 0
@@ -1490,12 +1527,7 @@ def is_source_cme(sphinx, fcast, obs_values, observation_objs):
 
         #Fill in True/False flare match values for each observation
         #Create arrays with results for each observation object.
-        final_check_indices = sphinx.overlapping_indices
-        if cme_ix != -1 and cme_ix not in sphinx.overlapping_indices:
-            final_check_indices = check_indices
-
-        #Fill in True/False flare match values for each observation
-        for ix in final_check_indices:
+        for ix in sphinx.overlapping_indices:
             #Prediction doesn't use CME triggers
             if len(fcast.cmes) == 0:
                 sphinx.is_source_cme.append(None)
@@ -2208,6 +2240,10 @@ def match_sep_quantities(sphinx, observation_obj, thresh, is_win_overlap,
     #True for matched observation and False for all other observations
     is_source = is_source_eruption(is_source_flare, is_source_cme)
 
+    #Appropriate observed probability for prediction window, etc
+    prob = cl.Probability(None, 0.0, thresh['threshold'],
+            thresh['threshold_units'])
+
     #Prediction window does not overlap with observation
     if not is_win_overlap: # this code is never touched! -- LS-code-comment -- should be now, KW
         sep_status = None
@@ -2222,10 +2258,6 @@ def match_sep_quantities(sphinx, observation_obj, thresh, is_win_overlap,
         else:
             sphinx.sep_match_status[thresh_key] = "Observation not in prediction window"
         return sep_status
-
-    #Appropriate observed probability for prediction window, etc
-    prob = cl.Probability(None, 0.0, thresh['threshold'],
-            thresh['threshold_units'])
         
     #Prediction and observation windows overlap
     #If ongoing SEP event at start of prediction window, no match
@@ -3380,13 +3412,21 @@ def setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_o
             ###### PREDICTION AND OBSERVATION WINDOWS OVERLAP? #####
             #Do prediction and observation windows overlap?
             #Save the overlapping observations to the SPHINX object
+            #The indices are the numerical index location in obs_values (which correspond to
+            #the order and index of observation objects in obs_objs).
             is_win_overlap = does_win_overlap(energy_key, fcast, obs_values)
             overlap_idx = [ix for ix in range(len(is_win_overlap)) if is_win_overlap[ix] == True]
             sphinx.overlapping_indices = overlap_idx
 
+            #If prediction triggered by flare/CME, check whether need to extend the observations
+            #that are compared since there are cases when a forecast prediction_window may
+            #not fully encompass the time period containing the observed SEP event.
+            #Update sphinx.overlapping_indices with any additional observations.
+            extend_compared_observations(sphinx, fcast, obs_values[energy_key]['dataframes'][0])
+
             #If no observations were found to overlap with the forecast, save in
             #not evaluated dataframe and continue
-            if not overlap_idx:
+            if not sphinx.overlapping_indices:
                 sphinx.not_evaluated = "No observations during forecast prediction window"
                 removed_sphinx[name][energy_key].append(sphinx)
                 logger.warning("REMOVED FROM ANALYSIS: " + fcast.source
@@ -3394,18 +3434,16 @@ def setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_o
                 continue
 
             logger.debug("Prediction and Observation windows overlap: ")
-            if overlap_idx:
-                for ix in range(len(overlap_idx)):
-                    sphinx.is_win_overlap.append(is_win_overlap[overlap_idx[ix]])
-                    sphinx.prediction_observation_windows_overlap.append(observation_objs[overlap_idx[ix]])
-                    obs_path = os.path.dirname(observation_objs[overlap_idx[ix]].source)
-                    profile_path = os.path.join(obs_path, observation_objs[overlap_idx[ix]].sep_profile)
+            if sphinx.overlapping_indices:
+                for index,ix in enumerate(sphinx.overlapping_indices):
+                    sphinx.is_win_overlap.append(is_win_overlap[ix])
+                    sphinx.prediction_observation_windows_overlap.append(observation_objs[ix])
+                    obs_path = os.path.dirname(observation_objs[ix].source)
+                    profile_path = os.path.join(obs_path, observation_objs[ix].sep_profile)
                     sphinx.observed_sep_profiles.append(profile_path)
                     #logging
-                    logger.debug("  " +
-                    str(sphinx.prediction_observation_windows_overlap[ix].source))
-                    logger.debug("  " +
-                    str(sphinx.observed_sep_profiles[ix]))
+                    logger.debug("  " + str(sphinx.prediction_observation_windows_overlap[index].source))
+                    logger.debug("  " + str(sphinx.observed_sep_profiles[index]))
 
             #Check that observations cover 100% of forecast prediction window
             is_covered = check_observations_coverage(sphinx)
@@ -3415,6 +3453,7 @@ def setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_o
                 logger.warning("REMOVED FROM ANALYSIS: Observations do not cover full prediction window: "
                     + fcast.source)
                 continue
+
 
             ######## FLARE RESPONSIBLE FOR OBSERVED SEP ###########
             #Is the flare that triggered the prediction identified as
@@ -3439,16 +3478,27 @@ def setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_o
         
             #Overwrite sphinx.overlapping_indices and the source flare and source CME outcomes
             #to include ONLY the observation with the match flare and/or CME
+            #Update the other matching arrays that have already been created - overlap, profiles
             if len(refine_indices) != 0:
-                sphinx.overlapping_indices = refine_indices
                 source_flare = []
                 source_cme = []
+                refine_win_overlap = []
+                refine_pred_obs_overlap = []
+                refine_profiles = []
                 for iix in refine_indices:
-                    ipos = overlap_idx.index(iix)
+                    ipos = sphinx.overlapping_indices.index(iix)
                     source_flare.append(sphinx.is_source_flare[ipos])
                     source_cme.append(sphinx.is_source_cme[ipos])
+                    refine_win_overlap.append(sphinx.is_win_overlap[ipos])
+                    refine_pred_obs_overlap.append(sphinx.prediction_observation_windows_overlap[ipos])
+                    refine_profiles.append(sphinx.observed_sep_profiles[ipos])
                 sphinx.is_source_flare = source_flare
                 sphinx.is_source_cme = source_cme
+                sphinx.overlapping_indices = refine_indices
+                sphinx.is_win_overlap = refine_win_overlap
+                sphinx.prediction_observation_windows_overlap = refine_pred_obs_overlap
+                sphinx.observed_sep_profiles = refine_profiles
+                logger.debug(f"Refining indices - found SEP with associated flare: {sphinx.is_source_flare}, or CME: {sphinx.is_source_cme}, at: {refine_indices}")
 
 
             ###### ONSET PEAK CRITERIA #####

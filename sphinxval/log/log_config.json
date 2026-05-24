@@ -28,7 +28,7 @@
         }
    },
 "root": {
-    "handlers" : ["user_file"],
+    "handlers" : ["debug_file"],
     "level": "DEBUG",
     "propagate": false
     }
