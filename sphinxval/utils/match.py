@@ -1173,10 +1173,11 @@ def extend_compared_observations(sphinx, fcast, obs_values):
     #the CME. This will not be correctly matched in this scheme.
     #5 days 08:32:00, >10 MeV protons: 2025-08-26 16:55:00, CME: 2025-08-21 08:23:00
     #
-    #Pull forecasts with observation windows starting up to 72 after the flare/CME to
+    #Pull forecasts with SEP threshold crossing times starting up to 72 after the flare/CME to
     #ensure that the observed SEP record with the flare/CME of interest is included
     #in the observations compared to the prediction.
     td = datetime.timedelta(hours=72)
+    td0 = datetime.timedelta(hours=0)
 
     ####Cast a net for flares
     flare_obs_ix = []
@@ -1187,7 +1188,8 @@ def extend_compared_observations(sphinx, fcast, obs_values):
             trigger_time = flare.start_time
         
         if not pd.isnull(trigger_time):
-            is_within_range = (obs_values['observation_window_start'] <= (trigger_time + td)) & (obs_values['observation_window_end'] > trigger_time)
+            diff = (obs_values['start_time'] - trigger_time)
+            is_within_range = (diff > td0) & (diff <= td) #NaT returns False, 0 - 72 hours True
 
         sub = obs_values[is_within_range]
         sub = sub.dropna(subset=['start_time']) #Only SEP events
@@ -1204,7 +1206,8 @@ def extend_compared_observations(sphinx, fcast, obs_values):
             trigger_time = cme.liftoff_time
         
         if not pd.isnull(trigger_time):
-            is_within_range = (obs_values['observation_window_start'] <= (trigger_time + td)) & (obs_values['observation_window_end'] > trigger_time)
+            diff = (obs_values['start_time'] - trigger_time)
+            is_within_range = (diff > td0) & (diff <= td) #NaT returns False, 0 - 72 hours True
 
         sub = obs_values[is_within_range]
         sub = sub.dropna(subset=['start_time']) #Only SEP events
@@ -1566,7 +1569,7 @@ def eruption_in_range(td_eruption_thresh_cross):
     """ Determine if the eruption (CME/flare) is in the appropriate
         range to be responsible for an observed SEP event.
         
-        Require CME/flare to occur a few mins to 24 hours before an
+        Require CME/flare to occur a few mins to 72 hours before an
         observed SEP event to be considered associated with that event.
     
     Input:
@@ -1581,14 +1584,15 @@ def eruption_in_range(td_eruption_thresh_cross):
             a better eruption matched to the SEP event
     
     """
+    td = -72 #Allow SEP events to occur up to 72 hours after eruption
     is_eruption_in_range = None
     if not pd.isnull(td_eruption_thresh_cross):
         if td_eruption_thresh_cross <= -0.15\
-            and td_eruption_thresh_cross > -24.:
+            and td_eruption_thresh_cross > td:
             is_eruption_in_range = True
             
         if td_eruption_thresh_cross > -0.15\
-            or td_eruption_thresh_cross <= -24.:
+            or td_eruption_thresh_cross <= td:
             is_eruption_in_range = False
 
     return is_eruption_in_range
@@ -2070,7 +2074,13 @@ def match_all_clear(sphinx, observation_obj, is_win_overlap,
         if is_source:
             sphinx.all_clear_match_status = "Trigger associated with observed SEP but SEP not in prediction window"
         else:
-            sphinx.all_clear_match_status = "Observation not in prediction window"
+            #This most likely occurs if an SEP event with within 72 hours of the
+            #forecast flare/CME trigger, but was not caused by the same flare/CME.
+            #There would be an earlier observation in the prediction window that gives
+            #the right match status. Don't want to overwrite.
+            #So, if match status not already set by comparison with a previous observation.
+            if sphinx.all_clear_match_status == "":
+                sphinx.all_clear_match_status = "Observation not in prediction window"
         return all_clear_status
 
 
@@ -2256,7 +2266,13 @@ def match_sep_quantities(sphinx, observation_obj, thresh, is_win_overlap,
         if is_source:
             sphinx.sep_match_status[thresh_key] = "Trigger associated with observed SEP but SEP not in prediction window"
         else:
-            sphinx.sep_match_status[thresh_key] = "Observation not in prediction window"
+            #This most likely occurs if an SEP event with within 72 hours of the
+            #forecast flare/CME trigger, but was not caused by the same flare/CME.
+            #There would be an earlier observation in the prediction window that gives
+            #the right match status. Don't want to overwrite.
+            #So, if match status not already set by comparison with a previous observation.
+            if sphinx.sep_match_status[thresh_key] == "":
+                sphinx.sep_match_status[thresh_key] = "Observation not in prediction window"
         return sep_status
         
     #Prediction and observation windows overlap
@@ -2441,7 +2457,13 @@ def match_sep_end_time(sphinx, observation_obj, thresh, is_win_overlap,
         if is_source:
             sphinx.end_time_match_status[thresh_key] = "Trigger associated with observed SEP but SEP not in prediction window"
         else:
-            sphinx.end_time_match_status[thresh_key] = "Observation not in prediction window"
+            #This most likely occurs if an SEP event with within 72 hours of the
+            #forecast flare/CME trigger, but was not caused by the same flare/CME.
+            #There would be an earlier observation in the prediction window that gives
+            #the right match status. Don't want to overwrite.
+            #So, if match status not already set by comparison with a previous observation.
+            if sphinx.end_time_match_status[thresh_key] == "":
+                sphinx.end_time_match_status[thresh_key] = "Observation not in prediction window"
         return end_status
 
 
