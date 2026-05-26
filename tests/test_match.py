@@ -567,6 +567,9 @@ class TestMatchObservedMaxFlux(LoadMatch):
         all_forecast_thresholds = forecast.identify_all_thresholds()
         sphinx, _ = self.load_sphinx_and_inputs(forecast, all_forecast_thresholds)
         function_evaluations = []
+        #KW - set new is_source_flare, is_source_cme to None to default to old matching behavior
+        is_source_flare = None
+        is_source_cme = None
         for forecast_threshold_index in range(len(all_forecast_thresholds)):
             forecast_threshold = all_forecast_thresholds[forecast_threshold_index]
             forecast_threshold_key = objh.threshold_to_key(forecast_threshold)
