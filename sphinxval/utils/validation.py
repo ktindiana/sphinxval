@@ -6,6 +6,8 @@ from . import config
 from . import time_profile as profile
 from . import resume
 from . import duplicates
+from . import uncertainties
+from . import metrics_dicts
 import matplotlib.pylab as plt
 from scipy.stats import pearsonr
 import statistics
@@ -719,147 +721,147 @@ def fill_sphinx_df(evaluated_sphinx, all_obs_thresholds, profname_dict):
 
 
 ##################### METRICS #####################
-def initialize_flux_dict():
-    """ Metrics used for fluxes.
+# def initialize_flux_dict():
+#     """ Metrics used for fluxes.
     
-    """
-    dict = {"Model": [],
-            "Energy Channel": [],
-            "Threshold": [],
-            "Prediction Energy Channel": [],
-            "Prediction Threshold": [],
-            "Scatter Plot": [],
-            "Linear Regression Slope": [],
-            "Linear Regression y-intercept": [],
-            "Pearson Correlation Coefficient (Linear)": [],
-            "Pearson Correlation Coefficient (Log)": [],
-            "Spearman Correlation Coefficient (Linear)": [],
-            "Mean Ratio": [],
-            "Median Ratio": [],
-            "Mean Error (ME)": [],
-            "Median Error (MedE)": [],
-            "Mean Log Error (MLE)": [],
-            "Median Log Error (MedLE)": [],
-            "Mean Absolute Error (MAE)": [],
-            "Median Absolute Error (MedAE)": [],
-            "Mean Absolute Log Error (MALE)": [],
-            "Median Absolute Log Error (MedALE)": [],
-            "Mean Percent Error (MPE)": [],
-            "Mean Absolute Percent Error (MAPE)": [],
-            "Mean Symmetric Percent Error (MSPE)": [],
-            "Mean Symmetric Absolute Percent Error (SMAPE)": [],
-            "Mean Accuracy Ratio (MAR)": [],
-            "Root Mean Square Error (RMSE)": [],
-            "Root Mean Square Log Error (RMSLE)": [],
-            "Median Symmetric Accuracy (MdSA)": [],
-            "Percentage within an Order of Magnitude (%)": [],
-            "Percentage within a factor of 2 (%)": []
-            }
+#     """
+#     dict = {"Model": [],
+#             "Energy Channel": [],
+#             "Threshold": [],
+#             "Prediction Energy Channel": [],
+#             "Prediction Threshold": [],
+#             "Scatter Plot": [],
+#             "Linear Regression Slope": [],
+#             "Linear Regression y-intercept": [],
+#             "Pearson Correlation Coefficient (Linear)": [],
+#             "Pearson Correlation Coefficient (Log)": [],
+#             "Spearman Correlation Coefficient (Linear)": [],
+#             "Mean Ratio": [],
+#             "Median Ratio": [],
+#             "Mean Error (ME)": [],
+#             "Median Error (MedE)": [],
+#             "Mean Log Error (MLE)": [],
+#             "Median Log Error (MedLE)": [],
+#             "Mean Absolute Error (MAE)": [],
+#             "Median Absolute Error (MedAE)": [],
+#             "Mean Absolute Log Error (MALE)": [],
+#             "Median Absolute Log Error (MedALE)": [],
+#             "Mean Percent Error (MPE)": [],
+#             "Mean Absolute Percent Error (MAPE)": [],
+#             "Mean Symmetric Percent Error (MSPE)": [],
+#             "Mean Symmetric Absolute Percent Error (SMAPE)": [],
+#             "Mean Accuracy Ratio (MAR)": [],
+#             "Root Mean Square Error (RMSE)": [],
+#             "Root Mean Square Log Error (RMSLE)": [],
+#             "Median Symmetric Accuracy (MdSA)": [],
+#             "Percentage within an Order of Magnitude (%)": [],
+#             "Percentage within a factor of 2 (%)": []
+#             }
     
-    return dict
+#     return dict
 
 
-def initialize_time_dict():
-    """ Metrics for predictions related to time.
+# def initialize_time_dict():
+#     """ Metrics for predictions related to time.
     
-    """
-    dict = {"Model": [],
-            "Energy Channel": [],
-            "Threshold": [],
-            "Prediction Energy Channel": [],
-            "Prediction Threshold": [],
-            "Mean Error (pred - obs)": [],
-            "Median Error (pred - obs)": [],
-            "Mean Absolute Error (|pred - obs|)": [],
-            "Median Absolute Error (|pred - obs|)": [],
-            }
+#     """
+#     dict = {"Model": [],
+#             "Energy Channel": [],
+#             "Threshold": [],
+#             "Prediction Energy Channel": [],
+#             "Prediction Threshold": [],
+#             "Mean Error (pred - obs)": [],
+#             "Median Error (pred - obs)": [],
+#             "Mean Absolute Error (|pred - obs|)": [],
+#             "Median Absolute Error (|pred - obs|)": [],
+#             }
             
-    return dict
+#     return dict
     
     
-def initialize_awt_dict():
-    """ Metrics for Adanced Warning Time to SEP start, SEP peak, SEP end.
-        The "Forecasted Value" field indicates which forecasted quantity
-        was used to calculate the AWT.
-    """
-    dict = {"Model": [],
-            "Energy Channel": [],
-            "Threshold": [],
-            "Prediction Energy Channel": [],
-            "Prediction Threshold": [],
+# def initialize_awt_dict():
+#     """ Metrics for Adanced Warning Time to SEP start, SEP peak, SEP end.
+#         The "Forecasted Value" field indicates which forecasted quantity
+#         was used to calculate the AWT.
+#     """
+#     dict = {"Model": [],
+#             "Energy Channel": [],
+#             "Threshold": [],
+#             "Prediction Energy Channel": [],
+#             "Prediction Threshold": [],
             
-            #All Clear Forecasts
-            #Commenting out redundant comparisons to Observed SEP Threshold Crossing Time and
-            #observed SEP Start Time. If there is ever a case where those fields are different
-            #then should uncomment them.
-            "Mean AWT for Predicted SEP All Clear to Observed SEP Threshold Crossing Time": [],
-            "Median AWT for Predicted SEP All Clear to Observed SEP Threshold Crossing Time": [],
+#             #All Clear Forecasts
+#             #Commenting out redundant comparisons to Observed SEP Threshold Crossing Time and
+#             #observed SEP Start Time. If there is ever a case where those fields are different
+#             #then should uncomment them.
+#             "Mean AWT for Predicted SEP All Clear to Observed SEP Threshold Crossing Time": [],
+#             "Median AWT for Predicted SEP All Clear to Observed SEP Threshold Crossing Time": [],
 
-#            "Mean AWT for Predicted SEP All Clear to Observed SEP Start Time": [],
-#            "Median AWT for Predicted SEP All Clear to Observed SEP Start Time": [],
-             "Mean AWT Efficiency for Predicted SEP All Clear to Observed SEP Threshold Crossing Time": [],
+# #            "Mean AWT for Predicted SEP All Clear to Observed SEP Start Time": [],
+# #            "Median AWT for Predicted SEP All Clear to Observed SEP Start Time": [],
+#              "Mean AWT Efficiency for Predicted SEP All Clear to Observed SEP Threshold Crossing Time": [],
 
-#            #Probability Forecasts - cannot without an explicit threshold
-#            "Mean AWT for Probability to Observed Threshold Crossing Time": [],
-#            "Median AWT for Probability to Observed Threshold Crossing Time": [],
-#            "Mean AWT for Probability to Observed Start Time": [],
-#            "Median AWT for Probability to Observed Start Time": [],
+# #            #Probability Forecasts - cannot without an explicit threshold
+# #            "Mean AWT for Probability to Observed Threshold Crossing Time": [],
+# #            "Median AWT for Probability to Observed Threshold Crossing Time": [],
+# #            "Mean AWT for Probability to Observed Start Time": [],
+# #            "Median AWT for Probability to Observed Start Time": [],
 
-            #Threshold Crossing Time Forecasts
-            "Mean AWT for Predicted SEP Threshold Crossing Time to Observed SEP Threshold Crossing Time": [],
-            "Median AWT for Predicted SEP Threshold Crossing Time to Observed SEP Threshold Crossing Time": [],
-            "Mean AWT Efficiency for Predicted SEP Threshold Crossing Time to Observed SEP Threshold Crossing Time": [], 
+#             #Threshold Crossing Time Forecasts
+#             "Mean AWT for Predicted SEP Threshold Crossing Time to Observed SEP Threshold Crossing Time": [],
+#             "Median AWT for Predicted SEP Threshold Crossing Time to Observed SEP Threshold Crossing Time": [],
+#             "Mean AWT Efficiency for Predicted SEP Threshold Crossing Time to Observed SEP Threshold Crossing Time": [], 
             
-#            "Mean AWT for Predicted SEP Threshold Crossing Time to Observed SEP Start Time": [],
-#            "Median AWT for Predicted SEP Threshold Crossing Time to Observed SEP Start Time": [],
+# #            "Mean AWT for Predicted SEP Threshold Crossing Time to Observed SEP Start Time": [],
+# #            "Median AWT for Predicted SEP Threshold Crossing Time to Observed SEP Start Time": [],
 
 
-            #Start Time Forecasts
-            "Mean AWT for Predicted SEP Start Time to Observed SEP Threshold Crossing Time": [],
-            "Median AWT for Predicted SEP Start Time to Observed SEP Threshold Crossing Time": [],
-            "Mean AWT Efficiency for Predicted SEP Start Time to Observed SEP Threshold Crossing Time": [],
-#            "Mean AWT for Predicted SEP Start Time to Observed SEP Start Time": [],
-#            "Median AWT for Predicted SEP Start Time to Observed SEP Start Time": [],
+#             #Start Time Forecasts
+#             "Mean AWT for Predicted SEP Start Time to Observed SEP Threshold Crossing Time": [],
+#             "Median AWT for Predicted SEP Start Time to Observed SEP Threshold Crossing Time": [],
+#             "Mean AWT Efficiency for Predicted SEP Start Time to Observed SEP Threshold Crossing Time": [],
+# #            "Mean AWT for Predicted SEP Start Time to Observed SEP Start Time": [],
+# #            "Median AWT for Predicted SEP Start Time to Observed SEP Start Time": [],
  
-#             #Point Intensity Forecasts
-#            "Mean AWT for Predicted Point Intensity to Observed SEP Threshold Crossing Time": [],
-#            "Median AWT for Predicted Point Intensity to Observed SEP Threshold Crossing Time": [],
-#            "Mean AWT for Predicted Point Intensity to Observed SEP Start Time": [],
-#            "Median AWT for Predicted Point Intensity to Observed SEP Start Time": [],
+# #             #Point Intensity Forecasts
+# #            "Mean AWT for Predicted Point Intensity to Observed SEP Threshold Crossing Time": [],
+# #            "Median AWT for Predicted Point Intensity to Observed SEP Threshold Crossing Time": [],
+# #            "Mean AWT for Predicted Point Intensity to Observed SEP Start Time": [],
+# #            "Median AWT for Predicted Point Intensity to Observed SEP Start Time": [],
  
  
-            #Peak Intensity Forecasts
-            "Mean AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Threshold Crossing Time": [],
-            "Median AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Threshold Crossing Time": [],
-#            "Mean AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Start Time": [],
-#            "Median AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Start Time": [],
-            "Mean AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Peak Intensity (Onset Peak) Time": [],
-            "Median AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Peak Intensity (Onset Peak) Time": [],
- #           "Mean AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Peak Intensity Max (Max Flux) Time": [],
- #           "Median AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Peak Intensity Max (Max Flux) Time": [],
+#             #Peak Intensity Forecasts
+#             "Mean AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Threshold Crossing Time": [],
+#             "Median AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Threshold Crossing Time": [],
+# #            "Mean AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Start Time": [],
+# #            "Median AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Start Time": [],
+#             "Mean AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Peak Intensity (Onset Peak) Time": [],
+#             "Median AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Peak Intensity (Onset Peak) Time": [],
+#  #           "Mean AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Peak Intensity Max (Max Flux) Time": [],
+#  #           "Median AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Peak Intensity Max (Max Flux) Time": [],
 
-            #Peak Intensity Max Forecasts
-            "Mean AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Threshold Crossing Time": [],
-            "Median AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Threshold Crossing Time": [],
-#            "Mean AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Start Time": [],
-#            "Median AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Start Time": [],
-            "Mean AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Peak Intensity Max (Max Flux) Time": [],
-            "Median AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Peak Intensity Max (Max Flux) Time": [],
+#             #Peak Intensity Max Forecasts
+#             "Mean AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Threshold Crossing Time": [],
+#             "Median AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Threshold Crossing Time": [],
+# #            "Mean AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Start Time": [],
+# #            "Median AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Start Time": [],
+#             "Mean AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Peak Intensity Max (Max Flux) Time": [],
+#             "Median AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Peak Intensity Max (Max Flux) Time": [],
 
-            #End Time Forecasts
-            "Mean AWT for Predicted SEP End Time to Observed SEP Threshold Crossing Time": [],
-            "Median AWT for Predicted SEP End Time to Observed SEP Threshold Crossing Time": [],
-#            "Mean AWT for Predicted SEP End Time to Observed SEP Start Time": [],
-#            "Median AWT for Predicted SEP End Time to Observed SEP Start Time": [],
-            "Mean AWT for Predicted SEP End Time to Observed SEP End Time": [],
-            "Median AWT for Predicted SEP End Time to Observed SEP End Time": []
-            }
+#             #End Time Forecasts
+#             "Mean AWT for Predicted SEP End Time to Observed SEP Threshold Crossing Time": [],
+#             "Median AWT for Predicted SEP End Time to Observed SEP Threshold Crossing Time": [],
+# #            "Mean AWT for Predicted SEP End Time to Observed SEP Start Time": [],
+# #            "Median AWT for Predicted SEP End Time to Observed SEP Start Time": [],
+#             "Mean AWT for Predicted SEP End Time to Observed SEP End Time": [],
+#             "Median AWT for Predicted SEP End Time to Observed SEP End Time": []
+#             }
             
-    return dict
+#     return dict
 
 
-def initialize_all_clear_dict():
-    """ Metrics for all clear predictions.
+# def initialize_all_clear_dict():
+#     """ Metrics for all clear predictions.
     
     """
     dict = {"Model": [],
@@ -910,26 +912,26 @@ def initialize_all_clear_dict():
 #            "Mean Absolute Percentage Error": []
             }
             
-    return dict
+#     return dict
 
             
-def initialize_probability_dict():
-    """ Metrics for probability predictions.
+# def initialize_probability_dict():
+#     """ Metrics for probability predictions.
     
-    """
-    dict = {"Model": [],
-            "Energy Channel": [],
-            "Threshold": [],
-            "Prediction Energy Channel": [],
-            "Prediction Threshold": [],
-            "ROC Curve Plot": [],
-            "Brier Score": [],
-            "Brier Skill Score": [],
-            "Spearman Correlation Coefficient": [],
-            "Area Under ROC Curve": []
-            }
+#     """
+#     dict = {"Model": [],
+#             "Energy Channel": [],
+#             "Threshold": [],
+#             "Prediction Energy Channel": [],
+#             "Prediction Threshold": [],
+#             "ROC Curve Plot": [],
+#             "Brier Score": [],
+#             "Brier Skill Score": [],
+#             "Spearman Correlation Coefficient": [],
+#             "Area Under ROC Curve": []
+#             }
             
-    return dict
+#     return dict
 
 
 
@@ -1617,7 +1619,7 @@ def all_clear_intuitive_metrics(df, dict, model, energy_key, thresh_key,
     
     fill_all_clear_dict(dict, model, energy_key, thresh_key, pred_energy_key,
         pred_thresh_key, scores, n_caught, sep_caught_str, n_miss, sep_miss_str)
-
+    uncertainties.feeder_from_sphinx(sub, dict, 'all_clear')
 
     return sub
 
@@ -1710,6 +1712,9 @@ def probability_intuitive_metrics(df, dict, model, energy_key, thresh_key,
     dict['Brier Skill Score'].append(brier_skill)
     dict['Spearman Correlation Coefficient'].append(rank_corr_coeff)
     dict['Area Under ROC Curve'].append(roc_auc)
+
+
+    uncertainties.feeder_from_sphinx(sub, dict, 'probability')
 
 
 def calc_all_flux_metrics(obs, pred):
@@ -1945,6 +1950,7 @@ def point_intensity_intuitive_metrics(df, dict, model, energy_key, thresh_key,
         slope, yint, r_lin, r_log, s_lin, MRatio, MedRatio, ME, MedE, MLE,
         MedLE, MAE, MedAE, MALE, MedALE, MPE, MAPE, MSPE, SMAPE,
         MAR, RMSE, RMSLE, MdSA, fact10, fact2, tp_plotnames)
+    uncertainties.feeder_from_sphinx(sub, dict, 'point_intensity')
 
 
 
@@ -2063,6 +2069,14 @@ def peak_intensity_intuitive_metrics(df, dict, model, energy_key, thresh_key,
         slope, yint, r_lin, r_log, s_lin, MRatio, MedRatio, ME, MedE, MLE,
         MedLE, MAE, MedAE, MALE, MedALE, MPE, MAPE, MSPE, SMAPE,
         MAR, RMSE, RMSLE, MdSA, fact10, fact2)
+    
+    logger.info('BEFORE UNCERT :LJ:LJ:LJ:LJ:LJ:LJ:LJ:LJ:J:LJ:LJ:LJ:LJ:LJ:')
+    logger.info(str(len(dict)))
+
+    uncertainties.feeder_from_sphinx(sub, dict, 'peak_intensity')
+    logger.info(str(dict))
+    logger.info(str(len(dict)))
+    logger.info('AFTER UNCERT :LJ:LJ:LJ:LJ:LJ:LJ:LJ:LJ:J:LJ:LJ:LJ:LJ:LJ:')
 
 
 
@@ -2223,6 +2237,8 @@ def peak_intensity_max_intuitive_metrics(df, dict, model, energy_key,
         slope, yint, r_lin, r_log, s_lin, MRatio, MedRatio, ME, MedE, MLE,
         MedLE, MAE, MedAE, MALE, MedALE, MPE, MAPE, MSPE, SMAPE,
         MAR, RMSE, RMSLE, MdSA, fact10, fact2)
+    
+    uncertainties.feeder_from_sphinx(sub, dict, 'peak_intensity_max')
 
 
 
@@ -2371,7 +2387,7 @@ def max_flux_in_pred_win_metrics(df, dict, model, energy_key,
         slope, yint, r_lin, r_log, s_lin, MRatio, MedRatio, ME, MedE, MLE,
         MedLE, MAE, MedAE, MALE, MedALE, MPE, MAPE, MSPE, SMAPE,
         MAR, RMSE, RMSLE, MdSA, fact10, fact2)
-
+    uncertainties.feeder_from_sphinx(sub, dict, 'max_flux_in_pred_win')
 
 
 def fluence_intuitive_metrics(df, dict, model, energy_key,
@@ -2489,6 +2505,7 @@ def fluence_intuitive_metrics(df, dict, model, energy_key,
         slope, yint, r_lin, r_log, s_lin, MRatio, MedRatio, ME, MedE, MLE,
         MedLE, MAE, MedAE, MALE, MedALE, MPE, MAPE, MSPE, SMAPE,
         MAR, RMSE, RMSLE, MdSA, fact10, fact2)
+    uncertainties.feeder_from_sphinx(sub, dict, 'fluence')
 
 
 
@@ -2556,6 +2573,8 @@ def threshold_crossing_intuitive_metrics(df, dict, model, energy_key,
     
     fill_time_metrics_dict(dict, model, energy_key, thresh_key,
     pred_energy_key, pred_thresh_key, ME, MedE, MAE, MedAE)
+
+    uncertainties.feeder_from_sphinx(sub, dict, 'threshold_crossing')
     
 
 def start_time_intuitive_metrics(df, dict, model, energy_key, thresh_key,
@@ -2622,6 +2641,7 @@ def start_time_intuitive_metrics(df, dict, model, energy_key, thresh_key,
     
     fill_time_metrics_dict(dict, model, energy_key, thresh_key,
     pred_energy_key, pred_thresh_key, ME, MedE, MAE, MedAE)
+    uncertainties.feeder_from_sphinx(sub, dict, 'start_time')
 
 
 def end_time_intuitive_metrics(df, dict, model, energy_key,
@@ -2687,6 +2707,7 @@ def end_time_intuitive_metrics(df, dict, model, energy_key,
     
     fill_time_metrics_dict(dict, model, energy_key, thresh_key,
     pred_energy_key, pred_thresh_key, ME, MedE, MAE, MedAE)
+    uncertainties.feeder_from_sphinx(sub, dict, 'end_time')
  
 
 
@@ -2755,6 +2776,7 @@ def duration_intuitive_metrics(df, dict, model, energy_key, thresh_key,
     
     fill_time_metrics_dict(dict, model, energy_key, thresh_key,
     pred_energy_key, pred_thresh_key, ME, MedE, MAE, MedAE)
+    uncertainties.feeder_from_sphinx(sub, dict, 'duration')
 
 
 
@@ -2831,6 +2853,8 @@ def peak_intensity_time_intuitive_metrics(df, dict, model, energy_key,
     
     fill_time_metrics_dict(dict, model, energy_key, thresh_key,
     pred_energy_key, pred_thresh_key, ME, MedE, MAE, MedAE)
+
+    uncertainties.feeder_from_sphinx(sub, dict, 'peak_intensity_time')
 
 
 def date_to_string(date):
@@ -2921,6 +2945,8 @@ def peak_intensity_max_time_intuitive_metrics(df, dict, model, energy_key,
     
     fill_time_metrics_dict(dict, model, energy_key, thresh_key,
     pred_energy_key, pred_thresh_key, ME, MedE, MAE, MedAE)
+
+    uncertainties.feeder_from_sphinx(sub, dict, 'peak_intensity_max_time')
 
 
 def time_profile_intuitive_metrics(df, dict, model, energy_key,
@@ -3916,59 +3942,59 @@ def calculate_intuitive_metrics(df, model_names, all_energy_channels,
     if validation_type == "All" or validation_type == "all":
         validation_type = ""
     
-    all_clear_dict = initialize_all_clear_dict() #All only
-    probability_dict = initialize_probability_dict() #All only
-    point_intensity_dict = initialize_flux_dict() #All only
-    peak_intensity_dict = initialize_flux_dict() #All, First, Last, Max, Mean
-    peak_intensity_max_dict = initialize_flux_dict() #All, First, Last, Max, Mean
-    fluence_dict = initialize_flux_dict() #All, First, Last, Max, Mean
-    profile_dict = initialize_flux_dict() #All, First, Last
-    thresh_cross_dict = initialize_time_dict() #All, First, Last
-    start_time_dict = initialize_time_dict() #All, First, Last
-    end_time_dict = initialize_time_dict() #All, First, Last
-    duration_dict = initialize_time_dict() #All, First, Last
-    peak_intensity_time_dict = initialize_time_dict() #All, First, Last
-    peak_intensity_max_time_dict = initialize_time_dict() #All, First, Last
-    max_dict = initialize_flux_dict() #max in prediction window #All only
-    awt_dict = initialize_awt_dict() #Advanced Warning Time #All, First
-    last_data_to_issue_dict = initialize_time_dict() #All
+    all_clear_dict = metrics_dicts.initialize_all_clear_dict() #All only
+    probability_dict = metrics_dicts.initialize_probability_dict() #All only
+    point_intensity_dict = metrics_dicts.initialize_flux_dict() #All only
+    peak_intensity_dict = metrics_dicts.initialize_flux_dict() #All, First, Last, Max, Mean
+    peak_intensity_max_dict = metrics_dicts.initialize_flux_dict() #All, First, Last, Max, Mean
+    fluence_dict = metrics_dicts.initialize_flux_dict() #All, First, Last, Max, Mean
+    profile_dict = metrics_dicts.initialize_flux_dict() #All, First, Last
+    thresh_cross_dict = metrics_dicts.initialize_time_dict() #All, First, Last
+    start_time_dict = metrics_dicts.initialize_time_dict() #All, First, Last
+    end_time_dict = metrics_dicts.initialize_time_dict() #All, First, Last
+    duration_dict = metrics_dicts.initialize_time_dict() #All, First, Last
+    peak_intensity_time_dict = metrics_dicts.initialize_time_dict() #All, First, Last
+    peak_intensity_max_time_dict = metrics_dicts.initialize_time_dict() #All, First, Last
+    max_dict = metrics_dicts.initialize_flux_dict() #max in prediction window #All only
+    awt_dict = metrics_dicts.initialize_awt_dict() #Advanced Warning Time #All, First
+    last_data_to_issue_dict = metrics_dicts.initialize_time_dict() #All
     
     for model in model_names:
         for ek in all_energy_channels:
             for tk in all_observed_thresholds[ek]:
                 logging.info("Calculating metrics for " + model + ", " + ek + ", " + tk)
                 
-                probability_intuitive_metrics(df, probability_dict,model,ek,tk,
-                    validation_type)
-                point_intensity_intuitive_metrics(df, point_intensity_dict,
-                    model, ek, tk, validation_type)
-                peak_intensity_intuitive_metrics(df, peak_intensity_dict,
-                    model,ek,tk, validation_type)
-                peak_intensity_max_intuitive_metrics(df,
-                    peak_intensity_max_dict,model,ek,tk, validation_type)
-                fluence_intuitive_metrics(df,fluence_dict, model,ek,tk,
-                    validation_type)
-                threshold_crossing_intuitive_metrics(df, thresh_cross_dict,
-                    model,ek,tk, validation_type)
-                start_time_intuitive_metrics(df, start_time_dict,
-                    model,ek,tk, validation_type)
-                end_time_intuitive_metrics(df, end_time_dict,model,ek,tk,
-                    validation_type)
-                duration_intuitive_metrics(df, duration_dict,model,ek,tk,
-                    validation_type)
-                peak_intensity_time_intuitive_metrics(df,
-                    peak_intensity_time_dict,model,ek,tk, validation_type)
-                peak_intensity_max_time_intuitive_metrics(df,
-                    peak_intensity_max_time_dict,model,ek,tk, validation_type)
+                # probability_intuitive_metrics(df, probability_dict,model,ek,tk,
+                #     validation_type)
+                # point_intensity_intuitive_metrics(df, point_intensity_dict,
+                #     model, ek, tk, validation_type)
+                # peak_intensity_intuitive_metrics(df, peak_intensity_dict,
+                #     model,ek,tk, validation_type)
+                # peak_intensity_max_intuitive_metrics(df,
+                #     peak_intensity_max_dict,model,ek,tk, validation_type)
+                # fluence_intuitive_metrics(df,fluence_dict, model,ek,tk,
+                #     validation_type)
+                # threshold_crossing_intuitive_metrics(df, thresh_cross_dict,
+                #     model,ek,tk, validation_type)
+                # start_time_intuitive_metrics(df, start_time_dict,
+                #     model,ek,tk, validation_type)
+                # end_time_intuitive_metrics(df, end_time_dict,model,ek,tk,
+                #     validation_type)
+                # duration_intuitive_metrics(df, duration_dict,model,ek,tk,
+                #     validation_type)
+                # peak_intensity_time_intuitive_metrics(df,
+                #     peak_intensity_time_dict,model,ek,tk, validation_type)
+                # peak_intensity_max_time_intuitive_metrics(df,
+                #     peak_intensity_max_time_dict,model,ek,tk, validation_type)
                 all_clear_intuitive_metrics(df, all_clear_dict,model,ek,tk,
                     validation_type)
-                time_profile_intuitive_metrics(df, profile_dict,model,ek,tk,
-                    validation_type)
-                max_flux_in_pred_win_metrics(df, max_dict, model,ek,tk,
-                    validation_type)
-                awt_metrics(df, awt_dict, model, ek, tk, validation_type)
-                last_data_to_issue_intuitive_metrics(df, last_data_to_issue_dict,model,ek,tk,
-                    validation_type)
+                # time_profile_intuitive_metrics(df, profile_dict,model,ek,tk,
+                #     validation_type)
+                # max_flux_in_pred_win_metrics(df, max_dict, model,ek,tk,
+                #     validation_type)
+                # awt_metrics(df, awt_dict, model, ek, tk, validation_type)
+                # last_data_to_issue_intuitive_metrics(df, last_data_to_issue_dict,model,ek,tk,
+                #     validation_type)
 
     logger.info("Completed calculating all metrics.")
 

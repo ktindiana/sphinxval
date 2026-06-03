@@ -267,16 +267,16 @@ def calc_LE(y_true, y_pred):
     """
 
     check_consistent_length(y_true, y_pred)
-
+    
     y_true = check_array(y_true, force_all_finite=True, ensure_2d=False)
     y_pred = check_array(y_pred, force_all_finite=True, ensure_2d=False)
-
+    # print(y_true, y_pred)
     if (y_true < 0).any() or (y_pred < 0).any():
         logger.error("Logarithmic Error cannot be used when "
                          "targets contain negative values.")
         raise ValueError("Logarithmic Error cannot be used when "
                          "targets contain negative values.")
-
+    # print(statistics.mean(np.log10(y_pred) - np.log10(y_true)))
     return np.log10(y_pred) - np.log10(y_true)
 
 
