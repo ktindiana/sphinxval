@@ -51,6 +51,7 @@ def initialize_sphinx_dict():
     
 
     dict = {"Model": [],
+            "Observatory": [],
             "Energy Channel Key": [],
             "Threshold Key": [],
             "Mismatch Allowed": [],
@@ -62,104 +63,147 @@ def initialize_sphinx_dict():
             "Forecast Issue Time":[],
             "Prediction Window Start": [],
             "Prediction Window End": [],
-            
-            #OBSERVATIONS
-            "Number of CMEs": [],
-            "CME Start Time": [], #Timestamp of 1st
-                #coronagraph image CME is visible in
-            "CME Liftoff Time": [], #Timestamp of coronagraph
-                #image with 1st indication of CME liftoff (used by
-                #CACTUS)
-            "CME Latitude": [],
-            "CME Longitude": [],
-            "CME Speed": [],
-            "CME Half Width": [],
-            "CME PA": [],
-            "CME Catalog": [],
-            "Number of Flares": [],
-            "Flare Latitude": [],
-            "Flare Longitude": [],
-            "Flare Start Time": [],
-            "Flare Peak Time": [],
-            "Flare End Time": [],
-            "Flare Last Data Time": [],
-            "Flare Intensity": [],
-            "Flare Integrated Intensity": [],
-            "Flare NOAA AR": [],
-            "Observatory": [],
-            "Observed Time Profile": [], #string of comma
-                                          #separated filenames
+            "Observed SEP Event": [], #If an SEP event was matched, list start time for convenience
+
+            #TRIGGER/INPUT SUMMARY TIMING INFORMATION
+            "Last Trigger Time": [],
+            "Last Input Time": [],
+            "Last Eruption Time": [], #Last time for flare/CME
+
+            #USEFUL SUPPLEMENTARY INFORMATION
+            "Last Data Time to Issue Time": [],
+
+            #FORECAST TRIGGERS
+            "Prediction Number of CMEs": [],
+            "Prediction CME Start Time": [], #Timestamp of 1st coronagraph image CME is visible in
+            "Prediction CME Liftoff Time": [], #Timestamp of coronagraph
+                #image with 1st indication of CME liftoff (used by CACTUS)
+            "Prediction CME Latitude": [],
+            "Prediction CME Longitude": [],
+            "Prediction CME Speed": [],
+            "Prediction CME Half Width": [],
+            "Prediction CME PA": [],
+            "Prediction CME Catalog": [],
+            "Prediction CME Catalog ID": [],
+
+            #KNOWN OBSERVED SEP TRIGGERS
+            "Observed SEP CME Start Time": [], #Timestamp of 1st coronagraph image CME is visible in
+            "Observed SEP CME Liftoff Time": [], #Timestamp of coronagraph
+                #image with 1st indication of CME liftoff (used by CACTUS)
+            "Observed SEP CME Latitude": [],
+            "Observed SEP CME Longitude": [],
+            "Observed SEP CME Speed": [],
+            "Observed SEP CME Half Width": [],
+            "Observed SEP CME PA": [],
+            "Observed SEP CME Catalog": [],
+            "Observed SEP CME Catalog ID": [],
+
+            #FORECAST TRIGGERS
+            "Prediction Number of Flares": [],
+            "Prediction Flare Latitude": [],
+            "Prediction Flare Longitude": [],
+            "Prediction Flare Start Time": [],
+            "Prediction Flare Peak Time": [],
+            "Prediction Flare End Time": [],
+            "Prediction Flare Last Data Time": [],
+            "Prediction Flare Intensity": [],
+            "Prediction Flare Integrated Intensity": [],
+            "Prediction Flare NOAA AR": [],
+
+            #KNOWN OBSERVED SEP TRIGGERS
+            "Observed SEP Flare Latitude": [],
+            "Observed SEP Flare Longitude": [],
+            "Observed SEP Flare Start Time": [],
+            "Observed SEP Flare Peak Time": [],
+            "Observed SEP Flare End Time": [],
+            "Observed SEP Flare Intensity": [],
+            "Observed SEP Flare Integrated Intensity": [],
+            "Observed SEP Flare NOAA AR": [],
+
+            #MATCHED PREDICTED AND OBSERVED INFORMATION
+            "All Clear Match Status": [],
+            "Predicted SEP All Clear Probability Threshold": [],
+            "Predicted SEP All Clear": [],
             "Observed SEP All Clear": [],
+
+            "Probability Match Status": [],
+            "Predicted SEP Probability": [],
             "Observed SEP Probability": [],
+
+            "Threshold Crossing Time Match Status": [],
+            "Predicted SEP Threshold Crossing Time": [],
             "Observed SEP Threshold Crossing Time": [],
+            
+            "Start Time Match Status": [],
+            "Predicted SEP Start Time":[],
             "Observed SEP Start Time":[],
-            "Observed SEP End Time": [],
-            "Observed SEP Duration": [],
-            "Observed SEP Fluence": [],
-            "Observed SEP Fluence Units": [],
-            "Observed SEP Fluence Spectrum": [],
-            "Observed SEP Fluence Spectrum Units": [],
+ 
+            "Peak Intensity Match Status": [],
+            "Predicted SEP Peak Intensity (Onset Peak)": [],
+            "Predicted SEP Peak Intensity (Onset Peak) Units": [],
+            "Predicted SEP Peak Intensity (Onset Peak) Time": [],
             "Observed SEP Peak Intensity (Onset Peak)": [],
             "Observed SEP Peak Intensity (Onset Peak) Units": [],
             "Observed SEP Peak Intensity (Onset Peak) Time": [],
+
+            "Peak Intensity Max Match Status": [],
+            "Predicted SEP Peak Intensity Max (Max Flux)": [],
+            "Predicted SEP Peak Intensity Max (Max Flux) Units": [],
+            "Predicted SEP Peak Intensity Max (Max Flux) Time": [],
             "Observed SEP Peak Intensity Max (Max Flux)": [],
             "Observed SEP Peak Intensity Max (Max Flux) Units": [],
             "Observed SEP Peak Intensity Max (Max Flux) Time": [],
 
-            "Observed Point Intensity": [],
-            "Observed Point Intensity Units": [],
-            "Observed Point Intensity Time": [],
             "Observed Max Flux in Prediction Window": [],
             "Observed Max Flux in Prediction Window Units": [],
             "Observed Max Flux in Prediction Window Time": [],
-            
-            #PREDICTIONS
-            "Predicted SEP All Clear": [],
-            "Predicted SEP All Clear Probability Threshold": [],
-            "All Clear Match Status": [],
-            "Predicted SEP Probability": [],
-            "Probability Match Status": [],
-            "Predicted SEP Threshold Crossing Time": [],
-            "Threshold Crossing Time Match Status": [],
-            "Predicted SEP Start Time":[],
-            "Start Time Match Status": [],
-            "Predicted SEP End Time": [],
+
             "End Time Match Status": [],
-            "Predicted SEP Duration": [],
+            "Predicted SEP End Time": [],
+            "Observed SEP End Time": [],
+            
             "Duration Match Status": [],
+            "Predicted SEP Duration": [],
+            "Observed SEP Duration": [],
+            
+            "Fluence Match Status": [],
             "Predicted SEP Fluence": [],
             "Predicted SEP Fluence Units": [],
-            "Fluence Match Status": [],
+            "Observed SEP Fluence": [],
+            "Observed SEP Fluence Units": [],
+
+            "Fluence Spectrum Match Status": [],
             "Predicted SEP Fluence Spectrum": [],
             "Predicted SEP Fluence Spectrum Units": [],
-            "Fluence Spectrum Match Status": [],
-            "Predicted SEP Peak Intensity (Onset Peak)": [],
-            "Predicted SEP Peak Intensity (Onset Peak) Units": [],
-            "Predicted SEP Peak Intensity (Onset Peak) Time": [],
-            "Peak Intensity Match Status": [],
-            "Predicted SEP Peak Intensity Max (Max Flux)": [],
-            "Predicted SEP Peak Intensity Max (Max Flux) Units": [],
-            "Predicted SEP Peak Intensity Max (Max Flux) Time": [],
-            "Peak Intensity Max Match Status": [],
-            
+            "Observed SEP Fluence Spectrum": [],
+            "Observed SEP Fluence Spectrum Units": [],
+
+            "Time Profile Match Status": [],
+            "Predicted Time Profile": [],
+            "Observed Time Profile": [], #string of comma separated filenames
+
             "Predicted Point Intensity": [],
             "Predicted Point Intensity Units": [],
             "Predicted Point Intensity Time": [],
+            "Observed Point Intensity": [],
+            "Observed Point Intensity Units": [],
+            "Observed Point Intensity Time": [],
 
-            "Predicted Time Profile": [],
-            "Time Profile Match Status": [],
-            
-            "Last Data Time to Issue Time": [],
             
             #MATCHING INFORMATION
+            "Overlapping Observations": [],
             "All Thresholds in Prediction": [],
-            "Last Eruption Time": [], #Last time for flare/CME
-            "Last Trigger Time": [],
-            "Last Input Time": [],
             "Threshold Crossed in Prediction Window": [],
             "All Threshold Crossing Times": [],
             "Eruption before Threshold Crossed": [],
             "Time Difference between Eruption and Threshold Crossing": [],
+            "Farside": [],
+            "Is Source Flare": [],
+            "All Observation Flare Peak Times": [],
+            "All Prediction Flares": [],
+            "Is Source CME": [],
+            "All Observation CME Start Times": [],
+            "All Prediction CMEs": [],
             "Eruption in Range": [],
             "Triggers before Threshold Crossing": [],
             "Inputs before Threshold Crossing": [],
@@ -209,6 +253,7 @@ def fill_sphinx_dict_row(sphinx, dict, energy_key, thresh_key, profname_dict):
         
     """
 
+    #CMEs THAT TRIGGERED PREDICTION
     ncme = len(sphinx.prediction.cmes)
     if ncme > 0:
         cme_start = sphinx.prediction.cmes[-1].start_time
@@ -219,6 +264,7 @@ def fill_sphinx_dict_row(sphinx, dict, energy_key, thresh_key, profname_dict):
         cme_half_width = sphinx.prediction.cmes[-1].half_width
         cme_speed = sphinx.prediction.cmes[-1].speed
         cme_catalog = sphinx.prediction.cmes[-1].catalog
+        cme_catalog_id = sphinx.prediction.cmes[-1].catalog_id
     else:
         cme_start = pd.NaT
         cme_liftoff = pd.NaT
@@ -228,7 +274,9 @@ def fill_sphinx_dict_row(sphinx, dict, energy_key, thresh_key, profname_dict):
         cme_half_width = np.nan
         cme_speed = np.nan
         cme_catalog = None
+        cme_catalog_id = None
         
+    #FLARES THAT TRIGGERED PREDICTIONS
     nfl = len(sphinx.prediction.flares)
     if nfl > 0:
         fl_lat = sphinx.prediction.flares[-1].lat
@@ -250,6 +298,32 @@ def fill_sphinx_dict_row(sphinx, dict, energy_key, thresh_key, profname_dict):
         fl_intensity = np.nan
         fl_integrated_intensity = np.nan
         fl_AR = None
+
+
+    #CME ASSOCIATED WITH OBSERVED SEP
+    #Null values already set if no CME
+    obs_cme_start = sphinx.observed_sep_cme.start_time
+    obs_cme_liftoff = sphinx.observed_sep_cme.liftoff_time
+    obs_cme_lat = sphinx.observed_sep_cme.lat
+    obs_cme_lon = sphinx.observed_sep_cme.lon
+    obs_cme_pa = sphinx.observed_sep_cme.pa
+    obs_cme_half_width = sphinx.observed_sep_cme.half_width
+    obs_cme_speed = sphinx.observed_sep_cme.speed
+    obs_cme_catalog = sphinx.observed_sep_cme.catalog
+    obs_cme_catalog_id = sphinx.observed_sep_cme.catalog_id
+
+    #FLARE ASSOCIATED WITH OBSERVED SEP
+    #Null values already set if no flare
+    obs_fl_lat = sphinx.observed_sep_flare.lat
+    obs_fl_lon = sphinx.observed_sep_flare.lon
+    obs_fl_last_data_time = sphinx.observed_sep_flare.last_data_time
+    obs_fl_start_time = sphinx.observed_sep_flare.start_time
+    obs_fl_peak_time = sphinx.observed_sep_flare.peak_time
+    obs_fl_end_time = sphinx.observed_sep_flare.end_time
+    obs_fl_intensity = sphinx.observed_sep_flare.intensity
+    obs_fl_integrated_intensity = sphinx.observed_sep_flare.integrated_intensity
+    obs_fl_AR = sphinx.observed_sep_flare.noaa_region
+
 
     observatory = ""
     obs_time_prof = ""
@@ -326,28 +400,52 @@ def fill_sphinx_dict_row(sphinx, dict, energy_key, thresh_key, profname_dict):
     dict["Forecast Issue Time"].append(sphinx.prediction.issue_time)
     dict["Prediction Window Start"].append(sphinx.prediction.prediction_window_start)
     dict["Prediction Window End"].append(sphinx.prediction.prediction_window_end)
-    dict["Number of CMEs"].append(ncme)
-    dict["CME Start Time"].append(cme_start) #Timestamp of 1st
+    dict["Prediction Number of CMEs"].append(ncme)
+    dict["Prediction CME Start Time"].append(cme_start) #Timestamp of 1st
             #coronagraph image CME is visible in
-    dict["CME Liftoff Time"].append(cme_liftoff) #Timestamp of coronagraph
+    dict["Prediction CME Liftoff Time"].append(cme_liftoff) #Timestamp of coronagraph
             #image with 1st indication of CME liftoff (used by
             #CACTUS)
-    dict["CME Latitude"].append(cme_lat)
-    dict["CME Longitude"].append(cme_lon)
-    dict["CME Speed"].append(cme_speed)
-    dict["CME Half Width"].append(cme_half_width)
-    dict["CME PA"].append(cme_pa)
-    dict["CME Catalog"].append(cme_catalog)
-    dict["Number of Flares"].append(nfl)
-    dict["Flare Latitude"].append(fl_lat)
-    dict["Flare Longitude"].append(fl_lon)
-    dict["Flare Start Time"].append(fl_start_time)
-    dict["Flare Peak Time"].append(fl_peak_time)
-    dict["Flare End Time"].append(fl_end_time)
-    dict["Flare Last Data Time"].append(fl_last_data_time)
-    dict["Flare Intensity"].append(fl_intensity)
-    dict["Flare Integrated Intensity"].append(fl_integrated_intensity)
-    dict["Flare NOAA AR"].append(fl_AR)
+    dict["Prediction CME Latitude"].append(cme_lat)
+    dict["Prediction CME Longitude"].append(cme_lon)
+    dict["Prediction CME Speed"].append(cme_speed)
+    dict["Prediction CME Half Width"].append(cme_half_width)
+    dict["Prediction CME PA"].append(cme_pa)
+    dict["Prediction CME Catalog"].append(cme_catalog)
+    dict["Prediction CME Catalog ID"].append(cme_catalog_id)
+    dict["Prediction Number of Flares"].append(nfl)
+    dict["Prediction Flare Latitude"].append(fl_lat)
+    dict["Prediction Flare Longitude"].append(fl_lon)
+    dict["Prediction Flare Start Time"].append(fl_start_time)
+    dict["Prediction Flare Peak Time"].append(fl_peak_time)
+    dict["Prediction Flare End Time"].append(fl_end_time)
+    dict["Prediction Flare Last Data Time"].append(fl_last_data_time)
+    dict["Prediction Flare Intensity"].append(fl_intensity)
+    dict["Prediction Flare Integrated Intensity"].append(fl_integrated_intensity)
+    dict["Prediction Flare NOAA AR"].append(fl_AR)
+    
+
+    dict["Observed SEP CME Start Time"].append(obs_cme_start) #Timestamp of 1st
+            #coronagraph image CME is visible in
+    dict["Observed SEP CME Liftoff Time"].append(obs_cme_liftoff) #Timestamp of coronagraph
+            #image with 1st indication of CME liftoff (used by
+            #CACTUS)
+    dict["Observed SEP CME Latitude"].append(obs_cme_lat)
+    dict["Observed SEP CME Longitude"].append(obs_cme_lon)
+    dict["Observed SEP CME Speed"].append(obs_cme_speed)
+    dict["Observed SEP CME Half Width"].append(obs_cme_half_width)
+    dict["Observed SEP CME PA"].append(obs_cme_pa)
+    dict["Observed SEP CME Catalog"].append(obs_cme_catalog)
+    dict["Observed SEP CME Catalog ID"].append(obs_cme_catalog_id)
+    dict["Observed SEP Flare Latitude"].append(obs_fl_lat)
+    dict["Observed SEP Flare Longitude"].append(obs_fl_lon)
+    dict["Observed SEP Flare Start Time"].append(obs_fl_start_time)
+    dict["Observed SEP Flare Peak Time"].append(obs_fl_peak_time)
+    dict["Observed SEP Flare End Time"].append(obs_fl_end_time)
+    dict["Observed SEP Flare Intensity"].append(obs_fl_intensity)
+    dict["Observed SEP Flare Integrated Intensity"].append(obs_fl_integrated_intensity)
+    dict["Observed SEP Flare NOAA AR"].append(obs_fl_AR)
+
     dict["Observatory"].append(observatory)
     dict["Observed Time Profile"].append(obs_time_prof) #string of comma
                               #separated filenames
@@ -364,8 +462,10 @@ def fill_sphinx_dict_row(sphinx, dict, energy_key, thresh_key, profname_dict):
         dict["Observed SEP Threshold Crossing Time"].append(pd.NaT)
 
     try:
+        dict["Observed SEP Event"].append(sphinx.observed_start_time[thresh_key])
         dict["Observed SEP Start Time"].append(sphinx.observed_start_time[thresh_key])
     except:
+        dict["Observed SEP Event"].append(pd.NaT)
         dict["Observed SEP Start Time"].append(pd.NaT)
 
     try:
@@ -462,6 +562,8 @@ def fill_sphinx_dict_row(sphinx, dict, energy_key, thresh_key, profname_dict):
     #MATCHING INFORMATION - cast all matching info to strings to avoid problems
     #with read/write. Kept mainly for human reference and traceability. Not used
     #in the validation process.
+    overlap_fnames = [obj.source for obj in sphinx.prediction_observation_windows_overlap]
+    dict["Overlapping Observations"].append(str(overlap_fnames))
     dict["All Thresholds in Prediction"].append(str(sphinx.prediction.all_thresholds))
     dict["Last Eruption Time"].append(str(sphinx.last_eruption_time))
     dict["Last Trigger Time"].append(str(sphinx.last_trigger_time))
@@ -474,7 +576,22 @@ def fill_sphinx_dict_row(sphinx, dict, energy_key, thresh_key, profname_dict):
     except:
         dict["Threshold Crossed in Prediction Window"].append(None)
         dict["All Threshold Crossing Times"].append(None)
-        
+ 
+    dict["Farside"].append(sphinx.observed_sep_farside)
+    dict["Is Source Flare"].append(str(sphinx.is_source_flare))
+    flare_times = [flare.peak_time for flare in sphinx.all_observed_flares]
+    dict["All Observation Flare Peak Times"].append(str(flare_times))
+    
+    flare_dicts = [pflare.to_dict() for pflare in sphinx.prediction.flares]
+    dict["All Prediction Flares"].append(str(flare_dicts))
+    
+    dict["Is Source CME"].append(str(sphinx.is_source_cme))
+    cme_times = [pcme.start_time for pcme in sphinx.all_observed_cmes]
+    dict["All Observation CME Start Times"].append(str(cme_times))
+
+    cme_dicts = [cme.to_dict() for cme in sphinx.prediction.cmes]
+    dict["All Prediction CMEs"].append(str(cme_dicts))
+
     try:
         dict["Eruption before Threshold Crossed"].append(str(sphinx.eruptions_before_threshold_crossing[thresh_key]))
         dict["Time Difference between Eruption and Threshold Crossing"].append(str(sphinx.time_difference_eruptions_threshold_crossing[thresh_key]))
@@ -574,7 +691,7 @@ def fill_sphinx_df(evaluated_sphinx, all_obs_thresholds, profname_dict):
         organized by model and energy channel.
     """
     #sorted by model, quantity, energy channel, threshold
-    dict = initialize_sphinx_dict()
+    sphinx_dict = initialize_sphinx_dict()
 
     #Loop through the forecasts for each model and fill in quantity_dict
     #as appropriate
@@ -585,16 +702,16 @@ def fill_sphinx_df(evaluated_sphinx, all_obs_thresholds, profname_dict):
             for sphinx in evaluated_sphinx[model][ek]:
                 logger.debug(sphinx.prediction.source)
                 
-                try:
-                    for tk in all_obs_thresholds[ek]:
-                        fill_sphinx_dict_row(sphinx, dict, ek, tk, profname_dict)
+                try: ####FIX BUG###
+                    for thresh in sphinx.thresholds:
+                        tk = objh.threshold_to_key(thresh)
+                    #for tk in all_obs_thresholds[ek]:
+                        fill_sphinx_dict_row(sphinx, sphinx_dict, ek, tk, profname_dict)
                 except:
-                    #In the case a new energy channel with added to
-                    #removed_sphinx
-                    fill_sphinx_dict_row(sphinx, dict, ek, None, profname_dict)
-                
+                    #In the case a new energy channel was added to removed_sphinx
+                    fill_sphinx_dict_row(sphinx, sphinx_dict, ek, None, profname_dict)
     
-    df = pd.DataFrame(dict)
+    df = pd.DataFrame(sphinx_dict)
     #Sort by prediction window start so in time order for AWT, etc
     df = df.sort_values(by=["Model","Energy Channel Key","Threshold Key","Prediction Window Start", "Forecast Issue Time"],ascending=[True, True, True, True, True])
     

@@ -285,46 +285,70 @@ def attributes_of_sphinx_obj(keyword, sphinx_obj, energy_channel_key, threshold_
 
     depth_top = {
         'Mismatch Allowed': 'mismatch',
-        'Evaluation Status': 'not_evaluated'
+        'Evaluation Status': 'not_evaluated',
+        'Farside': 'observed_sep_farside'
     }
     if keyword in depth_top:
         return getattr(sphinx_obj, depth_top[keyword], None)
 
     depth_cmes = {
-        'Number of CMEs': 'cmes',
-        'CME Start Time': 'start_time',
-        'CME Liftoff Time': 'liftoff_time',
-        'CME Latitude' : 'lat',
-        'CME Longitude': 'lon',
-        'CME Speed': 'speed',
-        'CME Half Width': 'half_width',
-        'CME PA': 'pa',
-        'CME Catalog': 'catalog'
+        'Prediction Number of CMEs': 'cmes',
+        'Observed SEP CME Start Time': 'start_time',
+        'Prediction CME Start Time': 'start_time',
+        'Observed SEP CME Liftoff Time': 'liftoff_time',
+        'Prediction CME Liftoff Time': 'liftoff_time',
+        'Observed SEP CME Latitude' : 'lat',
+        'Prediction CME Latitude': 'lat',
+        'Observed SEP CME Longitude': 'lon',
+        'Prediction CME Longitude': 'lon',
+        'Observed SEP CME Speed': 'speed',
+        'Prediction CME Speed': 'speed',
+        'Observed SEP CME Half Width': 'half_width',
+        'Prediction CME Half Width': 'half_width',
+        'Observed SEP CME PA': 'pa',
+        'Prediction CME PA': 'pa',
+        'Observed SEP CME Catalog': 'catalog',
+        'Prediction CME Catalog': 'catalog'
     }
     if keyword in depth_cmes:
-        if keyword == 'Number of CMEs':
+        if keyword == 'Prediction Number of CMEs':
             return len(getattr(sphinx_obj.prediction, depth_cmes[keyword], None))
         else:
-            return getattr(sphinx_obj.prediction.cmes[-1], depth_cmes[keyword], None)
+            if 'Prediction' in keyword:
+                return getattr(sphinx_obj.prediction.cmes[-1], depth_cmes[keyword], None)
+            else:
+                return getattr(sphinx_obj.observed_sep_cme, depth_cmes[keyword], None)
 
     depth_flare = {
-        'Number of Flares': 'flares',
-        'Flare Start Time': 'start_time',
-        'Flare Peak Time': 'peak_time',
-        'Flare Latitude' : "lat",
-        'Flare Longitude': 'lon',
-        'Flare End Time': 'end_time',
-        'Flare Last Data Time': 'last_data_time',
-        'Flare Intensity': 'intensity',
-        'Flare Integrated Intensity': 'integrated_intensity',
-        'Flare NOAA AR': 'noaa_region'
+        'Prediction Number of Flares': 'flares',
+        'Prediction Flare Start Time': 'start_time',
+        'Prediction Flare Peak Time': 'peak_time',
+        'Prediction Flare Latitude' : "lat",
+        'Prediction Flare Longitude': 'lon',
+        'Prediction Flare End Time': 'end_time',
+        'Prediction Flare Last Data Time': 'last_data_time',
+        'Prediction Flare Intensity': 'intensity',
+        'Prediction Flare Integrated Intensity': 'integrated_intensity',
+        'Observed SEP Flare NOAA AR': 'noaa_region',
+        'Observed SEP Number of Flares': 'flares',
+        'Observed SEP Flare Start Time': 'start_time',
+        'Observed SEP Flare Peak Time': 'peak_time',
+        'Observed SEP Flare Latitude' : "lat",
+        'Observed SEP Flare Longitude': 'lon',
+        'Observed SEP Flare End Time': 'end_time',
+        'Observed SEP Flare Last Data Time': 'last_data_time',
+        'Observed SEP Flare Intensity': 'intensity',
+        'Observed SEP Flare Integrated Intensity': 'integrated_intensity',
+        'Observed SEP Flare NOAA AR': 'noaa_region'
     }
     if keyword in depth_flare:
-        if keyword == 'Number of Flares':
+        if keyword == 'Prediction Number of Flares':
             return len(getattr(sphinx_obj.prediction, depth_flare[keyword], None))
         else:
-            logger.debug(depth_flare[keyword])
-            return getattr(sphinx_obj.prediction.flares, depth_flare[keyword], None)
+            if 'Prediction' in keyword:
+                return getattr(sphinx_obj.prediction.flares, depth_flare[keyword], None)
+            else:
+                return getattr(sphinx_obj.observed_sep_flare, depth_flare[keyword], None)
 
     depth_top_string = {
         'Last Eruption Time': 'last_eruption_time',
@@ -337,14 +361,36 @@ def attributes_of_sphinx_obj(keyword, sphinx_obj, energy_channel_key, threshold_
         'Time Difference between Triggers and Peak Intensity Max': 'time_difference_triggers_peak_intensity_max',
         'Triggers before Peak Intensity Max': 'triggers_before_peak_intensity_max', 
         'Inputs before Peak Intensity Max': 'inputs_before_peak_intensity_max', 
-        'Time Difference between Inputs and Peak Intensity Max': 'time_difference_inputs_peak_intensity_max'
+        'Time Difference between Inputs and Peak Intensity Max': 'time_difference_inputs_peak_intensity_max',
+        'Is Source Flare': 'is_source_flare',
+        'Is Source CME': 'is_source_cme'
     }
     if keyword in depth_top_string:
         return str(getattr(sphinx_obj, depth_top_string[keyword], None))
 
+    depth_top_arrays = {
+        'Overlapping Observations': 'prediction_observation_windows_overlap'
+    }
+    if keyword in depth_top_arrays:
+        attribute_arrays = getattr(sphinx_obj, depth_top_arrays[keyword], None)
+        attribute = str([obj.source for obj in attribute_arrays])
+        return attribute
+
+
+    depth_prediction_arrays = {
+        'All Prediction Flares': 'flares',
+        'All Prediction CMEs': 'cmes'
+    }
+    if keyword in depth_prediction_arrays:
+        
+        attribute_arrays = getattr(sphinx_obj.prediction, depth_prediction_arrays[keyword], None)
+        attribute = str([obj.to_dict() for obj in attribute_arrays])
+        return attribute
+
     depth_top_threshold = {
         'Observed SEP Start Time': 'observed_start_time',
-        'Observed SEP End Time': 'observed_end_time'
+        'Observed SEP End Time': 'observed_end_time',
+        'Observed SEP Event': 'observed_start_time'
     }
     if keyword in depth_top_threshold:
         return getattr(sphinx_obj, depth_top_threshold[keyword], None)[threshold_key[energy_channel_key][0]]
@@ -381,6 +427,7 @@ def attributes_of_sphinx_obj(keyword, sphinx_obj, energy_channel_key, threshold_
         'Prediction Window Overlap with Observed SEP Event': 'prediction_window_sep_overlap',
         'Ongoing SEP Event': 'observed_ongoing_events',
         'Eruption in Range': 'is_eruption_in_range'
+        
     }
     if keyword in depth_top_threshold_strings:
         return str(getattr(sphinx_obj, depth_top_threshold_strings[keyword], None)[threshold_key[energy_channel_key][0]])
@@ -515,6 +562,17 @@ def attributes_of_sphinx_obj(keyword, sphinx_obj, energy_channel_key, threshold_
 
     elif keyword == 'Trigger Advance Time':
         return 'NaT'
+    elif keyword == 'All Observation Flare Peak Times':
+        attribute_arrays = getattr(sphinx_obj, 'all_observed_flares', None)
+        attribute = str([obj.peak_time for obj in attribute_arrays])
+        return attribute
+    elif keyword == 'All Observation CME Start Times':
+        attribute_arrays = getattr(sphinx_obj, 'all_observed_cmes', None)
+        attribute = str([obj.start_time for obj in attribute_arrays])
+        return attribute 
+    
+
+
 
 
 def assert_equal_table(self, filename, test_dict):

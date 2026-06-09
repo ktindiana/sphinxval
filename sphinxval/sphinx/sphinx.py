@@ -112,8 +112,7 @@ def validate(data_list, model_list, top=None, Resume=None, resume_obs = None, re
     #windows (observed_sep_events).
     logger.info("Starting matching process.")
     evaluated_sphinx, removed_sphinx, all_observed_thresholds, observed_sep_events =\
-        match.match_all_forecasts(all_energy_channels, model_names,
-            obs_objs, model_objs)
+        match.match_all_forecasts(all_energy_channels, model_names, obs_objs, model_objs)
     logger.info("Completed matching process and starting intuitive validation.")
 
 
@@ -123,7 +122,6 @@ def validate(data_list, model_list, top=None, Resume=None, resume_obs = None, re
     removed_sphinx = duplicates.add_to_not_evaluated(removed_sphinx, removed_fcast, "Duplicate input forecast")
     if Resume is not None:
         removed_sphinx = duplicates.add_to_not_evaluated(removed_sphinx, removed_resume, "Duplicate forecast already present in the resume dataframe")
-
 
     #Perform intuitive validation
     sphinx_df = valid.intuitive_validation(evaluated_sphinx, removed_sphinx, model_names,

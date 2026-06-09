@@ -142,6 +142,7 @@ def write_json(template, filename):
     logger.info("Wrote SEP values to json file --> " + filename)
     return True
 
+
 ###### SUBROUTINES TO READ JSONS AND CREATE CLASS OBJECTS ##########
 def read_list_of_jsons(filename):
     """Read all of the json files in to a list.
@@ -246,6 +247,9 @@ def observation_object_from_json(obs_json, energy_channel):
     obs.add_observations_from_dict(obs_json)
     obs.check_energy_channel_format()
     
+    is_good_trig = obs.add_triggers_from_dict(obs_json)
+    is_good_input = obs.add_inputs_from_dict(obs_json)
+
     return obs
 
 
@@ -661,7 +665,7 @@ def dict_to_cme(cmeD):
         catalog = cmeD['catalog']
  
     if 'catalog_id' in cmeD:
-        catalog = cmeD['catalog_id']
+        catalog_id = cmeD['catalog_id']
 
 
     return start_time, liftoff_time, lat, lon, pa, half_width, speed,\
@@ -849,7 +853,8 @@ def dict_to_particle_intensity(partD):
 
     return observatory, instrument, last_data_time, ongoing_events
 
-def dict_to_human_evaluation(human_evaluation_dict): 
+
+def dict_to_human_evaluation(human_evaluation_dict):
     """ Extract values from an individual human evaluation entry.
         human_evaluation_dict like:
         forecast_json['sep_forecast_submission']['triggers'][0]['human_evaluation'][0]
@@ -867,6 +872,7 @@ def dict_to_human_evaluation(human_evaluation_dict):
         if isinstance(last_data_time, str):
             last_data_time = zulu_to_time(last_data_time) 
     return last_data_time
+
 
 
 ####INPUTS
