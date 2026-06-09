@@ -82,6 +82,23 @@ class CME:
         
         return
 
+    def to_dict(self):
+        """ Provide output in dictionary form """
+        cme_dict = {
+            "start_time": self.start_time,
+            "liftoff_time": self.liftoff_time,
+            "lat": self.lat,
+            "lon": self.lon,
+            "pa": self.pa,
+            "half_width": self.half_width,
+            "speed": self.speed,
+            "coordinates": self.coordinates,
+            "catalog": self.catalog,
+            "catalog_id": self.catalog_id
+        }
+        return cme_dict
+
+
 
 class CME_Simulation:
     def __init__(self, cmesim_id, model, sim_completion_time):
@@ -159,7 +176,23 @@ class Flare:
         self.noaa_region = noaa_region
         
         return
-            
+
+    def to_dict(self):
+        """ Provide output in dictionary form """
+        flare_dict = {
+            "last_data_time": self.last_data_time,
+            "start_time": self.start_time,
+            "peak_time": self.peak_time,
+            "end_time": self.end_time,
+            "location": self.location,
+            "lat": self.lat,
+            "lon": self.lon,
+            "intensity": self.intensity,
+            "integrated_intensity": self.integrated_intensity,
+            "noaa_region": self.noaa_region
+        }
+        return flare_dict
+        
 
 class Particle_Intensity:
     def __init__(self, part_id, observatory, instrument, last_data_time,
@@ -831,6 +864,7 @@ class Forecast():
                                  energy='{:02d}'.format(int(self.energy_channel['min'])))
         return is_good
 
+
     def fix_sep_profile(self, year='', month='', energy=''):
         # Check if the sep_profile exists in the current directory
         json_directory = os.path.abspath(os.path.dirname(self.source))
@@ -1252,7 +1286,19 @@ class Observation():
         self.location = None
         self.observation_window_start = pd.NaT
         self.observation_window_end = pd.NaT
+
+        #Triggers
+        self.cmes = []
+        self.cme_simulations = []
+        self.flares = []
+        self.particle_intensities = []
         
+        #Inputs
+        self.magnetic_connectivity = []
+        self.magnetograms = []
+        self.coronagraphs = []
+        self.human_evaluations = []
+        self.farside = None
         
         #Observed Values
         self.all_clear = All_Clear(None, np.nan, None, np.nan) #All_Clear object
@@ -1401,6 +1447,106 @@ class Observation():
         return
 
 
+    ## -------TRIGGERS
+    def add_triggers_from_dict(self, full_json):
+        """ Fills in trigger objects.
+            
+        """
+        
+        is_good, dataD = vjson.check_observation_json(full_json, self.energy_channel)
+        if not is_good: return
+        
+        if 'triggers' in full_json['sep_observation_submission']:
+            trig_arr = full_json['sep_observation_submission']['triggers']
+        else:
+            return
+        
+        for trig in trig_arr:
+            if 'cme' in trig and 'cme_simulation' not in trig:
+                start_time, liftoff_time, lat, lon, pa, half_width,\
+                speed, coordinates, catalog, catalog_id =\
+                    vjson.dict_to_cme(trig['cme'])
+                cme = CME("id", start_time, liftoff_time, lat, lon, pa,
+                    half_width, coordinates, speed, catalog, catalog_id)
+                self.cmes.append(cme)
+                continue
+            
+            if 'cme_simulation' in trig:
+                model,sim_completion_time = vjson.dict_to_cme_sim(trig['cme_simulation'])
+                cme_sim = CME_Simulation("id", model,sim_completion_time)
+                self.cme_simulations.append(cme_sim)
+                continue
+ 
+            if 'flare' in trig:
+                (last_data_time, start_time, peak_time, end_time,
+                 location, lat, lon, intensity, integrated_intensity, noaa_region, is_good_flare) = vjson.dict_to_flare(trig['flare'])
+                flare = Flare("id", last_data_time, start_time, peak_time,
+                            end_time, location, lat, lon, intensity,
+                            integrated_intensity, noaa_region)
+                self.flares.append(flare)
+                
+                if not is_good_flare:
+                    is_good = False
+                continue
+ 
+            if 'particle_intensity' in trig:
+                observatory, instrument, last_data_time, \
+                ongoing_events = vjson.dict_to_particle_intensity(trig['particle_intensity'])
+                pi = Particle_Intensity("id", observatory, instrument,
+                    last_data_time, ongoing_events)
+                self.particle_intensities.append(pi)
+                continue
+
+            if 'human_evaluation' in trig:
+                last_data_time = vjson.dict_to_human_evaluation(trig['human_evaluation'])
+                human_evaluation = HumanEvaluation("id", last_data_time)
+                self.human_evaluations.append(human_evaluation)
+                continue
+ 
+            if 'farside' in trig:
+                self.farside = trig['farside'] #boolean; {"farside": false}
+ 
+        return is_good
+ 
+
+    ## -----INPUTS
+    def add_inputs_from_dict(self,full_json):
+        """ Fills in input objects.
+        
+        """
+        is_good, dataD = vjson.check_observation_json(full_json, self.energy_channel)
+        if not is_good: return
+        
+        if 'inputs' in full_json['sep_observation_submission']:
+            input_arr = full_json['sep_observation_submission']['inputs']
+        else:
+            return is_good
+
+        for input in input_arr:
+            if 'magnetic_connectivity' in input:
+                method, lat, lon, connection_angle, solar_wind =\
+                    vjson.dict_to_mag_connectivity(input['magnetic_connectivity'])
+                magcon = Magnetic_Connectivity("id", method, lat, lon,
+                    connection_angle, solar_wind)
+                self.magnetic_connectivity.append(magcon)
+                continue
+ 
+            if 'magnetogram' in input:
+                observatory, instrument, products = vjson.dict_to_magnetogram(input['magnetogram'])
+                magneto = Magnetogram("id", observatory, instrument, products)
+                self.magnetograms.append(magneto)
+                continue
+
+            if 'coronagraph' in input:
+                observatory, instrument, products = \
+                    vjson.dict_to_coronagraph(input['coronagraph'])
+                corona = Coronagraph("id", observatory, instrument,
+                        products)
+                self.coronagraphs.append(corona)
+                continue
+
+        return is_good
+
 
     def identify_all_thresholds(self):
         """ Find all the thresholds applied to a given energy channel.
@@ -1481,6 +1627,14 @@ class SPHINX:
         self.prediction = None #Forecast object
         self.not_evaluated = None #set if a reason cannot evaluate forecast
 
+        self.observed_sep_flare = Flare("obs", pd.NaT, pd.NaT, pd.NaT,
+                pd.NaT, None, np.nan, np.nan, np.nan, np.nan, np.nan)
+        self.all_observed_flares = []
+        self.observed_sep_cme = CME("obs", pd.NaT, pd.NaT, np.nan, np.nan, np.nan,
+                    np.nan, None, np.nan, None, None)
+        self.all_observed_cmes = []
+        self.observed_sep_farside = None
+        
         #MATCHING INFORMATION
         #If user specified in config file to allow the observations
         #and predictions to have two different energy channels and thresholds,
@@ -1551,6 +1705,11 @@ class SPHINX:
         self.observed_point_intensity = Flux_Intensity('point_intensity', np.nan, None, np.nan, np.nan, np.nan, pd.NaT) #Derived quantity
         self.observed_match_peak_intensity_source = None
 
+        #Describe how the prediction was matched to an observation
+        #Filled in during one of the matching steps.
+        #Indicates if prediction flare/CME matched to known source flare/CME of observed SEP
+        self.match_how = None
+
         #Peak Intensity
         self.observed_match_peak_intensity_source = None
         self.peak_intensity_match_status = ""
@@ -1590,11 +1749,14 @@ class SPHINX:
         self.observed_probability = {} #Probability object
         
         # MATCHING CRITERIA INITIALIZATION
+        self.overlapping_observations = []
         self.is_win_overlap = []
+        self.is_source_flare = []
+        self.is_source_cme = []
         self.is_eruption_in_range = {}
         self.trigger_input_start = {}
         self.trigger_input_end = {}
-        
+
         return
 
 

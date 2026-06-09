@@ -42,23 +42,6 @@
 				],
 				"sep_profile": "match_observed_max_flux_integral_flux.10MeV.txt"
 			}
-		],
-		"triggers": [
-            {
-                "cme": {
-                    "start_time": "2000-01-01T00:00:01Z",
-                    "lat": -15.0,
-                    "lon": 45.0,
-                    "pa": 304.0,
-                    "half_width": 180.0,
-                    "speed": 1614.0,
-                    "catalog": "SOHO_CDAW",
-                    "derivation_technique": {
-                        "process": "manual",
-                        "method": "Plane-of-sky"
-                    }
-                }
-            }
-        ]
+		]
 	}
 }
