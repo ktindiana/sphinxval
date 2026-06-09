@@ -411,8 +411,7 @@ class Test_Resume(unittest.TestCase):
         self.Resume = './tests/files/fake_resume_dataframe.pkl'
         mock_dict = validate.initialize_sphinx_dict()
         data = mock_df_populate(mock_dict)
-        print(len(data))
-        print(len(mock_dict))
+
         df = pd.DataFrame(data = data)
             # if 'ValueError' occurs here, make sure the dictionary that is initialized in validation.py has the same
             # length/information as what get put in there form mock_df_populate. New columns to the dataframe will
