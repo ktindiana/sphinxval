@@ -1147,7 +1147,7 @@ def dict_to_event_length(event):
     threshold = np.nan
     threshold_units = None
     units = None
-    
+    logger.info(str(event))
     if 'start_time' in event:
         start_time = event['start_time']
         if isinstance(start_time,str):

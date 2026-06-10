@@ -1072,7 +1072,7 @@ class TestAllClear0(unittest.TestCase):
                 self.assertEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
 
     def step_2(self):
-        print('IN step 2')
+        # print('IN step 2')
         validate.calculate_intuitive_metrics(self.dataframe, self.model_names, self.all_energy_channels, \
                 self.obs_thresholds, 'All')
         validate.write_df(self.dataframe, "SPHINX_dataframe")
@@ -2007,8 +2007,8 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
         """
         validate.write_df(self.dataframe, "SPHINX_dataframe")
         
-        self.assertTrue(os.path.isfile('.\\tests\\output/csv/SPHINX_dataframe.csv'), msg = 'SPHINX_dataframe.csv does not exist, check the file is output correctly')
-        self.assertTrue(os.path.isfile('.\\tests\\output/pkl/SPHINX_dataframe.pkl'), msg = 'SPHINX_dataframe.pkl does not exist, check the file is output correctly')
+        self.assertTrue(os.path.isfile(os.path.join('.', 'tests', 'output', 'csv', 'SPHINX_dataframe.csv')), msg = 'SPHINX_dataframe.csv does not exist, check the file is output correctly')
+        self.assertTrue(os.path.isfile(os.path.join('.', 'tests', 'output', 'pkl', 'SPHINX_dataframe.pkl')), msg = 'SPHINX_dataframe.pkl does not exist, check the file is output correctly')
 
         
 
