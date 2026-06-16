@@ -15,16 +15,17 @@ SPHINX with extensions for VIVID.
 
 Plan/Outline:
     For SPHINX - 
-        After calculating metrics and putting them into dataframe 
-            validation -> calculate_intuitive_metrics
-        Grab _selections files for each model/predicted quantity subset
+        After calculating metrics and putting them into dictionaries 
+            validation -> calculate_intuitive_metrics -> after fill_*_dict
+        Grab df (equivalent to _selections files) for each
+            model/predicted quantity subset and dictionary containing metrics
         Use Scipy.stats bootstrap to resample and calculate the standard error
-        Add row/column (need to decide this) to metrics file for the metric uncertainties
+        Add row to metric dictionaries containing metric uncertainties
 
     VIVID -
         Add wrapper from VIVID feeder to generate the same subset that 
             is given to the _selections files but doesn't need to actually
-            read in the file
+            read in the file (take sphinx_dataframe and loop over energy/threshold/model?)
         Do the same bootstrapping
         Give out metric uncertainties (need to talk to Phil about VIVID inputs)
 """
@@ -37,14 +38,17 @@ def feeder_from_sphinx(df, dict, label):
     # take the dataframe passed from sphinx and insert into uncertainty workflow
     # needs to be a feeder function to make sure that the actual workflow is 
     # independent and modular
-  
+   
     uncertainty_workflow(df, label, dict)
-    # dict.append(uncertainty_dict)
+    
     return
 
 
 def feeder_from_vivid():
 
+
+
+    # uncertainty_workflow(df, label, dict)
 
     return
 
@@ -56,7 +60,7 @@ def test_feeder():
     label = 'peak_intensity_max'
     # df = time_uncertainties(df, label)
     df = flux_uncertainties(df, label)
-    print(df)
+    # print(df)
 
 
 
@@ -76,8 +80,6 @@ def uncertainty_workflow(df, label, dict):
             probability_uncertainties(df, label, dict)
         elif label == 'all_clear':
             all_clear_uncertainties(df, label, dict)
-        # what should be here?  all_clear, awt
-        # I.e. the hardest ones 
 
 
 
@@ -86,6 +88,7 @@ def uncertainty_workflow(df, label, dict):
 
 
 def flux_uncertainties(df, label, dict):
+    
     metrics_func = {
         'E': metrics.calc_E,                        # Error
         'Ratio': metrics.calc_ratio,                # Ratio
@@ -108,16 +111,16 @@ def flux_uncertainties(df, label, dict):
 
 
     mapped_label = flux_label_mapping(label)
-    logger.info(str(label) + ' ' + str(mapped_label))
-    logger.info(str(df.columns))
-    dict['Model'].append(df['Model'].iloc[0] + ' Uncertainty')
-    dict['Energy Channel'].append(df['Energy Channel Key'].iloc[0])
-    dict['Threshold'].append(df['Threshold Key'].iloc[0])
-    dict['Prediction Energy Channel'].append(df['Prediction Energy Channel Key'].iloc[0])
-    dict['Prediction Threshold'].append(df['Prediction Threshold Key'].iloc[0])
-    dict['Scatter Plot'].append(None)
-    dict['Linear Regression Slope'].append(None)
-    dict['Linear Regression y-intercept'].append(None)
+    # logger.info(str(label) + ' ' + str(mapped_label))
+    # logger.info(str(df.columns))
+    # dict['Model'].append(df['Model'].iloc[0] + ' Uncertainty')
+    # dict['Energy Channel'].append(df['Energy Channel Key'].iloc[0])
+    # dict['Threshold'].append(df['Threshold Key'].iloc[0])
+    # dict['Prediction Energy Channel'].append(df['Prediction Energy Channel Key'].iloc[0])
+    # dict['Prediction Threshold'].append(df['Prediction Threshold Key'].iloc[0])
+    # dict['Scatter Plot'].append(None)
+    # dict['Linear Regression Slope'].append(None)
+    # dict['Linear Regression y-intercept'].append(None)
     
     if 'Max Flux in Prediction Window' in mapped_label:
         pred_label = 'Predicted SEP Peak Intensity Max (Max Flux)'
@@ -136,14 +139,14 @@ def flux_uncertainties(df, label, dict):
         pred = df[pred_label].to_list()
 
     mean_metrics_list = ['E', 'Ratio', 'AE', 'LE', 'ALE', 'PE', 'APE', 'SPE', 'SAPE']
-    # metrics_list = ['LE']
     for met in mean_metrics_list:
         
         func = metrics_func[met]
         uncertainty = mean_call_bootstrapper(obs, pred, func)
         error = uncertainty.standard_error
-        dict[flux_metric_mapping(met)].append(error)
-        print(uncertainty, met)
+        dict[flux_metric_mapping(met) + ' Uncertainty'].append(error)
+        
+       
     median_metrics_list = ['E', 'Ratio', 'AE', 'LE', 'ALE']
     for met in median_metrics_list:
         func = metrics_func[met]
@@ -151,9 +154,8 @@ def flux_uncertainties(df, label, dict):
         uncertainty = median_call_bootstrapper(obs, pred, func)
         error = uncertainty.standard_error
         metric_label = "Med" + metric_label
-        dict[flux_metric_mapping(metric_label)].append(error)
-        print(uncertainty, metric_label)
-
+        dict[flux_metric_mapping(metric_label) + ' Uncertainty'].append(error)
+        
     #other metrics 
     other = ['MAR', 'RMSE', 'RMSLE', 'MdSA', 'spearman', 'r']
     for met in other:
@@ -162,14 +164,14 @@ def flux_uncertainties(df, label, dict):
             func = metrics_func[met]
             uncertainty = stats.bootstrap((obs, pred), statistic=func, method='basic', vectorized = False, paired = True)
             error = uncertainty.standard_error
-            dict[flux_metric_mapping(met)].append(error)
-            print(uncertainty, met)
+            dict[flux_metric_mapping(met) + ' Uncertainty'].append(error)
+            
         else:
             pearson_array = ['r_lin', 'r_log']
             for rs in pearson_array:
                 uncertainty = pearson_call_bootstrapper(obs, pred, rs)
                 error = uncertainty.standard_error
-                dict[flux_metric_mapping(rs)].append(error)
+                dict[flux_metric_mapping(rs) + ' Uncertainty'].append(error)
 
                 
         
@@ -183,15 +185,15 @@ def flux_uncertainties(df, label, dict):
             thresh = np.log10(2)
         uncertainty = factor_call_bootstrapper(obs, pred, thresh)
         error = uncertainty.standard_error
-        dict[flux_metric_mapping(fac)].append(error)
-        print(uncertainty, fac)
+        dict[flux_metric_mapping(fac) + ' Uncertainty'].append(error)
+        #print(uncertainty, fac)
 
     return
 
 
 def mean_call_bootstrapper(obs, pred, func):
     def wrapper(obs, pred):
-        return statistics.mean(func(obs, pred))
+        return np.nanmean(func(obs, pred))
     return stats.bootstrap((obs, pred), statistic=wrapper, method='basic', vectorized = False, paired = True)
 
 def median_call_bootstrapper(obs, pred, func):
@@ -224,7 +226,6 @@ def flux_label_mapping(label):
         'point_intensity': 'SEP Point Intensity',
         'peak_intensity_max': 'SEP Peak Intensity Max (Max Flux)',
         'peak_intensity': 'SEP Peak Intensity (Onset Peak)',
-        'time_profile': 'Time Profile',
         'max_flux_in_pred_win': 'Max Flux in Prediction Window',
         'fluence': 'SEP Fluence'
     }
@@ -240,7 +241,8 @@ def time_label_mapping(label):
         'start_time': 'SEP Start Time',
         'threshold_crossing': 'SEP Threshold Crossing Time',
         'end_time': 'SEP End Time',
-        'duration': 'SEP Duration'
+        'duration': 'SEP Duration',
+        'last_data_to_issue_time': "Last Data Time to Issue Time"
     }
     mapped_label = map_dict[label]
     return mapped_label
@@ -251,42 +253,35 @@ def time_uncertainties(df, label, dict):
     mapped_label = time_label_mapping(label)
     pred_label = 'Predicted ' + mapped_label
     obs_label = 'Observed ' + mapped_label
-
+    
     obs = df[obs_label]
     pred = df[pred_label]
-    dict['Model'].append(df['Model'].iloc[0] + ' Uncertainty')
-    dict['Energy Channel'].append(df['Energy Channel Key'].iloc[0])
-    dict['Threshold'].append(df['Threshold Key'].iloc[0])
-    dict['Prediction Energy Channel'].append(df['Prediction Energy Channel Key'].iloc[0])
-    dict['Prediction Threshold'].append(df['Prediction Threshold Key'].iloc[0])
+    
 
     if type(obs.iloc[0]) == str:
         obs = [datetime.strptime(x, "%Y-%m-%d %H:%M:%S") for x in obs]
     if type(pred.iloc[0]) == str:
         pred = [datetime.strptime(x, "%Y-%m-%d %H:%M:%S") for x in pred]
     mean_metrics_list = ['E', 'AE']
-    # metrics_list = ['LE']
     for met in mean_metrics_list:
         uncertainty = mean_time_call_bootstrapper(obs, pred, met)
         error = uncertainty.standard_error
-        dict[time_metric_mapping(met)].append(error)
-        print(uncertainty, met)
+        dict[time_metric_mapping(met) + ' Uncertainty'].append(error)
 
     for met in mean_metrics_list:
         metric_label = met
         uncertainty = median_time_call_bootstrapper(obs, pred, met)
         error = uncertainty.standard_error
         metric_label = "Med" + metric_label
-        dict[time_metric_mapping(metric_label)].append(error)
-        print(uncertainty, metric_label)
-
+        dict[time_metric_mapping(metric_label) + ' Uncertainty'].append(error)
+    
     return
 
 
 
 def mean_time_call_bootstrapper(obs, pred, metric_label):
     def wrapper(obs, pred):
-        # print(type(obs[0]), type(pred[0]))
+        
         td = (pred - obs)
         try:
             td = [x.total_seconds()/(60*60) for x in td]
@@ -295,7 +290,7 @@ def mean_time_call_bootstrapper(obs, pred, metric_label):
             td = [pd.Timedelta(x).total_seconds()/(60*60) for x in td]
         if metric_label == 'AE':
             td = [np.abs(x) for x in td]
-        return statistics.mean(td)
+        return np.nanmean(td)
     return stats.bootstrap((obs, pred), statistic=wrapper, method='basic', vectorized = False, paired = True)
 
 def median_time_call_bootstrapper(obs, pred, metric_label):
@@ -304,7 +299,6 @@ def median_time_call_bootstrapper(obs, pred, metric_label):
         try:
             td = [x.total_seconds()/(60*60) for x in td]
         except:
-            # print(td, td[0], type(td[0]))
             td = [pd.Timedelta(x).total_seconds()/(60*60) for x in td]
         if metric_label == 'medAE':
             td = [np.abs(x) for x in td]
@@ -366,28 +360,26 @@ def probability_uncertainties(df, label, dict):
 
     obs = df[obs_label]
     pred = df[pred_label]
-    print(obs, pred)
-    dict['Model'].append(df['Model'].iloc[0] + ' Uncertainty')
-    dict['Energy Channel'].append(df['Energy Channel Key'].iloc[0])
-    dict['Threshold'].append(df['Threshold Key'].iloc[0])
-    dict['Prediction Energy Channel'].append(df['Prediction Energy Channel Key'].iloc[0])
-    dict['Prediction Threshold'].append(df['Prediction Threshold Key'].iloc[0])
-    dict['ROC Curve Plot'].append(None)
+    # dict['Model'].append(df['Model'].iloc[0] + ' Uncertainty')
+    # dict['Energy Channel'].append(df['Energy Channel Key'].iloc[0])
+    # dict['Threshold'].append(df['Threshold Key'].iloc[0])
+    # dict['Prediction Energy Channel'].append(df['Prediction Energy Channel Key'].iloc[0])
+    # dict['Prediction Threshold'].append(df['Prediction Threshold Key'].iloc[0])
+    # dict['ROC Curve Plot'].append(None)
 
    
     mean_metrics_list = ['brier_score', 'brier_skill', 'spearman']
-    # metrics_list = ['LE']
+    
     for met in mean_metrics_list:
         func = metrics_dict[met]
         uncertainty = probability_call_bootstrapper(obs, pred, func)
         error = uncertainty.standard_error
-        dict[prob_metric_mapping(met)].append(error)
-        print(uncertainty, met)
+        dict[prob_metric_mapping(met) + ' Uncertainty'].append(error)
     
     uncertainty = roc_call_bootstrapper(obs, pred)
     error = uncertainty.standard_error
-    dict[prob_metric_mapping('roc_auc')].append(error)
-    print(uncertainty, 'roc_auc')
+    dict[prob_metric_mapping('roc_auc') + ' Uncertainty'].append(error)
+    
 
 
     return
@@ -437,9 +429,7 @@ def all_clear_uncertainties(df, label, dict):
     df = df.dropna(subset='All Clear Match Status')
     all_clear_true =  df[df['Observed SEP All Clear'] == True]
     all_clear_false = df[df['Observed SEP All Clear'] == False]
-    # print(all_clear_true)
-    # print(len(all_clear_true), len(all_clear_false))
-    # input()
+    
     n_samples = 1000
     scores = scores_dict()
     for n in range(n_samples):
@@ -452,48 +442,39 @@ def all_clear_uncertainties(df, label, dict):
         for met in current_scores:
             scores[met].append(current_scores[met])
     
-    dict['Model'].append(df['Model'].iloc[0] + ' Uncertainty')
-    dict['Energy Channel'].append(df['Energy Channel Key'].iloc[0])
-    dict['Threshold'].append(df['Threshold Key'].iloc[0])
-    dict['Prediction Energy Channel'].append(df['Prediction Energy Channel Key'].iloc[0])
-    dict['Prediction Threshold'].append(df['Prediction Threshold Key'].iloc[0])
-    dict["All Clear 'True Positives' (Hits)"].append(np.std(scores['TP'])) #Hits
-    dict["All Clear 'False Positives' (False Alarms)"].append(np.std(scores['FP'])) #False Alarms
-    dict["All Clear 'True Negatives' (Correct Negatives)"].append(np.std(scores['TN']))  #Correct negatives
-    dict["All Clear 'False Negatives' (Misses)"].append(np.std(scores['FN'])) #Misses
-    dict["N (Total Number of Forecasts)"].append(np.std(scores['TP'] + scores['FP'] + scores['TN'] + scores['FN']))
-    dict["Percent Correct"].append(np.std(scores['PC']))
-    dict["Bias"].append(np.std(scores['B']))
-    dict["Hit Rate"].append(np.std(scores['H']))
-    dict["False Alarm Rate"].append(np.std(scores['F']))
-    dict['False Negative Rate'].append(np.std(scores['FNR']))
-    dict["Frequency of Misses"].append(np.std(scores['FOM']))
-    dict["Frequency of Hits"].append(np.std(scores['FOH']))
-    dict["Probability of Correct Negatives"].append(np.std(scores['POCN']))
-    dict["Frequency of Correct Negatives"].append(np.std(scores['FOCN']))
-    dict["False Alarm Ratio"].append(np.std(scores['FAR']))
-    dict["Detection Failure Ratio"].append(np.std(scores['DFR']))
-    dict["Threat Score"].append(np.std(scores['TS'])) #Critical Success Index
-    dict["Odds Ratio"].append(np.std(scores['OR']))
-    dict["Gilbert Skill Score"].append(np.std(scores['GSS'])) #Equitable Threat Score
-    dict["True Skill Statistic"].append(np.std(scores['TSS']))
-    dict["Heidke Skill Score"].append(np.std(scores['HSS']))
-    dict["Odds Ratio Skill Score"].append(np.std(scores['ORSS']))
-    dict["Symmetric Extreme Dependency Score"].append(np.std(scores['SEDS']))
-    dict["F1 Score"].append(np.std(scores['FONE']))
-    dict["F2 Score"].append(np.std(scores['FTWO']))
-    dict["Fhalf Score"].append(np.std(scores['FHALF']))
-    dict['Prevalence'].append(np.std(scores['PREV']))
-    dict['Matthew Correlation Coefficient'].append(np.std(scores['MCC']))
-    dict['Informedness'].append(np.std(scores['INFORM']))
-    dict['Markedness'].append(np.std(scores['MARK']))
-    dict['Prevalence Threshold'].append(np.std(scores['PT']))
-    dict['Balanced Accuracy'].append(np.std(scores['BA']))
-    dict['Fowlkes-Mallows Index'].append(np.std(scores['FM']))
-    dict["Number SEP Events Correctly Predicted"].append(None)
-    dict["Number SEP Events Missed"].append(None)
-    dict["Predicted SEP Events"].append(None)
-    dict["Missed SEP Events"].append(None)
+    dict["All Clear 'True Positives' (Hits) Uncertainty"].append(np.nanstd(scores['TP'])) #Hits
+    dict["All Clear 'False Positives' (False Alarms) Uncertainty"].append(np.nanstd(scores['FP'])) #False Alarms
+    dict["All Clear 'True Negatives' (Correct Negatives) Uncertainty"].append(np.nanstd(scores['TN']))  #Correct negatives
+    dict["All Clear 'False Negatives' (Misses) Uncertainty"].append(np.nanstd(scores['FN'])) #Misses
+    dict["Percent Correct Uncertainty"].append(np.nanstd(scores['PC']))
+    dict["Bias Uncertainty"].append(np.nanstd(scores['B']))
+    dict["Hit Rate Uncertainty"].append(np.nanstd(scores['H']))
+    dict["False Alarm Rate Uncertainty"].append(np.nanstd(scores['F']))
+    dict['False Negative Rate Uncertainty'].append(np.nanstd(scores['FNR']))
+    dict["Frequency of Misses Uncertainty"].append(np.nanstd(scores['FOM']))
+    dict["Frequency of Hits Uncertainty"].append(np.nanstd(scores['FOH']))
+    dict["Probability of Correct Negatives Uncertainty"].append(np.nanstd(scores['POCN']))
+    dict["Frequency of Correct Negatives Uncertainty"].append(np.nanstd(scores['FOCN']))
+    dict["False Alarm Ratio Uncertainty"].append(np.nanstd(scores['FAR']))
+    dict["Detection Failure Ratio Uncertainty"].append(np.nanstd(scores['DFR']))
+    dict["Threat Score Uncertainty"].append(np.nanstd(scores['TS']))
+    dict["Odds Ratio Uncertainty"].append(np.nanstd(scores['OR']))
+    dict["Gilbert Skill Score Uncertainty"].append(np.nanstd(scores['GSS']))
+    dict["True Skill Statistic Uncertainty"].append(np.nanstd(scores['TSS']))
+    dict["Heidke Skill Score Uncertainty"].append(np.nanstd(scores['HSS']))
+    dict["Odds Ratio Skill Score Uncertainty"].append(np.nanstd(scores['ORSS']))
+    dict["Symmetric Extreme Dependency Score Uncertainty"].append(np.nanstd(scores['SEDS']))
+    dict["F1 Score Uncertainty"].append(np.nanstd(scores['FONE']))
+    dict["F2 Score Uncertainty"].append(np.nanstd(scores['FTWO']))
+    dict["Fhalf Score Uncertainty"].append(np.nanstd(scores['FHALF']))
+    dict['Prevalence Uncertainty'].append(np.nanstd(scores['PREV']))
+    dict['Matthew Correlation Coefficient Uncertainty'].append(np.nanstd(scores['MCC']))
+    dict['Informedness Uncertainty'].append(np.nanstd(scores['INFORM']))
+    dict['Markedness Uncertainty'].append(np.nanstd(scores['MARK']))
+    dict['Prevalence Threshold Uncertainty'].append(np.nanstd(scores['PT']))
+    dict['Balanced Accuracy Uncertainty'].append(np.nanstd(scores['BA']))
+    dict['Fowlkes-Mallows Index Uncertainty'].append(np.nanstd(scores['FM']))
+    
 
 
 def scores_dict():
@@ -532,3 +513,21 @@ def scores_dict():
         'FM': []  # Fowlkes-Mallows Index (Geometric mean of precision and recall)
     }
     return scores
+
+
+
+def time_profile_uncertainties(error_dict, dict):
+
+    n_samples = 1000
+    for key in error_dict.keys():    
+        current_metrics = []
+        for n in range(n_samples):
+            
+            current_metrics.append(pd.Series(error_dict[key]).sample(frac=0.75, replace = True))
+        # logger.info(key)
+        # logger.info(np.mean(error_dict[key]))
+        # logger.info(np.nanstd(current_metrics))
+        dict[key + ' Uncertainty'].append(np.nanstd(current_metrics))
+
+
+    return
