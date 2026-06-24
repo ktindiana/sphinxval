@@ -3185,8 +3185,11 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
     fact10_uncert = None
     fact2_uncert = None
 
-    if len(sepE) > 1:
+    if len(sepE) > 2:
         uncertainties.time_profile_uncertainties(errors, dict)
+    else:
+        for key in errors.keys():
+            dict[key + ' Uncertainty'].append(np.nan)
     
         
 
@@ -3710,18 +3713,18 @@ def profile_output(sphinx_dataframe, resume_obs, resume_model):
     observed_profs = {}
     model_profs = {}
     for u in u_obs_profs:
-        if resume_obs is not None and u in resume_obs:
-            continue
-        else:
-            for u_i in u.rsplit(','):
+        for u_i in u.rsplit(','):
+            if resume_obs is not None and u_i in resume_obs:
+                continue
+            else:
                 obs_dates, obs_profiles = profile.read_single_time_profile(u_i)
                 obs_dates = [x.strftime('%Y-%m-%dT%H:%M:%SZ') for x in obs_dates]
                 observed_profs[u_i] = {'dates': obs_dates, 'fluxes': obs_profiles}
     for um in u_model_profs:
-        if resume_model is not None and um in resume_model:
-            continue
-        else:
-            for um_i in um.rsplit(','):
+        for um_i in um.rsplit(','):
+            if resume_model is not None and um in resume_model:
+                continue
+            else:
                 model_dates, model_profiles = profile.read_single_time_profile(um_i)
                 model_dates = [x.strftime('%Y-%m-%dT%H:%M:%SZ') for x in model_dates]
                 model_profs[um_i] = {'dates': model_dates, 'fluxes': model_profiles}
@@ -4037,8 +4040,7 @@ def intuitive_validation(evaluated_sphinx, removed_sphinx, model_names,
         all_energy_channels = resume.identify_unique(df, 'Energy Channel Key')
         all_observed_thresholds = resume.identify_thresholds_per_energy_channel(df)
     ### RESUME COMPLETED
-
-
+    
     #Write SPHINX dataframe to file
     write_df(df, "SPHINX_evaluated")
     profile_output(df, r_obs, r_mod)
@@ -4048,7 +4050,7 @@ def intuitive_validation(evaluated_sphinx, removed_sphinx, model_names,
     write_df(df_not, "SPHINX_removed")
     logger.debug("Completed writing SPHINX_removed dataframe to file.")
 
-    validation_type = ["All","First", "Last", "Max", "Mean"]
+    validation_type = ["All"]#,"First", "Last", "Max", "Mean"]
     for type in validation_type:
         logger.info("-----------Starting validation of " + type +" forecasts-------------")
         calculate_intuitive_metrics(df, model_names, all_energy_channels,
@@ -4057,7 +4059,6 @@ def intuitive_validation(evaluated_sphinx, removed_sphinx, model_names,
     #Record explanatory information to the log
     validation_explanation()
     
-
     logger.info("intuitive_validation: Validation process complete.")
 
     return df   

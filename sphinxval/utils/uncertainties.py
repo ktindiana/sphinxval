@@ -60,7 +60,6 @@ def test_feeder():
     label = 'peak_intensity_max'
     # df = time_uncertainties(df, label)
     df = flux_uncertainties(df, label)
-    # print(df)
 
 
 
@@ -70,7 +69,6 @@ def uncertainty_workflow(df, label, dict):
     # Splitting function that will correctly funnel to the correct uncertainty calculation
     flux_filter = ['point_intensity', 'peak_intensity', 'peak_intensity_max', 'max_flux_in_pred_win', 'fluence']
     time_filter = ['start_time', 'end_time', 'peak_intensity_time', 'peak_intensity_max_time', 'threshold_crossing', 'duration', 'last_data_to_issue_time']
-    
     if label in time_filter:
         time_uncertainties(df, label, dict)
     elif label in flux_filter:
@@ -111,17 +109,8 @@ def flux_uncertainties(df, label, dict):
 
 
     mapped_label = flux_label_mapping(label)
-    # logger.info(str(label) + ' ' + str(mapped_label))
-    # logger.info(str(df.columns))
-    # dict['Model'].append(df['Model'].iloc[0] + ' Uncertainty')
-    # dict['Energy Channel'].append(df['Energy Channel Key'].iloc[0])
-    # dict['Threshold'].append(df['Threshold Key'].iloc[0])
-    # dict['Prediction Energy Channel'].append(df['Prediction Energy Channel Key'].iloc[0])
-    # dict['Prediction Threshold'].append(df['Prediction Threshold Key'].iloc[0])
-    # dict['Scatter Plot'].append(None)
-    # dict['Linear Regression Slope'].append(None)
-    # dict['Linear Regression y-intercept'].append(None)
-    
+
+ 
     if 'Max Flux in Prediction Window' in mapped_label:
         pred_label = 'Predicted SEP Peak Intensity Max (Max Flux)'
         obs_label = 'Observed Max Flux in Prediction Window'
@@ -138,6 +127,30 @@ def flux_uncertainties(df, label, dict):
         obs = df[obs_label].to_list()
         pred = df[pred_label].to_list()
 
+
+
+    if len(pred) < 2:
+        mean_metrics_list = ['E', 'Ratio', 'AE', 'LE', 'ALE', 'PE', 'APE', 'SPE', 'SAPE']
+        for met in mean_metrics_list:
+            dict[flux_metric_mapping(met) + ' Uncertainty'].append(np.nan)
+        median_metrics_list = ['E', 'Ratio', 'AE', 'LE', 'ALE']
+        for met in median_metrics_list:
+            metric_label = met
+            metric_label = "Med" + metric_label
+            dict[flux_metric_mapping(metric_label) + ' Uncertainty'].append(np.nan)
+        other = ['MAR', 'RMSE', 'RMSLE', 'MdSA', 'spearman', 'r']
+        for met in other:
+            if met != 'r':
+                dict[flux_metric_mapping(met) + ' Uncertainty'].append(np.nan)
+            else:
+                pearson_array = ['r_lin', 'r_log']
+                for rs in pearson_array:
+                    dict[flux_metric_mapping(rs) + ' Uncertainty'].append(np.nan)
+        factors = ['fac10', 'fac2']
+        for fac in factors:
+            dict[flux_metric_mapping(fac) + ' Uncertainty'].append(np.nan)
+        return
+
     mean_metrics_list = ['E', 'Ratio', 'AE', 'LE', 'ALE', 'PE', 'APE', 'SPE', 'SAPE']
     for met in mean_metrics_list:
         
@@ -145,6 +158,8 @@ def flux_uncertainties(df, label, dict):
         uncertainty = mean_call_bootstrapper(obs, pred, func)
         error = uncertainty.standard_error
         dict[flux_metric_mapping(met) + ' Uncertainty'].append(error)
+        
+
         
        
     median_metrics_list = ['E', 'Ratio', 'AE', 'LE', 'ALE']
@@ -186,7 +201,6 @@ def flux_uncertainties(df, label, dict):
         uncertainty = factor_call_bootstrapper(obs, pred, thresh)
         error = uncertainty.standard_error
         dict[flux_metric_mapping(fac) + ' Uncertainty'].append(error)
-        #print(uncertainty, fac)
 
     return
 
@@ -194,20 +208,19 @@ def flux_uncertainties(df, label, dict):
 def mean_call_bootstrapper(obs, pred, func):
     def wrapper(obs, pred):
         return np.nanmean(func(obs, pred))
-    return stats.bootstrap((obs, pred), statistic=wrapper, method='basic', vectorized = False, paired = True)
+    return stats.bootstrap((obs, pred), statistic=wrapper, method='basic', vectorized = False, paired = True, n_resamples = 1000)
 
 def median_call_bootstrapper(obs, pred, func):
     def wrapper(obs, pred):
         return statistics.median(func(obs, pred))
-    return stats.bootstrap((obs, pred), statistic=wrapper, method='basic', vectorized = False, paired = True)
+    return stats.bootstrap((obs, pred), statistic=wrapper, method='basic', vectorized = False, paired = True, n_resamples = 1000)
 
 def factor_call_bootstrapper(obs, pred, thresh):
     def wrapper(obs, pred):
         temp = metrics.switch_error_func('LE', obs, pred)
         count = sum(1 for x in temp if x <= thresh and x >= -thresh)
-        # print(count)
         return count / len(temp)
-    return stats.bootstrap((obs, pred), statistic=wrapper, method='basic', vectorized = False, paired = True)
+    return stats.bootstrap((obs, pred), statistic=wrapper, method='basic', vectorized = False, paired = True, n_resamples = 1000)
     
 def pearson_call_bootstrapper(obs, pred, label):
     def wrapper(obs, pred):
@@ -216,7 +229,7 @@ def pearson_call_bootstrapper(obs, pred, label):
         else:
             _, metric = metrics.calc_pearson(obs, pred)
         return metric
-    return stats.bootstrap((obs, pred), statistic=wrapper, method='basic', vectorized = False, paired = True)
+    return stats.bootstrap((obs, pred), statistic=wrapper, method='basic', vectorized = False, paired = True, n_resamples = 1000)
 
 
 
@@ -262,6 +275,20 @@ def time_uncertainties(df, label, dict):
         obs = [datetime.strptime(x, "%Y-%m-%d %H:%M:%S") for x in obs]
     if type(pred.iloc[0]) == str:
         pred = [datetime.strptime(x, "%Y-%m-%d %H:%M:%S") for x in pred]
+
+    if len(pred) < 2:
+        mean_metrics_list = ['E', 'AE']
+        for met in mean_metrics_list:
+            dict[time_metric_mapping(met) + ' Uncertainty'].append(np.nan)
+
+        for met in mean_metrics_list:
+            metric_label = met
+            metric_label = "Med" + metric_label
+            dict[time_metric_mapping(metric_label) + ' Uncertainty'].append(np.nan)
+        return
+
+
+    
     mean_metrics_list = ['E', 'AE']
     for met in mean_metrics_list:
         uncertainty = mean_time_call_bootstrapper(obs, pred, met)
@@ -286,12 +313,11 @@ def mean_time_call_bootstrapper(obs, pred, metric_label):
         try:
             td = [x.total_seconds()/(60*60) for x in td]
         except:
-            # print(td, td[0], type(td[0]))
             td = [pd.Timedelta(x).total_seconds()/(60*60) for x in td]
         if metric_label == 'AE':
             td = [np.abs(x) for x in td]
         return np.nanmean(td)
-    return stats.bootstrap((obs, pred), statistic=wrapper, method='basic', vectorized = False, paired = True)
+    return stats.bootstrap((obs, pred), statistic=wrapper, method='basic', vectorized = False, paired = True, n_resamples = 1000)
 
 def median_time_call_bootstrapper(obs, pred, metric_label):
     def wrapper(obs, pred):
@@ -303,7 +329,7 @@ def median_time_call_bootstrapper(obs, pred, metric_label):
         if metric_label == 'medAE':
             td = [np.abs(x) for x in td]
         return statistics.median(td)
-    return stats.bootstrap((obs, pred), statistic=wrapper, method='basic', vectorized = False, paired = True)
+    return stats.bootstrap((obs, pred), statistic=wrapper, method='basic', vectorized = False, paired = True, n_resamples = 1000)
 
 
 def flux_metric_mapping(metric_label):
@@ -348,44 +374,66 @@ def time_metric_mapping(metric_label):
 
 
 def probability_uncertainties(df, label, dict):
+    
     metrics_dict ={
         'brier_score': metrics.calc_brier,
         'brier_skill': metrics.calc_brier_skill,
         'spearman': metrics.calc_spearman,
         'roc_auc': metrics.receiver_operator_characteristic
     }
+
+    prob_dict = {
+        'brier_score': [],
+        'brier_skill': [],
+        'spearman': [],
+        'roc_auc': []
+    }
+    # prob_dict_mapping = prob_metric_mappin()
+    prob_metrics =  ['brier_score', 'brier_skill', 'spearman', 'roc_auc']
     mapped_label = 'SEP Probability'
     pred_label = 'Predicted ' + mapped_label
     obs_label = 'Observed ' + mapped_label
+    all_clear_true =  df[df['Observed SEP Probability'] == 0.0]
+    all_clear_false = df[df['Observed SEP Probability'] == 1.0]
 
-    obs = df[obs_label]
-    pred = df[pred_label]
-    # dict['Model'].append(df['Model'].iloc[0] + ' Uncertainty')
-    # dict['Energy Channel'].append(df['Energy Channel Key'].iloc[0])
-    # dict['Threshold'].append(df['Threshold Key'].iloc[0])
-    # dict['Prediction Energy Channel'].append(df['Prediction Energy Channel Key'].iloc[0])
-    # dict['Prediction Threshold'].append(df['Prediction Threshold Key'].iloc[0])
-    # dict['ROC Curve Plot'].append(None)
 
-   
-    mean_metrics_list = ['brier_score', 'brier_skill', 'spearman']
+
+    n_resamples = 1000
+    # scores = prob_dict()
+    for n in range(n_resamples):
+        sub_true = all_clear_true.sample(frac=0.75, replace = True)
+        sub_false = all_clear_false.sample(frac=0.75, replace = True)
+        obs = pd.concat([sub_true[obs_label], sub_false[obs_label]], ignore_index = True)
+        pred = pd.concat([sub_true[pred_label], sub_false[pred_label]], ignore_index = True)
+        for met in prob_metrics:
+            current_scores = probability_call_bootstrapper(obs, pred, metrics_dict[met], met)
+        
+            prob_dict[met].append(current_scores)
     
-    for met in mean_metrics_list:
-        func = metrics_dict[met]
-        uncertainty = probability_call_bootstrapper(obs, pred, func)
-        error = uncertainty.standard_error
-        dict[prob_metric_mapping(met) + ' Uncertainty'].append(error)
-    
-    uncertainty = roc_call_bootstrapper(obs, pred)
-    error = uncertainty.standard_error
-    dict[prob_metric_mapping('roc_auc') + ' Uncertainty'].append(error)
+    for met in prob_metrics:
+        dict[prob_metric_mapping(met)+ ' Uncertainty'].append(np.nanstd(prob_dict[met]))
+
+
     
 
 
     return
 
-def probability_call_bootstrapper(obs, pred, func):
-    return stats.bootstrap((obs, pred), statistic=func, method='basic', vectorized = False, paired = True)
+def probability_call_bootstrapper(obs, pred, func, metric):
+    def roc_wrapper(obs, pred):  
+        fpr, tpr, thresholds = skl.roc_curve(obs, pred)
+        roc_auc = skl.auc(fpr, tpr)
+        return roc_auc
+    if metric == 'roc_auc':
+        score = roc_wrapper(obs, pred)
+    else:
+        score = func(obs, pred)
+    return score
+
+
+
+# def probability_call_bootstrapper(obs, pred, func):
+#     return stats.bootstrap((obs, pred), statistic=func, method='basic', vectorized = False, paired = True)
 
 def roc_call_bootstrapper(obs, pred):
     # I dont want to create the plots for ROC so not doing the call to the metrics.py instead I am 
@@ -395,7 +443,7 @@ def roc_call_bootstrapper(obs, pred):
         roc_auc = skl.auc(fpr, tpr)
         return roc_auc
     
-    return stats.bootstrap((obs, pred), statistic=wrapper, method='basic', vectorized = False, paired = True)
+    return stats.bootstrap((obs, pred), statistic=wrapper, method='basic', vectorized = False, paired = True, n_resamples = 1000)
 
 
 def prob_metric_mapping(metric_label):
@@ -430,9 +478,9 @@ def all_clear_uncertainties(df, label, dict):
     all_clear_true =  df[df['Observed SEP All Clear'] == True]
     all_clear_false = df[df['Observed SEP All Clear'] == False]
     
-    n_samples = 1000
+    n_resamples = 1000
     scores = scores_dict()
-    for n in range(n_samples):
+    for n in range(n_resamples):
         sub_true = all_clear_true.sample(frac=0.75, replace = True)
         sub_false = all_clear_false.sample(frac=0.75, replace = True)
 
@@ -518,10 +566,10 @@ def scores_dict():
 
 def time_profile_uncertainties(error_dict, dict):
 
-    n_samples = 1000
+    n_resamples = 1000
     for key in error_dict.keys():    
         current_metrics = []
-        for n in range(n_samples):
+        for n in range(n_resamples):
             
             current_metrics.append(pd.Series(error_dict[key]).sample(frac=0.75, replace = True))
         # logger.info(key)
