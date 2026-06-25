@@ -10,6 +10,9 @@ referencepath = './reference'
 reportpath = './reports'
 logpath = './logs'
 baseurlpath = None
+#profile paths
+model_prof_path = './output/json/model_profiles.json'
+obs_prof_path = './output/json/observed_profiles.json'
 #baseurlpath = 'https://web-dev.ccmc.smce.nasa.gov:8001/sphinx'
 
 ######SHORTNAME#####
@@ -136,6 +139,9 @@ mm_thresh_key = mm_obs_tk + "_" + mm_pred_tk
 #organizing observed and predicted values by threshold.
 ######## END MISMATCH ############
 
+
+###Uncertainty Boolean
+uncert_boolean = True
 
 
 # METRICS TO BE REPORTED AS A PERCENTAGE

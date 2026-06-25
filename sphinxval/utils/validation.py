@@ -1405,7 +1405,7 @@ def all_clear_intuitive_metrics(df, dict, model, energy_key, thresh_key,
     
     fill_all_clear_dict(dict, model, energy_key, thresh_key, pred_energy_key,
         pred_thresh_key, scores, n_caught, sep_caught_str, n_miss, sep_miss_str)
-    uncertainties.feeder_from_sphinx(sub, dict, 'all_clear')
+    uncertainties.feeder_from_sphinx(sub, dict, 'all_clear', config.uncert_boolean)
 
     return sub
 
@@ -1500,7 +1500,7 @@ def probability_intuitive_metrics(df, dict, model, energy_key, thresh_key,
     dict['Area Under ROC Curve'].append(roc_auc)
 
 
-    uncertainties.feeder_from_sphinx(sub, dict, 'probability')
+    uncertainties.feeder_from_sphinx(sub, dict, 'probability', config.uncert_boolean)
 
 
 def calc_all_flux_metrics(obs, pred):
@@ -1736,7 +1736,7 @@ def point_intensity_intuitive_metrics(df, dict, model, energy_key, thresh_key,
         slope, yint, r_lin, r_log, s_lin, MRatio, MedRatio, ME, MedE, MLE,
         MedLE, MAE, MedAE, MALE, MedALE, MPE, MAPE, MSPE, SMAPE,
         MAR, RMSE, RMSLE, MdSA, fact10, fact2, tp_plotnames)
-    uncertainties.feeder_from_sphinx(sub, dict, 'point_intensity')
+    uncertainties.feeder_from_sphinx(sub, dict, 'point_intensity', config.uncert_boolean)
 
 
 
@@ -1859,7 +1859,7 @@ def peak_intensity_intuitive_metrics(df, dict, model, energy_key, thresh_key,
     # logger.info('BEFORE UNCERT :LJ:LJ:LJ:LJ:LJ:LJ:LJ:LJ:J:LJ:LJ:LJ:LJ:LJ:')
     # logger.info(str(len(dict)))
 
-    uncertainties.feeder_from_sphinx(sub, dict, 'peak_intensity')
+    uncertainties.feeder_from_sphinx(sub, dict, 'peak_intensity', config.uncert_boolean)
     # logger.info(str(dict))
     # logger.info(str(len(dict)))
     # logger.info('AFTER UNCERT :LJ:LJ:LJ:LJ:LJ:LJ:LJ:LJ:J:LJ:LJ:LJ:LJ:LJ:')
@@ -2024,7 +2024,7 @@ def peak_intensity_max_intuitive_metrics(df, dict, model, energy_key,
         MedLE, MAE, MedAE, MALE, MedALE, MPE, MAPE, MSPE, SMAPE,
         MAR, RMSE, RMSLE, MdSA, fact10, fact2)
     
-    uncertainties.feeder_from_sphinx(sub, dict, 'peak_intensity_max')
+    uncertainties.feeder_from_sphinx(sub, dict, 'peak_intensity_max', config.uncert_boolean)
 
 
 
@@ -2173,7 +2173,7 @@ def max_flux_in_pred_win_metrics(df, dict, model, energy_key,
         slope, yint, r_lin, r_log, s_lin, MRatio, MedRatio, ME, MedE, MLE,
         MedLE, MAE, MedAE, MALE, MedALE, MPE, MAPE, MSPE, SMAPE,
         MAR, RMSE, RMSLE, MdSA, fact10, fact2)
-    uncertainties.feeder_from_sphinx(sub, dict, 'max_flux_in_pred_win')
+    uncertainties.feeder_from_sphinx(sub, dict, 'max_flux_in_pred_win', config.uncert_boolean)
 
 
 def fluence_intuitive_metrics(df, dict, model, energy_key,
@@ -2291,7 +2291,7 @@ def fluence_intuitive_metrics(df, dict, model, energy_key,
         slope, yint, r_lin, r_log, s_lin, MRatio, MedRatio, ME, MedE, MLE,
         MedLE, MAE, MedAE, MALE, MedALE, MPE, MAPE, MSPE, SMAPE,
         MAR, RMSE, RMSLE, MdSA, fact10, fact2)
-    uncertainties.feeder_from_sphinx(sub, dict, 'fluence')
+    uncertainties.feeder_from_sphinx(sub, dict, 'fluence', config.uncert_boolean)
 
 
 
@@ -2360,7 +2360,7 @@ def threshold_crossing_intuitive_metrics(df, dict, model, energy_key,
     fill_time_metrics_dict(dict, model, energy_key, thresh_key,
     pred_energy_key, pred_thresh_key, ME, MedE, MAE, MedAE)
 
-    uncertainties.feeder_from_sphinx(sub, dict, 'threshold_crossing')
+    uncertainties.feeder_from_sphinx(sub, dict, 'threshold_crossing', config.uncert_boolean)
     
 
 def start_time_intuitive_metrics(df, dict, model, energy_key, thresh_key,
@@ -2427,7 +2427,7 @@ def start_time_intuitive_metrics(df, dict, model, energy_key, thresh_key,
     
     fill_time_metrics_dict(dict, model, energy_key, thresh_key,
     pred_energy_key, pred_thresh_key, ME, MedE, MAE, MedAE)
-    uncertainties.feeder_from_sphinx(sub, dict, 'start_time')
+    uncertainties.feeder_from_sphinx(sub, dict, 'start_time', config.uncert_boolean)
 
 
 def end_time_intuitive_metrics(df, dict, model, energy_key,
@@ -2493,7 +2493,7 @@ def end_time_intuitive_metrics(df, dict, model, energy_key,
     
     fill_time_metrics_dict(dict, model, energy_key, thresh_key,
     pred_energy_key, pred_thresh_key, ME, MedE, MAE, MedAE)
-    uncertainties.feeder_from_sphinx(sub, dict, 'end_time')
+    uncertainties.feeder_from_sphinx(sub, dict, 'end_time', config.uncert_boolean)
  
 
 
@@ -2562,7 +2562,7 @@ def duration_intuitive_metrics(df, dict, model, energy_key, thresh_key,
     
     fill_time_metrics_dict(dict, model, energy_key, thresh_key,
     pred_energy_key, pred_thresh_key, ME, MedE, MAE, MedAE)
-    uncertainties.feeder_from_sphinx(sub, dict, 'duration')
+    uncertainties.feeder_from_sphinx(sub, dict, 'duration', config.uncert_boolean)
 
 
 
@@ -2640,7 +2640,7 @@ def peak_intensity_time_intuitive_metrics(df, dict, model, energy_key,
     fill_time_metrics_dict(dict, model, energy_key, thresh_key,
     pred_energy_key, pred_thresh_key, ME, MedE, MAE, MedAE)
 
-    uncertainties.feeder_from_sphinx(sub, dict, 'peak_intensity_time')
+    uncertainties.feeder_from_sphinx(sub, dict, 'peak_intensity_time', config.uncert_boolean)
 
 
 def date_to_string(date):
@@ -2732,7 +2732,7 @@ def peak_intensity_max_time_intuitive_metrics(df, dict, model, energy_key,
     fill_time_metrics_dict(dict, model, energy_key, thresh_key,
     pred_energy_key, pred_thresh_key, ME, MedE, MAE, MedAE)
 
-    uncertainties.feeder_from_sphinx(sub, dict, 'peak_intensity_max_time')
+    uncertainties.feeder_from_sphinx(sub, dict, 'peak_intensity_max_time', config.uncert_boolean)
 
 
 def time_profile_intuitive_metrics(df, dict, model, energy_key,
@@ -2816,8 +2816,8 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
     tp_plotnames = ""
     figname = ""
     tpfigname = ""
-    model_prof_df = pd.read_json('./output/json/model_profiles.json')
-    obs_prof_df = pd.read_json('./output/json/observed_profiles.json')
+    model_prof_df = pd.read_json(config.model_prof_path)
+    obs_prof_df = pd.read_json(config.obs_prof_path)
   
     
     for i in range(len(obs_profs)):
@@ -2853,8 +2853,6 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
         logger.info("Comparing to OBSERVED TIME PROFILES: " + str(obs_fnames))
         for j in range(len(obs_fnames)):
             
-            
-            # df = 
             dt = [vjson.zulu_to_time(t) for t in obs_prof_df[obs_fnames[j]]['dates']]
             flx = obs_prof_df[obs_fnames[j]]['fluxes']
             # dt, flx = profile.read_single_time_profile(obs_fnames[j])

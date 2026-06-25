@@ -450,6 +450,7 @@ class Test_Resume(unittest.TestCase):
         for the various quantities as well as the selections for those quantities for each model
 
         """
+        validate.profile_output(self.df, None, None) # Moved this step here to make things work - won't test for the profile existence until later
         validate.calculate_intuitive_metrics(self.df, self.model_names, self.all_energy_channels, \
                 self.all_observed_thresholds, 'All')
         # taking the 'easy way' of doing this test- just going to check that there are outputs for each
@@ -515,6 +516,9 @@ class Test_Resume(unittest.TestCase):
     @patch('sphinxval.utils.config.mm_obs_threshold', config_tests.mm_obs_threshold)
     @patch('sphinxval.utils.config.mm_obs_ek', config_tests.mm_obs_ek)
     @patch('sphinxval.utils.config.mm_obs_tk', config_tests.mm_obs_tk)
+    @patch('sphinxval.utils.config.uncert_boolean', False)
+    @patch('sphinxval.utils.config.model_prof_path', './tests/output/json/model_profiles.json')
+    @patch('sphinxval.utils.config.obs_prof_path', './tests/output/json/observed_profiles.json')
     
     def test_all(self):
         utils.utility_delete_output()
