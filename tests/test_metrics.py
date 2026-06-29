@@ -1158,6 +1158,12 @@ class ContigencyMetricsTestCase(unittest.TestCase):
             elif score == 'FM':
                 self.assertAlmostEqual(result[score],1)
                 # Fowlkes-Mallows Index = Sqrt((h/(h+f))*(h/(h+m))) = sqrt((1/(1+0))*((1/(1+0)))
+            elif score == 'FAER':
+                self.assertAlmostEqual(result[score],0)
+                # FAER = f / (h + m) = 0 / (1 + 0)
+            elif score == 'Tau':
+                self.assertTrue(math.isnan(result[score]))
+                # Tau = 1 - (np.sqrt((f/(c + f))**2 + (m/(h + m))**2)/np.sqrt(2)) = 1 - sqrt((0 / 0)^2 + (0/(1 + 0))^2 )
 
 
 
@@ -1268,6 +1274,12 @@ class ContigencyMetricsTestCase(unittest.TestCase):
             elif score == 'FM':
                 self.assertTrue(math.isnan(result[score]))
                 # Fowlkes-Mallows Index = Sqrt((h/(h+f))*(h/(h+m))) = sqrt((0/(0+0))*((0/(0+1)))
+            elif score == 'FAER':
+                self.assertAlmostEqual(result[score],0)
+                # FAER = f / (h + m) = 0 / (0 + 1)
+            elif score == 'Tau':
+                self.assertTrue(math.isnan(result[score]))
+                # Tau = 1 - (np.sqrt((f/(c + f))**2 + (m/(h + m))**2)/np.sqrt(2)) = 1 - sqrt((0 / 0)^2 + (1/(1 + 0))^2 )
 
         
 
@@ -1377,6 +1389,12 @@ class ContigencyMetricsTestCase(unittest.TestCase):
             elif score == 'FM':
                 self.assertTrue(math.isnan(result[score]))
                 # Fowlkes-Mallows Index = Sqrt((h/(h+f))*(h/(h+m))) = sqrt((0/(0+1))*((0/(0+0)))
+            elif score == 'FAER':
+                self.assertAlmostEqual(result[score], np.inf)
+                # FAER = f / (h + m) = 1 / (0 + 0)
+            elif score == 'Tau':
+                self.assertTrue(math.isnan(result[score]))
+                # Tau = 1 - (np.sqrt((f/(c + f))**2 + (m/(h + m))**2)/np.sqrt(2)) = 1 - sqrt((1 / 1)^2 + (0/(0 + 0))^2 )
 
 
     def test_cont_only_correct_negatives(self):
@@ -1485,6 +1503,12 @@ class ContigencyMetricsTestCase(unittest.TestCase):
             elif score == 'FM':
                 self.assertTrue(math.isnan(result[score]))
                 # Fowlkes-Mallows Index = Sqrt((h/(h+f))*(h/(h+m))) = sqrt((0/(0+0))*((0/(0+0)))
+            elif score == 'FAER':
+                self.assertTrue(math.isnan(result[score]))
+                # FAER = f / (h + m) = 0 / (0 + 0)
+            elif score == 'Tau':
+                self.assertTrue(math.isnan(result[score]))
+                # Tau = 1 - (np.sqrt((f/(c + f))**2 + (m/(h + m))**2)/np.sqrt(2)) = 1 - sqrt((0 / 1)^2 + (0/(0 + 0))^2 )
     
     
     def test_cont_mixed_table(self):
@@ -1590,6 +1614,13 @@ class ContigencyMetricsTestCase(unittest.TestCase):
             elif score == 'FM':
                 self.assertAlmostEqual(result[score],1/2)
                 # Fowlkes-Mallows Index = Sqrt((h/(h+f))*(h/(h+m))) = sqrt((1/(1+1))*((1/(1+1)))
+            elif score == 'FAER':
+                self.assertAlmostEqual(result[score],1/2)
+                # FAER = f / (h + m) = 1 / (1 + 1)
+            elif score == 'Tau':
+                self.assertAlmostEqual(result[score],1/2)
+                # Tau = 1 - (np.sqrt((f/(c + f))**2 + (m/(h + m))**2)/np.sqrt(2)) = 1 - sqrt((1 / (1+1))^2 + (1/(1 + 1))^2 )
+            
 
 
 
@@ -1696,6 +1727,13 @@ class ContigencyMetricsTestCase(unittest.TestCase):
             elif score == 'FM':
                 self.assertAlmostEqual(result[score], np.sqrt(1/12))
                 # Fowlkes-Mallows Index = Sqrt((h/(h+f))*(h/(h+m))) = sqrt((1/(1+3))*((1/(1+2)))
+            elif score == 'FAER':
+                self.assertAlmostEqual(result[score],1)
+                # FAER = f / (h + m) = 3 / (1 + 2)
+            elif score == 'Tau':
+                self.assertAlmostEqual(result[score],0.43959036686000863)
+                # Tau = 1 - (np.sqrt((f/(c + f))**2 + (m/(h + m))**2)/np.sqrt(2)) = 1 - sqrt((3 / (4+3))^2 + (2/(1 + 2))^2 )
+            
              
     
     def test_cont_garbage(self):

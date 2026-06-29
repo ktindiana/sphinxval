@@ -160,8 +160,8 @@ class Test_AllFields_Mismatch(unittest.TestCase):
         """
         validate.write_df(self.dataframe, "SPHINX_dataframe")
         
-        self.assertTrue(os.path.isfile('./tests/output/csv/SPHINX_dataframe.csv'), msg = 'SPHINX_dataframe.csv does not exist, check the file is output correctly')
-        self.assertTrue(os.path.isfile('./tests/output/pkl/SPHINX_dataframe.pkl'), msg = 'SPHINX_dataframe.pkl does not exist, check the file is output correctly')
+        self.assertTrue(os.path.isfile(os.path.join('.', 'tests', 'output', 'csv', 'SPHINX_dataframe.csv')), msg = 'SPHINX_dataframe.csv does not exist, check the file is output correctly')
+        self.assertTrue(os.path.isfile(os.path.join('.', 'tests', 'output', 'pkl', 'SPHINX_dataframe.pkl')), msg = 'SPHINX_dataframe.pkl does not exist, check the file is output correctly')
     
     def step_3(self):
         """
@@ -177,9 +177,9 @@ class Test_AllFields_Mismatch(unittest.TestCase):
         for model in self.model_names:
             for quantities in self.validation_quantity:
                
-                metrics_filename = './tests/output/csv/' + quantities + '_metrics' 
+                metrics_filename = os.path.join('.', 'tests', 'output', 'csv', quantities + '_metrics')
                 self.assertTrue(os.path.isfile(metrics_filename + '.csv'), msg = metrics_filename + '.csv does not exist, check the file is output correctly')
-                metrics_filename = './tests/output/pkl/' + quantities + '_metrics' 
+                metrics_filename = os.path.join('.', 'tests', 'output', 'pkl', quantities + '_metrics')
                 self.assertTrue(os.path.isfile(metrics_filename + '.pkl'), msg = metrics_filename + '.pkl does not exist, check the file is output correctly')
                 
                 
@@ -189,23 +189,23 @@ class Test_AllFields_Mismatch(unittest.TestCase):
                     threshold_shortened = thresholds.rsplit('.')[0]+ '_' + thresholds.rsplit('.')[1] + '.' + thresholds.rsplit('.')[2]
                     logger.debug(quantities)
                     if quantities == 'awt':
-                        pkl_filename = './tests/output/pkl/' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + "_Predicted SEP All Clear_mm.pkl"
-                        csv_filename = './tests/output/csv/' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + "_Predicted SEP All Clear_mm.csv"
+                        pkl_filename = os.path.join('.', 'tests', 'output', 'pkl', quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + "_Predicted SEP All Clear_mm.pkl")
+                        csv_filename = os.path.join('.', 'tests', 'output', 'csv', quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + "_Predicted SEP All Clear_mm.csv")
                         self.assertTrue(os.path.isfile(pkl_filename) , \
                             msg = pkl_filename + ' does not exist, check the file is output correctly')
                         self.assertTrue(os.path.isfile(csv_filename), \
                             msg = csv_filename + ' does not exist, check the file is output correctly')
                     elif quantities == 'threshold_crossing':
-                        pkl_filename = './tests/output/pkl/' + quantities + '_time_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + "_mm.pkl"
-                        csv_filename = './tests/output/csv/' + quantities + '_time_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + "_mm.csv"
+                        pkl_filename = os.path.join('.', 'tests', 'output', 'pkl', quantities + '_time_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + "_mm.pkl")
+                        csv_filename = os.path.join('.', 'tests', 'output', 'csv', quantities + '_time_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + "_mm.csv")
                         self.assertTrue(os.path.isfile(pkl_filename) , \
                             msg = pkl_filename + ' does not exist, check the file is output correctly')
                         self.assertTrue(os.path.isfile(csv_filename), \
                             msg = csv_filename + ' does not exist, check the file is output correctly')
                     
                     else:
-                        pkl_filename = './tests/output/pkl/' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + '_mm.pkl'
-                        csv_filename = './tests/output/csv/' + quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + '_mm.csv'
+                        pkl_filename = os.path.join('.', 'tests', 'output', 'pkl', quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + "_mm.pkl")
+                        csv_filename = os.path.join('.', 'tests', 'output', 'csv', quantities + '_selections_' + model + '_' + energy_channels + '_' + threshold_shortened + "_mm.csv")
                     
                         self.assertTrue(os.path.isfile(pkl_filename), msg = pkl_filename + ' does not exist, check the file is output correctly')
                         self.assertTrue(os.path.isfile(csv_filename), msg = csv_filename + ' does not exist, check the file is output correctly')
