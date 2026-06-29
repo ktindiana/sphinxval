@@ -577,7 +577,6 @@ def attributes_of_sphinx_obj(keyword, sphinx_obj, energy_channel_key, threshold_
 
 def assert_equal_table(self, filename, test_dict):
     keyword_all_clear = []
-    print(filename)
     with open(filename, mode = 'r') as csvfile:
         reading = pd.read_csv(csvfile, delimiter = ',')
     

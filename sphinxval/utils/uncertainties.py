@@ -194,6 +194,13 @@ def flux_uncertainties(df, label, dict):
         error = uncertainty.standard_error
         dict[flux_metric_mapping(fac) + ' Uncertainty'].append(error)
 
+
+    corr_plot_metrics = ['slope', 'yint']
+    for met in corr_plot_metrics:
+        uncertainty = corr_call_bootstrapper(obs, pred, met)
+        error = uncertainty.standard_error
+        logger.info(str(flux_metric_mapping(met) + ' Uncertainty'))
+        dict[flux_metric_mapping(met) + ' Uncertainty'].append(error)
     return
 
 
@@ -222,6 +229,16 @@ def pearson_call_bootstrapper(obs, pred, label):
             _, metric = metrics.calc_pearson(obs, pred)
         return metric
     return stats.bootstrap((obs, pred), statistic=wrapper, method='basic', vectorized = False, paired = True, n_resamples = 10000)
+
+
+def corr_call_bootstrapper(obs, pred, label):
+    def wrapper(obs, pred):
+        if label == 'slope':
+            metric, _ = np.polyfit(obs, pred, 1)
+        else:
+            _, metric = np.polyfit(obs, pred, 1)
+        return metric
+    return stats.bootstrap((np.log10(obs), np.log10(pred)), statistic=wrapper, method='basic', vectorized = False, paired = True, n_resamples = 10000)
 
 
 
@@ -348,7 +365,9 @@ def flux_metric_mapping(metric_label):
         'MdSA': "Median Symmetric Accuracy (MdSA)",
         'spearman': 'Spearman Correlation Coefficient (Linear)',
         'fac2': 'Percentage within a factor of 2 (%)',
-        'fac10': 'Percentage within an Order of Magnitude (%)'
+        'fac10': 'Percentage within an Order of Magnitude (%)',
+        'slope': 'Linear Regression Slope',
+        'yint': 'Linear Regression y-intercept'
     }
     return metrics[metric_label]
 

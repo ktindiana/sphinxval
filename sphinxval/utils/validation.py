@@ -3157,8 +3157,9 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
     
 
 
-    
     # Uncertainty Calcs
+    slope_uncert = None
+    yint_uncert = None
     ratio_uncert = None
     medratio_uncert = None
     E_uncert = None
@@ -3188,6 +3189,8 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
     else:
         for key in errors.keys():
             dict[key + ' Uncertainty'].append(np.nan)
+    dict['Linear Regression Slope Uncertainty'] = np.nan
+    dict["Linear Regression y-intercept Uncertainty"] = np.nan
     
         
 
