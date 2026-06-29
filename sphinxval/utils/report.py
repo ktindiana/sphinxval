@@ -1,1229 +1,1022 @@
-### SPHINX MARKDOWN GENERATOR -- please criticize the mess as you please
+"""SPHINX Markdown/HTML report generator.
 
-import pandas as pd
-import numpy as np
-pd.set_option('mode.chained_assignment', None)
-import datetime
-import os
-import pickle
-import logging
+Generates per-model validation reports in Markdown and HTML formats from
+SPHINX output pkl files.  The public entry point is ``report()``.
+"""
 
-import markdown
-import PyPDF2 as pdf
-import glob
-import bs4
 import base64
+import datetime
+import io
+import logging
+import os
+from dataclasses import dataclass, field
+from typing import List, Optional
 
-from . import config 
+import bs4
+import markdown
+import numpy as np
+import pandas as pd
+import PyPDF2 as pdf
+
+from . import config
 from . import make_index
 
-#Create logger
+# SUPPRESS CHAINED-ASSIGNMENT WARNINGS FROM PANDAS; THE ASSIGNMENTS IN
+# build_info_events_table ARE INTENTIONAL (OPERATING ON AN EXPLICIT COPY)
+pd.set_option('mode.chained_assignment', None)
+
 logger = logging.getLogger(__name__)
 
-def formatting_function(value):
-    condition = True
-    num_floats = 2
-    while condition:
-        formatter_prefix = '{:.' + str(num_floats) + 'f' + '}'
-        formatted_value = formatter_prefix.format(value)
-        not_present = True
-        for digit in ['1', '2', '3', '4', '5', '6', '7', '8', '9']:
-            if digit in formatted_value:
-                not_present = False
-        if not_present:
-            num_floats += 1
+
+# -----------------------------------------------------------------------
+# MODULE-LEVEL CONSTANTS
+# -----------------------------------------------------------------------
+
+# METRICS THAT LIVE IN [0, 1] — FORMATTED TO 2 DECIMAL PLACES
+_ZERO_TO_ONE_METRICS = frozenset({
+    'Percent Correct', 'Hit rate', 'False Alarm Rate',
+    'Frequency of Misses', 'Probability of Correct Negatives',
+    'Frequency of Hits', 'False Alarm Ratio', 'Detection Failure Ratio',
+    'Frequency of Correct Negatives', 'Threat Score', 'Brier Score',
+    'Pearson Correlation Coefficient (linear)',
+    'Pearson Correlation Coefficient (log)',
+})
+
+# METRICS THAT ARE ALWAYS INTEGERS
+_INT_METRICS = frozenset({
+    'Hits (TP)', 'Misses (FN)', 'False Alarms (FP)', 'Correct Negatives (TN)',
+})
+
+# APPENDAGE VARIANTS SPHINX PRODUCES FOR EACH METRIC TYPE
+_APPENDAGES = ['', '_First', '_Last', '_Mean', '_Max']
+
+# SHARED METRICS DESCRIPTION STRINGS
+_DESC_FLUX = (
+    'Correlation coefficients and regression lines indicate association.<br>'
+    'Metrics involving error indicate bias. Positive values indicate model '
+    'overprediction and negative values indicate model underprediction.<br>'
+    'Metrics involving absolute error or squared error indicate accuracy.\n'
+)
+_DESC_TIME = (
+    'Metrics for Predicted Time - Observed Time are in hours.<br>'
+    'Negative values indicate predicted time is earlier than observed.<br>'
+    'Positive values indicate predicted time is later than observed.\n'
+)
+
+
+# -----------------------------------------------------------------------
+# SECTION DEFINITION DATACLASS
+# -----------------------------------------------------------------------
+
+@dataclass(frozen=True)
+class SectionDef:
+    """Describes one validated quantity section in the SPHINX report."""
+    # FILENAME PREFIX USED TO DETECT SELECTION FILES IN output_dir
+    file_prefix: str
+    # INTERNAL TAG USED IN OUTPUT FILENAMES (E.G. 'all_clear')
+    tag: str
+    # HUMAN-READABLE SECTION TITLE
+    title: str
+    # COLUMN NAME WHERE METRICS START IN THE METRICS PKL
+    metric_label_start: str
+    # DESCRIPTION TEXT SHOWN ABOVE THE METRICS TABLE
+    metrics_description: str
+    # KEY INTO validation_reference_flag_dict
+    ref_flag: str
+    # REFERENCE CSV FILENAMES (RELATIVE TO config.referencepath)
+    ref_csv_metrics: str
+    ref_csv_skills: Optional[str] = None
+    ref_csv_plots: Optional[str] = None
+    # COLUMNS TO SKIP IN THE METRICS TABLE
+    skip_labels: List[str] = field(default_factory=list)
+    # SECTION TYPE FLAGS
+    is_all_clear: bool = False
+    is_awt: bool = False
+    # OVERRIDE FOR THE METRICS FILE TAG WHEN IT DIFFERS FROM self.tag
+    metrics_tag_override: Optional[str] = None
+
+    @property
+    def metrics_tag(self):
+        return self.metrics_tag_override or self.tag
+
+
+_SECTION_DEFS = [
+    SectionDef(
+        file_prefix='all_clear_selections_',
+        tag='all_clear', title='All Clear',
+        metric_label_start='Mean Error (pred - obs)',
+        metrics_description='',
+        ref_flag='All Clear',
+        ref_csv_metrics='validation_reference_sheet_contingency_metrics.csv',
+        ref_csv_skills='validation_reference_sheet_contingency_skills.csv',
+        ref_csv_plots='validation_reference_sheet_contingency_plots.csv',
+        is_all_clear=True,
+    ),
+    SectionDef(
+        file_prefix='awt_selections_',
+        tag='awt', title='Advanced Warning Time',
+        metric_label_start='Mean AWT for Predicted SEP All Clear to Observed SEP Threshold Crossing Time',
+        metrics_description='N/A',
+        ref_flag='AWT',
+        ref_csv_metrics='validation_reference_sheet_awt_metrics.csv',
+        is_awt=True,
+    ),
+    SectionDef(
+        file_prefix='duration_selections_',
+        tag='duration', title='Duration',
+        metric_label_start='Mean Error (pred - obs)',
+        metrics_description=(
+            'Duration is calculated in hours.<br> Metrics involving error indicate bias. '
+            'Positive values indicate model overprediction and negative values indicate '
+            'model underprediction.<br>Metrics involving absolute error indicate accuracy.\n'
+        ),
+        ref_flag='Time',
+        ref_csv_metrics='validation_reference_sheet_time_metrics.csv',
+    ),
+    SectionDef(
+        file_prefix='peak_intensity_selections_',
+        tag='peak_intensity', title='Peak Intensity (Onset Peak)',
+        metric_label_start='Linear Regression Slope',
+        metrics_description=_DESC_FLUX,
+        ref_flag='Flux',
+        ref_csv_metrics='validation_reference_sheet_flux_metrics.csv',
+        ref_csv_plots='validation_reference_sheet_flux_plots.csv',
+    ),
+    SectionDef(
+        file_prefix='peak_intensity_max_selections_',
+        tag='peak_intensity_max', title='Peak Intensity Max (Max Flux)',
+        metric_label_start='Linear Regression Slope',
+        metrics_description=_DESC_FLUX,
+        ref_flag='Flux',
+        ref_csv_metrics='validation_reference_sheet_flux_metrics.csv',
+        ref_csv_plots='validation_reference_sheet_flux_plots.csv',
+    ),
+    SectionDef(
+        file_prefix='peak_intensity_time_selections_',
+        tag='peak_intensity_time', title='Peak Intensity (Onset Peak) Time',
+        metric_label_start='Mean Error (pred - obs)',
+        metrics_description=_DESC_TIME,
+        ref_flag='Time',
+        ref_csv_metrics='validation_reference_sheet_time_metrics.csv',
+    ),
+    SectionDef(
+        file_prefix='peak_intensity_max_time_selections_',
+        tag='peak_intensity_max_time', title='Peak Intensity Max (Max Flux) Time',
+        metric_label_start='Mean Error (pred - obs)',
+        metrics_description=_DESC_TIME,
+        ref_flag='Time',
+        ref_csv_metrics='validation_reference_sheet_time_metrics.csv',
+    ),
+    SectionDef(
+        file_prefix='threshold_crossing_time_selections_',
+        tag='threshold_crossing_time', title='Threshold Crossing Time',
+        metric_label_start='Mean Error (pred - obs)',
+        metrics_description=_DESC_TIME,
+        ref_flag='Time',
+        ref_csv_metrics='validation_reference_sheet_time_metrics.csv',
+        metrics_tag_override='threshold_crossing',
+    ),
+    SectionDef(
+        file_prefix='fluence_selections_',
+        tag='fluence', title='Fluence',
+        metric_label_start='Linear Regression Slope',
+        metrics_description=_DESC_FLUX,
+        ref_flag='Flux',
+        ref_csv_metrics='validation_reference_sheet_flux_metrics.csv',
+        ref_csv_plots='validation_reference_sheet_flux_plots.csv',
+    ),
+    SectionDef(
+        file_prefix='max_flux_in_pred_win_selections_',
+        tag='max_flux_in_pred_win', title='Max Flux in Prediction Window',
+        metric_label_start='Linear Regression Slope',
+        metrics_description=_DESC_FLUX,
+        ref_flag='Flux',
+        ref_csv_metrics='validation_reference_sheet_flux_metrics.csv',
+        ref_csv_plots='validation_reference_sheet_flux_plots.csv',
+    ),
+    SectionDef(
+        file_prefix='probability_selections_',
+        tag='probability', title='Probability',
+        metric_label_start='Brier Score',
+        metrics_description='',
+        ref_flag='Probability',
+        ref_csv_metrics='validation_reference_sheet_probability_metrics.csv',
+        ref_csv_skills='validation_reference_sheet_probability_skills.csv',
+        ref_csv_plots='validation_reference_sheet_probability_plots.csv',
+    ),
+    SectionDef(
+        file_prefix='start_time_selections_',
+        tag='start_time', title='Start Time',
+        metric_label_start='Mean Error (pred - obs)',
+        metrics_description=_DESC_TIME,
+        ref_flag='Time',
+        ref_csv_metrics='validation_reference_sheet_time_metrics.csv',
+    ),
+    SectionDef(
+        file_prefix='end_time_selections_',
+        tag='end_time', title='End Time',
+        metric_label_start='Mean Error (pred - obs)',
+        metrics_description=_DESC_TIME,
+        ref_flag='Time',
+        ref_csv_metrics='validation_reference_sheet_time_metrics.csv',
+    ),
+    SectionDef(
+        file_prefix='time_profile_selections_',
+        tag='time_profile', title='Time Profile',
+        metric_label_start='Linear Regression Slope',
+        metrics_description=(
+            'Correlation plots are created for each predicted time profile and may be '
+            'viewed in the output/plots directory.<br>Metrics are calculated from '
+            'overlapping portions of predicted and observed time profiles, highlighted '
+            'in red and orange in the Time Profile plots.<br>Metrics involving error '
+            'indicate bias. Positive values indicate model overprediction and negative '
+            'values indicate model underprediction.<br>Metrics involving absolute error '
+            'or squared error indicate accuracy.\n'
+        ),
+        ref_flag='Flux',
+        ref_csv_metrics='validation_reference_sheet_flux_metrics.csv',
+        ref_csv_plots='validation_reference_sheet_flux_plots.csv',
+        skip_labels=['Time Profile Selection Plot'],
+    ),
+]
+
+
+# -----------------------------------------------------------------------
+# CACHES — AVOID REDUNDANT DISK I/O ACROSS MODELS AND APPENDAGES
+# -----------------------------------------------------------------------
+
+# PKL CACHE: KEYED BY ABSOLUTE FILE PATH → LOADED DATAFRAME.
+# CLEARED AT THE START OF EACH report() CALL.
+_pkl_cache: dict = {}
+
+# REFERENCE CSV CACHE: KEYED BY ABSOLUTE FILE PATH → RENDERED MARKDOWN.
+# REFERENCE SHEETS NEVER CHANGE BETWEEN MODELS.
+_ref_csv_cache: dict = {}
+
+
+def _load_pkl(path: str) -> pd.DataFrame:
+    """Load a pickle file, returning the cached result on subsequent calls."""
+    abs_path = os.path.abspath(path)
+    if abs_path not in _pkl_cache:
+        _pkl_cache[abs_path] = pd.read_pickle(abs_path)
+    return _pkl_cache[abs_path]
+
+
+def _ref_csv_markdown(path: str) -> str:
+    """Load a reference CSV and render it as Markdown, caching the result."""
+    abs_path = os.path.abspath(path)
+    if abs_path not in _ref_csv_cache:
+        data = pd.read_csv(abs_path, skiprows=1)
+        _ref_csv_cache[abs_path] = '\n' + data.to_markdown(index=False) + '\n'
+    return _ref_csv_cache[abs_path]
+
+
+def _ref_path(filename: Optional[str]) -> Optional[str]:
+    """Resolve a reference CSV filename to its full path, or None."""
+    return os.path.join(config.referencepath, filename) if filename else None
+
+
+# -----------------------------------------------------------------------
+# FORMATTING HELPERS
+# -----------------------------------------------------------------------
+
+def _format_significant(value: float) -> str:
+    """Format a float to 2-5 significant decimal places, stopping once a
+    non-zero digit appears.  Falls back to scientific notation after 5
+    decimal places."""
+    for n in range(2, 6):
+        formatted = f'{value:.{n}f}'
+        if any(d in formatted for d in '123456789'):
+            return formatted
+    return formatted
+
+
+def _formatter_for_metric(metric_name: str):
+    """Return an appropriate single-argument formatting callable for a
+    named metric."""
+    if metric_name in _ZERO_TO_ONE_METRICS or 'Skill Score' in metric_name or 'Skill Statistic' in metric_name:
+        return lambda v: f'{v:.2f}'
+    if metric_name in _INT_METRICS:
+        return lambda v: str(int(round(v)))
+    return _format_significant
+
+
+# -----------------------------------------------------------------------
+# MARKDOWN TABLE BUILDERS
+# -----------------------------------------------------------------------
+
+def make_markdown_table(column_1: str, column_2: str, dataframe: pd.DataFrame, width: int = 50) -> str:
+    """Render a two-column (label | value) Markdown table from *dataframe*.
+
+    *dataframe* must have one column; its index provides the row labels.
+    """
+    rows = list(dataframe.index)
+    raw_values = list(dataframe.to_numpy().flatten())
+
+    # CONVERT RATIOS TO PERCENTAGES WHERE APPROPRIATE
+    for i, label in enumerate(rows):
+        if label in config.in_percent:
+            raw_values[i] = raw_values[i] * 100.0
+            rows[i] = label + ' [%]'
+
+    buf = io.StringIO()
+    buf.write(f'| {column_1:<{width - 1}}| {column_2:<{width - 1}}|\n')
+    buf.write(f'|:{"-" * (width - 1)}:|:{"-" * (width - 1)}:|\n')
+    for label, value in zip(rows, raw_values):
+        safe_label = label.replace('|', r'\|')
+        if value is None or (isinstance(value, float) and np.isnan(value)):
+            fmt_value = 'NaN'
         else:
-            condition = False
-        if num_floats >= 5:
-            condition = False
-    return formatted_value
-
-def transpose_markdown(text):
-    table = text.split('\n')
-    output = '| Metric | Value |\n'
-    output += '|:' + '-' * 48 + ':|:' + '-' * 48 + ':|\n'
-    labels = table[0].split('|')
-    values = table[2].split('|')
-    for i in range(1, len(labels)):
-        output += '|' + labels[i] + '|' + values[i] + '|\n'
-    output = output.rstrip('|||\n') + '|\n'
-    output = format_markdown_table(output)
-    return output
-
-def make_markdown_table(column_1, column_2, dataframe, width=50):
-    # INPUT MUST BE TWO COLUMN MATRIX; FIRST COLUMN LABELS, SECOND COLUMN DATA
-    zero_to_one_metric_name = ['Percent Correct', 'Hit rate', 
-                               'False Alarm Rate', 'Frequency of Misses', 
-                               'Probability of Correct Negatives', 
-                               'Frequency of Hits', 'False Alarm Ratio', 
-                               'Detection Failure Ratio', 
-                               'Frequency of Correct Negatives', 
-                               'Threat Score', 'Brier Score', 
-                               'Pearson Correlation Coefficient (linear)', 
-                               'Pearson Correlation Coefficient (log)']    
-    int_metric_name = ['Hits (TP)', 'Misses (FN)', 
-                       'False Alarms (FP)', 'Correct Negatives (TN)']                   
-    rows = dataframe.index.to_list()
-    numbers = list(dataframe.to_numpy())
-    
-    # CHANGE RATIOS TO PERCENTAGES
-    for i in range(0, len(rows)):
-         if rows[i] in config.in_percent:
-            numbers[i] *= 100.0
-            rows[i] = rows[i] + ' [%]'
-    
-    # CLEAN UP numbers
-    formatted_numbers = []
-    for i in range(0, len(rows)):
-        if rows[i] in zero_to_one_metric_name:
-            formatter = '{:.2f}'.format
-        elif rows[i] in int_metric_name:
-            formatter = '{:02d}'.format
-        else:
-            formatter = formatting_function
-        if numbers[i][0] is None:
-            formatter = lambda x : 'NaN'
-        formatted_numbers.append(formatter(numbers[i][0]))    
-    table = '| ' + column_1 + ' ' * (width - 1 - len(column_1)) + ' | ' + column_2 + ' ' * (width - 1 - len(column_2)) + ' |\n'
-    table += '|:' + (width - 1) * '-' + ':|:' + (width - 1) * '-' + ':|\n'
-    for i in range(0, len(rows)):
-        rows[i] = rows[i].replace('|', '\|')
-        table += '| ' + rows[i] + ' ' * (width - len(rows[i])) + '| ' + formatted_numbers[i] + ' ' * (width - len(formatted_numbers[i])) + '|\n'
-    return table
-    
-def format_markdown_table(text, width=50):
-    zero_to_one_metric_name = ['Percent Correct', 'Hit rate', 
-                               'False Alarm Rate', 'Frequency of Misses', 
-                               'Probability of Correct Negatives', 
-                               'Frequency of Hits', 'False Alarm Ratio', 
-                               'Detection Failure Ratio', 
-                               'Frequency of Correct Negatives', 
-                               'Threat Score', 'Brier Score', 
-                               'Pearson Correlation Coefficient (linear)', 
-                               'Pearson Correlation Coefficient (log)']    
-    int_metric_name = ['Hits (TP)', 'Misses (FN)', 
-                       'False Alarms (FP)', 'Correct Negatives (TN)']
-    table = text.split('\n')
-    table_string = ''
-    for i in range(0, len(table)):
-        cells = table[i].split('|')[1:-1]
-        for j in range(0, len(cells)):
-            try:
-                value = float(cells[j])
-            except ValueError:
-                value = cells[j].strip(' ')
-            formatter = None
-            if (type(value) == str):    
-                cells[j] = value
-                if ('Skill Score' in value) or ('Skill Statistic' in value):
-                    formatter = formatting_function
-                elif (value in zero_to_one_metric_name):
-                    formatter = formatting_function
-                elif value in int_metric_name:
-                    formatter = lambda x : str(int(round(x, 0)))
-                else:
-                    formatter = None
-            else:
-                if formatter is None:
-                    if abs(value) >= 1000.0:
-                        formatter = '{:.4e}'.format
-                    else:
-                        formatter = '{:.2f}'.format
-                cells[j] = formatter(value)
-
-        for j in range(0, len(cells)):
-            if len(cells[j]) < width:
-                counter = 0
-                while len(cells[j]) < width:
-                    if j != 0:
-                        if counter % 2 == 0:    
-                            cells[j] = ' ' + cells[j]
-                        else:
-                            cells[j] = cells[j] + ' '
-                    else:
-                        cells[j] = ' ' + cells[j]
-                    counter += 1
-        line = '|'
-        for j in range(0, len(cells)):
-            line += cells[j] + '|'
-        line += '\n'
-        table_string += line
-    return table_string
-
-def add_collapsible_segment(header, text):
-    markdown = '<details>\n'
-    markdown += '<summary>' + header + '</summary>\n\n'
-    markdown += text + '\n'
-    markdown += '</details>\n'
-    return markdown
-
-def add_collapsible_segment_start(header, text):
-    markdown = '<details>\n'
-    markdown += '<summary>' + header + '</summary>\n\n'
-    markdown += text + '\n'
-    markdown += '<blockquote>\n\n'
-    return markdown
-
-def add_collapsible_segment_end():
-    markdown = '</blockquote>\n'
-    markdown += '</details>\n\n'
-    return markdown
-
-def add_collapsible_segment_nest(header_list, text_list, depth=0):
-    result = []
-    for i in range(0, len(header_list)):
-        if isinstance(header_list[i], list):
-            sublist_result = add_collapsible_segment_nest(header_list[i], 
-                                                          text_list[i], 
-                                                          depth + 1)
-            result.append(sublist_result)
-        else:
-            result.append((depth, header_list[i], text_list[i]))
-    return result
-
-def build_info_string_header(value, limit_message, selections_filename):
-    info_string = 'Instruments and observed values used in validation.<br>'
-    info_string += 'Extracted from: ' + selections_filename + '<br>\n'
-    info_string += 'N = ' + str(value) + '<br>\n'
-    info_string += limit_message
-    return info_string
-
-def define_colors():
-    text = '<style>\n'
-    text += '    .red {\n'
-    text += '            background-color: #fad5d2;\n'
-    text += '        }\n'
-    text += '    .green {\n'
-    text += '           background-color: #89d99e;\n'
-    text += '        }\n'
-    text += '</style>\n'
-    return text
-
-def build_contingency_table(yes_yes, yes_no, no_no, no_yes, text_color='black'):
-    table_string = ''
-    table_string += '| |Observed Yes|Observed No|\n'
-    table_string += '|----|:----:|:----:|\n'
-    table_string += '|Predicted Yes|' + str(yes_yes) + '|' + str(yes_no) + '|\n'
-    table_string += '|Predicted No|' + str(no_yes) + '|' + str(no_no) + '|\n'
-    return table_string
-
-def add_text_color(text, color):
-    new_text = '<span style="' + 'color:' + color + '">' + text + '</span>'
-    return new_text
-
-def build_skill_score_table(labels, values):
-    table = pd.DataFrame(data=[values], columns=labels)
-    table_string = '\n' + transpose_markdown(table.to_markdown(index=False)) + '\n'
-    return table_string
-
-def build_info_events_table(filename, sphinx_dataframe, subset_list, subset_replacement_dict, selections_limit=1000):
-    data = pd.read_pickle(filename)
-    subset = data[subset_list]
-    subset.insert(0, 'Observatory', 'dummy')
-    selection_index = list(data.index)
-    subset['Observatory'] = sphinx_dataframe.loc[selection_index, 'Observatory'].to_list()
-    subset['Observed SEP Start Time'] = sphinx_dataframe.loc[selection_index, 'Observed SEP Start Time'].to_list()
-    subset['Observed SEP End Time'] = sphinx_dataframe.loc[selection_index, 'Observed SEP End Time'].to_list()
-    #subset = subset.rename(columns=subset_replacement_dict)
-    if len(subset) > selections_limit:
-        subset = subset.iloc[:selections_limit]
-        limit_message = 'This list has been truncated to the first ' + str(selections_limit) + ' entries. See ' + filename + ' for full list.\n'
-    else:
-        limit_message = ''
-    output = '\n' + subset.to_markdown(index=False) + '\n'
-    n_events = len(data)
-    return output, n_events, limit_message, subset
-
-def build_threshold_string(data, k):
-    energy_threshold_data = data.iloc[k]['Energy Channel']
-    if energy_threshold_data.count('MeV') > 1:
-        energy_threshold_values = energy_threshold_data.split('_')
-        energy_threshold = ''
-        mismatch_allowed_string = '_mm'
-        for i in range(0, len(energy_threshold_values)):
-            energy_threshold_min_split = energy_threshold_values[i].split('min.')[1]
-            energy_threshold_max_split = energy_threshold_values[i].split('.max.')[1]
-            energy_threshold_min = energy_threshold_min_split.split('.max.')[0]
-            energy_threshold_max = energy_threshold_max_split.split('.units.')[0]
-            if float(energy_threshold_max) < 0:
-                energy_threshold += '> ' + energy_threshold_min + ' MeV , '
-            else:
-                energy_threshold += energy_threshold_min + ' < E < ' + energy_threshold_max + ' MeV , '
-        energy_threshold = energy_threshold.rstrip(' , ')        
-    else:
-        energy_threshold = '> ' + energy_threshold_data.split('.')[1] + ' MeV'
-        energy_threshold_min_split = energy_threshold_data.split('min.')[1]
-        energy_threshold_max_split = energy_threshold_data.split('.max.')[1]
-        energy_threshold_min = energy_threshold_min_split.split('.max.')[0]
-        energy_threshold_max = energy_threshold_max_split.split('.units.')[0]
-        if float(energy_threshold_max) < 0:
-            energy_threshold = '> ' + energy_threshold_min + ' MeV'
-        else:
-            energy_threshold = energy_threshold_min + ' < E < ' + energy_threshold_max + ' MeV'
-        mismatch_allowed_string = ''
-    obs_threshold = data.iloc[k]['Threshold'].split('.units.')[0].split('threshold.')[1] + ' pfu'
-    pred_threshold = data.iloc[k]['Prediction Threshold'].split('.units.')[0].split('threshold.')[1] + ' pfu'
-    threshold_string = '* Energy Channel: ' + energy_threshold + '\n'
-    threshold_string += '* Observation Threshold: ' + obs_threshold + '\n'
-    threshold_string += '* Predictions Threshold: ' + pred_threshold + '\n'
-    return threshold_string, energy_threshold, obs_threshold, pred_threshold, mismatch_allowed_string
-
-def build_all_clear_skill_scores_section(filename, model, sphinx_dataframe, appendage=''):
-    data = pd.read_pickle(filename)
-    data = data[data.Model == model]
-    column_labels = data.columns
-    text = ''
-    number_rows = data.shape[0]
-    if number_rows > 0:
-        text += add_collapsible_segment_start('All Clear Skill Scores', '')
-    skill_score_start_index = 9
-    skill_score_table_labels = list(column_labels[skill_score_start_index:])
-    n_total = 0
-    for i in range(0, number_rows):
-        threshold_string, energy_threshold, obs_threshold, pred_threshold, mismatch_allowed_string = build_threshold_string(data, i)
-        hits = data.iloc[i]["All Clear 'True Positives' (Hits)"]
-        false_alarms = data.iloc[i]["All Clear 'False Positives' (False Alarms)"]
-        correct_negatives = data.iloc[i]["All Clear 'True Negatives' (Correct Negatives)"]
-        misses = data.iloc[i]["All Clear 'False Negatives' (Misses)"]
-        contingency_table_values = [hits, false_alarms, correct_negatives, misses]
-        contingency_table_string = build_contingency_table(*contingency_table_values)
-        selections_filename = os.path.join(output_dir__, 'all_clear_selections_' + model + '_' + data.iloc[i]['Energy Channel'] + '_threshold_' + obs_threshold.rstrip(' pfu') + mismatch_allowed_string + appendage + '.pkl')
-        subset_list = ['Prediction Window Start', 'Prediction Window End']
-        subset_list = append_subset_list(selections_filename, subset_list, 'Prediction Window End', 'Units')
-        info_string_, n_events, limit_message, subset = build_info_events_table(selections_filename, sphinx_dataframe, subset_list, {})
-        n_total += n_events
-        info_string = build_info_string_header(sum(contingency_table_values), limit_message, selections_filename)
-        info_string += info_string_
-        skill_score_table_values = data.iloc[i, skill_score_start_index:]
-        skill_score_table_string = build_skill_score_table(skill_score_table_labels, skill_score_table_values)
-        text += add_collapsible_segment_start(energy_threshold, '')
-        text += add_collapsible_segment('Thresholds Applied', threshold_string)
-        text += add_collapsible_segment('Validation Info', info_string)
-        text += add_collapsible_segment('Contingency Table', contingency_table_string)
-        text += add_collapsible_segment('Skill Scores Table', skill_score_table_string)
-        text += add_collapsible_segment_end()
-    text += add_collapsible_segment_end()
-    if n_total == 0:
-        return ''
-    else:
-        return text
-
-def build_metrics_table(data, current_index, metric_index_start, skip_label_list):
-    metrics_table_string = ''
-    column_labels = list(data.columns)
-    subset = data.iloc[current_index, metric_index_start:]
-    subset = pd.DataFrame(subset, index=column_labels[metric_index_start:])
-    for i in range(0, len(skip_label_list)):
-        subset = subset.drop(skip_label_list[i], axis=0)
-    column_1 = 'Metric'
-    column_2 = 'Value'
-    metrics_table_string += '\n' + make_markdown_table(column_1, column_2, subset) + '\n'
-    plot_string_list, plot_file_string_list = build_plot_string_list(data, current_index)
-    return metrics_table_string, plot_string_list, plot_file_string_list
-   
-def append_plot_string_list(plot_string_list, plot_file_string_list, plot_string_): 
-    if plot_string_ == '':
-        plot_string = 'No image files found.\n\n'
-        plot_file_string = ''
-        plot_string_list.append(plot_string)
-        plot_file_string_list.append(plot_file_string)
-    else:    
-        if relative_path_plots__:
-            plot_string = os.path.relpath(plot_string_, os.path.basename(config.reportpath))
-            plot_file_string = os.path.relpath(plot_string_, '.')
-        else:
-            plot_string = os.path.abspath(plot_string_)
-            plot_file_string = plot_string + ''
-        plot_string_list.append('![](' +  plot_string + ')\n\n')
-        plot_file_string_list.append(plot_file_string)
-    return plot_string_list, plot_file_string_list
- 
-def build_plot_string_list(data, current_index):
-    plot_string_list = []
-    plot_file_string_list = []
-    if ('Scatter Plot' in data.columns):    
-        plot_string = data.iloc[current_index]['Scatter Plot']
-        plot_string_list, plot_file_string_list = append_plot_string_list(plot_string_list, plot_file_string_list, plot_string)
-    
-    if ('ROC Curve Plot' in data.columns):
-        plot_string = data.iloc[current_index]['ROC Curve Plot']
-        plot_string_list, plot_file_string_list = append_plot_string_list(plot_string_list, plot_file_string_list, plot_string) 
-
-    if 'Time Profile Selection Plot' in data.columns:
-        time_profile_plot_string = data.iloc[current_index]['Time Profile Selection Plot']
-        time_profile_plot_string_list = time_profile_plot_string.split(';')
-        if time_profile_plot_string == '':
-            pass
-        else:
-            for i in range(0, len(time_profile_plot_string_list)):
-                if relative_path_plots__:
-                    plot_string = os.path.relpath(time_profile_plot_string_list[i], os.path.basename(config.reportpath))
-                    plot_file_string = os.path.relpath(time_profile_plot_string_list[i], '.')
-                else:
-                    plot_string = os.path.abspath(time_profile_plot_string_list[i])
-                    plot_file_string = plot_string + ''
-                plot_string_list.append('![](' +  plot_string + ')\n\n')
-                plot_file_string_list.append(plot_file_string)
-    return plot_string_list, plot_file_string_list
-
-def plot_subsection(plot_string_list, subset=None): 
-    plot_counter = 1
-    last_plot_type = ''
-    text = ''
-    for j in range(0, len(plot_string_list)):
-        plot_type = get_plot_type(plot_string_list[j])
-        if plot_type != last_plot_type:
-            plot_counter = 1
-        else:
-            plot_counter += 1
-
-        if plot_type == 'Time Profile':
-            appendage = ' for event observed ' + subset['Observed SEP Start Time'].iloc[0].isoformat()  + ' -- ' + subset['Observed SEP End Time'].iloc[0].isoformat()
-        else:
-            appendage = ''
-
-        text += add_collapsible_segment('Plot: ' + plot_type + ' ' + str(plot_counter) + appendage, plot_string_list[j])
-        last_plot_type = plot_type + ''
-    return text
-
-def append_subset_list(selections_filename, subset_list, include_after, exclusion_pattern=None):
-    # HACKY
-    a = open(selections_filename.replace('pkl', 'csv'), 'r')
-    read = a.readlines()
-    a.close()
-    columns = read[0].lstrip(',').split(',')
-    for i in range(0, len(columns)):
-        columns[i] = columns[i].rstrip('\n').rstrip('\\')
-    include = False
-    for i in range(0, len(columns)):
-        if include:
-            if exclusion_pattern is None:
-                subset_list.append(columns[i])
-            else:
-                if not (exclusion_pattern in columns[i]):
-                    subset_list.append(columns[i])
-        if columns[i] == include_after:
-            include = True
-    return subset_list
-
-def get_awt_filename(data, i, output_dir, section_tag, model, obs_threshold, pred_threshold, mismatch_allowed_string, awt_string, appendage=''):
-    selections_filename = output_dir + section_tag + '_selections_' + model + '_' + data.iloc[i]['Energy Channel'] + '_threshold_' + obs_threshold.rstrip(' pfu') + mismatch_allowed_string + '_' + awt_string + appendage + '.pkl'
-    return selections_filename
-
-def build_section_awt(filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, skip_label_list=[], rename_dict={}, appendage=''):
-    data = pd.read_pickle(filename)
-    data = data[data.Model == model]
-    column_labels = data.columns    
-    metric_index_start = list(column_labels).index(metric_label_start)
-    text = ''
-    number_rows = data.shape[0]
-    awt_index = 0
-    if number_rows > 0:
-        text += add_collapsible_segment_start(section_title + ' Metrics', '')
-
-    awt_string_list = ['Predicted SEP All Clear', 'Predicted SEP Peak Intensity (Onset Peak)', 'Predicted SEP Peak Intensity Max (Max Flux)']
-    n_total = 0
-    for i in range(0, number_rows):
-        threshold_string, energy_threshold, obs_threshold, pred_threshold, mismatch_allowed_string = build_threshold_string(data, i)
-        metrics_string = metrics_description_string + '\n' 
-        metrics_string_, plot_string_list, plot_file_string_list = build_metrics_table(data, i, metric_index_start, skip_label_list)
-        metrics_string += metrics_string_
-        text += add_collapsible_segment_start(energy_threshold, '')
-        text += add_collapsible_segment('Thresholds Applied', threshold_string)
-        for j in range(0, len(awt_string_list)):
-            awt_string = awt_string_list[j]
-            selections_filename = get_awt_filename(data, i, output_dir__, section_tag, model, obs_threshold, pred_threshold, mismatch_allowed_string, awt_string, appendage)
-            subset_list = ['Prediction Window Start', 'Prediction Window End']
-            if os.path.exists(selections_filename):            
-                subset_list = append_subset_list(selections_filename, subset_list, 'Prediction Window End', 'Units')
-                info_string_, n_events, limit_message, subset = build_info_events_table(selections_filename, sphinx_dataframe, subset_list, rename_dict)
-                n_total += n_events
-                info_string = build_info_string_header(n_events, limit_message, selections_filename)
-                info_string += info_string_
-                text += add_collapsible_segment('Validation Info - ' + awt_string, info_string)
-        text += add_collapsible_segment('Metrics', metrics_string)
-        text += plot_subsection(plot_string_list)
-        text += add_collapsible_segment_end()
-    text += add_collapsible_segment_end()
-    if n_total == 0:
-        return ''
-    else:
-        return text
-
-def build_section(filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, skip_label_list=[], rename_dict={}, appendage=''):
-    data = pd.read_pickle(filename)
-    data = data[data.Model == model]
-    column_labels = data.columns    
-    metric_index_start = list(column_labels).index(metric_label_start)
-    text = ''
-    number_rows = data.shape[0]
-    awt_index = 0
-    if number_rows > 0:
-        text += add_collapsible_segment_start(section_title + ' Metrics', '')
-    n_total = 0
-    for i in range(0, number_rows):
-        threshold_string, energy_threshold, obs_threshold, pred_threshold, mismatch_allowed_string = build_threshold_string(data, i)
-        selections_filename = os.path.join(output_dir__, section_tag + '_selections_' + model + '_' + data.iloc[i]['Energy Channel'] + '_threshold_' + obs_threshold.rstrip(' pfu') + mismatch_allowed_string + appendage + '.pkl')
-        subset_list = ['Prediction Window Start', 'Prediction Window End']
-        subset_list = append_subset_list(selections_filename, subset_list, 'Prediction Window End', 'Units')
-        info_string_, n_events, limit_message, subset = build_info_events_table(selections_filename, sphinx_dataframe, subset_list, rename_dict)
-        n_total += n_events
-        info_string = build_info_string_header(n_events, limit_message, selections_filename)
-        info_string += info_string_
-        metrics_string = metrics_description_string + '' 
-        metrics_string_, plot_string_list, plot_file_string_list = build_metrics_table(data, i, metric_index_start, skip_label_list)
-        metrics_string += metrics_string_
-        text += add_collapsible_segment_start(energy_threshold, '')
-        text += add_collapsible_segment('Thresholds Applied', threshold_string)
-        text += add_collapsible_segment('Validation Info', info_string)
-        text += add_collapsible_segment('Metrics', metrics_string)
-        text += plot_subsection(plot_string_list, subset)
-        text += add_collapsible_segment_end()
-    text += add_collapsible_segment_end()
-    if n_total == 0:
-        return ''
-    else:
-        return text
-    
-def build_validation_reference_section(text, filename1, filename2, filename3=None):
-    data = pd.read_csv(filename1, skiprows=1)
-    table = '\n' + data.to_markdown(index=False) + '\n'
-    text += add_collapsible_segment('Metrics', table)
-    if filename2:
-        data = pd.read_csv(filename2, skiprows=1)
-        table = '\n' + data.to_markdown(index=False) + '\n'
-        text += add_collapsible_segment('Skill Scores', table)
-    if filename3:
-        data = pd.read_csv(filename3, skiprows=1)
-        table = '\n' + data.to_markdown(index=False) + '\n'
-        text += add_collapsible_segment('Plots', table)
-    return text
-
-def construct_validation_reference_sheet(vr_subtext, vr_flag_dict, vr_flag, vr_filename_1, vr_filename_2=None, vr_filename_3=None):
-    if vr_flag_dict[vr_flag]:
-        vr_subtext += add_collapsible_segment_start(vr_flag, '')
-
-        # This block adds the AWT image to the reference section. Currently has the flag for Time but change to AWT for when AWT is 
-        # actually being calculated (it was not for my testing)
-        if vr_flag == 'Time':
-            plot_string_ = os.path.join(config.referencepath, 'AWT_image')
-            plot_string = os.path.abspath(plot_string_)
-            plot_file_string = plot_string + ''
-            vr_subtext += '![](' +  plot_string + ')\n\n'
-            
-        vr_subtext += build_validation_reference_section('', vr_filename_1, vr_filename_2, vr_filename_3)
-        vr_subtext += add_collapsible_segment_end()
-        vr_flag_dict[vr_flag] = False
-    return vr_subtext, vr_flag_dict
+            fmt_value = _formatter_for_metric(label)(value)
+        buf.write(f'| {safe_label:<{width}}| {fmt_value:<{width}}|\n')
+    return buf.getvalue()
 
 
-### CONVERT MARKDOWN TO HTML 
-def get_image_string(original_string):
-    # COUNT NUMBER OF PARENTHESES
-    left_parentheses = original_string.count('(')
-    right_parentheses = original_string.count(')')
-    if (left_parentheses > 1) or (right_parentheses > 1):
-        # FIND LAST RIGHT PARENTHESES
-        last_right_parentheses_index = -(original_string[::-1].index(')') + 1)
-        result = original_string[:last_right_parentheses_index]
-        result = result.split('![](')[1]
-    else:
-        left = original_string.split('![](')[1]
-        result = left.split(')')[0]
-    return result
+def transpose_markdown(text: str) -> str:
+    """Transpose a wide Markdown table into a two-column (Metric | Value) table."""
+    lines = text.strip().split('\n')
+    labels = [c.strip() for c in lines[0].split('|') if c.strip()]
+    values = [c.strip() for c in lines[2].split('|') if c.strip()]
+    buf = io.StringIO()
+    buf.write('| Metric | Value |\n')
+    buf.write(f'|:{"-" * 48}:|:{"-" * 48}:|\n')
+    for label, value in zip(labels, values):
+        buf.write(f'| {label} | {value} |\n')
+    return buf.getvalue().rstrip('|\n') + '|\n'
 
-def convert_tables_html(text):
-    new_text = ''
-    outside_table = True
-    first = False
-    for i in range(0, len(text)):
-        line = text[i]
-        if line == '' and outside_table: # NOT IN A TABLE
-            table = ''
-            outside_table = True
-        if len(line) > 0:
-            if line[0] == '|':
-                outside_table = False
-                table += line + '\n'
-            else:
-                outside_table = True
-                first = True
-        if first:
-            if 'table' in list(locals().keys()):
-                table_html = markdown.markdown(table, extensions=['markdown.extensions.tables'])
-                new_text += table_html + '\n'
-                del table
-            first = False    
-        if outside_table:
-            new_text += line + '\n'
-    new_text = new_text.split('\n')
-    return new_text
 
-def convert_plots_html(text):
-    new_text = ''
-    for i in range(0, len(text)):
-        line = text[i]
-        if line == '':
-            pass
-        else:
-            if line[0] == '!':
-                image_filename_plot_path = get_image_string(line)
-                # CHECK IMAGE DIMENSIONS
-                image_filename = os.path.abspath(os.path.join(config.reportpath, image_filename_plot_path))
-                reader = pdf.PdfReader(image_filename)
-                box = reader.pages[0].mediabox
-                width = str(box.width)
-                height = str(box.height + 60)
-                new_text += '<embed src="' + image_filename_plot_path + '" alt="" height="' + height + '" width="' + width + '">'  
-            else:
-                new_text += line + '\n'
-    new_text = new_text.split('\n')
-    return new_text
+# -----------------------------------------------------------------------
+# COLLAPSIBLE HTML/MARKDOWN SEGMENTS
+# -----------------------------------------------------------------------
 
-def convert_bullets_html(text):
-    new_text = ''
-    for i in range(0, len(text)):
-        line = text[i]
-        if line == '':
-            pass
-        else:
-            if '*' in line:
-                line_text = line.split('*')[1]
-                new_text += '<li>' + line_text + '</li>'
-            else:
-                new_text += line + '\n'
-    new_text = new_text.split('\n')
-    return new_text
+def add_collapsible_segment(header: str, text: str) -> str:
+    """Wrap *text* in a <details>/<summary> block."""
+    return f'<details>\n<summary>{header}</summary>\n\n{text}\n</details>\n'
 
-def add_space_between_sections(text):
-    # CHECK FOR BREAKS
-    text = ''.join(text)
-    text.replace('<br>', '')
-    # ADD SPACE BETWEEN SECTIONS
-    for i in range(0, len(text)):
-        if text[i] == '</details>' or text[i] == '</details>\n':
-            text[i] = '<br></details>'
-    return text
 
-def add_script(text):
-    text = '''<script>
+def add_collapsible_segment_start(header: str, text: str = '') -> str:
+    return f'<details>\n<summary>{header}</summary>\n\n{text}\n<blockquote>\n\n'
+
+
+def add_collapsible_segment_end() -> str:
+    return '</blockquote>\n</details>\n\n'
+
+
+# -----------------------------------------------------------------------
+# SMALL HTML PRIMITIVES
+# -----------------------------------------------------------------------
+
+def add_text_color(text: str, color: str) -> str:
+    return f'<span style="color:{color}">{text}</span>'
+
+
+def add_index_link() -> str:
+    return '<a href="index.html">&#8592; Other Reports</a>\n'
+
+
+def add_title(model: str) -> str:
+    return f'<h1>{model} Validation Report</h1>\n'
+
+
+def add_script(text: str) -> str:
+    return '''\
+<script>
 function openTab(evt, tabName) {
-  // Declare all variables
   var i, tabcontent, tablinks;
-
-  // Get all elements with class="tabcontent" and hide them
   tabcontent = document.getElementsByClassName("tabcontent");
-  for (i = 0; i < tabcontent.length; i++) {
-    tabcontent[i].style.display = "none";
-  }
-
-  // Get all elements with class="tablinks" and remove the class "active"
+  for (i = 0; i < tabcontent.length; i++) { tabcontent[i].style.display = "none"; }
   tablinks = document.getElementsByClassName("tablinks");
   for (i = 0; i < tablinks.length; i++) {
     tablinks[i].className = tablinks[i].className.replace(" active", "");
   }
-
-  // Show the current tab, and add an "active" class to the button that opened the tab
   document.getElementById(tabName).style.display = "block";
   evt.currentTarget.className += " active";
 }
 </script>\n\n''' + text
-    return text
 
-def add_style(text):
-    text = '''<style>
-table, th, td 
-{
-    border: 1px solid black;
-    border-collapse: collapse;
-}
-html * 
-{
-    font-size: 16px;
-    line-height: 1.25;
-    color: #000000;
-    font-family: Arial, sans-serif;
-}
- 
-/* Style the tab */
-.tab {
-    overflow: hidden;
-    border: 1px solid #ccc;
-    background-color: #f1f1f1;
-}
 
-/* Style the buttons that are used to open the tab content */
-.tab button {
-    background-color: inherit;
-    float: left;
-    border: none;
-    outline: none;
-    cursor: pointer;
-    padding: 14px 16px;
-    transition: 0.3s;
-}
-
-/* Change background color of buttons on hover */
-.tab button:hover {
-    background-color: #ddd;
-}
-
-/* Create an active/current tablink class */
-.tab button.active {
-    background-color: #ccc;
-}
-
-/* Style the tab content */
-.tabcontent {
-    display: none;
-    padding: 6px 12px;
-    border: 1px solid #ccc;
-    border-top: none;
-}
-	
-.red {
-    background-color: #fad5d2;
-}
-
-.green {
-    background-color: #89d99e;
-}
+def add_style(text: str) -> str:
+    return '''\
+<style>
+table, th, td { border: 1px solid black; border-collapse: collapse; }
+html * { font-size: 16px; line-height: 1.25; color: #000000; font-family: Arial, sans-serif; }
+.tab { overflow: hidden; border: 1px solid #ccc; background-color: #f1f1f1; }
+.tab button { background-color: inherit; float: left; border: none; outline: none;
+              cursor: pointer; padding: 14px 16px; transition: 0.3s; }
+.tab button:hover { background-color: #ddd; }
+.tab button.active { background-color: #ccc; }
+.tabcontent { display: none; padding: 6px 12px; border: 1px solid #ccc; border-top: none; }
+.red { background-color: #fad5d2; }
+.green { background-color: #89d99e; }
 </style>\n\n''' + text
-    return text
 
-def add_title(model):
-    return '<h1>' + model + ' Validation Report</h1>\n'
 
-def add_tab(appendage, markdown_text, model):
-    if appendage == '':
-        appendage = 'All'
-        default_string = 'style="display:block"'
+def get_html_report_preamble(model: str) -> str:
+    return add_script('') + add_style('') + add_index_link() + add_title(model)
+
+
+def add_tab(appendage: str, markdown_text: str, model: str) -> str:
+    tab_id = appendage.replace('_', '') if appendage else 'All'
+    display = 'style="display:block"' if not appendage else ''
+    return (
+        f'<div id="{tab_id}" class="tabcontent" {display}>\n'
+        f'    <h3>{tab_id}</h3>\n'
+        f'    {convert_markdown_to_html(markdown_text, model + "..." + tab_id, False)}\n'
+        f'</div>\n'
+    )
+
+
+# -----------------------------------------------------------------------
+# THRESHOLD / ENERGY-CHANNEL PARSING
+# -----------------------------------------------------------------------
+
+def _parse_energy_channel(raw: str):
+    """Return a human-readable energy channel string and mismatch suffix."""
+    if raw.count('MeV') > 1:
+        # MISMATCH CASE: TWO CHANNELS JOINED BY '_'
+        segments = []
+        for part in raw.split('_'):
+            emin = part.split('min.')[1].split('.max.')[0]
+            emax = part.split('.max.')[1].split('.units.')[0]
+            segments.append(f'> {emin} MeV' if float(emax) < 0 else f'{emin} < E < {emax} MeV')
+        return ' , '.join(segments), '_mm'
+    emin = raw.split('min.')[1].split('.max.')[0]
+    emax = raw.split('.max.')[1].split('.units.')[0]
+    label = f'> {emin} MeV' if float(emax) < 0 else f'{emin} < E < {emax} MeV'
+    return label, ''
+
+
+def build_threshold_string(data: pd.DataFrame, k: int):
+    row = data.iloc[k]
+    energy_threshold, mismatch_str = _parse_energy_channel(row['Energy Channel'])
+    obs_threshold = row['Threshold'].split('.units.')[0].split('threshold.')[1] + ' pfu'
+    pred_threshold = row['Prediction Threshold'].split('.units.')[0].split('threshold.')[1] + ' pfu'
+    threshold_string = (
+        f'* Energy Channel: {energy_threshold}\n'
+        f'* Observation Threshold: {obs_threshold}\n'
+        f'* Predictions Threshold: {pred_threshold}\n'
+    )
+    return threshold_string, energy_threshold, obs_threshold, pred_threshold, mismatch_str
+
+
+# -----------------------------------------------------------------------
+# CONTINGENCY / SKILL SCORE TABLES
+# -----------------------------------------------------------------------
+
+def build_contingency_table(yes_yes, yes_no, no_no, no_yes) -> str:
+    return (
+        '| |Observed Yes|Observed No|\n'
+        '|----|:----:|:----:|\n'
+        f'|Predicted Yes|{yes_yes}|{yes_no}|\n'
+        f'|Predicted No|{no_yes}|{no_no}|\n'
+    )
+
+
+def build_skill_score_table(labels, values) -> str:
+    table = pd.DataFrame(data=[values], columns=labels)
+    return '\n' + transpose_markdown(table.to_markdown(index=False)) + '\n'
+
+
+# -----------------------------------------------------------------------
+# SELECTIONS / INFO-EVENTS TABLE
+# -----------------------------------------------------------------------
+
+def append_subset_list(selections_filename: str, subset_list: list, include_after: str, exclusion_pattern: Optional[str] = None) -> list:
+    """Extend *subset_list* with column names from the CSV counterpart of
+    *selections_filename* that appear after *include_after*."""
+    csv_path = selections_filename.replace('.pkl', '.csv')
+    if not os.path.exists(csv_path):
+        logger.warning('CSV counterpart not found: %s', csv_path)
+        return subset_list
+    try:
+        header = pd.read_csv(csv_path, nrows=0)
+        columns = list(header.columns)
+        if columns and columns[0].startswith('Unnamed'):
+            columns = columns[1:]
+        include = False
+        for col in columns:
+            col = col.rstrip('\n').rstrip('\\')
+            if include and (exclusion_pattern is None or exclusion_pattern not in col):
+                subset_list.append(col)
+            if col == include_after:
+                include = True
+    except Exception:
+        logger.warning('Could not parse CSV header: %s', csv_path, exc_info=True)
+    return subset_list
+
+
+def build_info_events_table(filename: str, sphinx_dataframe: pd.DataFrame, subset_list: list, subset_replacement_dict: dict, selections_limit: int = 1000):
+    data = _load_pkl(filename)
+    subset = data[subset_list].copy()
+    subset.insert(0, 'Observatory', '')
+    selection_index = list(data.index)
+    subset['Observatory'] = sphinx_dataframe.loc[selection_index, 'Observatory'].to_list()
+    subset['Observed SEP Start Time'] = sphinx_dataframe.loc[selection_index, 'Observed SEP Start Time'].to_list()
+    subset['Observed SEP End Time'] = sphinx_dataframe.loc[selection_index, 'Observed SEP End Time'].to_list()
+    if len(subset) > selections_limit:
+        subset = subset.iloc[:selections_limit]
+        limit_message = (
+            f'This list has been truncated to the first {selections_limit} entries. '
+            f'See {filename} for full list.\n'
+        )
     else:
-        default_string = ''
-    text = '<div id="' + appendage + '" class="tabcontent"' + default_string + '>\n'
-    text += '    <h3>' + appendage + '</h3>\n'
-    text += '    ' + convert_markdown_to_html(markdown_text, model + '...' + appendage, False) + '\n'
-    text += '</div>\n'
-    return text
+        limit_message = ''
+    output = '\n' + subset.to_markdown(index=False) + '\n'
+    return output, len(data), limit_message, subset
 
-def add_index_link():
-    href_path = 'index.html'
-    return '<a href="' + href_path + '">&#8592; Other Reports</a>\n'
 
-def convert_markdown_to_html(text, model, validation_reference=False):
-    
-    if validation_reference:
-        None
-    else:
-        logger.info('Generating HTML report...' + model)
-    text = text.split('\n')
-    
-    # REPLACE TABLES
-    text = convert_tables_html(text)
-    
-    # REPLACE IMAGES
-    text = convert_plots_html(text)
-        
-    # REPLACE BULLETS
-    text = convert_bullets_html(text)
-    
-    # ADD SPACE
-    text = add_space_between_sections(text)
-    
-    text_final = ''
-    for i in range(0, len(text)):
-        text_final += text[i]
-        
-    # FINALIZE
-    html = markdown.markdown(text_final)
+def build_info_string_header(value, limit_message: str, selections_filename: str) -> str:
+    return (
+        f'Instruments and observed values used in validation.<br>'
+        f'Extracted from: {selections_filename}<br>\n'
+        f'N = {value}<br>\n'
+        f'{limit_message}'
+    )
 
-    return html
-      
-def get_html_report_preamble(model):
-    text = add_script('')
-    text += add_style('')
-    text += add_index_link()
-    text += add_title(model)
-    return text
 
-def get_plot_type(plot_string):
+# -----------------------------------------------------------------------
+# PLOT HELPERS
+# -----------------------------------------------------------------------
+
+def get_plot_type(plot_string: str) -> str:
     if 'Time_Profile' in plot_string:
-        plot_type = 'Time Profile'
-    elif 'Correlation' in plot_string:
-        plot_type = 'Correlation'
-    elif 'ROC' in plot_string:
-        plot_type = 'ROC Curve'
+        return 'Time Profile'
+    if 'Correlation' in plot_string:
+        return 'Correlation'
+    if 'ROC' in plot_string:
+        return 'ROC Curve'
+    return 'None'
+
+
+def _plot_path(plot_string_: str, relative_path_plots: bool) -> str:
+    if relative_path_plots:
+        return os.path.relpath(plot_string_, os.path.basename(config.reportpath))
+    return os.path.abspath(plot_string_)
+
+
+def _append_plot(plot_string_: str, plot_string_list: list, plot_file_string_list: list, relative_path_plots: bool):
+    if not plot_string_:
+        plot_string_list.append('No image files found.\n\n')
+        plot_file_string_list.append('')
     else:
-        plot_type = 'None'
-    return plot_type
+        path = _plot_path(plot_string_, relative_path_plots)
+        file_path = os.path.relpath(plot_string_, '.') if relative_path_plots else path
+        plot_string_list.append(f'![]({path})\n\n')
+        plot_file_string_list.append(file_path)
+    return plot_string_list, plot_file_string_list
 
-def convert_pdf_to_base64(pdf_path):
-    with open(pdf_path, 'rb') as pdf_file:
-        pdf_bytes = pdf_file.read()
-        base64_pdf = base64.b64encode(pdf_bytes).decode('utf-8')
-    return base64_pdf
 
-def embed_pdf_files_in_html(html_content, output_html_path):
+def build_plot_string_list(data: pd.DataFrame, current_index: int, relative_path_plots: bool):
+    plot_string_list = []
+    plot_file_string_list = []
+    row = data.iloc[current_index]
+    if 'Scatter Plot' in data.columns:
+        plot_string_list, plot_file_string_list = _append_plot(
+            row.get('Scatter Plot', ''), plot_string_list, plot_file_string_list, relative_path_plots)
+    if 'ROC Curve Plot' in data.columns:
+        plot_string_list, plot_file_string_list = _append_plot(
+            row.get('ROC Curve Plot', ''), plot_string_list, plot_file_string_list, relative_path_plots)
+    if 'Time Profile Selection Plot' in data.columns:
+        raw = row.get('Time Profile Selection Plot', '')
+        if raw:
+            for part in raw.split(';'):
+                path = _plot_path(part, relative_path_plots)
+                file_path = os.path.relpath(part, '.') if relative_path_plots else path
+                plot_string_list.append(f'![]({path})\n\n')
+                plot_file_string_list.append(file_path)
+    return plot_string_list, plot_file_string_list
+
+
+def plot_subsection(plot_string_list: list, subset=None) -> str:
+    """Build collapsible plot segments, labelling Time Profile plots with
+    their observed event window when available."""
+    buf = io.StringIO()
+    plot_counter = 1
+    last_plot_type = ''
+    for plot_string in plot_string_list:
+        plot_type = get_plot_type(plot_string)
+        plot_counter = 1 if plot_type != last_plot_type else plot_counter + 1
+        appendage = ''
+        if plot_type == 'Time Profile':
+            try:
+                start = subset['Observed SEP Start Time'].iloc[0].isoformat()
+                end = subset['Observed SEP End Time'].iloc[0].isoformat()
+                appendage = f' for event observed {start} -- {end}'
+            except (IndexError, AttributeError, TypeError):
+                pass
+        buf.write(add_collapsible_segment(f'Plot: {plot_type} {plot_counter}{appendage}', plot_string))
+        last_plot_type = plot_type
+    return buf.getvalue()
+
+
+# -----------------------------------------------------------------------
+# METRICS TABLE BUILDER
+# -----------------------------------------------------------------------
+
+def build_metrics_table(data: pd.DataFrame, current_index: int, metric_index_start: int, skip_label_list: list, relative_path_plots: bool):
+    column_labels = list(data.columns)
+    subset = data.iloc[current_index, metric_index_start:]
+    subset_df = pd.DataFrame(subset, index=column_labels[metric_index_start:])
+    for label in skip_label_list:
+        if label in subset_df.index:
+            subset_df = subset_df.drop(label, axis=0)
+    metrics_table_string = '\n' + make_markdown_table('Metric', 'Value', subset_df) + '\n'
+    plot_string_list, plot_file_string_list = build_plot_string_list(data, current_index, relative_path_plots)
+    return metrics_table_string, plot_string_list, plot_file_string_list
+
+
+# -----------------------------------------------------------------------
+# SECTION BUILDERS
+# -----------------------------------------------------------------------
+
+def _build_selections_info(selections_filename: str, sphinx_dataframe: pd.DataFrame) -> tuple:
+    """Load a selections pkl and build the info string and subset for a section row."""
+    subset_list = ['Prediction Window Start', 'Prediction Window End']
+    subset_list = append_subset_list(selections_filename, subset_list, 'Prediction Window End', 'Units')
+    info_str_, n_events, limit_message, subset = build_info_events_table(
+        selections_filename, sphinx_dataframe, subset_list, {})
+    info_str = build_info_string_header(n_events, limit_message, selections_filename) + info_str_
+    return info_str, n_events, subset
+
+
+def build_section_content(sdef: SectionDef, filename: str, model: str, sphinx_dataframe: pd.DataFrame, relative_path_plots: bool, output_dir: str, appendage: str = '') -> str:
+    """Build the collapsible Markdown content for a single validated-quantity section.
+
+    Handles all three section types (all-clear, AWT, and standard metrics)
+    via SectionDef flags, eliminating the need for three nearly-identical functions.
+    """
+    data = _load_pkl(filename)
+    data = data[data.Model == model]
+    if data.empty:
+        return ''
+
+    column_labels = list(data.columns)
+    buf = io.StringIO()
+    buf.write(add_collapsible_segment_start(f'{sdef.title} Metrics'))
+    n_total = 0
+
+    for i in range(len(data)):
+        threshold_string, energy_threshold, obs_threshold, pred_threshold, mismatch_str = build_threshold_string(data, i)
+        energy_channel = data.iloc[i]['Energy Channel']
+        obs_thresh_val = obs_threshold.rstrip(' pfu')
+        pred_thresh_val = pred_threshold.rstrip(' pfu')
+        buf.write(add_collapsible_segment_start(energy_threshold))
+        buf.write(add_collapsible_segment('Thresholds Applied', threshold_string))
+
+        if sdef.is_all_clear:
+            # ALL-CLEAR: CONTINGENCY TABLE + SKILL SCORES
+            hits = data.iloc[i]["All Clear 'True Positives' (Hits)"]
+            false_alarms = data.iloc[i]["All Clear 'False Positives' (False Alarms)"]
+            correct_negatives = data.iloc[i]["All Clear 'True Negatives' (Correct Negatives)"]
+            misses = data.iloc[i]["All Clear 'False Negatives' (Misses)"]
+            contingency_values = [hits, false_alarms, correct_negatives, misses]
+            selections_filename = os.path.join(
+                output_dir,
+                f'all_clear_selections_{model}_{energy_channel}'
+                f'_threshold_{obs_thresh_val}{mismatch_str}{appendage}.pkl'
+            )
+            info_str, n_events, subset = _build_selections_info(
+                selections_filename, sphinx_dataframe)
+            n_total += n_events
+            buf.write(add_collapsible_segment('Validation Info', info_str))
+            buf.write(add_collapsible_segment('Contingency Table', build_contingency_table(*contingency_values)))
+            skill_score_start_index = 9
+            skill_score_labels = list(column_labels[skill_score_start_index:])
+            skill_score_values = data.iloc[i, skill_score_start_index:]
+            buf.write(add_collapsible_segment('Skill Scores Table', build_skill_score_table(skill_score_labels, skill_score_values)))
+
+        elif sdef.is_awt:
+            # AWT: ONE INFO BLOCK PER AWT STRING VARIANT, THEN METRICS
+            awt_string_list = [
+                'Predicted SEP All Clear',
+                'Predicted SEP Peak Intensity (Onset Peak)',
+                'Predicted SEP Peak Intensity Max (Max Flux)',
+            ]
+            for awt_string in awt_string_list:
+                selections_filename = (
+                    f'{output_dir}{sdef.tag}_selections_{model}_{energy_channel}'
+                    f'_threshold_{obs_thresh_val}{mismatch_str}_{awt_string}{appendage}.pkl'
+                )
+                if os.path.exists(selections_filename):
+                    info_str, n_events, _ = _build_selections_info(selections_filename, sphinx_dataframe)
+                    n_total += n_events
+                    buf.write(add_collapsible_segment(f'Validation Info - {awt_string}', info_str))
+            metric_index_start = column_labels.index(sdef.metric_label_start)
+            metrics_str, plot_string_list, _ = build_metrics_table(
+                data, i, metric_index_start, sdef.skip_labels, relative_path_plots)
+            buf.write(add_collapsible_segment('Metrics', sdef.metrics_description + '\n' + metrics_str))
+            buf.write(plot_subsection(plot_string_list))
+
+        else:
+            # STANDARD: INFO + METRICS + PLOTS
+            selections_filename = os.path.join(
+                output_dir,
+                f'{sdef.tag}_selections_{model}_{energy_channel}'
+                f'_threshold_{obs_thresh_val}{mismatch_str}{appendage}.pkl'
+            )
+            info_str, n_events, subset = _build_selections_info(selections_filename, sphinx_dataframe)
+            n_total += n_events
+            buf.write(add_collapsible_segment('Validation Info', info_str))
+            metric_index_start = column_labels.index(sdef.metric_label_start)
+            metrics_str, plot_string_list, _ = build_metrics_table(
+                data, i, metric_index_start, sdef.skip_labels, relative_path_plots)
+            buf.write(add_collapsible_segment('Metrics', sdef.metrics_description + metrics_str))
+            buf.write(plot_subsection(plot_string_list, subset))
+
+        buf.write(add_collapsible_segment_end())
+
+    buf.write(add_collapsible_segment_end())
+    return buf.getvalue() if n_total > 0 else ''
+
+
+# -----------------------------------------------------------------------
+# VALIDATION REFERENCE SHEET
+# -----------------------------------------------------------------------
+
+def build_validation_reference_section(filename1: str, filename2: Optional[str], filename3: Optional[str] = None) -> str:
+    buf = io.StringIO()
+    for label, filename in [('Metrics', filename1), ('Skill Scores', filename2), ('Plots', filename3)]:
+        if filename:
+            buf.write(add_collapsible_segment(label, _ref_csv_markdown(filename)))
+    return buf.getvalue()
+
+
+def construct_validation_reference_sheet(vr_subtext: str, vr_flag_dict: dict, sdef: SectionDef) -> tuple:
+    """Add the validation reference sheet for *sdef* to *vr_subtext*, if not already added."""
+    if not vr_flag_dict.get(sdef.ref_flag, False):
+        return vr_subtext, vr_flag_dict
+    buf = io.StringIO()
+    buf.write(add_collapsible_segment_start(sdef.ref_flag))
+    if sdef.ref_flag == 'Time':
+        plot_path = os.path.abspath(os.path.join(config.referencepath, 'AWT_image'))
+        buf.write(f'![]({plot_path})\n\n')
+    buf.write(build_validation_reference_section(
+        _ref_path(sdef.ref_csv_metrics),
+        _ref_path(sdef.ref_csv_skills),
+        _ref_path(sdef.ref_csv_plots),
+    ))
+    buf.write(add_collapsible_segment_end())
+    vr_flag_dict[sdef.ref_flag] = False
+    return vr_subtext + buf.getvalue(), vr_flag_dict
+
+
+# -----------------------------------------------------------------------
+# MARKDOWN → HTML CONVERSION
+# -----------------------------------------------------------------------
+
+def get_image_string(original_string: str) -> str:
+    """Extract the image path from a Markdown image string ``![](...)``.
+    Handles paths that themselves contain parentheses."""
+    if original_string.count('(') > 1 or original_string.count(')') > 1:
+        last_close = len(original_string) - original_string[::-1].index(')') - 1
+        return original_string.split('![](')[1][:last_close]
+    return original_string.split('![](')[1].split(')')[0]
+
+
+def convert_tables_html(lines: list) -> list:
+    """Convert Markdown table blocks within *lines* to HTML."""
+    out = []
+    table_buf = []
+    for line in lines:
+        if line.startswith('|'):
+            table_buf.append(line)
+        else:
+            if table_buf:
+                out.append(markdown.markdown(
+                    '\n'.join(table_buf),
+                    extensions=['markdown.extensions.tables']
+                ))
+                table_buf = []
+            out.append(line)
+    if table_buf:
+        out.append(markdown.markdown(
+            '\n'.join(table_buf),
+            extensions=['markdown.extensions.tables']
+        ))
+    return out
+
+
+def convert_plots_html(lines: list) -> list:
+    """Replace Markdown image references with <embed> tags for PDF plots."""
+    out = []
+    for line in lines:
+        if line.startswith('!'):
+            path = get_image_string(line)
+            abs_path = os.path.abspath(os.path.join(config.reportpath, path))
+            try:
+                reader = pdf.PdfReader(abs_path)
+                box = reader.pages[0].mediabox
+                out.append(f'<embed src="{path}" alt="" height="{float(box.height) + 60}" width="{box.width}">')
+            except Exception:
+                logger.warning('Could not read PDF dimensions: %s', abs_path, exc_info=True)
+                out.append(f'<embed src="{path}" alt="">')
+        elif line:
+            out.append(line)
+    return out
+
+
+def convert_bullets_html(lines: list) -> list:
+    """Convert Markdown bullet lines to <li> elements."""
+    return [
+        '<li>' + line.split('*', 1)[1] + '</li>' if line and '*' in line else line
+        for line in lines
+    ]
+
+
+def convert_markdown_to_html(text: str, model: str, validation_reference: bool = False) -> str:
+    if not validation_reference:
+        logger.info('Generating HTML report...%s', model)
+    lines = text.split('\n')
+    lines = convert_tables_html(lines)
+    lines = convert_plots_html(lines)
+    lines = convert_bullets_html(lines)
+    return markdown.markdown('\n'.join(lines))
+
+
+def convert_pdf_to_base64(pdf_path: str) -> str:
+    with open(pdf_path, 'rb') as f:
+        return base64.b64encode(f.read()).decode('utf-8')
+
+
+def embed_pdf_files_in_html(html_content: str, output_html_path: str) -> str:
     soup = bs4.BeautifulSoup(html_content, 'html.parser')
-    embed_tags = soup.find_all('embed')
-    for embed in embed_tags:
-        embed_src = embed.get('src')
-        if embed_src.endswith('.pdf'):
-            pdf_path = embed_src
-            html_dir = os.path.abspath(config.reportpath)
-            pdf_path = os.path.normpath(os.path.join(html_dir, pdf_path))
-            base64_pdf = convert_pdf_to_base64(pdf_path)
-            embed['src'] = 'data:application/pdf;base64,' + base64_pdf   
-    return str(soup) 
+    html_dir = os.path.abspath(config.reportpath)
+    for embed in soup.find_all('embed'):
+        src = embed.get('src', '')
+        if src.endswith('.pdf'):
+            pdf_path = os.path.normpath(os.path.join(html_dir, src))
+            try:
+                embed['src'] = f'data:application/pdf;base64,{convert_pdf_to_base64(pdf_path)}'
+            except FileNotFoundError:
+                logger.warning('PDF not found for embedding: %s', pdf_path)
+    return str(soup)
 
- 
-# FINAL RESULT
-def report(output_dir, relative_path_plots, sphinx_dataframe=None): ### ADD OPTIONAL ARGUMENT HERE
-    global output_dir__
-    global relative_path_plots__
 
-    # get all model metrics
-    # analyze the output directory
-    if output_dir is None:
-        output_dir__ = os.path.join(config.outpath, 'pkl')
-    else:
-        output_dir__ = output_dir   
+# -----------------------------------------------------------------------
+# GIT INFO BLOCK
+# -----------------------------------------------------------------------
 
-    relative_path_plots__ = relative_path_plots
+def _build_git_info_text() -> str:
+    buf = io.StringIO()
+    buf.write(f'Date of Report: {datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S UTC")}<br>')
+    buf.write('Report generated by SPHINX<br>')
+    buf.write(f'This code may be publicly accessed at: [{config.git_repo_url}]({config.git_repo_url})<br>')
+    sha_url = os.path.join(config.git_repo_url, 'tree', config.git_commit_sha)
+    buf.write(f'Specific git commit SHA: [{config.git_commit_sha}]({sha_url})<br>')
+    if config.git_is_dirty:
+        dirty_buf = io.StringIO()
+        dirty_buf.write('&nbsp;&nbsp;&nbsp;&nbsp;The sphinxval code has changed since the commit listed above.<br>')
+        if config.git_changed_files:
+            dirty_buf.write('&nbsp;&nbsp;&nbsp;&nbsp;Changes were found in the following files:<br>')
+            for fname in config.git_changed_files:
+                dirty_buf.write(f'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{fname}<br>')
+        buf.write(add_collapsible_segment('Dirty Git Repository (details)', dirty_buf.getvalue()) + '<br>')
+    return buf.getvalue()
 
-    files = os.listdir(output_dir__)
-    if 'desktop.ini' in files:
-        files.remove('desktop.ini')
-    files.sort()
-   
-    if not os.path.isdir(config.reportpath):
-        os.mkdir(config.reportpath)
- 
-    # obtain sphinx dataframe
-    if sphinx_dataframe is None: 
-        sphinx_dataframe_location = os.path.join(output_dir__, 'SPHINX_evaluated.pkl')
-        logger.info('    No SPHINX dataframe supplied to reporting module. Using SPHINX dataframe saved at location ' + sphinx_dataframe_location)
-        sphinx_dataframe = pd.read_pickle(os.path.join(output_dir__, 'SPHINX_evaluated.pkl'))
 
-    # grab all models
-    models = list(set(sphinx_dataframe['Model']))
-    models.sort()
-    
-    # define appendages (First, Last, Mean, Max, ...)
-    appendages = ['', '_First', '_Last', '_Mean', '_Max']
-    for i in range(0, len(models)):
-        model = models[i]
+# -----------------------------------------------------------------------
+# MAIN ENTRY POINT
+# -----------------------------------------------------------------------
+
+def report(output_dir: Optional[str], relative_path_plots: bool, sphinx_dataframe: Optional[pd.DataFrame] = None) -> None:
+    """Generate per-model Markdown and HTML validation reports.
+
+    Parameters
+    ----------
+    output_dir : str or None
+        Path to the directory containing SPHINX output pkl files.
+        If None, defaults to ``config.outpath/pkl``.
+    relative_path_plots : bool
+        If True, embed plot paths as relative paths in reports.
+    sphinx_dataframe : pandas.DataFrame or None
+        The SPHINX evaluated dataframe.  If None, read from
+        ``output_dir/SPHINX_evaluated.pkl``.
+    """
+    output_dir = os.path.join(config.outpath, 'pkl') if output_dir is None else output_dir
+    os.makedirs(config.reportpath, exist_ok=True)
+
+    # CLEAR CACHES AT THE START OF EACH CALL SO STALE DATA IS NEVER USED
+    # IF report() IS CALLED MULTIPLE TIMES IN THE SAME PROCESS
+    _pkl_cache.clear()
+    _ref_csv_cache.clear()
+
+    if sphinx_dataframe is None:
+        pkl_path = os.path.join(output_dir, 'SPHINX_evaluated.pkl')
+        logger.info('No SPHINX dataframe supplied; reading from %s', pkl_path)
+        sphinx_dataframe = pd.read_pickle(pkl_path)
+
+    try:
+        files = sorted(f for f in os.listdir(output_dir) if f != 'desktop.ini')
+    except FileNotFoundError:
+        logger.error('Output directory not found: %s', output_dir)
+        return
+
+    models = sorted(set(sphinx_dataframe['Model']))
+    git_info_text = _build_git_info_text()
+
+    # PRE-INDEX FILES FOR O(1) SECTION-PRESENCE LOOKUPS.
+    # BUILD A SET OF (tag, model, appendage) TUPLES FROM THE PKL FILENAMES
+    # IN output_dir SO THE INNER LOOPS DON'T NEED TO SCAN THE FULL LIST.
+    present_index: set = set()
+    for fname in files:
+        for sdef in _SECTION_DEFS:
+            for appendage in _APPENDAGES:
+                stem = fname.rstrip('.pkl')
+                if (sdef.file_prefix in fname) and \
+                        (appendage in fname) and \
+                        (stem.endswith(appendage) or appendage == ''):
+                    after_prefix = fname.split(sdef.file_prefix, 1)[1]
+                    for model in models:
+                        if after_prefix.startswith(model):
+                            present_index.add((sdef.tag, model, appendage))
+
+    for model in models:
         markdown_texts = {}
         appendage_set_list = []
         html_text = get_html_report_preamble(model)
         validation_reference_subtext_html = ''
-        # define on/off flags for validation reference tables
-        validation_reference_flag_dict = {'All Clear' : True,
-                                          'AWT' : True,
-                                          'Duration' : True,
-                                          'Flux' : True,
-                                          'Time' : True,
-                                          'Probability' : True,
-                                         }
-        for j in range(0, len(appendages)):
-        
-            # check which sections to include
-            all_clear = False
-            awt = False
-            duration = False
-            peak_intensity = False
-            peak_intensity_max = False
-            peak_intensity_time = False
-            peak_intensity_max_time = False
-            threshold_crossing = False
-            fluence = False
-            max_flux_in_pred_win = False
-            probability = False
-            start_time = False
-            end_time = False
-            time_profile = False
-            
-            validation_reference_subtext = ''
-            for k in range(0, len(files)):
-                if appendages[j] in files[k]:
-                    file_no_extension = files[k].rstrip('.pkl')
-                    if (file_no_extension[-len(appendages[j]):] == appendages[j]) or (file_no_extension[-len(appendages[j]):] == file_no_extension):
-                        if ('all_clear_selections_' + model) in files[k]:
-                            all_clear = True
-                            continue
-                        if ('awt_selections_' + model) in files[k]:
-                            awt = True
-                            continue
-                        if ('duration_selections_' + model) in files[k]:
-                            duration = True
-                            continue
-                        if ('peak_intensity_selections_' + model) in files[k]:
-                            peak_intensity = True
-                            continue
-                        if ('peak_intensity_max_selections_' + model) in files[k]:
-                            peak_intensity_max = True
-                            continue
-                        if ('peak_intensity_time_selections_' + model) in files[k]:
-                            peak_intensity_time = True
-                            continue
-                        if ('peak_intensity_max_time_selections_' + model) in files[k]:
-                            peak_intensity_max_time = True
-                            continue
-                        if ('threshold_crossing_time_selections_' + model) in files[k]:
-                            threshold_crossing = True
-                            continue       
-                        if ('fluence_selections_' + model) in files[k]:
-                            fluence = True
-                            continue
-                        if ('max_flux_in_pred_win_selections_' + model) in files[k]:
-                            max_flux_in_pred_win = True
-                            continue
-                        if ('probability_selections_' + model) in files[k]:
-                            probability = True
-                            continue
-                        if ('start_time_selections_' + model) in files[k]:
-                            start_time = True
-                            continue
-                        if ('end_time_selections_' + model) in files[k]:
-                            end_time = True
-                            continue
-                        if ('time_profile_selections_' + model) in files[k]:
-                            time_profile = True
-                            continue
+        validation_reference_flag_dict = {
+            'All Clear': True, 'AWT': True, 'Duration': True,
+            'Flux': True, 'Time': True, 'Probability': True,
+        }
 
-            # preamble -- define colors and font and whatnot
-            info_header = 'Report Information'
-            info_text = 'Date of Report: ' + datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d' + 'T' + '%H:%M:%S UTC') + '<br>'
-            info_text += 'Report generated by SPHINX<br>'
-            info_text += 'This code may be publicly accessed at: ' + '[' + config.git_repo_url + '](' + config.git_repo_url + ')<br>'
-            info_text += 'Specific git commit SHA used to generate this report: [' + config.git_commit_sha + '](' + os.path.join(config.git_repo_url, 'tree', config.git_commit_sha) + ')<br>'
-            if config.git_is_dirty:
-                git_info = ''
-                git_info += '&nbsp;&nbsp;&nbsp;&nbsp;The sphinxval code used to generate this report has changed since the commit listed above.<br>'
-                if len(config.git_changed_files) > 0:
-                    git_info += '&nbsp;&nbsp;&nbsp;&nbsp;Changes were found in the following files:<br>'
-                    for this_filename in config.git_changed_files:
-                        git_info += '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + this_filename + '<br>'
-                #if len(config.git_untracked_files) > 0:
-                #    git_info += '&nbsp;&nbsp;&nbsp;&nbsp;The following untracked files were found:<br>'
-                #    for this_filename in config.git_untracked_files:
-                #        git_info += '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + this_filename + '<br>'
-                info_text += add_collapsible_segment('Dirty Git Repository (details)', git_info) + '<br>'
+        for appendage in _APPENDAGES:
+            present = {tag for (tag, m, app) in present_index
+                       if m == model and app == appendage}
+            if not present:
+                continue
 
-            if appendages[j] == '':
-                title = model + ' Validation Report'
-            else:
-                title = model + ' ' + appendages[j].lstrip('_') + ' Validation Report'
-            
-            validation_header = 'Validated Quantities'
             validation_text = 'This model was validated for the following quantities.\n\n'
-            
-            section_filename = ''
+            validation_reference_subtext = ''
             markdown_text = ''
             report_exists = False
-            if all_clear:
-                ### build the all clear skill scores
-                logger.debug(appendages[j])
-                all_clear_filename = os.path.join(output_dir__, 'all_clear_metrics' + appendages[j] + '.pkl')
-                if os.path.exists(all_clear_filename):
-                    validation_text += '* All Clear\n'
-                    report_exists = True
-                    appendage_set_list.append(appendages[j])
-                    logger.debug(appendage_set_list)
-                    markdown_text += build_all_clear_skill_scores_section(all_clear_filename, model, sphinx_dataframe, appendage=appendages[j])
-                validation_reference_subtext_string, validation_reference_flag_dict = construct_validation_reference_sheet(validation_reference_subtext, validation_reference_flag_dict, 'All Clear', 
-                                                                                                                           os.path.join(config.referencepath, 'validation_reference_sheet_contingency_metrics.csv'),
-                                                                                                                           os.path.join(config.referencepath, 'validation_reference_sheet_contingency_skills.csv'),
-                                                                                                                           os.path.join(config.referencepath, 'validation_reference_sheet_contingency_plots.csv'))
-                validation_reference_subtext = validation_reference_subtext_string
 
-            if awt:
-                ### build the advanced warning time (AWT) metrics
-                metric_label_start = 'Mean AWT for Predicted SEP All Clear to Observed SEP Threshold Crossing Time'
-                section_title = 'Advanced Warning Time'
-                section_tag = 'awt'
-                metrics_description_string = 'N/A'
-                section_filename = os.path.join(output_dir__, section_tag + '_metrics' + appendages[j] + '.pkl')
-                if os.path.exists(section_filename):
-                    validation_text += '* ' + section_title + '\n'
-                    report_exists = True
-                    appendage_set_list.append(appendages[j])
-                    markdown_text += build_section_awt(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
-                validation_reference_subtext_string, validation_reference_flag_dict = construct_validation_reference_sheet(validation_reference_subtext, validation_reference_flag_dict, 'AWT', 
-                                                                                                                           os.path.join(config.referencepath, 'validation_reference_sheet_awt_metrics.csv'),
-                                                                                                                           None,
-                                                                                                                           None)
-                validation_reference_subtext += validation_reference_subtext_string
-                
-            if peak_intensity:
-                ### build the peak intensity metrics
-                metric_label_start = 'Linear Regression Slope'
-                section_title = 'Peak Intensity (Onset Peak)'
-                section_tag = 'peak_intensity'
-                metrics_description_string = "Correlation coefficients and regression lines indicate association.<br>Metrics involving error indicate bias. Positive values indicate model overprediction and negative values indicate model underprediction.<br>Metrics involving absolute error or squared error indicate accuracy.\n"
-                section_filename = os.path.join(output_dir__, section_tag + '_metrics' + appendages[j] + '.pkl')
-                if os.path.exists(section_filename):
-                    validation_text += '* ' + section_title + '\n'
-                    report_exists = True
-                    appendage_set_list.append(appendages[j])
-                    markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
-                validation_reference_subtext_string, validation_reference_flag_dict = construct_validation_reference_sheet(validation_reference_subtext, validation_reference_flag_dict, 'Flux', 
-                                                                                                                           os.path.join(config.referencepath, 'validation_reference_sheet_flux_metrics.csv'),
-                                                                                                                           None,
-                                                                                                                           os.path.join(config.referencepath, 'validation_reference_sheet_flux_plots.csv'))
-                validation_reference_subtext = validation_reference_subtext_string
-                
-            if peak_intensity_max:
-                ### build the peak intensity max metrics
-                metric_label_start = 'Linear Regression Slope'
-                section_title = 'Peak Intensity Max (Max Flux)'
-                section_tag = 'peak_intensity_max'
-                metrics_description_string = "Correlation coefficients and regression lines indicate association.<br>Metrics involving error indicate bias. Positive values indicate model overprediction and negative values indicate model underprediction.<br>Metrics involving absolute error or squared error indicate accuracy.\n"
-                section_filename = os.path.join(output_dir__, section_tag + '_metrics' + appendages[j] + '.pkl')
-                if os.path.exists(section_filename):
-                    validation_text += '* ' + section_title + '\n'
-                    report_exists = True
-                    appendage_set_list.append(appendages[j])
-                    markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
-                validation_reference_subtext_string, validation_reference_flag_dict = construct_validation_reference_sheet(validation_reference_subtext, validation_reference_flag_dict, 'Flux', 
-                                                                                                                           os.path.join(config.referencepath, 'validation_reference_sheet_flux_metrics.csv'),
-                                                                                                                           None,
-                                                                                                                           os.path.join(config.referencepath, 'validation_reference_sheet_flux_plots.csv'))
-                validation_reference_subtext = validation_reference_subtext_string
-                
-            if peak_intensity_time:
-                ### build the peak intensity time metrics
-                metric_label_start = 'Mean Error (pred - obs)'
-                section_title = 'Peak Intensity (Onset Peak) Time'
-                section_tag = 'peak_intensity_time'
-                metrics_description_string = "Metrics for Predicted Time - Observed Time are in hours.<br>Negative values indicate predicted time is earlier than observed.<br>Positive values indicate predicted time is later than observed.\n"
-                section_filename = os.path.join(output_dir__, section_tag + '_metrics' + appendages[j] + '.pkl')
-                if os.path.exists(section_filename):
-                    validation_text += '* ' + section_title + '\n'
-                    report_exists = True
-                    appendage_set_list.append(appendages[j])
-                    markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
-                validation_reference_subtext_string, validation_reference_flag_dict = construct_validation_reference_sheet(validation_reference_subtext, validation_reference_flag_dict, 'Time', 
-                                                                                                                           os.path.join(config.referencepath, 'validation_reference_sheet_time_metrics.csv'),
-                                                                                                                           None,
-                                                                                                                           None)
-                validation_reference_subtext = validation_reference_subtext_string
-           
-            if peak_intensity_max_time:
-                ### build the peak intensity max time metrics
-                metric_label_start = 'Mean Error (pred - obs)'
-                section_title = 'Peak Intensity Max (Max Flux) Time'
-                section_tag = 'peak_intensity_max_time'
-                metrics_description_string = "Metrics for Predicted Time - Observed Time are in hours.<br>Negative values indicate predicted time is earlier than observed.<br>Positive values indicate predicted time is later than observed.\n"
-                section_filename = os.path.join(output_dir__, section_tag + '_metrics' + appendages[j] + '.pkl')
-                if os.path.exists(section_filename):
-                    validation_text += '* ' + section_title + '\n'
-                    report_exists = True
-                    appendage_set_list.append(appendages[j])
-                    markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
-                validation_reference_subtext_string, validation_reference_flag_dict = construct_validation_reference_sheet(validation_reference_subtext, validation_reference_flag_dict, 'Time', 
-                                                                                                                           os.path.join(config.referencepath, 'validation_reference_sheet_time_metrics.csv'),
-                                                                                                                           None,
-                                                                                                                           None)
-                validation_reference_subtext = validation_reference_subtext_string
-            
-            if threshold_crossing:
-                ### build the threshold crossing metrics
-                metric_label_start = 'Mean Error (pred - obs)'
-                section_title = 'Threshold Crossing Time'
-                section_tag = 'threshold_crossing_time'
-                alt_section_tag = 'threshold_crossing'
-                metrics_description_string = "Metrics for Predicted Time - Observed Time are in hours.<br>Negative values indicate predicted time is earlier than observed.<br>Positive values indicate predicted time is later than observed.\n"
-                section_filename = os.path.join(output_dir__, alt_section_tag + '_metrics' + appendages[j] + '.pkl')
-                if os.path.exists(section_filename):
-                    validation_text += '* ' + section_title + '\n'
-                    report_exists = True
-                    appendage_set_list.append(appendages[j])
-                    markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
-                validation_reference_subtext_string, validation_reference_flag_dict = construct_validation_reference_sheet(validation_reference_subtext, validation_reference_flag_dict, 'Time', 
-                                                                                                                           os.path.join(config.referencepath, 'validation_reference_sheet_time_metrics.csv'),
-                                                                                                                           None,
-                                                                                                                           None)
-                validation_reference_subtext = validation_reference_subtext_string
-            
-            if fluence:
-                ### build the fluence metrics
-                metric_label_start = 'Linear Regression Slope'
-                section_title = 'Fluence'
-                section_tag = 'fluence'
-                metrics_description_string = "Correlation coefficients and regression lines indicate association.<br>Metrics involving error indicate bias. Positive values indicate model overprediction and negative values indicate model underprediction.<br>Metrics involving absolute error or squared error indicate accuracy.\n"
-                section_filename = os.path.join(output_dir__, section_tag + '_metrics' + appendages[j] + '.pkl')
-                if os.path.exists(section_filename):
-                    validation_text += '* ' + section_title + '\n'
-                    report_exists = True
-                    appendage_set_list.append(appendages[j])
-                    markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
-                validation_reference_subtext_string, validation_reference_flag_dict = construct_validation_reference_sheet(validation_reference_subtext, validation_reference_flag_dict, 'Flux', 
-                                                                                                                           os.path.join(config.referencepath, 'validation_reference_sheet_flux_metrics.csv'),
-                                                                                                                           None,
-                                                                                                                           os.path.join(config.referencepath, 'validation_reference_sheet_flux_plots.csv'))
-                validation_reference_subtext = validation_reference_subtext_string
-            
-            if max_flux_in_pred_win:
-                ### build the maximum flux in prediction window metrics
-                metric_label_start = 'Linear Regression Slope'
-                section_title = 'Max Flux in Prediction Window'
-                section_tag = 'max_flux_in_pred_win'
-                metrics_description_string = "Correlation coefficients and regression lines indicate association.<br>Metrics involving error indicate bias. Positive values indicate model overprediction and negative values indicate model underprediction.<br>Metrics involving absolute error or squared error indicate accuracy.\n"
-                section_filename = os.path.join(output_dir__, section_tag + '_metrics' + appendages[j] + '.pkl')
-                if os.path.exists(section_filename):
-                    validation_text += '* ' + section_title + '\n'
-                    report_exists = True
-                    appendage_set_list.append(appendages[j])
-                    markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
-                validation_reference_subtext_string, validation_reference_flag_dict = construct_validation_reference_sheet(validation_reference_subtext, validation_reference_flag_dict, 'Flux', 
-                                                                                                                           os.path.join(config.referencepath, 'validation_reference_sheet_flux_metrics.csv'),
-                                                                                                                           None,
-                                                                                                                           os.path.join(config.referencepath, 'validation_reference_sheet_flux_plots.csv'))
-                validation_reference_subtext = validation_reference_subtext_string
-                
-            
-            if probability:    
-                ### build the probability metrics
-                metric_label_start = 'Brier Score'
-                section_title = 'Probability'
-                section_tag = 'probability'
-                metrics_description_string = ""
-                section_filename = os.path.join(output_dir__, section_tag + '_metrics' + appendages[j] + '.pkl')
-                if os.path.exists(section_filename):
-                    validation_text += '* ' + section_title + '\n'
-                    report_exists = True
-                    appendage_set_list.append(appendages[j])
-                    markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
-                validation_reference_subtext_string, validation_reference_flag_dict = construct_validation_reference_sheet(validation_reference_subtext, validation_reference_flag_dict, 'Probability', 
-                                                                                                                           os.path.join(config.referencepath, 'validation_reference_sheet_probability_metrics.csv'),
-                                                                                                                           os.path.join(config.referencepath, 'validation_reference_sheet_probability_skills.csv'),
-                                                                                                                           os.path.join(config.referencepath, 'validation_reference_sheet_probability_plots.csv'))
-                validation_reference_subtext = validation_reference_subtext_string
-                
-            if start_time:
-                ### build the start time metrics
-                metric_label_start = 'Mean Error (pred - obs)'
-                section_title = 'Start Time'
-                section_tag = 'start_time'
-                metrics_description_string = "Metrics for Predicted Time - Observed Time are in hours.<br>Negative values indicate predicted time is earlier than observed.<br>Positive values indicate predicted time is later than observed.\n"
-                section_filename = os.path.join(output_dir__, section_tag + '_metrics' + appendages[j] + '.pkl')
-                if os.path.exists(section_filename):
-                    validation_text += '* ' + section_title + '\n'
-                    report_exists = True
-                    appendage_set_list.append(appendages[j])
-                    markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
-                validation_reference_subtext_string, validation_reference_flag_dict = construct_validation_reference_sheet(validation_reference_subtext, validation_reference_flag_dict, 'Time', 
-                                                                                                                           os.path.join(config.referencepath, 'validation_reference_sheet_time_metrics.csv'),
-                                                                                                                           None,
-                                                                                                                           None)
-                validation_reference_subtext = validation_reference_subtext_string
-            
-            if duration:
-                ### build the duration metrics
-                metric_label_start = 'Mean Error (pred - obs)'
-                section_title = 'Duration'
-                section_tag = 'duration'
-                metrics_description_string = "Duration is calculated in hours.<br> Metrics involving error indicate bias. Positive values indicate model overprediction and negative values indicate model underprediction.<br>Metrics involving absolute error indicate accuracy.\n"
-                section_filename = os.path.join(output_dir__, section_tag + '_metrics' + appendages[j] + '.pkl')
-                if os.path.exists(section_filename):
-                    validation_text += '* ' + section_title + '\n'
-                    report_exists = True
-                    appendage_set_list.append(appendages[j])
-                    markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
-                validation_reference_subtext_string, validation_reference_flag_dict = construct_validation_reference_sheet(validation_reference_subtext, validation_reference_flag_dict, 'Time', 
-                                                                                                                           os.path.join(config.referencepath, 'validation_reference_sheet_time_metrics.csv'),
-                                                                                                                           None,
-                                                                                                                           None)
-                validation_reference_subtext = validation_reference_subtext_string
-              
-            if end_time:
-                ### build the end time metrics
-                metric_label_start = 'Mean Error (pred - obs)'
-                section_title = 'End Time'
-                section_tag = 'end_time'
-                metrics_description_string = "Metrics for Predicted Time - Observed Time are in hours.<br>Negative values indicate predicted time is earlier than observed.<br>Positive values indicate predicted time is later than observed.\n"
-                section_filename = os.path.join(output_dir__, section_tag + '_metrics' + appendages[j] + '.pkl')
-                if os.path.exists(section_filename):
-                    validation_text += '* ' + section_title + '\n'
-                    report_exists = True
-                    appendage_set_list.append(appendages[j])
-                    markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, appendage=appendages[j])
-                validation_reference_subtext_string, validation_reference_flag_dict = construct_validation_reference_sheet(validation_reference_subtext, validation_reference_flag_dict, 'Time', 
-                                                                                                                           os.path.join(config.referencepath, 'validation_reference_sheet_time_metrics.csv'),
-                                                                                                                           None,
-                                                                                                                           None)
-                validation_reference_subtext = validation_reference_subtext_string
-                    
-            if time_profile:
-                ### build the time profile metrics
-                metric_label_start = 'Linear Regression Slope'
-                section_title = 'Time Profile'
-                section_tag = 'time_profile'            
-                metrics_description_string = "Correlation plots are created fro each predicted time profile and may be viewed in the output/plots directory.<br>Metrics are calculated from overlapping portions of predicted and observed time profiles, highlighted in red and orange in the Time Profile plots.<br>Metrics involving error indicate bias. Positive values indicate model overprediction and negative values indicate model underprediction.<br>Metrics involving absolute error or squared error indicate accuracy.\n"
-                skip_label_list = ['Time Profile Selection Plot']
-                section_filename = os.path.join(output_dir__, section_tag + '_metrics' + appendages[j] + '.pkl')
-                if os.path.exists(section_filename):
-                    validation_text += '* ' + section_title + '\n'
-                    report_exists = True
-                    appendage_set_list.append(appendages[j])
-                    markdown_text += build_section(section_filename, model, sphinx_dataframe, metric_label_start, section_title, section_tag, metrics_description_string, skip_label_list=skip_label_list, appendage=appendages[j])        
-                validation_reference_subtext_string, validation_reference_flag_dict = construct_validation_reference_sheet(validation_reference_subtext, validation_reference_flag_dict, 'Flux', 
-                                                                                                                           os.path.join(config.referencepath, 'validation_reference_sheet_flux_metrics.csv'),
-                                                                                                                           None,
-                                                                                                                           os.path.join(config.referencepath, 'validation_reference_sheet_flux_plots.csv'))
-                validation_reference_subtext = validation_reference_subtext_string
-            
-            ### BUILD THE VALIDATION REFERENCE SHEET AND FINALIZE
-            validation_text = add_collapsible_segment(validation_header, validation_text)
-            markdown_text = info_text + validation_text + markdown_text
-            markdown_filename = os.path.join(config.reportpath, model + '_report' + appendages[j] + '.md')
-            appendage_set_list = list(set(appendage_set_list))
+            for sdef in _SECTION_DEFS:
+                if sdef.tag not in present:
+                    continue
+                section_filename = os.path.join(
+                    output_dir, f'{sdef.metrics_tag}_metrics{appendage}.pkl')
+                if not os.path.exists(section_filename):
+                    continue
 
-            validation_reference_text = add_collapsible_segment_start('Validation Reference Sheet', '')
-            validation_reference_text += validation_reference_subtext
-            validation_reference_text += add_collapsible_segment_end()
+                section_content = build_section_content(
+                    sdef, section_filename, model, sphinx_dataframe,
+                    relative_path_plots, output_dir, appendage=appendage)
+                if not section_content:
+                    continue
+
+                validation_text += f'* {sdef.title}\n'
+                markdown_text += section_content
+                report_exists = True
+                appendage_set_list.append(appendage)
+
+                validation_reference_subtext, validation_reference_flag_dict = (
+                    construct_validation_reference_sheet(
+                        validation_reference_subtext, validation_reference_flag_dict, sdef))
+
             validation_reference_subtext_html += validation_reference_subtext
-            
-            if report_exists:
-                a = open(markdown_filename, 'w')
-                a.write(markdown_text)
-                a.close()
-                markdown_texts[appendages[j]] = markdown_text
-        
-        
-        html_text += '<div class="tab">\n'
-        html_text += '    <button class="tablinks" onclick="openTab(event, \'All\')">All</button>\n'
-        for j in range(0, len(appendage_set_list)):
-            if appendage_set_list[j] == '':
-                None
-            else:
-                html_text += '    <button class="tablinks" onclick="openTab(event, \'' + appendage_set_list[j].replace('_', '') + '\')">' + appendage_set_list[j].replace('_', '') + '</button>\n'
-        html_text += '</div>\n'
-        
-        for j in range(0, len(appendage_set_list)):
-            html_text += add_tab(appendage_set_list[j].replace('_', ''), markdown_texts[appendage_set_list[j]], model)
-                
-        validation_reference_text_html = add_collapsible_segment_start('Validation Reference Sheet', '')
-        validation_reference_text_html += validation_reference_subtext_html
-        validation_reference_text_html += add_collapsible_segment_end()
-        html_filename = os.path.join(config.reportpath, model + '_report.html')
 
-        # CONVERT TO BASE64
+            if report_exists:
+                full_markdown = (
+                    git_info_text
+                    + add_collapsible_segment('Validated Quantities', validation_text)
+                    + markdown_text
+                )
+                md_filename = os.path.join(config.reportpath, f'{model}_report{appendage}.md')
+                with open(md_filename, 'w') as f:
+                    f.write(full_markdown)
+                markdown_texts[appendage] = full_markdown
+
+        # BUILD HTML TABS
+        appendage_set_list = sorted(set(appendage_set_list))
+        tab_bar = io.StringIO()
+        tab_bar.write('<div class="tab">\n')
+        tab_bar.write("    <button class=\"tablinks\" onclick=\"openTab(event, 'All')\">All</button>\n")
+        for app in appendage_set_list:
+            if app:
+                tab_id = app.replace('_', '')
+                tab_bar.write(f'    <button class="tablinks" onclick="openTab(event, \'{tab_id}\')">{tab_id}</button>\n')
+        tab_bar.write('</div>\n')
+        html_text += tab_bar.getvalue()
+        for app in appendage_set_list:
+            if app in markdown_texts:
+                html_text += add_tab(app, markdown_texts[app], model)
+
+        # ADD VALIDATION REFERENCE SHEET
+        html_text += (
+            add_collapsible_segment_start('Validation Reference Sheet')
+            + validation_reference_subtext_html
+            + add_collapsible_segment_end()
+        )
+
+        html_filename = os.path.join(config.reportpath, f'{model}_report.html')
         html_text = embed_pdf_files_in_html(html_text, html_filename)
-        a = open(html_filename, 'w', encoding='utf-8')
-        a.write(html_text)
-        a.close()
+        with open(html_filename, 'w', encoding='utf-8') as f:
+            f.write(html_text)
         logger.info('    Complete')
-        
-    # MAKE index.html
-    html_index = make_index.make_index(config.reportpath, banner_text='SPHINX Validation Report Repository')
-    a = open(os.path.join(config.reportpath, 'index.html'), 'w')
-    a.write(html_index)
-    a.close()
-    
-        
-        
-            
-                
-        
+
+    # WRITE INDEX PAGE
+    html_index = make_index.make_index(
+        config.reportpath, banner_text='SPHINX Validation Report Repository')
+    with open(os.path.join(config.reportpath, 'index.html'), 'w') as f:
+        f.write(html_index)
