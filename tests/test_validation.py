@@ -209,6 +209,8 @@ def initialize_all_clear_dict():
             "Probability of Correct Negatives": [],
             "Frequency of Correct Negatives": [],
             "False Alarm Ratio": [],
+            "False Alarm Event Ratio": [],
+            'Tau': [],
             "Detection Failure Ratio": [],
             "Threat Score": [],
             "Odds Ratio": [],
@@ -278,6 +280,8 @@ def fill_all_clear_dict_hit(dict, self):
         dict["Probability of Correct Negatives"].append(np.nan)
         dict["Frequency of Correct Negatives"].append(np.nan)
         dict["False Alarm Ratio"].append('0.0')
+        dict["False Alarm Event Ratio"].append('0.0')
+        dict["Tau"].append('1.0')
         dict["Detection Failure Ratio"].append(np.nan)
         dict["Threat Score"].append('1.0') #Critical Success Index
         dict["Odds Ratio"].append(np.nan)
@@ -327,6 +331,8 @@ def fill_all_clear_dict_CN(dict, self):
         dict["Probability of Correct Negatives"].append('1.0')
         dict["Frequency of Correct Negatives"].append('1.0')
         dict["False Alarm Ratio"].append(np.nan)
+        dict["False Alarm Event Ratio"].append('0.0')
+        dict["Tau"].append('1.0')
         dict["Detection Failure Ratio"].append('0.0')
         dict["Threat Score"].append(np.nan) #Critical Success Index
         dict["Odds Ratio"].append(np.nan)
@@ -418,7 +424,7 @@ def fill_probability_dict_highprob(dict, self):
     dict["Prediction Energy Channel"].append(self.energy_key)
     dict["Prediction Threshold"].append(self.obs_thresholds[self.energy_key][0])
     
-    dict['ROC Curve Plot'].append("./tests/output/plots/ROC_curve_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf")
+    dict['ROC Curve Plot'].append(".\\tests\\output/plots/ROC_curve_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf")
     dict['Brier Score'].append('0.0')
     dict['Brier Skill Score'].append('1.0')
     dict['Spearman Correlation Coefficient'].append(np.nan)
@@ -432,7 +438,7 @@ def fill_probability_dict_lowprob(dict, self):
     dict["Prediction Energy Channel"].append(self.energy_key)
     dict["Prediction Threshold"].append(self.obs_thresholds[self.energy_key][0])
     
-    dict['ROC Curve Plot'].append("./tests/output/plots/ROC_curve_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf")
+    dict['ROC Curve Plot'].append(".\\tests\\output/plots/ROC_curve_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf")
     dict['Brier Score'].append('1.0')
     dict['Brier Skill Score'].append('-0.06941692181172066')
     dict['Spearman Correlation Coefficient'].append(np.nan)
@@ -447,7 +453,7 @@ def fill_probability_dict_multprob(dict, self):
     dict["Prediction Energy Channel"].append(self.energy_key)
     dict["Prediction Threshold"].append(self.obs_thresholds[self.energy_key][0])
     
-    dict['ROC Curve Plot'].append("./tests/output/plots/ROC_curve_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf")
+    dict['ROC Curve Plot'].append(".\\tests\\output/plots/ROC_curve_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf")
     dict['Brier Score'].append('0.5')
     dict['Brier Skill Score'].append('0.4652915390941397')
     dict['Spearman Correlation Coefficient'].append(np.nan)
@@ -504,7 +510,7 @@ def fill_peak_intensity_max_mult_dict(dict, self):
     dict["Threshold"].append(self.obs_thresholds[self.energy_key][0])
     dict["Prediction Energy Channel"].append(self.energy_key)
     dict["Prediction Threshold"].append(self.obs_thresholds[self.energy_key][0])
-    dict["Scatter Plot"].append('./tests/output/plots/Correlation_peak_intensity_max_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf')
+    dict["Scatter Plot"].append('.\\tests\\output/plots/Correlation_peak_intensity_max_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf')
     dict["Linear Regression Slope"].append('-0.25000000000000006')
     dict["Linear Regression y-intercept"].append('-0.25')
     dict["Pearson Correlation Coefficient (Linear)"].append(np.nan)
@@ -583,7 +589,7 @@ def fill_peak_intensity_mult_dict(dict, self):
     dict["Threshold"].append(self.obs_thresholds[self.energy_key][0])
     dict["Prediction Energy Channel"].append(self.energy_key)
     dict["Prediction Threshold"].append(self.obs_thresholds[self.energy_key][0])
-    dict["Scatter Plot"].append('./tests/output/plots/Correlation_peak_intensity_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf')
+    dict["Scatter Plot"].append('.\\tests\\output/plots/Correlation_peak_intensity_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf')
     dict["Linear Regression Slope"].append('-0.25000000000000006')
     dict["Linear Regression y-intercept"].append('-0.25')
     dict["Pearson Correlation Coefficient (Linear)"].append(np.nan)
@@ -634,7 +640,7 @@ def fill_probability_dict_all(dict, self):
     dict["Prediction Energy Channel"].append(self.energy_key)
     dict["Prediction Threshold"].append(self.obs_thresholds[self.energy_key][0])
     
-    dict['ROC Curve Plot'].append("./tests/output/plots/ROC_curve_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf")
+    dict['ROC Curve Plot'].append(".\\tests\\output/plots/ROC_curve_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf")
     dict['Brier Score'].append('0.006799999999999997')
     dict['Brier Skill Score'].append('0.9890982954329874')
     dict['Spearman Correlation Coefficient'].append('1.0')
@@ -647,7 +653,7 @@ def fill_peak_intensity_metrics_dict_all(dict, self):
     dict["Threshold"].append(self.obs_thresholds[self.energy_key][0])
     dict["Prediction Energy Channel"].append(self.energy_key)
     dict["Prediction Threshold"].append(self.obs_thresholds[self.energy_key][0])
-    dict["Scatter Plot"].append('./tests/output/plots/Correlation_peak_intensity_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf')
+    dict["Scatter Plot"].append('.\\tests\\output/plots/Correlation_peak_intensity_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf')
     dict["Linear Regression Slope"].append('0.5103481712895563')
     dict["Linear Regression y-intercept"].append('0.5103481712895562')
     dict["Pearson Correlation Coefficient (Linear)"].append(np.nan)
@@ -686,7 +692,7 @@ def fill_time_profile_dict_all(dict, self):
     dict["Threshold"].append(self.obs_thresholds[self.energy_key][0])
     dict["Prediction Energy Channel"].append(self.energy_key)
     dict["Prediction Threshold"].append(self.obs_thresholds[self.energy_key][0])
-    dict["Scatter Plot"].append('./tests/output/plots/Correlation_time_profile_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_20000101T000000.pdf')
+    dict["Scatter Plot"].append('.\\tests\\output/plots/Correlation_time_profile_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_20000101T000000.pdf')
     dict["Linear Regression Slope"].append(np.nan)
     dict["Linear Regression y-intercept"].append(np.nan)
     dict["Pearson Correlation Coefficient (Linear)"].append('-0.16603070802422484')
@@ -712,7 +718,7 @@ def fill_time_profile_dict_all(dict, self):
     dict["Median Symmetric Accuracy (MdSA)"].append('2.0078825180431')
     dict["Percentage within an Order of Magnitude (%)"].append('1.0')
     dict["Percentage within a factor of 2 (%)"].append('0.3333333333333333')
-    dict.update({"Time Profile Selection Plot": ['./tests/output/plots/Time_Profile_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_20000101T000000.pdf;./tests/output/plots/Time_Profile_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_20000101T000000.pdf']})
+    dict.update({"Time Profile Selection Plot": ['.\\tests\\output/plots/Time_Profile_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_20000101T000000.pdf;.\\tests\\output/plots/Time_Profile_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_20000101T000000.pdf']})
 
     return dict
 
@@ -739,6 +745,8 @@ def fill_all_clear_dict_all(dict, self):
     dict["Probability of Correct Negatives"].append('1.0')
     dict["Frequency of Correct Negatives"].append('1.0')
     dict["False Alarm Ratio"].append('0.0')
+    dict["False Alarm Event Ratio"].append('0.0')
+    dict["Tau"].append('1.0')
     dict["Detection Failure Ratio"].append('0.0')
     dict["Threat Score"].append('1.0') #Critical Success Index
     dict["Odds Ratio"].append('inf')
@@ -865,7 +873,7 @@ def fill_max_flux_in_pred_win_metrics_dict_all(dict, self):
     dict["Threshold"].append(self.obs_thresholds[self.energy_key][0])
     dict["Prediction Energy Channel"].append(self.energy_key)
     dict["Prediction Threshold"].append(self.obs_thresholds[self.energy_key][0])
-    dict["Scatter Plot"].append('./tests/output/plots/Correlation_max_flux_in_pred_win_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf')
+    dict["Scatter Plot"].append('.\\tests\\output/plots/Correlation_max_flux_in_pred_win_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf')
     dict["Linear Regression Slope"].append('0.5103481712895563')
     dict["Linear Regression y-intercept"].append('0.5103481712895562')
     dict["Pearson Correlation Coefficient (Linear)"].append(np.nan)
@@ -891,7 +899,7 @@ def fill_max_flux_in_pred_win_metrics_dict_all(dict, self):
     dict["Median Symmetric Accuracy (MdSA)"].append('0.04880884817015163')
     dict["Percentage within an Order of Magnitude (%)"].append('1.0')
     dict["Percentage within a factor of 2 (%)"].append('1.0')
-    dict.update({"Time Profile Selection Plot": ['./tests/output/plots/Time_Profile_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_20000101T000000.pdf']})
+    dict.update({"Time Profile Selection Plot": ['.\\tests\\output/plots/Time_Profile_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_20000101T000000.pdf']})
 
     return dict
 
@@ -913,7 +921,7 @@ def fill_peak_intensity_max_metrics_dict_all(dict, self):
     dict["Threshold"].append(self.obs_thresholds[self.energy_key][0])
     dict["Prediction Energy Channel"].append(self.energy_key)
     dict["Prediction Threshold"].append(self.obs_thresholds[self.energy_key][0])
-    dict["Scatter Plot"].append('./tests/output/plots/Correlation_peak_intensity_max_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf')
+    dict["Scatter Plot"].append('.\\tests\\output/plots/Correlation_peak_intensity_max_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf')
     dict["Linear Regression Slope"].append('0.5103481712895563')
     dict["Linear Regression y-intercept"].append('0.5103481712895562')
     dict["Pearson Correlation Coefficient (Linear)"].append(np.nan)
@@ -991,7 +999,7 @@ def fill_fluence_dict_all(dict, self):
     dict["Threshold"].append(self.obs_thresholds[self.energy_key][0])
     dict["Prediction Energy Channel"].append(self.energy_key)
     dict["Prediction Threshold"].append(self.obs_thresholds[self.energy_key][0])
-    dict["Scatter Plot"].append('./tests/output/plots/Correlation_fluence_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf')
+    dict["Scatter Plot"].append('.\\tests\\output/plots/Correlation_fluence_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf')
     dict["Linear Regression Slope"].append('0.42195511876358965')
     dict["Linear Regression y-intercept"].append('3.36735874637887')
     dict["Pearson Correlation Coefficient (Linear)"].append(np.nan)
@@ -1017,7 +1025,7 @@ def fill_fluence_dict_all(dict, self):
     dict["Median Symmetric Accuracy (MdSA)"].append('16.605742455879447')
     dict["Percentage within an Order of Magnitude (%)"].append('0.0')
     dict["Percentage within a factor of 2 (%)"].append('0.0')
-    dict.update({"Time Profile Selection Plot": ['./tests/output/plots/Time_Profile_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_20000101T000000.pdf']})
+    dict.update({"Time Profile Selection Plot": ['.\\tests\\output/plots/Time_Profile_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_20000101T000000.pdf']})
 
     return dict
 
@@ -1064,11 +1072,14 @@ class TestAllClear0(unittest.TestCase):
                 self.assertEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
 
     def step_2(self):
+        # print('IN step 2')
         validate.calculate_intuitive_metrics(self.dataframe, self.model_names, self.all_energy_channels, \
                 self.obs_thresholds, 'All')
+        validate.write_df(self.dataframe, "SPHINX_dataframe")
     
 
     def step_3(self):
+
         test_dict = initialize_all_clear_dict()
         test_dict = fill_all_clear_dict_hit(test_dict, self)
         csv_filename = os.path.join(config.outpath, 'csv', 'all_clear_metrics.csv')
@@ -1077,7 +1088,7 @@ class TestAllClear0(unittest.TestCase):
 
 
 
-    def step_5(self):
+    def step_4(self):
         
         test_dict = initialize_awt_dict()
         test_dict = fill_awt_dict(test_dict, self)
@@ -1096,7 +1107,7 @@ class TestAllClear0(unittest.TestCase):
             if name.startswith("step"):
                 yield name, getattr(self, name)
         
-    @patch('sphinxval.utils.config.outpath', './tests/output')
+    @patch('sphinxval.utils.config.outpath', os.path.join('.','tests','output'))
 
     def test_all_clear_0(self):
         validate.prepare_outdirs()
@@ -1179,7 +1190,7 @@ class TestAllClear1(unittest.TestCase):
             if name.startswith("step"):
                 yield name, getattr(self, name)
 
-    @patch('sphinxval.utils.config.outpath', './tests/output')
+    @patch('sphinxval.utils.config.outpath', os.path.join('.','tests','output'))
 
     def test_all_clear_1(self):
         validate.prepare_outdirs()
@@ -1197,7 +1208,7 @@ class TestAllClearGarbage(unittest.TestCase):
         self.verbosity = utils.utility_get_verbosity()
     
     
-    @patch('sphinxval.utils.config.outpath', './tests/output')
+    @patch('sphinxval.utils.config.outpath', os.path.join('.','tests','output'))
 
     def test_garbage(self): 
         validate.prepare_outdirs()
@@ -1294,7 +1305,7 @@ class TestPeakIntensity0(unittest.TestCase):
             if name.startswith("step"):
                 yield name, getattr(self, name)
         
-    @patch('sphinxval.utils.config.outpath', './tests/output')
+    @patch('sphinxval.utils.config.outpath', os.path.join('.','tests','output'))
 
     def test_peak_intensity_0(self):
         validate.prepare_outdirs()
@@ -1401,7 +1412,7 @@ class TestPeakIntensityMult(unittest.TestCase):
                 yield name, getattr(self, name)
         
 
-    @patch('sphinxval.utils.config.outpath', './tests/output')
+    @patch('sphinxval.utils.config.outpath', os.path.join('.','tests','output'))
 
     def test_peak_intensity_1(self):
         validate.prepare_outdirs()
@@ -1483,7 +1494,7 @@ class TestPeakIntensityMax0(unittest.TestCase):
                 yield name, getattr(self, name)
         
    
-    @patch('sphinxval.utils.config.outpath', './tests/output')
+    @patch('sphinxval.utils.config.outpath', os.path.join('.','tests','output'))
 
     def test_peak_intensity_max_0(self):
         validate.prepare_outdirs()
@@ -1599,7 +1610,7 @@ class TestPeakIntensityMaxMult(unittest.TestCase):
                 yield name, getattr(self, name)
 
 
-    @patch('sphinxval.utils.config.outpath', './tests/output')
+    @patch('sphinxval.utils.config.outpath', os.path.join('.','tests','output'))
 
     def test_peak_intensity_max_1(self):
         validate.prepare_outdirs()
@@ -1695,7 +1706,7 @@ class TestProbability0(unittest.TestCase):
         
 
 
-    @patch('sphinxval.utils.config.outpath', './tests/output')
+    @patch('sphinxval.utils.config.outpath', os.path.join('.','tests','output'))
 
     def test_prob_0(self):
         validate.prepare_outdirs()
@@ -1816,7 +1827,7 @@ class TestProbabilityMult(unittest.TestCase):
                 yield name, getattr(self, name)
         
    
-    @patch('sphinxval.utils.config.outpath', './tests/output')
+    @patch('sphinxval.utils.config.outpath', os.path.join('.','tests','output'))
     
     def test_prob_1(self):
         validate.prepare_outdirs()
@@ -1882,7 +1893,7 @@ class TestShortNameChanger(unittest.TestCase):
                 yield name, getattr(self, name)
         
    
-    @patch('sphinxval.utils.config.outpath', './tests/output')
+    @patch('sphinxval.utils.config.outpath', os.path.join('.','tests','output'))
     @patch('sphinxval.utils.config.shortname_grouping', [('Test_model_0.*', 'new_shortname_for_testing')])
 
     def test_shortname_change(self):
@@ -1996,8 +2007,8 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
         """
         validate.write_df(self.dataframe, "SPHINX_dataframe")
         
-        self.assertTrue(os.path.isfile('./tests/output/csv/SPHINX_dataframe.csv'), msg = 'SPHINX_dataframe.csv does not exist, check the file is output correctly')
-        self.assertTrue(os.path.isfile('./tests/output/pkl/SPHINX_dataframe.pkl'), msg = 'SPHINX_dataframe.pkl does not exist, check the file is output correctly')
+        self.assertTrue(os.path.isfile(os.path.join('.', 'tests', 'output', 'csv', 'SPHINX_dataframe.csv')), msg = 'SPHINX_dataframe.csv does not exist, check the file is output correctly')
+        self.assertTrue(os.path.isfile(os.path.join('.', 'tests', 'output', 'pkl', 'SPHINX_dataframe.pkl')), msg = 'SPHINX_dataframe.pkl does not exist, check the file is output correctly')
 
         
 
@@ -2136,8 +2147,8 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
     def step_19_profiledicts(self):
 
         validate.profile_output(self.dataframe, None, None)
-        self.assertTrue(os.path.isfile('./tests/output/json/model_profiles.json'), msg = 'model_profiles.json does not exist, check the file is output correctly')
-        self.assertTrue(os.path.isfile('./tests/output/json/observed_profiles.json'), msg = 'observed_profiles.json does not exist, check the file is output correctly')
+        self.assertTrue(os.path.isfile(os.path.join('.', 'tests', 'output', 'json', 'model_profiles.json')), msg = 'model_profiles.json does not exist, check the file is output correctly')
+        self.assertTrue(os.path.isfile(os.path.join('.', 'tests', 'output', 'json', 'observed_profiles.json')), msg = 'observed_profiles.json does not exist, check the file is output correctly')
 
 
     def utility_print_docstring(self, function):
@@ -2151,7 +2162,7 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
                 yield name, getattr(self, name)
         
 
-    @patch('sphinxval.utils.config.outpath', './tests/output')
+    @patch('sphinxval.utils.config.outpath', os.path.join('.','tests','output'))
     
     def test_all(self):
         validate.prepare_outdirs()

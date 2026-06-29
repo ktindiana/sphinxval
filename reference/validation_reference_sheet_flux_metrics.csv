@@ -4,8 +4,8 @@ Error (E), Prediction - Observation, Linear error calculation, 0, -inf - inf
 Log Error (LE), log10(Prediction) - log10(Observation), Order of magnitude, 0, -inf - inf
 Absolute Error (AE), abs(Prediction - Observation), Bias calculation, 0, 0 - inf 
 Absolute Log Error (ALE), abs(log10(Prediction) - log10(Observation)), Something,0, 0 - inf
-Percent Error (PE), (Prediction - Observation)/Observation ,Something,0, -inf - inf
-Absolute Percent Error (APE), abs((Prediction - Observation)/Observation),Something ,0, 0 - inf 
+Percent Error (PE), (Prediction - Observation)/Observation ,Also called Relative Difference,0, -inf - inf
+Absolute Percent Error (APE), abs((Prediction - Observation)/Observation),Also called Absolute Relative Difference ,0, 0 - inf 
 Symmetric Percent Error (SPE), 2.0x(Prediction - Observation)/(Prediction + Observation),Something , 0, -2 - 2
 Symmetric Absolute Percent Error (MAPE),2.0xabs((Prediction - Observation)/(Prediction + Observation)),Something ,0,0 - 2
 Mean Accuracy Ratio (MAR), mean(Prediction/Observation),Displayed as a percent,0, 0 - inf

@@ -3,7 +3,7 @@ Name,Attribute,Calculation,Range, Perfect Score,Alternate Names,Notes
 Percent Correct,Accuracy,(Hits+Correct Negatives)/N,0 to 1,1,Accuracy,
 Bias,Bias,(Hits+False Alarms)/(Hits+Misses),0 to infinity,1,Frequency bias,
 Hit Rate,Discrimination,Hits+(Hits+Misses),0 to 1,1,Probability of Detection & Recall & Sensitivity & True Positive Rate,
-False Alarm Ratio,Resolution,False Alarms/(Hits+False Alarms),0 to 1,1,False Discovery Rate,
+False Alarm Ratio,Resolution,False Alarms/(Hits+False Alarms),0 to 1,1,FAR & False Discovery Rate,
 False Alarm Rate,Discrimination,False Alarms/(False Alarms + Correct Negatives),0 to 1,0,False Positive Rate & Probability of False Alarm,
 False Negative Rate,,Misses/(Hits+Misses),0 to 1,0,Miss Rate,
 Frequency of Hits,Resolution,Hits/(Hits+False Alarms),0 to 1,1,Positive Predictive Value & Precision,
