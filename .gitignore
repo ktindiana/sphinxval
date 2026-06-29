@@ -21,8 +21,10 @@ logs/*
 **/venv/*
 tests/output/
 tests/logs/
-
-
+*_evaluated.pkl
+SPHINX_cumulative.pkl
+pushvivid_data/
+check_logs/
 
 venv/*
 
