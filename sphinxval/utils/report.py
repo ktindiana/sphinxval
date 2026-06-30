@@ -301,14 +301,27 @@ def _formatter_for_metric(metric_name: str):
     return _format_significant
 
 
+def _format_value(label: str, value) -> str:
+    """Format a single metric value, falling back to str() for
+    non-numeric values (e.g. date strings like 'Predicted SEP Events')."""
+    if isinstance(value, str):
+        return value
+    if not isinstance(value, (int, float, np.integer, np.floating)):
+        return str(value)
+    return _formatter_for_metric(label)(value)
+
+
 # -----------------------------------------------------------------------
 # MARKDOWN TABLE BUILDERS
 # -----------------------------------------------------------------------
 
-def make_markdown_table(column_1: str, column_2: str, dataframe: pd.DataFrame, width: int = 50) -> str:
-    """Render a two-column (label | value) Markdown table from *dataframe*.
+def make_markdown_table(column_1: str, column_2: str, dataframe: pd.DataFrame, width: int = 50, uncertainties: dict = None) -> str:
+    """Render a Markdown table from *dataframe*.
 
     *dataframe* must have one column; its index provides the row labels.
+    If *uncertainties* is provided (a dict mapping label -> uncertainty
+    value or None), a third "Uncertainty" column is added, showing '-'
+    for metrics with no corresponding uncertainty value.
     """
     rows = list(dataframe.index)
     raw_values = list(dataframe.to_numpy().flatten())
@@ -320,15 +333,28 @@ def make_markdown_table(column_1: str, column_2: str, dataframe: pd.DataFrame, w
             rows[i] = label + ' [%]'
 
     buf = io.StringIO()
-    buf.write(f'| {column_1:<{width - 1}}| {column_2:<{width - 1}}|\n')
-    buf.write(f'|:{"-" * (width - 1)}:|:{"-" * (width - 1)}:|\n')
-    for label, value in zip(rows, raw_values):
+    if uncertainties is not None:
+        buf.write(f'| {column_1:<{width - 1}}| {column_2:<{width - 1}}| {"Uncertainty":<{width - 1}}|\n')
+        buf.write(f'|:{"-" * (width - 1)}:|:{"-" * (width - 1)}:|:{"-" * (width - 1)}:|\n')
+    else:
+        buf.write(f'| {column_1:<{width - 1}}| {column_2:<{width - 1}}|\n')
+        buf.write(f'|:{"-" * (width - 1)}:|:{"-" * (width - 1)}:|\n')
+
+    for orig_label, label, value in zip(dataframe.index, rows, raw_values):
         safe_label = label.replace('|', r'\|')
         if value is None or (isinstance(value, float) and np.isnan(value)):
             fmt_value = 'NaN'
         else:
-            fmt_value = _formatter_for_metric(label)(value)
-        buf.write(f'| {safe_label:<{width}}| {fmt_value:<{width}}|\n')
+            fmt_value = _format_value(label, value)
+        if uncertainties is not None:
+            unc_value = uncertainties.get(orig_label)
+            if unc_value is None or (isinstance(unc_value, float) and np.isnan(unc_value)):
+                fmt_unc = '-'
+            else:
+                fmt_unc = _format_value(label, unc_value)
+            buf.write(f'| {safe_label:<{width}}| {fmt_value:<{width}}| {fmt_unc:<{width}}|\n')
+        else:
+            buf.write(f'| {safe_label:<{width}}| {fmt_value:<{width}}|\n')
     return buf.getvalue()
 
 
@@ -473,8 +499,22 @@ def build_contingency_table(yes_yes, yes_no, no_no, no_yes) -> str:
 
 
 def build_skill_score_table(labels, values) -> str:
-    table = pd.DataFrame(data=[values], columns=labels)
-    return '\n' + transpose_markdown(table.to_markdown(index=False)) + '\n'
+    """Build a Metric | Value | Uncertainty table from parallel labels and
+    values lists, where some labels may be '{Metric} Uncertainty' siblings
+    of a preceding metric label."""
+    uncertainty_suffix = ' Uncertainty'
+    pairs = list(zip(labels, values))
+    uncertainties = {}
+    main_pairs = []
+    for label, value in pairs:
+        if label.endswith(uncertainty_suffix):
+            uncertainties[label[:-len(uncertainty_suffix)]] = value
+        else:
+            main_pairs.append((label, value))
+    main_labels = [label for label, _ in main_pairs]
+    main_values = [value for _, value in main_pairs]
+    subset_df = pd.DataFrame(main_values, index=main_labels)
+    return '\n' + make_markdown_table('Metric', 'Value', subset_df, uncertainties=uncertainties) + '\n'
 
 
 # -----------------------------------------------------------------------
@@ -617,10 +657,23 @@ def build_metrics_table(data: pd.DataFrame, current_index: int, metric_index_sta
     column_labels = list(data.columns)
     subset = data.iloc[current_index, metric_index_start:]
     subset_df = pd.DataFrame(subset, index=column_labels[metric_index_start:])
+
+    # SEPARATE OUT "{Metric} Uncertainty" ROWS INTO A LOOKUP DICT, KEYED
+    # BY THE BASE METRIC NAME (WITHOUT THE " Uncertainty" SUFFIX), AND
+    # DROP THEM FROM THE MAIN METRIC ROWS SO THEY DON'T APPEAR TWICE.
+    uncertainty_suffix = ' Uncertainty'
+    uncertainties = {}
+    uncertainty_labels = [label for label in subset_df.index if label.endswith(uncertainty_suffix)]
+    for label in uncertainty_labels:
+        base_label = label[:-len(uncertainty_suffix)]
+        uncertainties[base_label] = subset_df.loc[label].iloc[0]
+        subset_df = subset_df.drop(label, axis=0)
+
     for label in skip_label_list:
         if label in subset_df.index:
             subset_df = subset_df.drop(label, axis=0)
-    metrics_table_string = '\n' + make_markdown_table('Metric', 'Value', subset_df) + '\n'
+
+    metrics_table_string = '\n' + make_markdown_table('Metric', 'Value', subset_df, uncertainties=uncertainties) + '\n'
     plot_string_list, plot_file_string_list = build_plot_string_list(data, current_index, relative_path_plots)
     return metrics_table_string, plot_string_list, plot_file_string_list
 
