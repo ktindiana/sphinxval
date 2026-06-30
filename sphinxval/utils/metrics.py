@@ -18,6 +18,13 @@ from sphinxval.utils.tau import Tau, ContingencySpace, ConfusionMatrix
 
 
 
+# from contingency_space.contingency_space import ContingencySpace
+# from contingency_space.confusion_matrix import ConfusionMatrix
+import matplotlib.pyplot as plt
+from sphinxval.utils.tau import Tau, ContingencySpace, ConfusionMatrix
+
+
+
 
 __author__ = "Phil Quinn"
 __maintainer__ = "Kathryn Whitman"
@@ -1331,12 +1338,7 @@ def contingency_scores(h,m,f,c):
     'FAER' : check_div(f, h+m),                          # False Alarm Event Ratio
     'Tau': None
     }
-    #### Just doing some testing here with likelihood ratios, keep commented out for now
-    # print(df[obs_key], df[pred_key])
-    # clr_pos = check_div(h, h+m) / (1-check_div(c, c+f))
-    # clr_neg = (1-check_div(h, h+m)) / check_div(c, c+f)
-    # print(clr_pos, clr_neg)
-    # input()
+
     
     return scores
 
@@ -1434,7 +1436,6 @@ def calc_contingency_all_clear(df, obs_key, pred_key):
 
     tau = calc_tau(h, m, f, c, df.iloc[0, 0], df.iloc[0, 1])
     scores['Tau'] = tau
-    logger.info(str(scores))
     return scores
 
 
@@ -1582,12 +1583,6 @@ def remove_zero(obs, model):
     return obs_clean, model_clean
 
 def calc_tau(h, m, f, c, model_name, energy_channel, visualize = False):
-    
-        
-        logger.info(str(model_name))
-        logger.info(str(energy_channel))
-        
-        # input()
         if visualize:
             try:
                 matrix = {'t': [h, m], 'f': [f, c]}
