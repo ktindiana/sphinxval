@@ -812,6 +812,8 @@ def fill_all_clear_dict(dict, model, energy_key, thresh_key, pred_energy_key,
     dict["Probability of Correct Negatives"].append(scores['POCN'])
     dict["Frequency of Correct Negatives"].append(scores['FOCN'])
     dict["False Alarm Ratio"].append(scores['FAR'])
+    dict['False Alarm Event Ratio'].append(scores['FAER'])
+    dict['Tau'].append(scores['Tau'])
     dict["Detection Failure Ratio"].append(scores['DFR'])
     dict['False Alarm Event Ratio'].append(scores['FAER'])
     dict['Tau'].append(scores['Tau'])

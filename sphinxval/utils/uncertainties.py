@@ -515,6 +515,8 @@ def all_clear_uncertainties(df, label, dict):
     dict["Probability of Correct Negatives Uncertainty"].append(np.nanstd(scores['POCN']))
     dict["Frequency of Correct Negatives Uncertainty"].append(np.nanstd(scores['FOCN']))
     dict["False Alarm Ratio Uncertainty"].append(np.nanstd(scores['FAR']))
+    dict["False Alarm Event Ratio Uncertainty"].append(np.nanstd(scores['FAER']))
+    dict["Tau Uncertainty"].append(np.nanstd(scores['Tau']))
     dict["Detection Failure Ratio Uncertainty"].append(np.nanstd(scores['DFR']))
     dict["Threat Score Uncertainty"].append(np.nanstd(scores['TS']))
     dict["Odds Ratio Uncertainty"].append(np.nanstd(scores['OR']))
@@ -551,6 +553,8 @@ def scores_dict():
         'FOH': [],                          # Frequency of Hits
         'FOM': [],                          # Frequency of Misses
         'POCN': [],                         # Probability of Correct Negatives, Specificity, Selectivity
+        'FAER': [],
+        'Tau': [],
         'DFR': [],                          # Detection Failure Ratio
         'FOCN': [],                         # Frequency of Correct Negatives
         'TS': [],                         # Threat Score, Critical success index
@@ -569,7 +573,7 @@ def scores_dict():
         'MARK': [],  # Markedness
         'PT': [],                         # Prevalence Threshold
         'BA': [], # Balanced Accuracy
-        'FM': []  # Fowlkes-Mallows Index (Geometric mean of precision and recall)
+        'FM': [],  # Fowlkes-Mallows Index (Geometric mean of precision and recall)
     }
     return scores
 
