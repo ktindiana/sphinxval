@@ -592,13 +592,13 @@ def assert_equal_table(self, filename, test_dict):
                     # keyword = keyword_all_clear
                     # print(reading.iloc[rows][keywords], type(reading.iloc[rows][keywords]))#, column)#, test_dict[keyword][0])
                     if pd.isna(reading.iloc[rows][keywords]):# and pd.isna(test_dict[keywords][0]):
-                        print(test_dict[keywords], keywords)
+                 
                         self.assertTrue(pd.isna(reading.iloc[rows][keywords]))
                         self.assertTrue(pd.isna(test_dict[keywords][0]), msg = 'This test_dict element should be a nan for keyword ' + keywords) 
                     elif isinstance(reading.iloc[rows][keywords], str):
                         self.assertEqual(reading.iloc[rows][keywords], test_dict[keywords][0], msg = 'This is the keyword ' + keywords) 
                     else:
-                        print(keywords)
+            
                         self.assertAlmostEqual(reading.iloc[rows][keywords], float(test_dict[keywords][0]), msg = 'This is the keyword ' + keywords)
                         
                                
