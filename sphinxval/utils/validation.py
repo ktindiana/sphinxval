@@ -815,8 +815,6 @@ def fill_all_clear_dict(dict, model, energy_key, thresh_key, pred_energy_key,
     dict['False Alarm Event Ratio'].append(scores['FAER'])
     dict['Tau'].append(scores['Tau'])
     dict["Detection Failure Ratio"].append(scores['DFR'])
-    dict['False Alarm Event Ratio'].append(scores['FAER'])
-    dict['Tau'].append(scores['Tau'])
     dict["Threat Score"].append(scores['TS']) #Critical Success Index
     dict["Odds Ratio"].append(scores['OR'])
     dict["Gilbert Skill Score"].append(scores['GSS']) #Equitable Threat Score

@@ -70,14 +70,14 @@ def uncertainty_workflow(df, label, dict, uncert_boolean):
         flux_filter = ['point_intensity', 'peak_intensity', 'peak_intensity_max', 'max_flux_in_pred_win', 'fluence']
         time_filter = ['start_time', 'end_time', 'peak_intensity_time', 'peak_intensity_max_time', 'threshold_crossing', 'duration', 'last_data_to_issue_time']
         if label in time_filter:
-            time_uncertainties(df, label, dict)
+            time_uncert_feeder(df, label, dict)
         elif label in flux_filter:
-            flux_uncertainties(df, label, dict)
+            flux_uncert_feeder(df, label, dict)
         else:
             if label == 'probability':
-                probability_uncertainties(df, label, dict)
+                probability_uncert_feeder(df, label, dict)
             elif label == 'all_clear':
-                all_clear_uncertainties(df, label, dict)
+                all_clear_uncert_feeder(df, label, dict)
     else:
         headers = dict.keys()
         for he in headers:
@@ -90,26 +90,9 @@ def uncertainty_workflow(df, label, dict, uncert_boolean):
     return 
 
 
-def flux_uncertainties(df, label, dict):
+def flux_uncert_feeder(df, label, dict):
     
-    metrics_func = {
-        'E': metrics.calc_E,                        # Error
-        'Ratio': metrics.calc_ratio,                # Ratio
-        'AE': metrics.calc_AE,                      # Absolute Error
-        'LE': metrics.calc_LE,                      # Log Error
-        'ALE': metrics.calc_ALE,                    # Absolute Log Error
-        'SE': metrics.calc_SE,                      # Squared Error
-        'SLE': metrics.calc_SLE,                    # Squared Log Error
-        'RMSE': metrics.calc_RMSE,                  # Root Mean Squared Error
-        'RMSLE': metrics.calc_RMSLE,                # Root Mean Squared Log Error
-        'PE': metrics.calc_PE,                      # Percent Error
-        'APE': metrics.calc_APE,                    # Absolute Percent Error, absolute percentage deviation
-        'SPE': metrics.calc_SPE,                    # Symmetric Percent Error
-        'SAPE': metrics.calc_SAPE,                  # Symmetric Absolute Percent Error
-        'MAR': metrics.calc_MAR,                    # Mean Accuracy Ratio
-        'MdSA': metrics.calc_MdSA,                  # Median Symmetric  Accuracy
-        'spearman': metrics.calc_spearman,          # Spearman, rank order correlation coefficient
-        }
+    
     
 
 
@@ -142,14 +125,45 @@ def flux_uncertainties(df, label, dict):
             else:
                 pass
         return
+    
 
+    uncert_dict = calc_flux_uncertainties(obs, pred)
+    headers = dict.keys()
+    for he in headers:
+        if 'Uncertainty' in he:
+            dict[he].append(uncert_dict[he])
+        else:
+            pass
+
+    return
+
+def calc_flux_uncertainties(obs, pred):
+    metrics_func = {
+        'E': metrics.calc_E,                        # Error
+        'Ratio': metrics.calc_ratio,                # Ratio
+        'AE': metrics.calc_AE,                      # Absolute Error
+        'LE': metrics.calc_LE,                      # Log Error
+        'ALE': metrics.calc_ALE,                    # Absolute Log Error
+        'SE': metrics.calc_SE,                      # Squared Error
+        'SLE': metrics.calc_SLE,                    # Squared Log Error
+        'RMSE': metrics.calc_RMSE,                  # Root Mean Squared Error
+        'RMSLE': metrics.calc_RMSLE,                # Root Mean Squared Log Error
+        'PE': metrics.calc_PE,                      # Percent Error
+        'APE': metrics.calc_APE,                    # Absolute Percent Error, absolute percentage deviation
+        'SPE': metrics.calc_SPE,                    # Symmetric Percent Error
+        'SAPE': metrics.calc_SAPE,                  # Symmetric Absolute Percent Error
+        'MAR': metrics.calc_MAR,                    # Mean Accuracy Ratio
+        'MdSA': metrics.calc_MdSA,                  # Median Symmetric  Accuracy
+        'spearman': metrics.calc_spearman,          # Spearman, rank order correlation coefficient
+        }
+    flux_dict = metrics_dicts.initialize_flux_dict()
     mean_metrics_list = ['E', 'Ratio', 'AE', 'LE', 'ALE', 'PE', 'APE', 'SPE', 'SAPE']
     for met in mean_metrics_list:
         
         func = metrics_func[met]
         uncertainty = mean_call_bootstrapper(obs, pred, func)
         error = uncertainty.standard_error
-        dict[flux_metric_mapping(met) + ' Uncertainty'].append(error)
+        flux_dict[flux_metric_mapping(met) + ' Uncertainty'].append(error)
         
 
         
@@ -161,7 +175,7 @@ def flux_uncertainties(df, label, dict):
         uncertainty = median_call_bootstrapper(obs, pred, func)
         error = uncertainty.standard_error
         metric_label = "Med" + metric_label
-        dict[flux_metric_mapping(metric_label) + ' Uncertainty'].append(error)
+        flux_dict[flux_metric_mapping(metric_label) + ' Uncertainty'].append(error)
         
     #other metrics 
     other = ['MAR', 'RMSE', 'RMSLE', 'MdSA', 'spearman', 'r']
@@ -171,14 +185,14 @@ def flux_uncertainties(df, label, dict):
             func = metrics_func[met]
             uncertainty = stats.bootstrap((obs, pred), statistic=func, method='basic', vectorized = False, paired = True)
             error = uncertainty.standard_error
-            dict[flux_metric_mapping(met) + ' Uncertainty'].append(error)
+            flux_dict[flux_metric_mapping(met) + ' Uncertainty'].append(error)
             
         else:
             pearson_array = ['r_lin', 'r_log']
             for rs in pearson_array:
                 uncertainty = pearson_call_bootstrapper(obs, pred, rs)
                 error = uncertainty.standard_error
-                dict[flux_metric_mapping(rs) + ' Uncertainty'].append(error)
+                flux_dict[flux_metric_mapping(rs) + ' Uncertainty'].append(error)
 
                 
         
@@ -192,7 +206,7 @@ def flux_uncertainties(df, label, dict):
             thresh = np.log10(2)
         uncertainty = factor_call_bootstrapper(obs, pred, thresh)
         error = uncertainty.standard_error
-        dict[flux_metric_mapping(fac) + ' Uncertainty'].append(error)
+        flux_dict[flux_metric_mapping(fac) + ' Uncertainty'].append(error)
 
 
     corr_plot_metrics = ['slope', 'yint']
@@ -200,26 +214,26 @@ def flux_uncertainties(df, label, dict):
         uncertainty = corr_call_bootstrapper(obs, pred, met)
         error = uncertainty.standard_error
         logger.info(str(flux_metric_mapping(met) + ' Uncertainty'))
-        dict[flux_metric_mapping(met) + ' Uncertainty'].append(error)
-    return
+        flux_dict[flux_metric_mapping(met) + ' Uncertainty'].append(error)
+    return flux_dict
 
 
 def mean_call_bootstrapper(obs, pred, func):
     def wrapper(obs, pred):
         return np.nanmean(func(obs, pred))
-    return stats.bootstrap((obs, pred), statistic=wrapper, method='basic', vectorized = False, paired = True, n_resamples = 10000)
+    return stats.bootstrap((obs, pred), statistic=wrapper, method='basic', vectorized = False, paired = True, n_resamples = 1000)
 
 def median_call_bootstrapper(obs, pred, func):
     def wrapper(obs, pred):
         return statistics.median(func(obs, pred))
-    return stats.bootstrap((obs, pred), statistic=wrapper, method='basic', vectorized = False, paired = True, n_resamples = 10000)
+    return stats.bootstrap((obs, pred), statistic=wrapper, method='basic', vectorized = False, paired = True, n_resamples = 1000)
 
 def factor_call_bootstrapper(obs, pred, thresh):
     def wrapper(obs, pred):
         temp = metrics.switch_error_func('LE', obs, pred)
         count = sum(1 for x in temp if x <= thresh and x >= -thresh)
         return count / len(temp)
-    return stats.bootstrap((obs, pred), statistic=wrapper, method='basic', vectorized = False, paired = True, n_resamples = 10000)
+    return stats.bootstrap((obs, pred), statistic=wrapper, method='basic', vectorized = False, paired = True, n_resamples = 1000)
     
 def pearson_call_bootstrapper(obs, pred, label):
     def wrapper(obs, pred):
@@ -228,7 +242,7 @@ def pearson_call_bootstrapper(obs, pred, label):
         else:
             _, metric = metrics.calc_pearson(obs, pred)
         return metric
-    return stats.bootstrap((obs, pred), statistic=wrapper, method='basic', vectorized = False, paired = True, n_resamples = 10000)
+    return stats.bootstrap((obs, pred), statistic=wrapper, method='basic', vectorized = False, paired = True, n_resamples = 1000)
 
 
 def corr_call_bootstrapper(obs, pred, label):
@@ -238,8 +252,7 @@ def corr_call_bootstrapper(obs, pred, label):
         else:
             _, metric = np.polyfit(obs, pred, 1)
         return metric
-    return stats.bootstrap((np.log10(obs), np.log10(pred)), statistic=wrapper, method='basic', vectorized = False, paired = True, n_resamples = 10000)
-
+    return stats.bootstrap((np.log10(obs), np.log10(pred)), statistic=wrapper, method='basic', vectorized = False, paired = True, n_resamples = 1000)
 
 
 
@@ -270,7 +283,7 @@ def time_label_mapping(label):
     return mapped_label
 
 
-def time_uncertainties(df, label, dict):
+def time_uncert_feeder(df, label, dict):
 
     mapped_label = time_label_mapping(label)
     pred_label = 'Predicted ' + mapped_label
@@ -296,22 +309,31 @@ def time_uncertainties(df, label, dict):
             dict[time_metric_mapping(metric_label) + ' Uncertainty'].append(np.nan)
         return
 
+    uncert_dict = calc_time_uncertainties(obs, pred)
+    headers = dict.keys()
+    for he in headers:
+        if 'Uncertainty' in he:
+            dict[he].append(uncert_dict[he])
+        else:
+            pass
+    return
 
-    
+def calc_time_uncertainties(obs, pred):
+    time_dict = metrics_dicts.initialize_time_dict()
     mean_metrics_list = ['E', 'AE']
     for met in mean_metrics_list:
         uncertainty = mean_time_call_bootstrapper(obs, pred, met)
         error = uncertainty.standard_error
-        dict[time_metric_mapping(met) + ' Uncertainty'].append(error)
+        time_dict[time_metric_mapping(met) + ' Uncertainty'].append(error)
 
     for met in mean_metrics_list:
         metric_label = met
         uncertainty = median_time_call_bootstrapper(obs, pred, met)
         error = uncertainty.standard_error
         metric_label = "Med" + metric_label
-        dict[time_metric_mapping(metric_label) + ' Uncertainty'].append(error)
+        time_dict[time_metric_mapping(metric_label) + ' Uncertainty'].append(error)
     
-    return
+    return time_dict
 
 
 
@@ -326,7 +348,7 @@ def mean_time_call_bootstrapper(obs, pred, metric_label):
         if metric_label == 'AE':
             td = [np.abs(x) for x in td]
         return np.nanmean(td)
-    return stats.bootstrap((obs, pred), statistic=wrapper, method='basic', vectorized = False, paired = True, n_resamples = 10000)
+    return stats.bootstrap((obs, pred), statistic=wrapper, method='basic', vectorized = False, paired = True, n_resamples = 1000)
 
 def median_time_call_bootstrapper(obs, pred, metric_label):
     def wrapper(obs, pred):
@@ -338,7 +360,7 @@ def median_time_call_bootstrapper(obs, pred, metric_label):
         if metric_label == 'medAE':
             td = [np.abs(x) for x in td]
         return statistics.median(td)
-    return stats.bootstrap((obs, pred), statistic=wrapper, method='basic', vectorized = False, paired = True, n_resamples = 10000)
+    return stats.bootstrap((obs, pred), statistic=wrapper, method='basic', vectorized = False, paired = True, n_resamples = 1000)
 
 
 def flux_metric_mapping(metric_label):
@@ -384,8 +406,39 @@ def time_metric_mapping(metric_label):
 
 
 
-def probability_uncertainties(df, label, dict):
+def probability_uncert_feeder(df, label, dict):
     
+    
+    # prob_dict_mapping = prob_metric_mappin()
+    
+    mapped_label = 'SEP Probability'
+    pred_label = 'Predicted ' + mapped_label
+    obs_label = 'Observed ' + mapped_label
+    all_clear_true =  df[df['Observed SEP Probability'] == 0.0]
+    all_clear_false = df[df['Observed SEP Probability'] == 1.0]
+
+
+    
+    n_resamples = 1000
+    # scores = prob_dict()
+    for n in range(n_resamples):
+        sub_true = all_clear_true.sample(frac=0.75, replace = True)
+        sub_false = all_clear_false.sample(frac=0.75, replace = True)
+        obs = pd.concat([sub_true[obs_label], sub_false[obs_label]], ignore_index = True)
+        pred = pd.concat([sub_true[pred_label], sub_false[pred_label]], ignore_index = True)
+        prob_dict = calc_prob_uncertainty(obs, pred)
+        
+    
+    for met in prob_dict.keys():
+        dict[prob_metric_mapping(met)+ ' Uncertainty'].append(np.nanstd(prob_dict[met]))
+
+
+    
+
+
+    return
+
+def calc_prob_uncertainty(obs, pred):
     metrics_dict ={
         'brier_score': metrics.calc_brier,
         'brier_skill': metrics.calc_brier_skill,
@@ -399,36 +452,14 @@ def probability_uncertainties(df, label, dict):
         'spearman': [],
         'roc_auc': []
     }
-    # prob_dict_mapping = prob_metric_mappin()
     prob_metrics =  ['brier_score', 'brier_skill', 'spearman', 'roc_auc']
-    mapped_label = 'SEP Probability'
-    pred_label = 'Predicted ' + mapped_label
-    obs_label = 'Observed ' + mapped_label
-    all_clear_true =  df[df['Observed SEP Probability'] == 0.0]
-    all_clear_false = df[df['Observed SEP Probability'] == 1.0]
-
-
-
-    n_resamples = 10000
-    # scores = prob_dict()
-    for n in range(n_resamples):
-        sub_true = all_clear_true.sample(frac=0.75, replace = True)
-        sub_false = all_clear_false.sample(frac=0.75, replace = True)
-        obs = pd.concat([sub_true[obs_label], sub_false[obs_label]], ignore_index = True)
-        pred = pd.concat([sub_true[pred_label], sub_false[pred_label]], ignore_index = True)
-        for met in prob_metrics:
+    for met in prob_metrics:
             current_scores = probability_call_bootstrapper(obs, pred, metrics_dict[met], met)
         
             prob_dict[met].append(current_scores)
-    
-    for met in prob_metrics:
-        dict[prob_metric_mapping(met)+ ' Uncertainty'].append(np.nanstd(prob_dict[met]))
 
 
-    
-
-
-    return
+    return prob_dict
 
 def probability_call_bootstrapper(obs, pred, func, metric):
     def roc_wrapper(obs, pred):  
@@ -454,7 +485,7 @@ def roc_call_bootstrapper(obs, pred):
         roc_auc = skl.auc(fpr, tpr)
         return roc_auc
     
-    return stats.bootstrap((obs, pred), statistic=wrapper, method='basic', vectorized = False, paired = True, n_resamples = 10000)
+    return stats.bootstrap((obs, pred), statistic=wrapper, method='basic', vectorized = False, paired = True, n_resamples = 1000)
 
 
 def prob_metric_mapping(metric_label):
@@ -469,7 +500,7 @@ def prob_metric_mapping(metric_label):
 
 
 
-def all_clear_uncertainties(df, label, dict):
+def all_clear_uncert_feeder(df, label, dict):
     """ 
     This is the most different from the rest of the uncertainies
     as it won't use the scipy library for its bootstrapping. I will
@@ -488,16 +519,29 @@ def all_clear_uncertainties(df, label, dict):
     df = df.dropna(subset='All Clear Match Status')
     all_clear_true =  df[df['Observed SEP All Clear'] == True]
     all_clear_false = df[df['Observed SEP All Clear'] == False]
-    
-    n_resamples = 10000
+    print(len(all_clear_false), len(all_clear_true))
+    print(all_clear_false)
+    print(all_clear_true)
+    # input()
+    if len(all_clear_false) < 2 or len(all_clear_true) < 2:
+        headers = dict.keys()
+        for he in headers:
+            if 'Uncertainty' in he:
+                dict[he].append(np.nan)
+            else:
+                pass
+        return
+    n_resamples = 1000
     scores = scores_dict()
     for n in range(n_resamples):
         sub_true = all_clear_true.sample(frac=0.75, replace = True)
         sub_false = all_clear_false.sample(frac=0.75, replace = True)
 
         sub_current = pd.concat([sub_true, sub_false])
-        current_scores = metrics.calc_contingency_all_clear(sub_current, 'Observed SEP All Clear',
-                'Predicted SEP All Clear')
+        obs = sub_current['Observed SEP All Clear']
+        pred = sub_current['Predicted SEP All Clear']
+        
+        current_scores = contingency_uncertainty(obs, pred)
         for met in current_scores:
             scores[met].append(current_scores[met])
     
@@ -535,7 +579,37 @@ def all_clear_uncertainties(df, label, dict):
     dict['Prevalence Threshold Uncertainty'].append(np.nanstd(scores['PT']))
     dict['Balanced Accuracy Uncertainty'].append(np.nanstd(scores['BA']))
     dict['Fowlkes-Mallows Index Uncertainty'].append(np.nanstd(scores['FM']))
+    return
+
+
+def build_contingency_table(obs, pred):
+    result = (obs == False) & (pred == False)
+    h = result.sum(axis=0)
     
+    #MISSES: obs = False, pred = True
+    result = (obs == False) & (pred == True)
+    m = result.sum(axis=0)
+    
+    #FALSE POSITIVE: obs = True, pred = False
+    result = (obs == True) & (pred == False)
+    f = result.sum(axis=0)
+
+    #TRUE NEGATIVES: obs = True, pred = True
+    result = (obs == True) & (pred == True)
+    c = result.sum(axis=0)
+
+
+
+    return h, m, f, c
+
+
+def contingency_uncertainty(obs, pred):
+    h, m, f, c = build_contingency_table(obs, pred)
+    scores = metrics.contingency_scores(h,m,f,c)
+
+    tau = 1 - (np.sqrt((f/(c + f))**2 + (m/(h + m))**2)/np.sqrt(2))
+    scores['Tau'] = tau
+    return scores
 
 
 def scores_dict():
@@ -581,7 +655,7 @@ def scores_dict():
 
 def time_profile_uncertainties(error_dict, dict):
 
-    n_resamples = 10000
+    n_resamples = 1000
     for key in error_dict.keys():    
         current_metrics = []
         for n in range(n_resamples):
