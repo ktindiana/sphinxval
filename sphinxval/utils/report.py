@@ -255,10 +255,14 @@ _ref_csv_cache: dict = {}
 
 
 def _load_pkl(path: str) -> pd.DataFrame:
-    """Load a pickle file, returning the cached result on subsequent calls."""
+    """Load a selections file (.pkl or .csv), returning the cached result
+    on subsequent calls. .csv files are loaded with pandas.read_csv()."""
     abs_path = os.path.abspath(path)
     if abs_path not in _pkl_cache:
-        _pkl_cache[abs_path] = pd.read_pickle(abs_path)
+        if abs_path.endswith('.csv'):
+            _pkl_cache[abs_path] = pd.read_csv(abs_path)
+        else:
+            _pkl_cache[abs_path] = pd.read_pickle(abs_path)
     return _pkl_cache[abs_path]
 
 
@@ -524,7 +528,10 @@ def build_skill_score_table(labels, values) -> str:
 def append_subset_list(selections_filename: str, subset_list: list, include_after: str, exclusion_pattern: Optional[str] = None) -> list:
     """Extend *subset_list* with column names from the CSV counterpart of
     *selections_filename* that appear after *include_after*."""
-    csv_path = selections_filename.replace('.pkl', '.csv')
+    if selections_filename.endswith('.csv'):
+        csv_path = selections_filename
+    else:
+        csv_path = selections_filename.replace('.pkl', '.csv')
     if not os.path.exists(csv_path):
         logger.warning('CSV counterpart not found: %s', csv_path)
         return subset_list
@@ -692,6 +699,23 @@ def _build_selections_info(selections_filename: str, sphinx_dataframe: pd.DataFr
     return info_str, n_events, subset
 
 
+def _resolve_selections_filename(output_dir: str, basename: str) -> str:
+    """Return the path to a selections file, preferring .pkl over .csv.
+
+    *basename* should be the filename WITHOUT extension (e.g.
+    'all_clear_selections_MAG4_...'). Tries .pkl first; if that doesn't
+    exist, falls back to .csv. Returns the .pkl path regardless if
+    neither exists (so the caller gets a consistent missing-file error).
+    """
+    pkl_path = os.path.join(output_dir, basename + '.pkl')
+    if os.path.exists(pkl_path):
+        return pkl_path
+    csv_path = os.path.join(output_dir, basename + '.csv')
+    if os.path.exists(csv_path):
+        return csv_path
+    return pkl_path  # RETURN pkl PATH SO MISSING-FILE ERRORS ARE CONSISTENT
+
+
 def build_section_content(sdef: SectionDef, filename: str, model: str, sphinx_dataframe: pd.DataFrame, relative_path_plots: bool, output_dir: str, appendage: str = '') -> str:
     """Build the collapsible Markdown content for a single validated-quantity section.
 
@@ -723,10 +747,10 @@ def build_section_content(sdef: SectionDef, filename: str, model: str, sphinx_da
             correct_negatives = data.iloc[i]["All Clear 'True Negatives' (Correct Negatives)"]
             misses = data.iloc[i]["All Clear 'False Negatives' (Misses)"]
             contingency_values = [hits, false_alarms, correct_negatives, misses]
-            selections_filename = os.path.join(
+            selections_filename = _resolve_selections_filename(
                 output_dir,
                 f'all_clear_selections_{model}_{energy_channel}'
-                f'_threshold_{obs_thresh_val}{mismatch_str}{appendage}.pkl'
+                f'_threshold_{obs_thresh_val}{mismatch_str}{appendage}'
             )
             info_str, n_events, subset = _build_selections_info(
                 selections_filename, sphinx_dataframe)
@@ -746,9 +770,10 @@ def build_section_content(sdef: SectionDef, filename: str, model: str, sphinx_da
                 'Predicted SEP Peak Intensity Max (Max Flux)',
             ]
             for awt_string in awt_string_list:
-                selections_filename = (
-                    f'{output_dir}{sdef.tag}_selections_{model}_{energy_channel}'
-                    f'_threshold_{obs_thresh_val}{mismatch_str}_{awt_string}{appendage}.pkl'
+                selections_filename = _resolve_selections_filename(
+                    output_dir,
+                    f'{sdef.tag}_selections_{model}_{energy_channel}'
+                    f'_threshold_{obs_thresh_val}{mismatch_str}_{awt_string}{appendage}'
                 )
                 if os.path.exists(selections_filename):
                     info_str, n_events, _ = _build_selections_info(selections_filename, sphinx_dataframe)
@@ -762,10 +787,10 @@ def build_section_content(sdef: SectionDef, filename: str, model: str, sphinx_da
 
         else:
             # STANDARD: INFO + METRICS + PLOTS
-            selections_filename = os.path.join(
+            selections_filename = _resolve_selections_filename(
                 output_dir,
                 f'{sdef.tag}_selections_{model}_{energy_channel}'
-                f'_threshold_{obs_thresh_val}{mismatch_str}{appendage}.pkl'
+                f'_threshold_{obs_thresh_val}{mismatch_str}{appendage}'
             )
             info_str, n_events, subset = _build_selections_info(selections_filename, sphinx_dataframe)
             n_total += n_events
@@ -945,7 +970,15 @@ def report(output_dir: Optional[str], relative_path_plots: bool, sphinx_datafram
         The SPHINX evaluated dataframe.  If None, read from
         ``output_dir/SPHINX_evaluated.pkl``.
     """
-    output_dir = os.path.join(config.outpath, 'pkl') if output_dir is None else output_dir
+    pkl_dir = os.path.join(config.outpath, 'pkl')
+    csv_dir = os.path.join(config.outpath, 'csv')
+    if output_dir is None:
+        if os.path.isdir(pkl_dir):
+            output_dir = pkl_dir
+        elif os.path.isdir(csv_dir):
+            output_dir = csv_dir
+        else:
+            output_dir = pkl_dir  # DEFAULT EVEN IF NOT YET CREATED
     os.makedirs(config.reportpath, exist_ok=True)
 
     # CLEAR CACHES AT THE START OF EACH CALL SO STALE DATA IS NEVER USED
