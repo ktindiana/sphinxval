@@ -531,9 +531,14 @@ def append_subset_list(selections_filename: str, subset_list: list, include_afte
     if selections_filename.endswith('.csv'):
         csv_path = selections_filename
     else:
-        csv_path = selections_filename.replace('.pkl', '.csv')
+        # CSV COUNTERPARTS LIVE IN output/csv/, NOT output/pkl/ ALONGSIDE
+        # THE PKL FILES. SWAP THE DIRECTORY AS WELL AS THE EXTENSION.
+        csv_path = selections_filename.replace('.pkl', '.csv').replace(
+            os.sep + 'pkl' + os.sep, os.sep + 'csv' + os.sep)
+        # ALSO HANDLE FORWARD-SLASH PATHS (E.G. ON LINUX OR IN RELATIVE PATHS)
+        csv_path = csv_path.replace('/pkl/', '/csv/')
     if not os.path.exists(csv_path):
-        logger.warning('CSV counterpart not found: %s', csv_path)
+        logger.debug('CSV counterpart not found: %s', csv_path)
         return subset_list
     try:
         header = pd.read_csv(csv_path, nrows=0)
