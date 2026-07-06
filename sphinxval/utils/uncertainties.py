@@ -519,9 +519,6 @@ def all_clear_uncert_feeder(df, label, dict):
     df = df.dropna(subset='All Clear Match Status')
     all_clear_true =  df[df['Observed SEP All Clear'] == True]
     all_clear_false = df[df['Observed SEP All Clear'] == False]
-    print(len(all_clear_false), len(all_clear_true))
-    print(all_clear_false)
-    print(all_clear_true)
     # input()
     if len(all_clear_false) < 2 or len(all_clear_true) < 2:
         headers = dict.keys()
@@ -540,7 +537,6 @@ def all_clear_uncert_feeder(df, label, dict):
         sub_current = pd.concat([sub_true, sub_false])
         obs = sub_current['Observed SEP All Clear']
         pred = sub_current['Predicted SEP All Clear']
-        
         current_scores = contingency_uncertainty(obs, pred)
         for met in current_scores:
             scores[met].append(current_scores[met])
