@@ -837,8 +837,6 @@ def fill_all_clear_dict(dict, model, energy_key, thresh_key, pred_energy_key,
     dict["Number SEP Events Missed"].append(n_miss)
     dict["Predicted SEP Events"].append(sep_caught_str)
     dict["Missed SEP Events"].append(sep_miss_str)
-#    dict["Mean Percentage Error"].append(scores[])
-#    dict["Mean Absolute Percentage Error"].append(scores[])
 
 
 
@@ -1401,8 +1399,7 @@ def all_clear_intuitive_metrics(df, dict, model, energy_key, thresh_key,
         sep_miss_str = str(sep_miss[0])
         for jj in range(1,n_miss,1):
             sep_miss_str += ";" + str(sep_miss[jj])
-    
-    
+
     fill_all_clear_dict(dict, model, energy_key, thresh_key, pred_energy_key,
         pred_thresh_key, scores, n_caught, sep_caught_str, n_miss, sep_miss_str)
     uncertainties.feeder_from_sphinx(sub, dict, 'all_clear', config.uncert_boolean)
@@ -1856,13 +1853,9 @@ def peak_intensity_intuitive_metrics(df, dict, model, energy_key, thresh_key,
         MedLE, MAE, MedAE, MALE, MedALE, MPE, MAPE, MSPE, SMAPE,
         MAR, RMSE, RMSLE, MdSA, fact10, fact2)
     
-    # logger.info('BEFORE UNCERT :LJ:LJ:LJ:LJ:LJ:LJ:LJ:LJ:J:LJ:LJ:LJ:LJ:LJ:')
-    # logger.info(str(len(dict)))
 
     uncertainties.feeder_from_sphinx(sub, dict, 'peak_intensity', config.uncert_boolean)
-    # logger.info(str(dict))
-    # logger.info(str(len(dict)))
-    # logger.info('AFTER UNCERT :LJ:LJ:LJ:LJ:LJ:LJ:LJ:LJ:J:LJ:LJ:LJ:LJ:LJ:')
+
 
 
 
