@@ -1,5 +1,6 @@
 #Subroutines related to validation
 from . import object_handler as objh
+from . import units_handler as vunits
 from . import metrics
 from . import plotting_tools as plt_tools
 from . import config
@@ -22,6 +23,7 @@ import scipy
 from pandas.api.types import is_datetime64_any_dtype as is_datetime
 import sklearn.metrics as skl
 import os.path
+import glob
 import logging
 import pickle
 import json
@@ -688,6 +690,166 @@ def write_df(df, name, verbose=True):
         write_func(filepath, **kwargs)
         if verbose:
             logger.debug('Wrote ' + filepath)
+
+def _units_columns_to_string(df):
+    """ Return a copy of df with config.UNITS_COLUMNS converted from live
+        astropy.units.Unit objects to strings, safe for Parquet.
+        None/NaN values are left as-is.
+    """
+    df = df.copy()
+    for col in config.UNITS_COLUMNS:
+        if col in df.columns:
+            df[col] = df[col].apply(
+                lambda u: vunits.convert_units_to_string(u) if u is not None and not pd.isnull(u) else None)
+    return df
+
+
+def _units_columns_from_string(df):
+    """ Return a copy of df with config.UNITS_COLUMNS converted back from strings
+        to live astropy.units.Unit objects, reversing
+        _units_columns_to_string. Used when reading partitions back into
+        a dataframe (e.g. in materialize_for_report.py).
+    """
+    df = df.copy()
+    for col in config.UNITS_COLUMNS:
+        if col in df.columns:
+            df[col] = df[col].apply(
+                lambda s: vunits.convert_string_to_units(s) if s is not None and not pd.isnull(s) else None)
+    return df
+
+
+def write_partition_df(df, name, partition_key, verbose=True):
+    """ Write ONLY new rows (e.g. one run's / one month's worth of data)
+        to a partitioned Parquet dataset, instead of rewriting an entire
+        cumulative pkl/csv file every run.
+
+        This is the storage layer that replaces repeatedly unpickling and
+        re-pickling a single ever-growing SPHINX_cumulative-style file.
+        Each call appends exactly one small file; existing partitions are
+        never re-read or re-written.
+
+        Requires config.partitionpath to be set (e.g. to somewhere on
+        /data/SPHINX/), and requires pyarrow to be installed
+        (pip install pyarrow --break-system-packages).
+
+        INPUT:
+
+            :df: (dataframe) NEW rows only for this run
+            :name: (string) dataset name, e.g. "SPHINX_evaluated" or
+                "SPHINX_removed" -- becomes a subdirectory under
+                config.partitionpath
+            :partition_key: (string) identifies this run's partition
+                file, e.g. "2025-08" -- must be filesystem-safe
+
+        OUTPUT:
+
+            :filepath: (string) path to the partition file written
+    """
+    if df.empty:
+        if verbose:
+            logger.debug('write_partition_df: df for ' + name
+                + ' partition ' + partition_key + ' is empty, skipping write.')
+        return None
+
+    partition_dir = os.path.join(config.partitionpath, name)
+    if not os.path.isdir(partition_dir):
+        os.makedirs(partition_dir)
+
+    filepath = os.path.join(partition_dir, name + '_' + partition_key + '.parquet')
+
+    #CONVERT astropy.units.Unit OBJECTS TO STRINGS -- PARQUET CANNOT
+    #SERIALIZE ARBITRARY PYTHON OBJECTS THE WAY PICKLE CAN
+    parquet_safe_df = _units_columns_to_string(df)
+    parquet_safe_df.to_parquet(filepath, index=False)
+    if verbose:
+        logger.debug('Wrote partition ' + filepath)
+
+    return filepath
+
+
+def read_all_partitions(name, columns=None):
+    """ Read every partition file for a dataset and concatenate them into
+        a single pandas dataframe.
+
+        Deliberately does NOT use pyarrow.dataset(...).to_table() across
+        the whole directory. That approach infers one Arrow schema per
+        file, and a column that is entirely null/NaN in one month's
+        partition gets inferred as Arrow type `null` rather than the
+        column's real dtype (e.g. `double`). When pyarrow.dataset then
+        tries to unify schemas across files, it cannot cast a real value
+        in one file into the `null`-typed schema inferred from another,
+        and raises ArrowNotImplementedError: "Unsupported cast from
+        double to null using function cast_null" (or similar, for other
+        dtypes). Reading each file individually via pandas and
+        concatenating avoids this entirely -- pandas resolves the
+        combined column's dtype from the union of actual values across
+        all rows, the same way it always has for the pipeline's
+        pickle-based dataframes.
+
+        Also requests timestamp_as_object=True: pandas' default parquet
+        read coerces Arrow timestamp columns into numpy datetime64[ns],
+        which only represents dates roughly 1677-2262. Sentinel/
+        placeholder datetime values outside that range (e.g. a
+        far-future "no crossing time yet" marker) overflow that cast
+        with ArrowInvalid: "Casting from timestamp[us] to timestamp[ns]
+        would result in out of bounds timestamp" -- seen in production
+        testing. timestamp_as_object=True keeps such columns as plain
+        Python datetime objects instead, matching how the original
+        pickle-based dataframes held them (pickle never enforced a
+        dtype/range at all).
+
+    INPUT:
+
+        :name: (string) partitioned dataset name, e.g. "SPHINX_evaluated"
+        :columns: (list of string or None) columns to read from each
+            partition file (column pruning still applies per-file)
+
+    OUTPUT:
+
+        :df: (pandas DataFrame) concatenation of all partitions, in
+            filename-sorted order. Empty DataFrame if the partition
+            directory doesn't exist yet or contains no partition files.
+    """
+    partition_dir = os.path.join(config.partitionpath, name)
+    if not os.path.isdir(partition_dir):
+        return pd.DataFrame()
+
+    partition_files = sorted(glob.glob(os.path.join(partition_dir, "*.parquet")))
+    if not partition_files:
+        return pd.DataFrame()
+
+    #READ EACH FILE VIA pyarrow DIRECTLY RATHER THAN pd.read_parquet's
+    #to_pandas_kwargs PASSTHROUGH -- THAT PASSTHROUGH IS NOT CONSISTENTLY
+    #SUPPORTED ACROSS pandas VERSIONS (SEEN IN PRODUCTION: "TypeError:
+    #read_table() got an unexpected keyword argument 'to_pandas_kwargs'",
+    #WHERE THE ARGUMENT WAS FORWARDED TO pyarrow.parquet.read_table()
+    #ITSELF INSTEAD OF TO THE .to_pandas() CONVERSION STEP). CALLING
+    #pyarrow DIRECTLY AVOIDS THAT VERSION DEPENDENCY ENTIRELY.
+    import pyarrow.parquet as pq
+    import pyarrow.types as patypes
+
+    frames = []
+    for f in partition_files:
+        table = pq.read_table(f, columns=columns)
+        #timestamp_as_object=True AVOIDS THE OUT-OF-nanosecond-RANGE CRASH
+        #(SEE read_all_partitions DOCSTRING), BUT IT ALSO TURNS GENUINELY
+        #MISSING VALUES FROM pd.NaT INTO PLAIN Python None -- AND None
+        #RAISES TypeError IN ARITHMETIC WHERE NaT WOULD HAVE PROPAGATED
+        #SAFELY AS NaN (SEEN IN PRODUCTION: awt_metrics' `tc_awt / tc_tat`
+        #FAILING WITH "unsupported operand type(s) for /: 'float' and
+        #'NoneType'"). RESTORE PROPER DATETIME SEMANTICS FOR EVERY COLUMN
+        #THAT WAS ORIGINALLY TIMESTAMP-TYPED: IN-RANGE VALUES AND MISSING
+        #VALUES BOTH GET CORRECT NaT-SAFE BEHAVIOR BACK; A GENUINELY
+        #OUT-OF-RANGE SENTINEL EITHER GETS PRESERVED (IF THIS PANDAS
+        #VERSION SUPPORTS NON-NANOSECOND DATETIME64 RESOLUTION) OR
+        #COERCED TO NaT (OLDER PANDAS) -- EITHER OUTCOME IS ARITHMETIC-SAFE.
+        frame = table.to_pandas(timestamp_as_object=True)
+        for field in table.schema:
+            if patypes.is_timestamp(field.type):
+                frame[field.name] = pd.to_datetime(frame[field.name], errors='coerce')
+        frames.append(frame)
+
+    return pd.concat(frames, ignore_index=True)
 
 
 def fill_sphinx_df(evaluated_sphinx, all_obs_thresholds, profname_dict):
@@ -3532,7 +3694,14 @@ def awt_metrics(df, dict, model, energy_key, thresh_key, validation_type):
 
             if ftype['obs_key'] == '': 
                 tc_tat = sep_sub.iloc[idx]["Trigger Advance Time"]
-                if pd.isnull(tc_awt) or tc_tat == 'NaT':
+                #ORIGINAL GUARD NEVER CHECKED pd.isnull(tc_tat) -- ONLY
+                #pd.isnull(tc_awt) (THE WRONG VARIABLE) AND A STRING
+                #COMPARISON tc_tat == 'NaT' THAT NEVER MATCHES A REAL
+                #NaN/None VALUE. A GENUINELY MISSING Trigger Advance Time
+                #COULD REACH THE DIVISION BELOW AND RAISE:
+                #TypeError: unsupported operand type(s) for /: 'float' and 'NoneType'
+                #if pd.isnull(tc_awt) or tc_tat == 'NaT':
+                if pd.isnull(tc_awt) or pd.isnull(tc_tat) or tc_tat == 'NaT':
                     awteff = 0.0
                 else:
                     awteff = tc_awt / tc_tat
@@ -3936,10 +4105,7 @@ def validation_explanation():
     logger.info("============================")
     logger.info("")
     
-
-def intuitive_validation(evaluated_sphinx, removed_sphinx, model_names,
-    all_energy_channels, all_observed_thresholds, observed_sep_events,
-    profname_dict, r_df=None, r_obs= None, r_mod= None, uncertainty = config.uncert_boolean):
+def intuitive_validation(evaluated_sphinx, removed_sphinx, model_names, all_energy_channels, all_observed_thresholds, observed_sep_events, profname_dict, resuming=False, resume_metadata=None, r_df=None, r_obs=None, r_mod=None, uncertainty=config.uncert_boolean):
     """ In the intuitive_validation subroutine, forecasts are validated in a
         way similar to which people would interpret forecasts.
     
@@ -4017,40 +4183,95 @@ def intuitive_validation(evaluated_sphinx, removed_sphinx, model_names,
     logger.info("Completed filling removed_sphinx dataframe. ")
 
 
-    ### RESUME WILL APPEND DF TO PREVIOUS DF
-    if r_df is not None:
-        logger.info("RESUME: Resuming from a previous run. Concatenating current and previous forecasts, ensuring that any duplicates are removed. ")
- 
-        df = pd.concat([r_df, df], ignore_index=True)
-        df, duplicate_df = duplicates.remove_sphinx_duplicates(df,"Duplicate in resume dataframe")
-        #Add the duplicates discarded from df
-        df_not = pd.concat([df_not,duplicate_df])
-        logger.debug("RESUME: Completed concatenation and removed any duplicates. Writing SPHINX_evaluated dataframe to file.")
+    ### RESUME: CHECK NEW ROWS AGAINST A LIGHTWEIGHT HISTORICAL INDEX
+    ### INSTEAD OF LOADING/CONCATENATING/RE-HASHING A FULL HISTORICAL
+    ### DATAFRAME. THIS IS WHAT ELIMINATES THE MemoryError THAT MOTIVATED
+    ### THIS REFACTOR: NO STEP BELOW HOLDS MORE THAN ONE RUN'S NEW DATA
+    ### PLUS THE SMALL INDEX/METADATA FILES IN MEMORY AT ONCE.
+    partition_key = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    if resuming:
+        logger.info("RESUME: Checking new forecasts against historical index.")
 
-        model_names = resume.identify_unique(df, 'Model')
-        all_energy_channels = resume.identify_unique(df, 'Energy Channel Key')
-        all_observed_thresholds = resume.identify_thresholds_per_energy_channel(df)
+        index_path = os.path.join(config.partitionpath, "SPHINX_evaluated_index.parquet")
+        index_df = None
+        if os.path.isfile(index_path):
+            index_df = pd.read_parquet(index_path)
+
+        df, duplicate_df, new_index_rows = duplicates.remove_new_duplicates_against_index(
+            df, index_df, "Duplicate already present in resume history")
+        df_not = pd.concat([df_not, duplicate_df])
+        logger.debug("RESUME: Completed index-based duplicate check.")
+
+        #APPEND NEW ROWS' HASHES TO THE PERSISTED INDEX SO FUTURE RUNS
+        #DON'T NEED TO RE-DERIVE THEM FROM FULL HISTORICAL DATA
+        if index_df is None or index_df.empty:
+            updated_index = new_index_rows
+        else:
+            updated_index = pd.concat([index_df, new_index_rows], ignore_index=True)
+        if not os.path.isdir(config.partitionpath):
+            os.makedirs(config.partitionpath)
+        updated_index.to_parquet(index_path, index=False)
+
+        #UNION THIS RUN'S MODELS/ENERGY CHANNELS/THRESHOLDS WITH THE SMALL
+        #PERSISTED METADATA STATE -- NO FULL DATAFRAME NEEDED FOR THIS
+        metadata_path = os.path.join(config.partitionpath, "SPHINX_metadata.pkl")
+        prev_models = resume_metadata['models'] if resume_metadata else []
+        prev_energy_channels = resume_metadata['energy_channels'] if resume_metadata else []
+        prev_thresholds = resume_metadata['thresholds'] if resume_metadata else {}
+
+        model_names = sorted(set(prev_models) | set(model_names))
+        all_energy_channels = sorted(set(prev_energy_channels) | set(all_energy_channels))
+        merged_thresholds = dict(prev_thresholds)
+        for ek, tks in all_observed_thresholds.items():
+            merged_thresholds[ek] = sorted(set(merged_thresholds.get(ek, [])) | set(tks))
+        all_observed_thresholds = merged_thresholds
+
+        resume.write_metadata(metadata_path, model_names, all_energy_channels, all_observed_thresholds)
     ### RESUME COMPLETED
-    
-    #Write SPHINX dataframe to file
-    write_df(df, "SPHINX_evaluated")
-    profile_output(df, r_obs, r_mod)
-    logger.debug("Completed writing SPHINX_evaluated dataframe to file.")
+    #WRITE ONLY THIS RUN'S NEW, DEDUPED ROWS AS A PARTITION -- NEVER A
+    #FULL REWRITE OF ALL HISTORY, AND NEVER write_df (PICKLE) ON A
+    #FULL-HISTORY DATAFRAME.
+    write_partition_df(df, "SPHINX_evaluated", partition_key)
+    logger.debug("Wrote new SPHINX_evaluated partition for this run.")
 
-    #Write NOT EVALUATED SPHINX dataframe to file
-    write_df(df_not, "SPHINX_removed")
-    logger.debug("Completed writing SPHINX_removed dataframe to file.")
+    write_partition_df(df_not, "SPHINX_removed", partition_key)
+    logger.debug("Wrote new SPHINX_removed partition for this run.")
+
+    #RECONSTRUCT FULL-HISTORY df FOR METRICS CALCULATION AND THE RETURN
+    #VALUE. calculate_intuitive_metrics STILL NEEDS FULL HISTORY
+    #THIS RECONSTRUCTION USES A BOUNDED COLUMNAR PARQUET READ
+    #(NOT THE OLD PICKLE ROUND-TRIP), SO IT DOES NOT REINTRODUCE THE
+    #ORIGINAL MemoryError SOURCE, BUT IT IS NOT FREE -- IT IS BOUNDED BY
+    #TOTAL HISTORY SIZE.
+    if resuming:
+        logger.info("Reconstructing full-history dataframe from partitions "
+            "for metrics calculation.")
+        try:
+            full_df = read_all_partitions("SPHINX_evaluated")
+        except MemoryError:
+            logger.error("MemoryError reconstructing full-history dataframe "
+                "from partitions for metrics calculation. Total history has "
+                "grown large enough that even a per-partition read no longer "
+                "fits in memory. This is the point at which calculate_intuitive_metrics "
+                "needs to become truly incremental rather than reading full "
+                "history each run.")
+            raise
+        full_df = _units_columns_from_string(full_df)
+    else:
+        full_df = df
 
     validation_type = ["All","First", "Last", "Max", "Mean"]
     for type in validation_type:
         logger.info("-----------Starting validation of " + type +" forecasts-------------")
         calculate_intuitive_metrics(df, model_names, all_energy_channels,
-                all_observed_thresholds, type, uncertainty = uncertainty,)
+                all_observed_thresholds, type, uncertainty=uncertainty)
 
     #Record explanatory information to the log
     validation_explanation()
     
+    #NOTE: profile_output ONLY NEEDS THIS RUN'S NEW ROWS, NOT FULL HISTORY
+    profile_output(df, r_obs, r_mod)
+
     logger.info("intuitive_validation: Validation process complete.")
 
-    return df   
- 
+    return full_df

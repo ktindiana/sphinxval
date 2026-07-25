@@ -17,11 +17,17 @@ parser.add_argument("--TopDirectory", default=None,
             "specify the base path in which the model json and time profile txt files "
             "might be found. Optional. "))
 parser.add_argument("--Resume", type=str, default=None,
-        help=("Specify filename of existing Pandas DataFrame containing the results of a previous SPHINX run (pkl) to add forecasts to an existing "
-            "dataframe and recalculate metrics."))
+        help=("Set to any value to enable resume mode. History is read from "
+            "the partitioned data at --PartitionPath (or config.partitionpath) "
+            "via a lightweight index/metadata, not a single pkl file -- this "
+            "is no longer interpreted as a filename."))
 parser.add_argument("--ResumeProfiles", nargs = '+', default=None,
         help=("Specify the path and filename of existing profile dictionaries (as pkl) containing the observed and model profiles. "
             "This is in the form of two strings seperated by a space, each string with a set of quotes around it"))
+parser.add_argument("--PartitionPath", type=str, default=None,
+        help=("Directory for partitioned SPHINX_evaluated/SPHINX_removed data, the "
+            "duplicate index, and metadata. Overrides config.partitionpath for this "
+            "run. If not given, config.partitionpath (as set in config.py) is used."))
 parser.add_argument("--RelativePathPlots", type=bool, default=True, \
         help=("Generate reports with relative paths for plots"))
 parser.add_argument("--Uncertainty", action = 'store_true', default=cfg.uncert_boolean, \
@@ -54,7 +60,16 @@ try:
     else:
         resume_obs = None
         resume_model = None
-    sphinx_df = sphinxval.sphinx.validate(args.DataList, args.ModelList, top=args.TopDirectory, Resume=args.Resume, resume_obs = resume_obs, resume_model = resume_model, uncertainty = args.Uncertainty)
+    sphinx_df = sphinxval.sphinx.validate(
+        args.DataList,
+        args.ModelList,
+        top=args.TopDirectory,
+        Resume=args.Resume,
+        resume_obs=resume_obs,
+        resume_model=resume_model,
+        uncertainty=args.Uncertainty,
+        partitionpath=args.PartitionPath
+        )
     sphinxval.sphinx.report.report(None, args.RelativePathPlots, sphinx_dataframe=sphinx_df)
 
 except:

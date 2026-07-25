@@ -18,8 +18,8 @@ logging.getLogger("MARKDOWN").setLevel(logging.WARNING)
 logging.getLogger("matplotlib").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
+def validate(data_list, model_list, top=None, Resume=None, resume_obs=None, resume_model=None, uncertainty=cfg.uncert_boolean, partitionpath=None):
 
-def validate(data_list, model_list, top=None, Resume=None, resume_obs = None, resume_model = None, uncertainty = cfg.uncert_boolean):
     """ Validate ingests a list of observations (data_list) and a
         list of predictions (model_list).
         
@@ -39,8 +39,17 @@ def validate(data_list, model_list, top=None, Resume=None, resume_obs = None, re
             :model_list: (string array) filenames of model prediction jsons
             :top: (string) top directory in which to search for time profile
                 files. Directory containing model jsons and .txt files.
-            :Resume: (string) filename of pickle file containing previously
-                calculated dataframe. New predictions will be appended.
+            :Resume: (any non-None value) enables resume mode. No longer
+                interpreted as a filename -- history is now read from
+                config.partitionpath (or the partitionpath override
+                below) via a lightweight index/metadata, not a single
+                growing pickle file.
+            :partitionpath: (string or None) if given, overrides
+                config.partitionpath for this run -- the directory where
+                partitioned SPHINX_evaluated/SPHINX_removed data, the
+                duplicate index, and metadata are read from and written
+                to. If None, config.partitionpath (as set in config.py)
+                is used.
                 
         OUTPUT:
         
@@ -51,19 +60,30 @@ def validate(data_list, model_list, top=None, Resume=None, resume_obs = None, re
     logger.info("SPHINX called with: " + " ".join(sys.argv))
     logger.info("Starting SPHINX Validation and reading in files.")
 
-
+    #OVERRIDE THE MODULE-LEVEL config.partitionpath FOR THIS RUN IF THE
+    #CALLER PASSED ONE IN. EVERY DOWNSTREAM FUNCTION (write_partition_df,
+    #intuitive_validation'S RESUME BLOCK, ETC.) READS config.partitionpath
+    #DIRECTLY, SO SETTING IT HERE IS WHAT MAKES IT EFFECTIVE THROUGHOUT
+    #THE REST OF THIS RUN.
+    if partitionpath is not None:
+        logger.info(f"Overriding config.partitionpath with: {partitionpath}")
+        cfg.partitionpath = partitionpath
 
     #### RESUME ####
-    #If resuming, read in the dataframe specified by the user.
-    #Can use SPHINX_dataframe.pkl from a previous run, because will not
-    #have overwritten by this point.
-    r_df = None
+    #IF RESUMING, READ THE LIGHTWEIGHT HISTORICAL INDEX AND METADATA
+    #INSTEAD OF THE FULL HISTORICAL SPHINX DATAFRAME. THIS ELIMINATES THE
+    #UPSTREAM FULL-HISTORY UNPICKLE THAT CAUSED THE MemoryError.
+    resume_index_df = None
+    resume_metadata = None
     r_obs_prof = None
     r_model_prof = None
     if Resume is not None:
-        logger.info("RESUME: Reading in previous dataframe: "
-            + Resume)
-        r_df = resume.read_in_df(Resume)
+        logger.info("RESUME: Reading lightweight historical index and metadata "
+                            "instead of full historical dataframe.")
+        index_path = os.path.join(cfg.partitionpath, "SPHINX_evaluated_index.parquet")
+        metadata_path = os.path.join(cfg.partitionpath, "SPHINX_metadata.pkl")
+        resume_index_df = resume.read_in_index(index_path, columns=["Forecast Source"])
+        resume_metadata = resume.read_in_metadata(metadata_path)
     if resume_obs is not None and resume_model is not None:
         r_obs_prof, r_model_prof = resume.read_in_profile_dicts(resume_obs, resume_model)
     elif resume_obs is not None and resume_model is None or resume_model is not None and resume_obs is None:
@@ -101,7 +121,7 @@ def validate(data_list, model_list, top=None, Resume=None, resume_obs = None, re
     #Compare the newly read in forecasts to the resume dataframe and remove
     #any duplicates from the new forecasts
     if Resume is not None:
-        model_objs, removed_resume = duplicates.remove_resume_duplicates(r_df, model_objs)
+        model_objs, removed_resume = duplicates.remove_resume_duplicates(resume_index_df, model_objs)
     ################
     
     
@@ -124,12 +144,22 @@ def validate(data_list, model_list, top=None, Resume=None, resume_obs = None, re
         removed_sphinx = duplicates.add_to_not_evaluated(removed_sphinx, removed_resume, "Duplicate forecast already present in the resume dataframe")
 
     #Perform intuitive validation
-    sphinx_df = valid.intuitive_validation(evaluated_sphinx, removed_sphinx, model_names,
-        all_energy_channels, all_observed_thresholds, observed_sep_events, profname_dict, r_df=r_df, r_obs = r_obs_prof, r_mod = r_model_prof, uncertainty = uncertainty)
+    sphinx_df = valid.intuitive_validation(
+        evaluated_sphinx,
+        removed_sphinx,
+        model_names,
+        all_energy_channels,
+        all_observed_thresholds,
+        observed_sep_events,
+        profname_dict,
+        resuming=(Resume is not None),
+        resume_metadata=resume_metadata,
+        r_obs=r_obs_prof,
+        r_mod=r_model_prof,
+        uncertainty=uncertainty
+    )
+
+
     logger.info("Completed validation.")
 
-
     return sphinx_df
-
-
-    
