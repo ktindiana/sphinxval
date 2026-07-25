@@ -9,11 +9,13 @@ outpath = './output'
 referencepath = './reference'
 reportpath = './reports'
 logpath = './logs'
-baseurlpath = None
 #profile paths
 model_prof_path = './output/json/model_profiles.json'
 obs_prof_path = './output/json/observed_profiles.json'
-#baseurlpath = 'https://web-dev.ccmc.smce.nasa.gov:8001/sphinx'
+#partitionpath = '/data/SPHINX/active/partitions'
+partitionpath = './data/partitions'
+os.makedirs(partitionpath, exist_ok=True)
+baseurlpath = 'https://web-dev.ccmc.smce.nasa.gov:8001/sphinx'
 
 ######SHORTNAME#####
 # Set to a list of items if you want to group a model's submodules to share
@@ -25,6 +27,58 @@ shortname_grouping = [
     ('UMASEP-30 .*', 'UMASEP-30'),
     ('UMASEP-50 .*', 'UMASEP-50'),
     ('UMASEP-500 .*', 'UMASEP-500')
+]
+
+#KEY COLUMNS THAT UNIQUELY IDENTIFY A FORECAST ROW. SHARED BY
+#sphinxval.utils.duplicates.remove_sphinx_duplicates AND
+#sphinxval.utils.duplicates.remove_new_duplicates_against_index SO BOTH
+#FUNCTIONS AGREE ON WHAT COUNTS AS A DUPLICATE. CANNOT USE ALL DF ENTRIES
+#BECAUSE THE HASH COMMAND CANNOT HASH LISTS.
+SPHINX_KEY_COLUMNS = ["Model", "Energy Channel Key", "Threshold Key", "Mismatch Allowed",
+        "Prediction Energy Channel Key", "Prediction Threshold Key", "Prediction Window Start",
+        "Prediction Window End", "Prediction Number of CMEs","Prediction CME Start Time",
+        "Prediction CME Liftoff Time", "Prediction CME Latitude", "Prediction CME Longitude",
+        "Prediction CME Speed", "Prediction CME Half Width", "Prediction CME PA",
+        "Prediction Number of Flares", "Prediction Flare Latitude", "Prediction Flare Longitude",
+        "Prediction Flare Start Time", "Prediction Flare Peak Time", "Prediction Flare End Time",
+        "Prediction Flare Last Data Time", "Prediction Flare Intensity",
+        "Prediction Flare Integrated Intensity", "Prediction Flare NOAA AR",
+        "Observed SEP CME Start Time",
+        "Observed SEP CME Liftoff Time", "Observed SEP CME Latitude", "Observed SEP CME Longitude",
+        "Observed SEP CME Speed", "Observed SEP CME Half Width", "Observed SEP CME PA",
+        "Observed SEP Flare Latitude", "Observed SEP Flare Longitude",
+        "Observed SEP Flare Start Time", "Observed SEP Flare Peak Time",
+        "Observed SEP Flare End Time",
+        "Observed SEP Flare Intensity",
+        "Observed SEP Flare Integrated Intensity", "Observed SEP Flare NOAA AR",
+        "Observatory", "Observed SEP All Clear",
+        "Predicted SEP All Clear", "Predicted SEP All Clear Probability Threshold",
+        "All Clear Match Status", "Predicted SEP Probability",
+        "Probability Match Status", "Predicted SEP Threshold Crossing Time",
+        "Threshold Crossing Time Match Status", "Predicted SEP Start Time",
+        "Start Time Match Status", "Predicted SEP End Time", "End Time Match Status",
+        "Predicted SEP Duration", "Duration Match Status", "Predicted SEP Fluence",
+        "Fluence Match Status", "Predicted SEP Peak Intensity (Onset Peak)",
+        "Peak Intensity Match Status", "Predicted SEP Peak Intensity Max (Max Flux)",
+        "Peak Intensity Max Match Status", "Predicted Point Intensity",
+        "Predicted Time Profile", "Time Profile Match Status"]
+
+#COLUMNS THAT HOLD LIVE astropy.units.Unit OBJECTS RATHER THAN STRINGS.
+#PARQUET CANNOT SERIALIZE ARBITRARY PYTHON OBJECTS (UNLIKE PICKLE), SO
+#THESE MUST BE CONVERTED TO STRINGS BEFORE write_partition_df AND BACK TO
+#Unit OBJECTS AFTER READING PARTITIONS BACK INTO A DATAFRAME.
+UNITS_COLUMNS = [
+    "Observed SEP Peak Intensity (Onset Peak) Units",
+    "Observed SEP Peak Intensity Max (Max Flux) Units",
+    "Observed Point Intensity Units",
+    "Observed Max Flux in Prediction Window Units",
+    "Observed SEP Fluence Units",
+    "Observed SEP Fluence Spectrum Units",
+    "Predicted Point Intensity Units",
+    "Predicted SEP Peak Intensity (Onset Peak) Units",
+    "Predicted SEP Peak Intensity Max (Max Flux) Units",
+    "Predicted SEP Fluence Units",
+    "Predicted SEP Fluence Spectrum Units",
 ]
 
 # SEP Profile Path Appendages

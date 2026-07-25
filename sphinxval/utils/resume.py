@@ -32,6 +32,73 @@ def read_in_df(filename):
 
 
 
+def read_in_index(filename, columns=None):
+    """ Read in the lightweight duplicate-tracking index (Parquet), instead
+        of a full historical SPHINX dataframe. Returns None if the file
+        doesn't exist yet (first run).
+
+    INPUT:
+
+        :filename: (string) path to the index Parquet file
+        :columns: (list of string or None) if given, only these columns
+            are read from disk (e.g. ["Forecast Source"] when the caller
+            doesn't need RowHash)
+
+    OUTPUT:
+
+        :index_df: (pandas DataFrame or None)
+
+    """
+    import os
+    if not os.path.isfile(filename):
+        return None
+    return pd.read_parquet(filename, columns=columns)
+
+
+def read_in_metadata(filename):
+    """ Read in the small persisted metadata dict (models, energy channels,
+        thresholds) built up incrementally across resumed runs. Returns
+        None if the file doesn't exist yet (first run).
+
+    OUTPUT:
+
+        :metadata: (dict or None) with keys 'models', 'energy_channels',
+            'thresholds' (dict of energy_channel -> list of threshold keys)
+
+    """
+    import os
+    if not os.path.isfile(filename):
+        return None
+    try:
+        pklfile = open(filename, "rb")
+        metadata = pickle.load(pklfile)
+        return metadata
+    except:
+        logger.error("Cannot open pickle file containing "
+            f"resume metadata. Please check the filename: {filename}")
+        sys.exit()
+
+
+def write_metadata(filename, models, energy_channels, thresholds):
+    """ Persist the small metadata dict so future resumed runs don't need
+        to re-derive unique models/energy channels/thresholds from a full
+        historical dataframe.
+
+    INPUT:
+
+        :filename: (string) path to write the metadata pickle
+        :models: (list of string)
+        :energy_channels: (list of string)
+        :thresholds: (dict) energy_channel -> list of threshold keys
+
+    """
+    metadata = {'models': list(models), 'energy_channels': list(energy_channels),
+        'thresholds': thresholds}
+    pklfile = open(filename, "wb")
+    pickle.dump(metadata, pklfile)
+    pklfile.close()
+
+
 def identify_unique(df, value):
     """ Find all unique values in df and output list.
         Find all models, energy channels, thresholds, etc

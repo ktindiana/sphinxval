@@ -20,6 +20,7 @@ import PyPDF2 as pdf
 
 from . import config
 from . import make_index
+from . import validation
 
 # SUPPRESS CHAINED-ASSIGNMENT WARNINGS FROM PANDAS; THE ASSIGNMENTS IN
 # build_info_events_table ARE INTENTIONAL (OPERATING ON AN EXPLICIT COPY)
@@ -245,11 +246,11 @@ _SECTION_DEFS = [
 # CACHES — AVOID REDUNDANT DISK I/O ACROSS MODELS AND APPENDAGES
 # -----------------------------------------------------------------------
 
-# PKL CACHE: KEYED BY ABSOLUTE FILE PATH → LOADED DATAFRAME.
+# PKL CACHE: KEYED BY ABSOLUTE FILE PATH -> LOADED DATAFRAME.
 # CLEARED AT THE START OF EACH report() CALL.
 _pkl_cache: dict = {}
 
-# REFERENCE CSV CACHE: KEYED BY ABSOLUTE FILE PATH → RENDERED MARKDOWN.
+# REFERENCE CSV CACHE: KEYED BY ABSOLUTE FILE PATH -> RENDERED MARKDOWN.
 # REFERENCE SHEETS NEVER CHANGE BETWEEN MODELS.
 _ref_csv_cache: dict = {}
 
@@ -535,7 +536,7 @@ def append_subset_list(selections_filename: str, subset_list: list, include_afte
         # THE PKL FILES. SWAP THE DIRECTORY AS WELL AS THE EXTENSION.
         csv_path = selections_filename.replace('.pkl', '.csv').replace(
             os.sep + 'pkl' + os.sep, os.sep + 'csv' + os.sep)
-        
+
         csv_path = csv_path.replace('/pkl/', '/csv/')
     if not os.path.exists(csv_path):
         logger.debug('CSV counterpart not found: %s', csv_path)
@@ -561,10 +562,39 @@ def build_info_events_table(filename: str, sphinx_dataframe: pd.DataFrame, subse
     data = _load_pkl(filename)
     subset = data[subset_list].copy()
     subset.insert(0, 'Observatory', '')
-    selection_index = list(data.index)
-    subset['Observatory'] = sphinx_dataframe.loc[selection_index, 'Observatory'].to_list()
-    subset['Observed SEP Start Time'] = sphinx_dataframe.loc[selection_index, 'Observed SEP Start Time'].to_list()
-    subset['Observed SEP End Time'] = sphinx_dataframe.loc[selection_index, 'Observed SEP End Time'].to_list()
+
+    # JOIN ON THE COMPOSITE KEY (Forecast Source, Model, Energy Channel Key, Threshold Key)
+    #
+    # NOTE: sphinx_dataframe ARRIVES HERE ALREADY DEDUPLICATED AND INDEXED
+    # ON THE COMPOSITE KEY BY report() -- NOT A FLAT DATAFRAME. .reindex()
+    # AGAINST A PRE-BUILT INDEX IS USED INSTEAD OF .merge() BECAUSE THIS
+    # FUNCTION IS CALLED ONCE PER (model, energy channel, threshold,
+    # section type) COMBINATION
+    key_cols = ['Forecast Source', 'Model', 'Energy Channel Key', 'Threshold Key']
+    missing_key_cols = [c for c in key_cols if c not in data.columns]
+    if missing_key_cols:
+        raise ValueError(
+            f'build_info_events_table: selections file {filename} is '
+            f'missing expected key column(s) {missing_key_cols} needed to '
+            f'look up Observatory/Start Time/End Time. Cannot safely '
+            f'proceed without risking misaligned data.')
+    joined = sphinx_dataframe.reindex(
+        pd.MultiIndex.from_frame(data[key_cols])).reset_index(drop=True)
+
+    # SAFETY NET: IF THE COMPOSITE KEY EVER TURNS OUT NOT TO BE UNIQUE FOR
+    # SOME OTHER SELECTIONS FILE (UNVERIFIED BEYOND THE PRODUCTION DATA
+    # CHECKED), THIS WOULD SHOW UP AS A LENGTH MISMATCH. FAIL LOUDLY HERE
+    # RATHER THAN SILENTLY MISALIGN DATA.
+    if len(joined) != len(data):
+        raise ValueError(
+            f'build_info_events_table: reindex on the composite key '
+            f'produced {len(joined)} rows from {len(data)} input rows for '
+            f'{filename}. The key may not be unique for this selections '
+            f'file -- investigate before trusting this report section.')
+
+    subset['Observatory'] = joined['Observatory'].to_list()
+    subset['Observed SEP Start Time'] = joined['Observed SEP Start Time'].to_list()
+    subset['Observed SEP End Time'] = joined['Observed SEP End Time'].to_list()
     if len(subset) > selections_limit:
         subset = subset.iloc[:selections_limit]
         limit_message = (
@@ -851,8 +881,9 @@ def get_image_string(original_string: str) -> str:
     """Extract the image path from a Markdown image string ``![](...)``.
     Handles paths that themselves contain parentheses."""
     if original_string.count('(') > 1 or original_string.count(')') > 1:
-        last_close = len(original_string) - original_string[::-1].index(')') - 1
-        return original_string.split('![](')[1][:last_close]
+        after_prefix = original_string.split('![](')[1]
+        last_close = len(after_prefix) - after_prefix[::-1].index(')') - 1
+        return after_prefix[:last_close]
     return original_string.split('![](')[1].split(')')[0]
 
 
@@ -972,8 +1003,11 @@ def report(output_dir: Optional[str], relative_path_plots: bool, sphinx_datafram
     relative_path_plots : bool
         If True, embed plot paths as relative paths in reports.
     sphinx_dataframe : pandas.DataFrame or None
-        The SPHINX evaluated dataframe.  If None, read from
-        ``output_dir/SPHINX_evaluated.pkl``.
+        The SPHINX evaluated dataframe.  If None, only the columns
+        report() actually needs (Model, Forecast Source, Observatory,
+        Observed SEP Start/End Time) are read directly from partitioned
+        data at config.partitionpath -- no flat SPHINX_evaluated.pkl is
+        required.
     """
     pkl_dir = os.path.join(config.outpath, 'pkl')
     csv_dir = os.path.join(config.outpath, 'csv')
@@ -991,10 +1025,46 @@ def report(output_dir: Optional[str], relative_path_plots: bool, sphinx_datafram
     _pkl_cache.clear()
     _ref_csv_cache.clear()
 
+    # WHEN NO IN-MEMORY sphinx_dataframe IS SUPPLIED (THE bin/report.py
+    # STANDALONE PATH), READ ONLY THE COLUMNS report() ACTUALLY USES
+    # DIRECTLY FROM PARTITIONS, INSTEAD OF DEPENDING ON A FULL FLAT
+    # SPHINX_evaluated.pkl. report() ONLY EVER NEEDS 'Model' (FOR THE
+    # MODEL LIST BELOW) AND 'Forecast Source'/'Observatory'/
+    # 'Observed SEP Start Time'/'Observed SEP End Time' (FOR
+    # build_info_events_table's LOOKUP) -- NEVER THE FULL 70+ COLUMN,
+    # FULL-HISTORY DATAFRAME
     if sphinx_dataframe is None:
-        pkl_path = os.path.join(output_dir, 'SPHINX_evaluated.pkl')
-        logger.info('No SPHINX dataframe supplied; reading from %s', pkl_path)
-        sphinx_dataframe = pd.read_pickle(pkl_path)
+        logger.info('No SPHINX dataframe supplied; reading needed columns '
+            'directly from partitions.')
+        needed_columns = ['Model', 'Energy Channel Key', 'Threshold Key',
+            'Forecast Source', 'Observatory',
+            'Observed SEP Start Time', 'Observed SEP End Time']
+        sphinx_dataframe = validation.read_all_partitions('SPHINX_evaluated',
+            columns=needed_columns)
+        if sphinx_dataframe.empty:
+            logger.error('No partitioned SPHINX_evaluated data found at '
+                '%s -- has any validation run written partitions yet?',
+                config.partitionpath)
+            return
+
+    # DEDUPLICATE AND BUILD A HASH INDEX EXACTLY ONCE HERE, REGARDLESS OF
+    # WHETHER sphinx_dataframe WAS SUPPLIED IN-MEMORY (bin/sphinx.py) OR
+    # JUST READ ABOVE (bin/report.py STANDALONE). build_info_events_table
+    # USED TO CALL sphinx_dataframe.loc[list(data.index), ...]
+    # (POSITIONAL, FRAGILE -- SEE THAT FUNCTION'S DOCSTRING) AND, IN AN
+    # EARLIER VERSION OF THIS FIX, .merge() AGAINST THE FULL DATAFRAME --
+    # ON EVERY SINGLE CALL, ONCE PER (model, energy channel, threshold,
+    # section type) COMBINATION. FOR A MODEL WITH ~187 SUCH FILES (SEEN IN
+    # PRODUCTION: ZEUS+iPATH_CME), EVEN A REPEATED .merge() AGAINST AN
+    # ALREADY-DEDUPLICATED ~6.35M-ROW TABLE PROJECTED TO ~9 MINUTES OF
+    # REDUNDANT WORK. BUILDING THE HASH INDEX ONCE (set_index) AND REUSING
+    # IT VIA .reindex() PER CALL INSTEAD MEASURED MUCH FASTER.
+    #
+    # models MUST BE DERIVED BEFORE sphinx_dataframe IS CONVERTED TO THE
+    # INDEXED LOOKUP BELOW, SINCE THE INDEXED VERSION NO LONGER CARRIES
+    # 'Model' AS A REGULAR COLUMN.
+    key_cols = ['Forecast Source', 'Model', 'Energy Channel Key', 'Threshold Key']
+    sphinx_dataframe_deduped = sphinx_dataframe.drop_duplicates(subset=key_cols)
 
     try:
         files = sorted(f for f in os.listdir(output_dir) if f != 'desktop.ini')
@@ -1002,24 +1072,41 @@ def report(output_dir: Optional[str], relative_path_plots: bool, sphinx_datafram
         logger.error('Output directory not found: %s', output_dir)
         return
 
-    models = sorted(set(sphinx_dataframe['Model']))
+    models = sorted(set(sphinx_dataframe_deduped['Model']))
     git_info_text = _build_git_info_text()
+
+    # NOW SAFE TO BUILD THE INDEXED LOOKUP -- models HAS ALREADY BEEN
+    # DERIVED ABOVE.
+    sphinx_dataframe = sphinx_dataframe_deduped.set_index(key_cols)[
+        ['Observatory', 'Observed SEP Start Time', 'Observed SEP End Time']]
+    del sphinx_dataframe_deduped
 
     # PRE-INDEX FILES FOR O(1) SECTION-PRESENCE LOOKUPS.
     # BUILD A SET OF (tag, model, appendage) TUPLES FROM THE PKL FILENAMES
     # IN output_dir SO THE INNER LOOPS DON'T NEED TO SCAN THE FULL LIST.
+    #
+    # NOTE: THE MODEL-MATCHING SCAN (after_prefix.startswith(model)) IS
+    # DONE ONCE PER (fname, sdef) HERE, THEN REUSED ACROSS ALL APPENDAGES
+    # -- NOT RE-SCANNED FOR EVERY APPENDAGE AS BEFORE. THIS PRESERVES THE
+    # EXACT ORIGINAL MATCHING SEMANTICS (INCLUDING THAT IT DOES NOT BREAK
+    # ON THE FIRST MATCH: IF ONE MODEL NAME IS A STRING-PREFIX OF ANOTHER,
+    # E.G. "Model1" OF "Model10", BOTH STILL GET ADDED AS THEY DID
+    # ORIGINALLY -- THAT PRE-EXISTING AMBIGUITY IS UNCHANGED AND NOT
+    # SOMETHING THIS PATCH DECIDES TO RESOLVE).
     present_index: set = set()
     for fname in files:
+        stem = fname.rstrip('.pkl')
         for sdef in _SECTION_DEFS:
+            if sdef.file_prefix not in fname:
+                continue
+            after_prefix = fname.split(sdef.file_prefix, 1)[1]
+            matched_models = [m for m in models if after_prefix.startswith(m)]
+            if not matched_models:
+                continue
             for appendage in _APPENDAGES:
-                stem = fname.rstrip('.pkl')
-                if (sdef.file_prefix in fname) and \
-                        (appendage in fname) and \
-                        (stem.endswith(appendage) or appendage == ''):
-                    after_prefix = fname.split(sdef.file_prefix, 1)[1]
-                    for model in models:
-                        if after_prefix.startswith(model):
-                            present_index.add((sdef.tag, model, appendage))
+                if (appendage in fname) and (stem.endswith(appendage) or appendage == ''):
+                    for model in matched_models:
+                        present_index.add((sdef.tag, model, appendage))
 
     for model in models:
         markdown_texts = {}
@@ -1105,6 +1192,19 @@ def report(output_dir: Optional[str], relative_path_plots: bool, sphinx_datafram
         with open(html_filename, 'w', encoding='utf-8') as f:
             f.write(html_text)
         logger.info('    Complete')
+
+        # EVICT CACHES AFTER EACH MODEL'S REPORT IS FULLY WRITTEN, NOT JUST
+        # ONCE AT THE START OF report(). _load_pkl's CACHE IS GLOBAL AND
+        # NEVER EVICTS ON ITS OWN -- WITHOUT THIS, EVERY MODEL'S METRICS
+        # AND SELECTIONS PKLS STAY IN MEMORY FOR THE REST OF THE ENTIRE
+        # report() CALL, SO BY THE LAST MODEL, MEMORY STILL HOLDS
+        # EVERY PRIOR MODEL'S DATA TOO. CLEARING HERE CAPS MEMORY TO
+        # ROUGHLY ONE MODEL'S WORTH OF CACHED DATA AT A TIME, WHILE STILL
+        # PRESERVING THE CACHE'S BENEFIT *WITHIN* A SINGLE MODEL'S REPORT
+        # (REPEATED LOADS OF THE SAME FILE ACROSS THAT MODEL'S OWN
+        # APPENDAGES/SECTIONS STILL HIT THE CACHE).
+        _pkl_cache.clear()
+        _ref_csv_cache.clear()
 
     # WRITE INDEX PAGE
     html_index = make_index.make_index(

@@ -1,8 +1,11 @@
+from . import config
 from . import object_handler as objh
 import sys
 import datetime
 import pandas as pd
 import logging
+
+
 
 __author__ = "Katie Whitman"
 __maintainer__ = "Katie Whitman"
@@ -373,37 +376,43 @@ def remove_forecast_duplicates(all_energy_channels, model_objs):
 
 
 
-def remove_resume_duplicates(r_df, model_objs):
-    """ Compare exact filenames in the resume dataframe with filenames
-        in the dataframe of Forecast objects from model_objs
-    
+def remove_resume_duplicates(index_df, model_objs):
+    """ Compare exact filenames in the lightweight historical index with
+        filenames in the dataframe of Forecast objects from model_objs.
+
         INPUTS:
-        
-            :r_df: (pandas DataFrame) SPHINX_dataframe read back in from a previous run
+
+            :index_df: (pandas DataFrame or None) lightweight index with
+                column "Forecast Source", covering all historically
+                written forecasts. None if this is the first run.
             :model_objs: (dict of Forecast objects) unique forecast objects sorted by energy channel
-            
+
         OUTPUTS:
-        
+
             :model_objs: (dict of Forecast objects) forecasts with filenames already
-                present in r_df have been removed
-    
+                present in the historical index have been removed
+
     """
-    
+
     removed = []
-    
+
+    if index_df is None or index_df.empty:
+        return model_objs, removed
+
     for energy_key in model_objs.keys():
         df = fill_forecast_df(model_objs[energy_key])
 
-        df_dup = df[df['Forecast Source'].isin(r_df['Forecast Source'])]
+        df_dup = df[df['Forecast Source'].isin(index_df['Forecast Source'])]
         dup_indices = df_dup['Prediction Index'].to_list()
-        
+
         for i in sorted(dup_indices, reverse=True):
-            logger.warning(f"DUPLICATE RESUME FORECAST: Removing duplicated forecast already present in the resume SPHINX_dataframe for energy channel {energy_key}, {model_objs[energy_key][i].source}")
+            logger.warning(f"DUPLICATE RESUME FORECAST: Removing duplicated forecast already present in the historical index for energy channel {energy_key}, {model_objs[energy_key][i].source}")
             removed.append(model_objs[energy_key][i])
             model_objs[energy_key].pop(i)
 
-
     return model_objs, removed
+
+
 
 
 def remove_sphinx_duplicates(df, reason='Duplicate in sphinx dataframe'):
@@ -420,35 +429,7 @@ def remove_sphinx_duplicates(df, reason='Duplicate in sphinx dataframe'):
         
     """
     #Extract key rows from the df that uniquely identify a forecast
-    #Cannot use all df entries, because the hash command cannot hash lists.
-    sub = df[["Model", "Energy Channel Key", "Threshold Key", "Mismatch Allowed",
-            "Prediction Energy Channel Key", "Prediction Threshold Key", "Prediction Window Start",
-            "Prediction Window End", "Prediction Number of CMEs","Prediction CME Start Time",
-            "Prediction CME Liftoff Time", "Prediction CME Latitude", "Prediction CME Longitude",
-            "Prediction CME Speed", "Prediction CME Half Width", "Prediction CME PA",
-            "Prediction Number of Flares", "Prediction Flare Latitude", "Prediction Flare Longitude",
-            "Prediction Flare Start Time", "Prediction Flare Peak Time", "Prediction Flare End Time",
-            "Prediction Flare Last Data Time", "Prediction Flare Intensity",
-            "Prediction Flare Integrated Intensity", "Prediction Flare NOAA AR",
-            "Observed SEP CME Start Time",
-            "Observed SEP CME Liftoff Time", "Observed SEP CME Latitude", "Observed SEP CME Longitude",
-            "Observed SEP CME Speed", "Observed SEP CME Half Width", "Observed SEP CME PA",
-            "Observed SEP Flare Latitude", "Observed SEP Flare Longitude",
-            "Observed SEP Flare Start Time", "Observed SEP Flare Peak Time",
-            "Observed SEP Flare End Time",
-            "Observed SEP Flare Intensity",
-            "Observed SEP Flare Integrated Intensity", "Observed SEP Flare NOAA AR",
-            "Observatory", "Observed SEP All Clear",
-            "Predicted SEP All Clear", "Predicted SEP All Clear Probability Threshold",
-            "All Clear Match Status", "Predicted SEP Probability",
-            "Probability Match Status", "Predicted SEP Threshold Crossing Time",
-            "Threshold Crossing Time Match Status", "Predicted SEP Start Time",
-            "Start Time Match Status", "Predicted SEP End Time", "End Time Match Status",
-            "Predicted SEP Duration", "Duration Match Status", "Predicted SEP Fluence",
-            "Fluence Match Status", "Predicted SEP Peak Intensity (Onset Peak)",
-            "Peak Intensity Match Status", "Predicted SEP Peak Intensity Max (Max Flux)",
-            "Peak Intensity Max Match Status", "Predicted Point Intensity",
-            "Predicted Time Profile", "Time Profile Match Status"]]
+    sub = df[config.SPHINX_KEY_COLUMNS]
     
     #Create a hash for each row of the dataframe
     hash = pd.util.hash_pandas_object(sub, index=False)
@@ -466,6 +447,74 @@ def remove_sphinx_duplicates(df, reason='Duplicate in sphinx dataframe'):
     duplicate_df = duplicate_df.assign(**{"Evaluation Status": reason})
     
     return unique_df, duplicate_df
+
+
+def compute_row_hash(df):
+    """ Compute the same per-row hash used by remove_sphinx_duplicates,
+        as a standalone Series. Used to build/extend the lightweight
+        duplicate INDEX file (just Forecast Source + RowHash) so that
+        checking new months for duplicates against history never requires
+        loading the full historical SPHINX dataframe into memory.
+
+        INPUT:
+            :df: (dataframe) must contain all columns in config.SPHINX_KEY_COLUMNS
+
+        OUTPUT:
+            :row_hash: (pd.Series of int64) one hash per row of df
+    """
+    sub = df[config.SPHINX_KEY_COLUMNS]
+    return pd.util.hash_pandas_object(sub, index=False)
+
+
+def remove_new_duplicates_against_index(df, index_df,
+    reason='Duplicate already present in history'):
+    """ Check a NEW (e.g. one month's worth of) SPHINX dataframe for rows
+        that duplicate anything already recorded in the historical INDEX,
+        without ever loading the full historical SPHINX dataframe.
+
+        This replaces the pattern of pd.concat([r_df, df]) followed by
+        remove_sphinx_duplicates() on the full concatenated frame, which
+        re-hashes and re-checks all of history on every run.
+
+        INPUT:
+
+            :df: (dataframe) NEW rows only (this run's output), must
+                contain all columns in config.SPHINX_KEY_COLUMNS
+            :index_df: (dataframe or None) lightweight index with columns
+                ["Forecast Source", "RowHash"] covering ALL historical
+                rows previously written. None or empty if this is the
+                first run (nothing to resume from).
+            :reason: (string) "Evaluation Status" will be set to this
+                for any rows found to duplicate history
+
+        OUTPUT:
+
+            :unique_df: (dataframe) rows in df not present in index_df
+            :duplicate_df: (dataframe) rows in df already present in
+                index_df, with "Evaluation Status" set to reason
+            :new_index_rows: (dataframe) ["Forecast Source", "RowHash"]
+                for unique_df, to be appended to the persisted index
+    """
+    row_hash = compute_row_hash(df)
+    df = df.assign(RowHash=row_hash.values)
+
+    if index_df is None or index_df.empty:
+        is_dup = pd.Series(False, index=df.index)
+    else:
+        is_dup = df["RowHash"].isin(index_df["RowHash"])
+
+    dup_df = df.loc[is_dup]
+    for entry in dup_df["Forecast Source"]:
+        logger.warning("DUPLICATE SPHINX FORECAST: " + str(entry)
+            + " already present in historical index. Removing.")
+
+    unique_df = df.loc[~is_dup].drop(columns=["RowHash"])
+    duplicate_df = df.loc[is_dup].drop(columns=["RowHash"])
+    duplicate_df = duplicate_df.assign(**{"Evaluation Status": reason})
+
+    new_index_rows = df.loc[~is_dup, ["Forecast Source", "RowHash"]]
+
+    return unique_df, duplicate_df, new_index_rows
 
 
 
