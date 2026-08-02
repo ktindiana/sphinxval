@@ -142,8 +142,16 @@ peak_flux_cut = 8e-1
 #to be compared to each other.
 #e.g. if want to validate with observations that are "close" to the
 #predicted energy channels and thresholds, but not exactly the same.
-#Only one excepted case allowed in current version.
-#Set do_mismatch = True to allow comparison of mismatched energy channels and thresholds
+#
+#Multiple rules are supported. Each rule is fully independent -- any
+#combination of (model, pred_energy_channel, pred_threshold,
+#obs_energy_channel, obs_threshold) is allowed, including:
+#  - the same model with multiple mismatched energy-channel pairs
+#  - the same model + energy pair with multiple mismatched thresholds
+#  - different models each with their own rule(s)
+#Set do_mismatch = True to allow comparison of mismatched energy channels
+#and thresholds. If do_mismatch is True but mismatch_rules is empty, no
+#mismatching will actually occur.
 do_mismatch = True
 
 #mm stands for "mismatch"
@@ -157,40 +165,68 @@ e_units = vunits.convert_string_to_units("MeV")
 t_units = vunits.convert_string_to_units("pfu")
 t2_units = vunits.convert_string_to_units("MeV^-1*s^-1*cm^-2*sr^-1")
 
-######SET MODEL INFO#####
-mm_model = "REleASE" #Model short name contains this string
-mm_pred_energy_channel = {"min": 15.8, "max": 39.8, "units": e_units}
-mm_pred_threshold = {"threshold": 0.1, "threshold_units": t2_units}
-#mm_pred_energy_channel = {"min": 28.2, "max": 50.1, "units": e_units}
-#mm_pred_threshold = {"threshold": 0.1, "threshold_units": t_units}
+#Each entry is one independent mismatch rule. "model" is matched as a
+#substring against a forecast's short_name. Add as many rules as
+#needed, including multiple entries for the same model.
+mismatch_rules = [
+    {
+        "model": "REleASE",
+        "pred_energy_channel": {"min": 15.8, "max": 39.8, "units": e_units},
+        "pred_threshold": {"threshold": 0.1, "threshold_units": t2_units},
+        "obs_energy_channel": {"min": 10, "max": -1, "units": e_units},
+        "obs_threshold": {"threshold": 10, "threshold_units": t_units},
+    },
+    {
+        "model": "REleASE",
+        "pred_energy_channel": {"min": 28.2, "max": 50.1, "units": e_units},
+        "pred_threshold": {"threshold": 0.1, "threshold_units": t2_units},
+        "obs_energy_channel": {"min": 10, "max": -1, "units": e_units},
+        "obs_threshold": {"threshold": 10, "threshold_units": t_units},
+    },
+    {
+        "model": "REleASE",
+        "pred_energy_channel": {"min": 28.2, "max": 50.1, "units": e_units},
+        "pred_threshold": {"threshold": 0.1, "threshold_units": t2_units},
+        "obs_energy_channel": {"min": 100, "max": -1, "units": e_units},
+        "obs_threshold": {"threshold": 1, "threshold_units": t_units},
+    },
+]
 
-#mm_model = "UNSPELL" #Model short name contains this string
-#mm_pred_energy_channel = {"min": 5, "max": -1, "units": e_units}
-#mm_pred_threshold = {"threshold": 5, "threshold_units": t_units}
+###AUTOMATIC -- derive lookup keys for each rule. Do not edit below this line.
+for _mm_rule in mismatch_rules:
+    _mm_rule["pred_ek"] = objh.energy_channel_to_key(_mm_rule["pred_energy_channel"])
+    _mm_rule["pred_tk"] = objh.threshold_to_key(_mm_rule["pred_threshold"])
+    _mm_rule["obs_ek"] = objh.energy_channel_to_key(_mm_rule["obs_energy_channel"])
+    _mm_rule["obs_tk"] = objh.threshold_to_key(_mm_rule["obs_threshold"])
+    #Dictionaries throughout the code use energy_key to organize
+    #observation and model objects.
+    _mm_rule["energy_key"] = _mm_rule["obs_ek"] + "_" + _mm_rule["pred_ek"]
+    #The observed threshold key is used in organizing observed and
+    #predicted values by threshold.
+    _mm_rule["thresh_key"] = _mm_rule["obs_tk"] + "_" + _mm_rule["pred_tk"]
+del _mm_rule
 
-#mm_model = "SEPMOD" #Model short name contains this string
-#mm_pred_energy_channel = {"min": 10, "max": -1, "units": e_units}
-#mm_pred_threshold = {"threshold": 0.001, "threshold_units": t_units}
+#Deduplicated view by energy_key -- safe for extraction-value lookups
+#only (e.g. "which pred_energy_channel to pull from a forecast json for
+#this energy_key"), not for applicability checks ("does a rule apply to
+#this model"). Any rules sharing an energy_key are guaranteed to have
+#identical obs_ek/pred_ek (energy_key is literally built from them), so
+#picking any one representative rule per energy_key is safe for value
+#lookups. It is not safe for checking which model(s) a rule applies to:
+#if two different models happen to share the same energy_key, deduping
+#by energy_key alone would silently drop one model's rule from this
+#view. Applicability checks search the full mismatch_rules list instead.
+mismatch_rules_by_energy_key = {}
+for _mm_rule in mismatch_rules:
+    if _mm_rule["energy_key"] not in mismatch_rules_by_energy_key:
+        mismatch_rules_by_energy_key[_mm_rule["energy_key"]] = _mm_rule
+del _mm_rule
 
-######SET OBSERVATION INFO#######
-#mm_obs_energy_channel = {"min": 25, "max": 40.9, "units": e_units}
-#mm_obs_threshold = {"threshold": 0.1, "threshold_units": t_units}
-
-mm_obs_energy_channel = {"min": 10, "max": -1, "units": e_units}
-mm_obs_threshold = {"threshold": 10, "threshold_units": t_units}
-
-###AUTOMATIC
-mm_pred_ek = objh.energy_channel_to_key(mm_pred_energy_channel)
-mm_pred_tk = objh.threshold_to_key(mm_pred_threshold)
-mm_obs_ek = objh.energy_channel_to_key(mm_obs_energy_channel)
-mm_obs_tk = objh.threshold_to_key(mm_obs_threshold)
-mm_energy_key = mm_obs_ek + "_" + mm_pred_ek
-mm_thresh_key = mm_obs_tk + "_" + mm_pred_tk
-
-#Dictionaries throughout the code will use mm_energy_key to
-#organize observation and model objects.
-#The observed threshold key, mm_obs_tk, will be used in
-#organizing observed and predicted values by threshold.
+#Plain, model-agnostic set of distinct energy_key strings -- used for
+#bucket creation (obs_objs/model_objs dictionary keys, all_energy_channels
+#append), where only the key string itself matters, not which model(s)
+#use it.
+mismatch_energy_keys = sorted(set(_mm_rule["energy_key"] for _mm_rule in mismatch_rules))
 ######## END MISMATCH ############
 
 

@@ -350,8 +350,15 @@ def fill_sphinx_dict_row(sphinx, dict, energy_key, thresh_key, profname_dict):
     #If mismatch allowed for this prediction
     mismatch = sphinx.mismatch
     if mismatch:
-        pred_energy_key = objh.energy_channel_to_key(config.mm_pred_energy_channel)
-        pred_thresh_key = objh.threshold_to_key(config.mm_pred_threshold)
+        matched_rule = None
+        for rule in mismatch:
+            if rule["obs_tk"] == thresh_key:
+                matched_rule = rule
+                break
+        if matched_rule is None:
+            matched_rule = mismatch[0]
+        pred_energy_key = matched_rule["pred_ek"]
+        pred_thresh_key = matched_rule["pred_tk"]
 
    #Extract predicted values associated only with the desired energy channel
    #and threshold combination
@@ -397,7 +404,12 @@ def fill_sphinx_dict_row(sphinx, dict, energy_key, thresh_key, profname_dict):
     dict["Model"].append(sphinx.prediction.short_name)
     dict["Energy Channel Key"].append(energy_key)
     dict["Threshold Key"].append(thresh_key)
-    dict["Mismatch Allowed"].append(mismatch)
+    #sphinx.mismatch is a list of applicable mismatch rules (see
+    #match.py), not a boolean -- "Mismatch Allowed" must store an actual
+    #boolean, since every other read site in this file does bool(...) on
+    #it, and a raw list (especially non-empty, containing nested
+    #astropy.units.Unit objects) cannot be serialized to Parquet.
+    dict["Mismatch Allowed"].append(bool(mismatch))
     dict["Prediction Energy Channel Key"].append(pred_energy_key)
     dict["Prediction Threshold Key"].append(pred_thresh_key)
     dict["Forecast Source"].append(sphinx.prediction.source)
