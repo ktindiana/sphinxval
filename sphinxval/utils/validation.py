@@ -2837,13 +2837,13 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
         fact10 = np.nan
         fact2 = np.nan
         
-        logger.info("Comparing time profile of " + pred_profs[i] + " to observations.")
+        logger.debug("Comparing time profile of " + pred_profs[i] + " to observations.")
         all_obs_dates = []
         all_obs_flux = []
         #Read in and combine time profiles of observations inside
         #prediction window
         obs_fnames = obs_profs[i].strip().split(",")
-        logger.info("Comparing to OBSERVED TIME PROFILES: " + str(obs_fnames))
+        logger.debug("Comparing to OBSERVED TIME PROFILES: " + str(obs_fnames))
         for j in range(len(obs_fnames)):
             
             dt = [vjson.zulu_to_time(t) for t in obs_prof_df[obs_fnames[j]]['dates']]
@@ -2897,7 +2897,7 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
             trim_st = max(obs_st[i],pred_st[i])
         if not pd.isnull(pred_et[i]):
             time_et = min(obs_et[i], pred_et[i])
-        logger.info("Trimming between " + str(trim_st) + " and " + str(trim_et))
+        logger.debug("Trimming between " + str(trim_st) + " and " + str(trim_et))
         trim_pred_dates, trim_pred_flux = profile.trim_profile(trim_st,
                 trim_et, pred_dates, pred_flux)
         trim_obs_dates, trim_obs_flux = profile.trim_profile(trim_st,
@@ -3048,7 +3048,6 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
     
     
     if len(errors['Mean Ratio']) != 0:
-        #
         sub = sub.assign(**errors)
     
     #Write out selections and the metrics associated with each profile match
@@ -3844,7 +3843,7 @@ def calculate_intuitive_metrics(df, model_names, all_energy_channels,
                 awt_metrics(df, awt_dict, model, ek, tk, validation_type)
                 last_data_to_issue_intuitive_metrics(df, last_data_to_issue_dict,model,ek,tk,
                     validation_type)
-
+    logger.info("Completed calculating all metrics.")
     prob_metrics_df = pd.DataFrame(probability_dict)
     point_intensity_metrics_df = pd.DataFrame(point_intensity_dict)
     peak_intensity_metrics_df = pd.DataFrame(peak_intensity_dict)
@@ -4044,7 +4043,7 @@ def intuitive_validation(evaluated_sphinx, removed_sphinx, model_names,
     write_df(df_not, "SPHINX_removed")
     logger.debug("Completed writing SPHINX_removed dataframe to file.")
 
-    validation_type = ["All"]#,"First", "Last", "Max", "Mean"]
+    validation_type = ["All","First", "Last", "Max", "Mean"]
     for type in validation_type:
         logger.info("-----------Starting validation of " + type +" forecasts-------------")
         calculate_intuitive_metrics(df, model_names, all_energy_channels,

@@ -6,6 +6,7 @@ from scipy import stats
 import sklearn.metrics as skl
 from . import metrics
 from . import metrics_dicts
+from . import config
 import logging
 
 
@@ -23,11 +24,12 @@ Plan/Outline:
         Add row to metric dictionaries containing metric uncertainties
 
     VIVID -
-        Add wrapper from VIVID feeder to generate the same subset that 
-            is given to the _selections files but doesn't need to actually
-            read in the file (take sphinx_dataframe and loop over energy/threshold/model?)
+        Feature of this code is all uncertainty routines calc_x_uncertainties have only
+            an (obs, pred) input which helps VIVID since Phil will be able to use the same
+            functions after filtering with VIVID and passing the obs/pred arrays to 
+            the uncertainty workflows
         Do the same bootstrapping
-        Give out metric uncertainties (need to talk to Phil about VIVID inputs)
+        Give out metric uncertainties dictionaries
 """
 #Create logger
 logger = logging.getLogger(__name__)
@@ -39,7 +41,7 @@ def feeder_from_sphinx(df, dict, label, uncert_boolean):
     # needs to be a feeder function to make sure that the actual workflow is 
     # independent and modular
    
-    uncertainty_workflow(df, label, dict, uncert_boolean)
+    uncertainty_workflow(df, dict, label, uncert_boolean)
     
     return
 
@@ -53,18 +55,9 @@ def feeder_from_vivid():
     return
 
 
-def test_feeder():
-    filename = './junk/peak_intensity_max_selections_SEPSTER2D CME_min.10.0.max.-1.0.units.MeV_threshold_10.0.csv'
-    # filename = './junk/peak_intensity_max_time_selections_ZEUS+iPATH_CME_min.10.0.max.-1.0.units.MeV_threshold_10.0.csv'
-    df = pd.read_csv(filename, index_col = 0)
-    label = 'peak_intensity_max'
-    # df = time_uncertainties(df, label)
-    df = flux_uncertainties(df, label)
 
 
-
-
-def uncertainty_workflow(df, label, dict, uncert_boolean):
+def uncertainty_workflow(df, dict, label, uncert_boolean):
     if uncert_boolean:
         # Splitting function that will correctly funnel to the correct uncertainty calculation
         flux_filter = ['point_intensity', 'peak_intensity', 'peak_intensity_max', 'max_flux_in_pred_win', 'fluence']
@@ -105,6 +98,18 @@ def flux_uncert_feeder(df, label, dict):
     else:
         pred_label = 'Predicted ' + mapped_label
         obs_label = 'Observed ' + mapped_label
+
+
+    # The SEPSTER special case. Both flavors of SEPSTER
+    # only fill out the Onset Peak field (peak_intensity) of the JSON 
+    # but for validation, we still compare them to the max peak. 
+    # However, in the sphinx dataframe we don't populate the Max Peak
+    # field for the SEPSTERs, so if we were just to call Max Peak it 
+    # would not return anything and there would be no uncertainties
+    # despite there being metrics. So I had to create a work-around
+    # specifically for SEPSTER. The try/except is a back-up catch-all
+    # for models other than SEPSTER, if there is a new model that 
+    # has a similar issue. 
     if 'SEPSTER' in df['Model'].iloc[0] and label != 'fluence':
         pred_label = 'Predicted SEP Peak Intensity (Onset Peak)'
     try:
@@ -116,14 +121,15 @@ def flux_uncert_feeder(df, label, dict):
         pred = df[pred_label].to_list()
 
 
-
+    # if for whatever reason the length of pred is not >2 then 
+    # uncertainty is nan. The bootstrapper throws an error out
+    # if either of the arrays used (obs,pred) are length 0 or 1
+    # hence this block here
     if len(pred) < 2:
         headers = dict.keys()
         for he in headers:
             if 'Uncertainty' in he:
                 dict[he].append(np.nan)
-            else:
-                pass
         return
     
 
@@ -132,8 +138,6 @@ def flux_uncert_feeder(df, label, dict):
     for he in headers:
         if 'Uncertainty' in he:
             dict[he].append(uncert_dict[he])
-        else:
-            pass
 
     return
 
@@ -218,31 +222,46 @@ def calc_flux_uncertainties(obs, pred):
     return flux_dict
 
 
-def mean_call_bootstrapper(obs, pred, func):
+# This first bootstrapper call will be fully commented as an example for the rest of these function calls
+# These function calls use obs, pred, and then either a label or direct function call. In this 
+# case its a function call func. 
+def mean_call_bootstrapper(obs, pred, func): 
+    # The wrapper is here for the bootstrapper to have a function call in its statistic kwarg (necessary)
     def wrapper(obs, pred):
+        # inside the wrapper needs to be something that returns a singular number. So for the mean metrics
+        # the return is the mean of the randomly resampled obs and pred array metrics
         return np.nanmean(func(obs, pred))
-    return stats.bootstrap((obs, pred), statistic=wrapper, method='basic', vectorized = False, paired = True, n_resamples = 1000)
+    
+    # This is the call for the bootstrapping method. Statistic needs to be a function (hence the wrapper),
+    # method = basic for basic bootstrap confidence level, vectorized = False means we don't have to pass
+    # an axis argument and the statistic is supposed to be 1D. Paired = True keeps the obs and pred
+    # pairings, which is important for our use case since we have to keep the pairs
+    return stats.bootstrap((obs, pred), statistic=wrapper, method='basic', vectorized = False, paired = True, n_resamples = config.uncert_n_resamples)
 
 def median_call_bootstrapper(obs, pred, func):
     def wrapper(obs, pred):
         return statistics.median(func(obs, pred))
-    return stats.bootstrap((obs, pred), statistic=wrapper, method='basic', vectorized = False, paired = True, n_resamples = 1000)
+    return stats.bootstrap((obs, pred), statistic=wrapper, method='basic', vectorized = False, paired = True, n_resamples = config.uncert_n_resamples)
 
 def factor_call_bootstrapper(obs, pred, thresh):
     def wrapper(obs, pred):
         temp = metrics.switch_error_func('LE', obs, pred)
         count = sum(1 for x in temp if x <= thresh and x >= -thresh)
         return count / len(temp)
-    return stats.bootstrap((obs, pred), statistic=wrapper, method='basic', vectorized = False, paired = True, n_resamples = 1000)
+    return stats.bootstrap((obs, pred), statistic=wrapper, method='basic', vectorized = False, paired = True, n_resamples = config.uncert_n_resamples)
     
+
+# Pearson correlation is calculated at the same time, and is accessed through the return variables
+# of that function. So it needs a slightly different wrapper to properly get the appropriate
+# values.
 def pearson_call_bootstrapper(obs, pred, label):
     def wrapper(obs, pred):
         if label == 'r_lin':
             metric, _ = metrics.calc_pearson(obs, pred)
-        else:
+        elif label == 'r_log':
             _, metric = metrics.calc_pearson(obs, pred)
         return metric
-    return stats.bootstrap((obs, pred), statistic=wrapper, method='basic', vectorized = False, paired = True, n_resamples = 1000)
+    return stats.bootstrap((obs, pred), statistic=wrapper, method='basic', vectorized = False, paired = True, n_resamples = config.uncert_n_resamples)
 
 
 def corr_call_bootstrapper(obs, pred, label):
@@ -252,7 +271,7 @@ def corr_call_bootstrapper(obs, pred, label):
         else:
             _, metric = np.polyfit(obs, pred, 1)
         return metric
-    return stats.bootstrap((np.log10(obs), np.log10(pred)), statistic=wrapper, method='basic', vectorized = False, paired = True, n_resamples = 1000)
+    return stats.bootstrap((np.log10(obs), np.log10(pred)), statistic=wrapper, method='basic', vectorized = False, paired = True, n_resamples = config.uncert_n_resamples)
 
 
 
@@ -314,8 +333,6 @@ def time_uncert_feeder(df, label, dict):
     for he in headers:
         if 'Uncertainty' in he:
             dict[he].append(uncert_dict[he])
-        else:
-            pass
     return
 
 def calc_time_uncertainties(obs, pred):
@@ -348,7 +365,7 @@ def mean_time_call_bootstrapper(obs, pred, metric_label):
         if metric_label == 'AE':
             td = [np.abs(x) for x in td]
         return np.nanmean(td)
-    return stats.bootstrap((obs, pred), statistic=wrapper, method='basic', vectorized = False, paired = True, n_resamples = 1000)
+    return stats.bootstrap((obs, pred), statistic=wrapper, method='basic', vectorized = False, paired = True, n_resamples = config.uncert_n_resamples)
 
 def median_time_call_bootstrapper(obs, pred, metric_label):
     def wrapper(obs, pred):
@@ -360,7 +377,7 @@ def median_time_call_bootstrapper(obs, pred, metric_label):
         if metric_label == 'medAE':
             td = [np.abs(x) for x in td]
         return statistics.median(td)
-    return stats.bootstrap((obs, pred), statistic=wrapper, method='basic', vectorized = False, paired = True, n_resamples = 1000)
+    return stats.bootstrap((obs, pred), statistic=wrapper, method='basic', vectorized = False, paired = True, n_resamples = config.uncert_n_resamples)
 
 
 def flux_metric_mapping(metric_label):
@@ -408,9 +425,6 @@ def time_metric_mapping(metric_label):
 
 def probability_uncert_feeder(df, label, dict):
     
-    
-    # prob_dict_mapping = prob_metric_mappin()
-    
     mapped_label = 'SEP Probability'
     pred_label = 'Predicted ' + mapped_label
     obs_label = 'Observed ' + mapped_label
@@ -419,11 +433,10 @@ def probability_uncert_feeder(df, label, dict):
 
 
     
-    n_resamples = 1000
-    # scores = prob_dict()
+    n_resamples = config.uncert_n_resamples
     for n in range(n_resamples):
-        sub_true = all_clear_true.sample(frac=0.75, replace = True)
-        sub_false = all_clear_false.sample(frac=0.75, replace = True)
+        sub_true = all_clear_true.sample(frac=config.uncert_fraction, replace = True)
+        sub_false = all_clear_false.sample(frac=config.uncert_fraction, replace = True)
         obs = pd.concat([sub_true[obs_label], sub_false[obs_label]], ignore_index = True)
         pred = pd.concat([sub_true[pred_label], sub_false[pred_label]], ignore_index = True)
         prob_dict = calc_prob_uncertainty(obs, pred)
@@ -454,9 +467,9 @@ def calc_prob_uncertainty(obs, pred):
     }
     prob_metrics =  ['brier_score', 'brier_skill', 'spearman', 'roc_auc']
     for met in prob_metrics:
-            current_scores = probability_call_bootstrapper(obs, pred, metrics_dict[met], met)
+            trials_scores = probability_call_bootstrapper(obs, pred, metrics_dict[met], met)
         
-            prob_dict[met].append(current_scores)
+            prob_dict[met].append(trials_scores)
 
 
     return prob_dict
@@ -473,10 +486,6 @@ def probability_call_bootstrapper(obs, pred, func, metric):
     return score
 
 
-
-# def probability_call_bootstrapper(obs, pred, func):
-#     return stats.bootstrap((obs, pred), statistic=func, method='basic', vectorized = False, paired = True)
-
 def roc_call_bootstrapper(obs, pred):
     # I dont want to create the plots for ROC so not doing the call to the metrics.py instead I am 
     # creating the metric here
@@ -485,7 +494,7 @@ def roc_call_bootstrapper(obs, pred):
         roc_auc = skl.auc(fpr, tpr)
         return roc_auc
     
-    return stats.bootstrap((obs, pred), statistic=wrapper, method='basic', vectorized = False, paired = True, n_resamples = 1000)
+    return stats.bootstrap((obs, pred), statistic=wrapper, method='basic', vectorized = False, paired = True, n_resamples = config.uncert_n_resamples)
 
 
 def prob_metric_mapping(metric_label):
@@ -503,12 +512,12 @@ def prob_metric_mapping(metric_label):
 def all_clear_uncert_feeder(df, label, dict):
     """ 
     This is the most different from the rest of the uncertainies
-    as it won't use the scipy library for its bootstrapping. I will
-    write the algorithm for resampling by splitting the Observed All-Clear
-    False and True into seperate arrays and take 80% of each array for
-    the resampling. This should preserve the biased dataset and ensure
+    as it won't use the scipy library for its bootstrapping. 
+    I manually resample by splitting the Observed All-Clear False
+    and True into seperate arrays, then take 80% of each array for
+    the resampling. This preserves the biased dataset and ensures
     any all clear metric that is influenced by dataset bias will retain 
-    that bias (looking at you HSS). After resampling, calculating the 
+    that bias (looking at you HSS). After resampling, I calculate the 
     metrics, then the standard devaition will be found for each metric
     which will be the uncertainty.
 
@@ -519,66 +528,93 @@ def all_clear_uncert_feeder(df, label, dict):
     df = df.dropna(subset='All Clear Match Status')
     all_clear_true =  df[df['Observed SEP All Clear'] == True]
     all_clear_false = df[df['Observed SEP All Clear'] == False]
-    # input()
     if len(all_clear_false) < 2 or len(all_clear_true) < 2:
         headers = dict.keys()
         for he in headers:
             if 'Uncertainty' in he:
                 dict[he].append(np.nan)
-            else:
-                pass
         return
-    n_resamples = 1000
+    n_resamples = config.uncert_n_resamples
     scores = scores_dict()
     for n in range(n_resamples):
         sub_true = all_clear_true.sample(frac=0.75, replace = True)
         sub_false = all_clear_false.sample(frac=0.75, replace = True)
 
-        sub_current = pd.concat([sub_true, sub_false])
-        obs = sub_current['Observed SEP All Clear']
-        pred = sub_current['Predicted SEP All Clear']
-        current_scores = contingency_uncertainty(obs, pred)
-        for met in current_scores:
-            scores[met].append(current_scores[met])
-    
-    dict["All Clear 'True Positives' (Hits) Uncertainty"].append(np.nanstd(scores['TP'])) #Hits
-    dict["All Clear 'False Positives' (False Alarms) Uncertainty"].append(np.nanstd(scores['FP'])) #False Alarms
-    dict["All Clear 'True Negatives' (Correct Negatives) Uncertainty"].append(np.nanstd(scores['TN']))  #Correct negatives
-    dict["All Clear 'False Negatives' (Misses) Uncertainty"].append(np.nanstd(scores['FN'])) #Misses
-    dict["Percent Correct Uncertainty"].append(np.nanstd(scores['PC']))
-    dict["Bias Uncertainty"].append(np.nanstd(scores['B']))
-    dict["Hit Rate Uncertainty"].append(np.nanstd(scores['H']))
-    dict["False Alarm Rate Uncertainty"].append(np.nanstd(scores['F']))
-    dict['False Negative Rate Uncertainty'].append(np.nanstd(scores['FNR']))
-    dict["Frequency of Misses Uncertainty"].append(np.nanstd(scores['FOM']))
-    dict["Frequency of Hits Uncertainty"].append(np.nanstd(scores['FOH']))
-    dict["Probability of Correct Negatives Uncertainty"].append(np.nanstd(scores['POCN']))
-    dict["Frequency of Correct Negatives Uncertainty"].append(np.nanstd(scores['FOCN']))
-    dict["False Alarm Ratio Uncertainty"].append(np.nanstd(scores['FAR']))
-    dict["False Alarm Event Ratio Uncertainty"].append(np.nanstd(scores['FAER']))
-    dict["Tau Uncertainty"].append(np.nanstd(scores['Tau']))
-    dict["Detection Failure Ratio Uncertainty"].append(np.nanstd(scores['DFR']))
-    dict["Threat Score Uncertainty"].append(np.nanstd(scores['TS']))
-    dict["Odds Ratio Uncertainty"].append(np.nanstd(scores['OR']))
-    dict["Gilbert Skill Score Uncertainty"].append(np.nanstd(scores['GSS']))
-    dict["True Skill Statistic Uncertainty"].append(np.nanstd(scores['TSS']))
-    dict["Heidke Skill Score Uncertainty"].append(np.nanstd(scores['HSS']))
-    dict["Odds Ratio Skill Score Uncertainty"].append(np.nanstd(scores['ORSS']))
-    dict["Symmetric Extreme Dependency Score Uncertainty"].append(np.nanstd(scores['SEDS']))
-    dict["F1 Score Uncertainty"].append(np.nanstd(scores['FONE']))
-    dict["F2 Score Uncertainty"].append(np.nanstd(scores['FTWO']))
-    dict["Fhalf Score Uncertainty"].append(np.nanstd(scores['FHALF']))
-    dict['Prevalence Uncertainty'].append(np.nanstd(scores['PREV']))
-    dict['Matthew Correlation Coefficient Uncertainty'].append(np.nanstd(scores['MCC']))
-    dict['Informedness Uncertainty'].append(np.nanstd(scores['INFORM']))
-    dict['Markedness Uncertainty'].append(np.nanstd(scores['MARK']))
-    dict['Prevalence Threshold Uncertainty'].append(np.nanstd(scores['PT']))
-    dict['Balanced Accuracy Uncertainty'].append(np.nanstd(scores['BA']))
-    dict['Fowlkes-Mallows Index Uncertainty'].append(np.nanstd(scores['FM']))
+        sub_trials = pd.concat([sub_true, sub_false])
+        obs = sub_trials['Observed SEP All Clear']
+        pred = sub_trials['Predicted SEP All Clear']
+        trials_scores = contingency_uncertainty(obs, pred)
+        for met in trials_scores:
+            scores[met].append(trials_scores[met])
+
+    std_mapping = [("All Clear 'True Positives' (Hits) Uncertainty", "TP"),
+                    ("All Clear 'False Positives' (False Alarms) Uncertainty", "FP"),
+                    ("All Clear 'True Negatives' (Correct Negatives) Uncertainty", "TN"),
+                    ("All Clear 'False Negatives' (Misses) Uncertainty", "FN"),
+                    ("Percent Correct Uncertainty", "PC"), ("Bias Uncertainty", "B"),
+                    ("Hit Rate Uncertainty", "H"), ("False Alarm Rate Uncertainty", "F"),
+                    ("False Negative Rate Uncertainty", "FNR"), ("Frequency of Misses Uncertainty", "FOM"),
+                    ("Frequency of Hits Uncertainty", "FOH"), ("Probability of Correct Negatives Uncertainty", "POCN"),
+                    ("Frequency of Correct Negatives Uncertainty", "FOCN"), ("False Alarm Ratio Uncertainty", "FAR"),
+                    ("False Alarm Event Ratio Uncertainty", 'FAER'), ("Tau Uncertainty", "Tau"),
+                    ("Detection Failure Ratio Uncertainty", "DFR"), ("Threat Score Uncertainty", "TS"),
+                    ("Odds Ratio Uncertainty", "OR"), ("Gilbert Skill Score Uncertainty", "GSS"),
+                    ("True Skill Statistic Uncertainty", "TSS"), ("Heidke Skill Score Uncertainty", "HSS"),
+                    ("Odds Ratio Skill Score Uncertainty", 'ORSS'), ("Symmetric Extreme Dependency Score Uncertainty", "SEDS"),
+                    ("F1 Score Uncertainty", "FONE"), ("F2 Score Uncertainty", "FTWO"), ("Fhalf Score Uncertainty", "FHALF"),
+                    ('Prevalence Uncertainty', "PREV"), ("Matthew Correlation Coefficient Uncertainty", "MCC"),
+                    ("Informedness Uncertainty", "INFORM"), ("Markedness Uncertainty", "MARK"),
+                    ("Prevalence Threshold Uncertainty", "PT"), ("Balanced Accuracy Uncertainty", "BA"),
+                    ("Fowlkes-Mallows Index Uncertainty", "FM")
+                    
+                    ]
+
+    for label_key, metric_key in std_mapping:
+        dict[label_key].append(np.nanstd(scores[metric_key]))
+    # dict[""].append(np.nanstd(scores['TP'])) #Hits
+    # dict["All Clear 'False Positives' (False Alarms) Uncertainty"].append(np.nanstd(scores['FP'])) #False Alarms
+    # dict["All Clear 'True Negatives' (Correct Negatives) Uncertainty"].append(np.nanstd(scores['TN']))  #Correct negatives
+    # dict["All Clear 'False Negatives' (Misses) Uncertainty"].append(np.nanstd(scores['FN'])) #Misses
+    # dict["Percent Correct Uncertainty"].append(np.nanstd(scores['PC']))
+    # dict["Bias Uncertainty"].append(np.nanstd(scores['B']))
+    # dict["Hit Rate Uncertainty"].append(np.nanstd(scores['H']))
+    # dict["False Alarm Rate Uncertainty"].append(np.nanstd(scores['F']))
+    # dict['False Negative Rate Uncertainty'].append(np.nanstd(scores['FNR']))
+    # dict["Frequency of Misses Uncertainty"].append(np.nanstd(scores['FOM']))
+    # dict["Frequency of Hits Uncertainty"].append(np.nanstd(scores['FOH']))
+    # dict["Probability of Correct Negatives Uncertainty"].append(np.nanstd(scores['POCN']))
+    # dict["Frequency of Correct Negatives Uncertainty"].append(np.nanstd(scores['FOCN']))
+    # dict["False Alarm Ratio Uncertainty"].append(np.nanstd(scores['FAR']))
+    # dict["False Alarm Event Ratio Uncertainty"].append(np.nanstd(scores['FAER']))
+    # dict["Tau Uncertainty"].append(np.nanstd(scores['Tau']))
+    # dict["Detection Failure Ratio Uncertainty"].append(np.nanstd(scores['DFR']))
+    # dict["Threat Score Uncertainty"].append(np.nanstd(scores['TS']))
+    # dict["Odds Ratio Uncertainty"].append(np.nanstd(scores['OR']))
+    # dict["Gilbert Skill Score Uncertainty"].append(np.nanstd(scores['GSS']))
+    # dict["True Skill Statistic Uncertainty"].append(np.nanstd(scores['TSS']))
+    # dict["Heidke Skill Score Uncertainty"].append(np.nanstd(scores['HSS']))
+    # dict["Odds Ratio Skill Score Uncertainty"].append(np.nanstd(scores['ORSS']))
+    # dict["Symmetric Extreme Dependency Score Uncertainty"].append(np.nanstd(scores['SEDS']))
+    # dict["F1 Score Uncertainty"].append(np.nanstd(scores['FONE']))
+    # dict["F2 Score Uncertainty"].append(np.nanstd(scores['FTWO']))
+    # dict["Fhalf Score Uncertainty"].append(np.nanstd(scores['FHALF']))
+    # dict['Prevalence Uncertainty'].append(np.nanstd(scores['PREV']))
+    # dict['Matthew Correlation Coefficient Uncertainty'].append(np.nanstd(scores['MCC']))
+    # dict['Informedness Uncertainty'].append(np.nanstd(scores['INFORM']))
+    # dict['Markedness Uncertainty'].append(np.nanstd(scores['MARK']))
+    # dict['Prevalence Threshold Uncertainty'].append(np.nanstd(scores['PT']))
+    # dict['Balanced Accuracy Uncertainty'].append(np.nanstd(scores['BA']))
+    # dict['Fowlkes-Mallows Index Uncertainty'].append(np.nanstd(scores['FM']))
     return
 
 
 def build_contingency_table(obs, pred):
+    """
+    HITS:  obs = False, pred = False
+    MISSES: obs = False, pred = True
+    FALSE ALARMS: obs = True, pred = False
+    CORRECT NEGATIVES: obs = True, pred = True
+    """
     result = (obs == False) & (pred == False)
     h = result.sum(axis=0)
     
@@ -651,15 +687,12 @@ def scores_dict():
 
 def time_profile_uncertainties(error_dict, dict):
 
-    n_resamples = 1000
+    n_resamples = config.uncert_n_resamples
     for key in error_dict.keys():    
         current_metrics = []
         for n in range(n_resamples):
             
             current_metrics.append(pd.Series(error_dict[key]).sample(frac=0.75, replace = True))
-        # logger.info(key)
-        # logger.info(np.mean(error_dict[key]))
-        # logger.info(np.nanstd(current_metrics))
         dict[key + ' Uncertainty'].append(np.nanstd(current_metrics))
 
 

@@ -11,20 +11,9 @@ import statistics
 import sklearn.metrics as skl
 import sys
 import logging
-# from contingency_space.contingency_space import ContingencySpace
-# from contingency_space.confusion_matrix import ConfusionMatrix
+
 import matplotlib.pyplot as plt
 from sphinxval.utils.tau import Tau, ContingencySpace, ConfusionMatrix
-
-
-
-# from contingency_space.contingency_space import ContingencySpace
-# from contingency_space.confusion_matrix import ConfusionMatrix
-import matplotlib.pyplot as plt
-from sphinxval.utils.tau import Tau, ContingencySpace, ConfusionMatrix
-
-
-
 
 __author__ = "Phil Quinn"
 __maintainer__ = "Kathryn Whitman"
