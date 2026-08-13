@@ -2848,7 +2848,6 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
             
             dt = [vjson.zulu_to_time(t) for t in obs_prof_df[obs_fnames[j]]['dates']]
             flx = obs_prof_df[obs_fnames[j]]['fluxes']
-            # dt, flx = profile.read_single_time_profile(obs_fnames[j])
             all_obs_dates.append(dt)
             all_obs_flux.append(flx)
 
@@ -2856,7 +2855,6 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
             all_obs_flux)
         pred_dates = [vjson.zulu_to_time(x) for x in model_prof_df[pred_profs[i]]['dates']]
         pred_flux = model_prof_df[pred_profs[i]]['fluxes']
-        # pred_dates, pred_flux = profile.read_single_time_profile(pred_profs[i])
         if not pred_flux:
             #Remove row for bad time profile from sub
             sub = sub[sub['Predicted Time Profile'] != pred_profs[i]]
