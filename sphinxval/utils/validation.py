@@ -4031,7 +4031,18 @@ def intuitive_validation(evaluated_sphinx, removed_sphinx, model_names,
         all_energy_channels = resume.identify_unique(df, 'Energy Channel Key')
         all_observed_thresholds = resume.identify_thresholds_per_energy_channel(df)
     ### RESUME COMPLETED
-    
+
+    dum_toggle = True
+    dum_profs = None
+    if dum_toggle:
+        df, dum_profs = dums.feeder_from_sphinx(df)
+        df, duplicate_df = duplicates.remove_sphinx_duplicates(df) #just in case there's some duplication of DUM models
+        model_names = resume.identify_unique(df, 'Model')
+        all_energy_channels = resume.identify_unique(df, 'Energy Channel Key')
+        all_observed_thresholds = resume.identify_thresholds_per_energy_channel(df)
+
+
+        
     #Write SPHINX dataframe to file
     write_df(df, "SPHINX_evaluated")
     profile_output(df, r_obs, r_mod)
