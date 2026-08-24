@@ -1315,7 +1315,7 @@ def extract_time_forecast_type(df, pred_key, validation_type):
 
 
 def all_clear_intuitive_metrics(df, dict, model, energy_key, thresh_key,
-    validation_type):
+    validation_type, uncertainty):
     """ Extract the appropriate predictions and calculate metrics
         All Clear
 
@@ -1402,14 +1402,14 @@ def all_clear_intuitive_metrics(df, dict, model, energy_key, thresh_key,
 
     fill_all_clear_dict(dict, model, energy_key, thresh_key, pred_energy_key,
         pred_thresh_key, scores, n_caught, sep_caught_str, n_miss, sep_miss_str)
-    uncertainties.feeder_from_sphinx(sub, dict, 'all_clear', config.uncert_boolean)
+    uncertainties.feeder_from_sphinx(sub, dict, 'all_clear', uncertainty)
 
     return sub
 
 
 
 def probability_intuitive_metrics(df, dict, model, energy_key, thresh_key,
-    validation_type):
+    validation_type, uncertainty):
     """ Extract the appropriate predictions and calculate metrics
         Probability
 
@@ -1497,7 +1497,7 @@ def probability_intuitive_metrics(df, dict, model, energy_key, thresh_key,
     dict['Area Under ROC Curve'].append(roc_auc)
 
 
-    uncertainties.feeder_from_sphinx(sub, dict, 'probability', config.uncert_boolean)
+    uncertainties.feeder_from_sphinx(sub, dict, 'probability', uncertainty)
 
 
 def calc_all_flux_metrics(obs, pred):
@@ -1572,7 +1572,7 @@ def calc_all_flux_metrics(obs, pred):
 
 
 def point_intensity_intuitive_metrics(df, dict, model, energy_key, thresh_key,
-    validation_type, flux_threshold=0):
+    validation_type, uncertainty, flux_threshold=0):
     """ Extract the appropriate predictions and calculate metrics
         Point intensity
 
@@ -1733,12 +1733,12 @@ def point_intensity_intuitive_metrics(df, dict, model, energy_key, thresh_key,
         slope, yint, r_lin, r_log, s_lin, MRatio, MedRatio, ME, MedE, MLE,
         MedLE, MAE, MedAE, MALE, MedALE, MPE, MAPE, MSPE, SMAPE,
         MAR, RMSE, RMSLE, MdSA, fact10, fact2, tp_plotnames)
-    uncertainties.feeder_from_sphinx(sub, dict, 'point_intensity', config.uncert_boolean)
+    uncertainties.feeder_from_sphinx(sub, dict, 'point_intensity', uncertainty)
 
 
 
 def peak_intensity_intuitive_metrics(df, dict, model, energy_key, thresh_key,
-    validation_type):
+    validation_type, uncertainty):
     """ Extract the appropriate predictions and calculate metrics
         Peak intensity
 
@@ -1854,14 +1854,14 @@ def peak_intensity_intuitive_metrics(df, dict, model, energy_key, thresh_key,
         MAR, RMSE, RMSLE, MdSA, fact10, fact2)
     
 
-    uncertainties.feeder_from_sphinx(sub, dict, 'peak_intensity', config.uncert_boolean)
+    uncertainties.feeder_from_sphinx(sub, dict, 'peak_intensity', uncertainty)
 
 
 
 
 
 def peak_intensity_max_intuitive_metrics(df, dict, model, energy_key,
-    thresh_key, validation_type):
+    thresh_key, validation_type, uncertainty):
     """ Extract the appropriate predictions and calculate metrics
         Peak intensity
 
@@ -2017,12 +2017,12 @@ def peak_intensity_max_intuitive_metrics(df, dict, model, energy_key,
         MedLE, MAE, MedAE, MALE, MedALE, MPE, MAPE, MSPE, SMAPE,
         MAR, RMSE, RMSLE, MdSA, fact10, fact2)
     
-    uncertainties.feeder_from_sphinx(sub, dict, 'peak_intensity_max', config.uncert_boolean)
+    uncertainties.feeder_from_sphinx(sub, dict, 'peak_intensity_max', uncertainty)
 
 
 
 def max_flux_in_pred_win_metrics(df, dict, model, energy_key,
-    thresh_key, validation_type):
+    thresh_key, validation_type, uncertainty):
     """ Extract the appropriate predictions and calculate metrics
         Compare predicted max or onset peak flux to the max observed
         flux in the model's prediction window.
@@ -2166,11 +2166,11 @@ def max_flux_in_pred_win_metrics(df, dict, model, energy_key,
         slope, yint, r_lin, r_log, s_lin, MRatio, MedRatio, ME, MedE, MLE,
         MedLE, MAE, MedAE, MALE, MedALE, MPE, MAPE, MSPE, SMAPE,
         MAR, RMSE, RMSLE, MdSA, fact10, fact2)
-    uncertainties.feeder_from_sphinx(sub, dict, 'max_flux_in_pred_win', config.uncert_boolean)
+    uncertainties.feeder_from_sphinx(sub, dict, 'max_flux_in_pred_win', uncertainty)
 
 
 def fluence_intuitive_metrics(df, dict, model, energy_key,
-    thresh_key, validation_type):
+    thresh_key, validation_type, uncertainty):
     """ Extract the appropriate predictions and calculate metrics
         Fluence
 
@@ -2284,13 +2284,13 @@ def fluence_intuitive_metrics(df, dict, model, energy_key,
         slope, yint, r_lin, r_log, s_lin, MRatio, MedRatio, ME, MedE, MLE,
         MedLE, MAE, MedAE, MALE, MedALE, MPE, MAPE, MSPE, SMAPE,
         MAR, RMSE, RMSLE, MdSA, fact10, fact2)
-    uncertainties.feeder_from_sphinx(sub, dict, 'fluence', config.uncert_boolean)
+    uncertainties.feeder_from_sphinx(sub, dict, 'fluence', uncertainty)
 
 
 
 
 def threshold_crossing_intuitive_metrics(df, dict, model, energy_key,
-    thresh_key, validation_type):
+    thresh_key, validation_type, uncertainty):
     """ Extract the appropriate predictions and calculate metrics
         Threshold Crossing
 
@@ -2353,11 +2353,11 @@ def threshold_crossing_intuitive_metrics(df, dict, model, energy_key,
     fill_time_metrics_dict(dict, model, energy_key, thresh_key,
     pred_energy_key, pred_thresh_key, ME, MedE, MAE, MedAE)
 
-    uncertainties.feeder_from_sphinx(sub, dict, 'threshold_crossing', config.uncert_boolean)
+    uncertainties.feeder_from_sphinx(sub, dict, 'threshold_crossing', uncertainty)
     
 
 def start_time_intuitive_metrics(df, dict, model, energy_key, thresh_key,
-    validation_type):
+    validation_type, uncertainty):
     """ Extract the appropriate predictions and calculate metrics
         Start Time
 
@@ -2420,11 +2420,11 @@ def start_time_intuitive_metrics(df, dict, model, energy_key, thresh_key,
     
     fill_time_metrics_dict(dict, model, energy_key, thresh_key,
     pred_energy_key, pred_thresh_key, ME, MedE, MAE, MedAE)
-    uncertainties.feeder_from_sphinx(sub, dict, 'start_time', config.uncert_boolean)
+    uncertainties.feeder_from_sphinx(sub, dict, 'start_time', uncertainty)
 
 
 def end_time_intuitive_metrics(df, dict, model, energy_key,
-    thresh_key, validation_type):
+    thresh_key, validation_type, uncertainty):
     """ Extract the appropriate predictions and calculate metrics
         End Time
 
@@ -2486,12 +2486,12 @@ def end_time_intuitive_metrics(df, dict, model, energy_key,
     
     fill_time_metrics_dict(dict, model, energy_key, thresh_key,
     pred_energy_key, pred_thresh_key, ME, MedE, MAE, MedAE)
-    uncertainties.feeder_from_sphinx(sub, dict, 'end_time', config.uncert_boolean)
+    uncertainties.feeder_from_sphinx(sub, dict, 'end_time', uncertainty)
  
 
 
 def duration_intuitive_metrics(df, dict, model, energy_key, thresh_key,
-    validation_type):
+    validation_type, uncertainty):
     """ Extract the appropriate predictions and calculate metrics
         Duration
 
@@ -2555,13 +2555,13 @@ def duration_intuitive_metrics(df, dict, model, energy_key, thresh_key,
     
     fill_time_metrics_dict(dict, model, energy_key, thresh_key,
     pred_energy_key, pred_thresh_key, ME, MedE, MAE, MedAE)
-    uncertainties.feeder_from_sphinx(sub, dict, 'duration', config.uncert_boolean)
+    uncertainties.feeder_from_sphinx(sub, dict, 'duration', uncertainty)
 
 
 
 
 def peak_intensity_time_intuitive_metrics(df, dict, model, energy_key,
-    thresh_key, validation_type):
+    thresh_key, validation_type, uncertainty):
     """ Extract the appropriate predictions and calculate metrics
         Peak Intensity Time
 
@@ -2633,7 +2633,7 @@ def peak_intensity_time_intuitive_metrics(df, dict, model, energy_key,
     fill_time_metrics_dict(dict, model, energy_key, thresh_key,
     pred_energy_key, pred_thresh_key, ME, MedE, MAE, MedAE)
 
-    uncertainties.feeder_from_sphinx(sub, dict, 'peak_intensity_time', config.uncert_boolean)
+    uncertainties.feeder_from_sphinx(sub, dict, 'peak_intensity_time', uncertainty)
 
 
 def date_to_string(date):
@@ -2654,7 +2654,7 @@ def date_to_string(date):
 
 
 def peak_intensity_max_time_intuitive_metrics(df, dict, model, energy_key,
-    thresh_key, validation_type):
+    thresh_key, validation_type, uncertainty):
     """ Extract the appropriate predictions and calculate metrics
         Peak Intensity Max Time
 
@@ -2725,11 +2725,11 @@ def peak_intensity_max_time_intuitive_metrics(df, dict, model, energy_key,
     fill_time_metrics_dict(dict, model, energy_key, thresh_key,
     pred_energy_key, pred_thresh_key, ME, MedE, MAE, MedAE)
 
-    uncertainties.feeder_from_sphinx(sub, dict, 'peak_intensity_max_time', config.uncert_boolean)
+    uncertainties.feeder_from_sphinx(sub, dict, 'peak_intensity_max_time', uncertainty)
 
 
 def time_profile_intuitive_metrics(df, dict, model, energy_key,
-    thresh_key, validation_type):
+    thresh_key, validation_type, uncertainty):
     """ Extract the appropriate predictions and calculate metrics
         Time Profile
 
@@ -3748,7 +3748,7 @@ def profile_output(sphinx_dataframe, resume_obs, resume_model):
 
 
 def calculate_intuitive_metrics(df, model_names, all_energy_channels,
-    all_observed_thresholds, validation_type="All"):
+    all_observed_thresholds, uncertainty, validation_type="All"):
     """ Calculate metrics appropriate to each quantity and
         store in dataframes.
             
@@ -3811,33 +3811,33 @@ def calculate_intuitive_metrics(df, model_names, all_energy_channels,
                 logging.info("Calculating metrics for " + model + ", " + ek + ", " + tk)
                 
                 probability_intuitive_metrics(df, probability_dict,model,ek,tk,
-                    validation_type)
+                    validation_type, uncertainty)
                 point_intensity_intuitive_metrics(df, point_intensity_dict,
-                    model, ek, tk, validation_type)
+                    model, ek, tk, validation_type, uncertainty)
                 peak_intensity_intuitive_metrics(df, peak_intensity_dict,
-                    model,ek,tk, validation_type)
+                    model,ek,tk, validation_type, uncertainty)
                 peak_intensity_max_intuitive_metrics(df,
-                    peak_intensity_max_dict,model,ek,tk, validation_type)
+                    peak_intensity_max_dict,model,ek,tk, validation_type, uncertainty)
                 fluence_intuitive_metrics(df,fluence_dict, model,ek,tk,
-                    validation_type)
+                    validation_type, uncertainty)
                 threshold_crossing_intuitive_metrics(df, thresh_cross_dict,
-                    model,ek,tk, validation_type)
+                    model,ek,tk, validation_type, uncertainty)
                 start_time_intuitive_metrics(df, start_time_dict,
-                    model,ek,tk, validation_type)
+                    model,ek,tk, validation_type, uncertainty)
                 end_time_intuitive_metrics(df, end_time_dict,model,ek,tk,
-                    validation_type)
+                    validation_type, uncertainty)
                 duration_intuitive_metrics(df, duration_dict,model,ek,tk,
-                    validation_type)
+                    validation_type, uncertainty)
                 peak_intensity_time_intuitive_metrics(df,
-                    peak_intensity_time_dict,model,ek,tk, validation_type)
+                    peak_intensity_time_dict,model,ek,tk, validation_type, uncertainty)
                 peak_intensity_max_time_intuitive_metrics(df,
-                    peak_intensity_max_time_dict,model,ek,tk, validation_type)
+                    peak_intensity_max_time_dict,model,ek,tk, validation_type, uncertainty)
                 all_clear_intuitive_metrics(df, all_clear_dict,model,ek,tk,
-                    validation_type)
+                    validation_type, uncertainty)
                 time_profile_intuitive_metrics(df, profile_dict,model,ek,tk,
-                    validation_type)
+                    validation_type, uncertainty)
                 max_flux_in_pred_win_metrics(df, max_dict, model,ek,tk,
-                    validation_type)
+                    validation_type, uncertainty)
                 awt_metrics(df, awt_dict, model, ek, tk, validation_type)
                 last_data_to_issue_intuitive_metrics(df, last_data_to_issue_dict,model,ek,tk,
                     validation_type)
@@ -3939,7 +3939,7 @@ def validation_explanation():
 
 def intuitive_validation(evaluated_sphinx, removed_sphinx, model_names,
     all_energy_channels, all_observed_thresholds, observed_sep_events,
-    profname_dict, r_df=None, r_obs= None, r_mod= None):
+    profname_dict, r_df=None, r_obs= None, r_mod= None, uncertainty = config.uncert_boolean):
     """ In the intuitive_validation subroutine, forecasts are validated in a
         way similar to which people would interpret forecasts.
     
@@ -4044,8 +4044,9 @@ def intuitive_validation(evaluated_sphinx, removed_sphinx, model_names,
     validation_type = ["All","First", "Last", "Max", "Mean"]
     for type in validation_type:
         logger.info("-----------Starting validation of " + type +" forecasts-------------")
+        print(uncertainty)
         calculate_intuitive_metrics(df, model_names, all_energy_channels,
-                all_observed_thresholds, type)
+                all_observed_thresholds, uncertainty, type)
 
     #Record explanatory information to the log
     validation_explanation()

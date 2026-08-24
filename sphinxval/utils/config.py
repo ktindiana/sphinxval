@@ -142,7 +142,7 @@ mm_thresh_key = mm_obs_tk + "_" + mm_pred_tk
 
 ###Uncertainty Boolean
 uncert_boolean = True
-uncert_n_resamples = 1000
+uncert_n_resamples = 10000
 uncert_fraction = 0.75
 
 # METRICS TO BE REPORTED AS A PERCENTAGE

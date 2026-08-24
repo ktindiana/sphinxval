@@ -19,7 +19,7 @@ logging.getLogger("matplotlib").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
 
-def validate(data_list, model_list, top=None, Resume=None, resume_obs = None, resume_model = None):
+def validate(data_list, model_list, top=None, Resume=None, resume_obs = None, resume_model = None, uncertainty = cfg.uncert_boolean):
     """ Validate ingests a list of observations (data_list) and a
         list of predictions (model_list).
         
@@ -125,7 +125,7 @@ def validate(data_list, model_list, top=None, Resume=None, resume_obs = None, re
 
     #Perform intuitive validation
     sphinx_df = valid.intuitive_validation(evaluated_sphinx, removed_sphinx, model_names,
-        all_energy_channels, all_observed_thresholds, observed_sep_events, profname_dict, r_df=r_df, r_obs = r_obs_prof, r_mod = r_model_prof)
+        all_energy_channels, all_observed_thresholds, observed_sep_events, profname_dict, r_df=r_df, r_obs = r_obs_prof, r_mod = r_model_prof, uncertainty = uncertainty)
     logger.info("Completed validation.")
 
 
