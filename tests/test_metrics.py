@@ -12,8 +12,6 @@ import datetime
 __version__ = "1.0"
 __author__ = "Clayton Allison"
 
-import warnings
-warnings.filterwarnings("ignore")
 
 # Updated Aug 26, 2026
 
