@@ -3748,7 +3748,7 @@ def profile_output(sphinx_dataframe, resume_obs, resume_model):
 
 
 def calculate_intuitive_metrics(df, model_names, all_energy_channels,
-    all_observed_thresholds, uncertainty, validation_type="All"):
+    all_observed_thresholds, validation_type="All", uncertainty = config.uncert_boolean):
     """ Calculate metrics appropriate to each quantity and
         store in dataframes.
             
@@ -4044,9 +4044,8 @@ def intuitive_validation(evaluated_sphinx, removed_sphinx, model_names,
     validation_type = ["All","First", "Last", "Max", "Mean"]
     for type in validation_type:
         logger.info("-----------Starting validation of " + type +" forecasts-------------")
-        print(uncertainty)
         calculate_intuitive_metrics(df, model_names, all_energy_channels,
-                all_observed_thresholds, uncertainty, type)
+                all_observed_thresholds, type, uncertainty = uncertainty,)
 
     #Record explanatory information to the log
     validation_explanation()

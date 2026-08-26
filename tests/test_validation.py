@@ -30,7 +30,10 @@ import numpy as np
 from unittest.mock import patch
 import shutil # using this to delete the contents of the output folder each run - since the unittest is based on the existence/creation of certain files each loop
 
+import warnings
+warnings.filterwarnings("ignore")
 
+# Updated Aug 26. 2026
 
 logger = logging.getLogger(__name__)
 
@@ -94,7 +97,7 @@ def fill_all_clear_dict_hit(dict, self):
         dict["Frequency of Correct Negatives"].append(np.nan)
         dict["False Alarm Ratio"].append('0.0')
         dict["False Alarm Event Ratio"].append('0.0')
-        dict["Tau"].append('1.0')
+        dict["Tau"].append(np.nan)
         dict["Detection Failure Ratio"].append(np.nan)
         dict["Threat Score"].append('1.0') #Critical Success Index
         dict["Odds Ratio"].append(np.nan)
@@ -149,8 +152,8 @@ def fill_all_clear_dict_CN(dict, self):
         dict["Probability of Correct Negatives"].append('1.0')
         dict["Frequency of Correct Negatives"].append('1.0')
         dict["False Alarm Ratio"].append(np.nan)
-        dict["False Alarm Event Ratio"].append('0.0')
-        dict["Tau"].append('1.0')
+        dict["False Alarm Event Ratio"].append(np.nan)
+        dict["Tau"].append(np.nan)
         dict["Detection Failure Ratio"].append('0.0')
         dict["Threat Score"].append(np.nan) #Critical Success Index
         dict["Odds Ratio"].append(np.nan)
@@ -195,45 +198,33 @@ def fill_awt_dict(dict, self):
 
     dict["Mean AWT for Predicted SEP All Clear to Observed SEP Threshold Crossing Time"].append('1.0')
     dict["Median AWT for Predicted SEP All Clear to Observed SEP Threshold Crossing Time"].append('1.0')
-    # dict["Mean AWT for Predicted SEP All Clear to Observed SEP Start Time"].append('1.0')
-    # dict["Median AWT for Predicted SEP All Clear to Observed SEP Start Time"].append('1.0')
     dict["Mean AWT Efficiency for Predicted SEP All Clear to Observed SEP Threshold Crossing Time"].append('0.0')
 
             #Threshold Crossing Time Forecasts
     dict["Mean AWT for Predicted SEP Threshold Crossing Time to Observed SEP Threshold Crossing Time"].append(np.nan)
     dict["Median AWT for Predicted SEP Threshold Crossing Time to Observed SEP Threshold Crossing Time"].append(np.nan)
-    # dict["Mean AWT for Predicted SEP Threshold Crossing Time to Observed SEP Start Time"].append(np.nan)
-    # dict["Median AWT for Predicted SEP Threshold Crossing Time to Observed SEP Start Time"].append(np.nan)
     dict['Mean AWT Efficiency for Predicted SEP Threshold Crossing Time to Observed SEP Threshold Crossing Time'].append(np.nan)
 
             #Start Time Forecasts
     dict["Mean AWT for Predicted SEP Start Time to Observed SEP Threshold Crossing Time"].append(np.nan)
     dict["Median AWT for Predicted SEP Start Time to Observed SEP Threshold Crossing Time"].append(np.nan)
-    # dict["Mean AWT for Predicted SEP Start Time to Observed SEP Start Time"].append(np.nan)
-    # dict["Median AWT for Predicted SEP Start Time to Observed SEP Start Time"].append(np.nan)
     dict["Mean AWT Efficiency for Predicted SEP Start Time to Observed SEP Threshold Crossing Time"].append(np.nan)
  
             #Peak Intensity Forecasts
     dict["Mean AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Threshold Crossing Time"].append(np.nan)
     dict["Median AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Threshold Crossing Time"].append(np.nan)
-    # dict["Mean AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Start Time"].append(np.nan)
-    # dict["Median AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Start Time"].append(np.nan)
     dict["Mean AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Peak Intensity (Onset Peak) Time"].append(np.nan)
     dict["Median AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Peak Intensity (Onset Peak) Time"].append(np.nan)
 
             #Peak Intensity Max Forecasts
     dict["Mean AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Threshold Crossing Time"].append(np.nan)
     dict["Median AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Threshold Crossing Time"].append(np.nan)
-    # dict["Mean AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Start Time"].append(np.nan)
-    # dict["Median AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Start Time"].append(np.nan)
     dict["Mean AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Peak Intensity Max (Max Flux) Time"].append(np.nan)
     dict["Median AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Peak Intensity Max (Max Flux) Time"].append(np.nan)
 
             #End Time Forecasts
     dict["Mean AWT for Predicted SEP End Time to Observed SEP Threshold Crossing Time"].append(np.nan)
     dict["Median AWT for Predicted SEP End Time to Observed SEP Threshold Crossing Time"].append(np.nan)
-    # dict["Mean AWT for Predicted SEP End Time to Observed SEP Start Time"].append(np.nan)
-    # dict["Median AWT for Predicted SEP End Time to Observed SEP Start Time"].append(np.nan)
     dict["Mean AWT for Predicted SEP End Time to Observed SEP End Time"].append(np.nan)
     dict["Median AWT for Predicted SEP End Time to Observed SEP End Time"].append(np.nan)
             
@@ -246,7 +237,7 @@ def fill_probability_dict_highprob(dict, self):
     dict["Prediction Energy Channel"].append(self.energy_key)
     dict["Prediction Threshold"].append(self.obs_thresholds[self.energy_key][0])
     
-    dict['ROC Curve Plot'].append(".\\tests\\output/plots/ROC_curve_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf")
+    dict['ROC Curve Plot'].append(os.path.join('.', 'tests', 'output', 'plots', 'ROC_curve_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf'))#".\\tests\\output/plots/ROC_curve_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf")
     dict['Brier Score'].append('0.0')
     dict['Brier Skill Score'].append('1.0')
     dict['Spearman Correlation Coefficient'].append(np.nan)
@@ -264,7 +255,7 @@ def fill_probability_dict_lowprob(dict, self):
     dict["Prediction Energy Channel"].append(self.energy_key)
     dict["Prediction Threshold"].append(self.obs_thresholds[self.energy_key][0])
     
-    dict['ROC Curve Plot'].append(".\\tests\\output/plots/ROC_curve_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf")
+    dict['ROC Curve Plot'].append(os.path.join('.', 'tests', 'output', 'plots', 'ROC_curve_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf'))#".\\tests\\output/plots/ROC_curve_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf")
     dict['Brier Score'].append('1.0')
     dict['Brier Skill Score'].append('-0.06941692181172066')
     dict['Spearman Correlation Coefficient'].append(np.nan)
@@ -283,7 +274,7 @@ def fill_probability_dict_multprob(dict, self):
     dict["Prediction Energy Channel"].append(self.energy_key)
     dict["Prediction Threshold"].append(self.obs_thresholds[self.energy_key][0])
     
-    dict['ROC Curve Plot'].append(".\\tests\\output/plots/ROC_curve_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf")
+    dict['ROC Curve Plot'].append(os.path.join('.', 'tests', 'output', 'plots', 'ROC_curve_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf'))#".\\tests\\output/plots/ROC_curve_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf")
     dict['Brier Score'].append('0.5')
     dict['Brier Skill Score'].append('0.4652915390941397')
     dict['Spearman Correlation Coefficient'].append(np.nan)
@@ -348,7 +339,7 @@ def fill_peak_intensity_max_mult_dict(dict, self):
     dict["Threshold"].append(self.obs_thresholds[self.energy_key][0])
     dict["Prediction Energy Channel"].append(self.energy_key)
     dict["Prediction Threshold"].append(self.obs_thresholds[self.energy_key][0])
-    dict["Scatter Plot"].append('.\\tests\\output/plots/Correlation_peak_intensity_max_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf')
+    dict["Scatter Plot"].append(os.path.join('.', 'tests', 'output', 'plots', 'Correlation_peak_intensity_max_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf'))
     dict["Linear Regression Slope"].append('-0.25000000000000006')
     dict["Linear Regression y-intercept"].append('-0.25')
     dict["Pearson Correlation Coefficient (Linear)"].append(np.nan)
@@ -435,7 +426,7 @@ def fill_peak_intensity_mult_dict(dict, self):
     dict["Threshold"].append(self.obs_thresholds[self.energy_key][0])
     dict["Prediction Energy Channel"].append(self.energy_key)
     dict["Prediction Threshold"].append(self.obs_thresholds[self.energy_key][0])
-    dict["Scatter Plot"].append('.\\tests\\output/plots/Correlation_peak_intensity_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf')
+    dict["Scatter Plot"].append(os.path.join('.', 'tests', 'output', 'plots', 'Correlation_peak_intensity_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf')) #.\\tests\\output/plots/Correlation_peak_intensity_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf'
     dict["Linear Regression Slope"].append('-0.25000000000000006')
     dict["Linear Regression y-intercept"].append('-0.25')
     dict["Pearson Correlation Coefficient (Linear)"].append(np.nan)
@@ -494,7 +485,7 @@ def fill_probability_dict_all(dict, self):
     dict["Prediction Energy Channel"].append(self.energy_key)
     dict["Prediction Threshold"].append(self.obs_thresholds[self.energy_key][0])
     
-    dict['ROC Curve Plot'].append(".\\tests\\output/plots/ROC_curve_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf")
+    dict['ROC Curve Plot'].append(os.path.join('.', 'tests', 'output', 'plots', 'ROC_curve_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf'))#".\\tests\\output/plots/ROC_curve_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf")
     dict['Brier Score'].append('0.006799999999999997')
     dict['Brier Skill Score'].append('0.9890982954329874')
     dict['Spearman Correlation Coefficient'].append('1.0')
@@ -511,7 +502,7 @@ def fill_peak_intensity_metrics_dict_all(dict, self):
     dict["Threshold"].append(self.obs_thresholds[self.energy_key][0])
     dict["Prediction Energy Channel"].append(self.energy_key)
     dict["Prediction Threshold"].append(self.obs_thresholds[self.energy_key][0])
-    dict["Scatter Plot"].append('.\\tests\\output/plots/Correlation_peak_intensity_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf')
+    dict["Scatter Plot"].append(os.path.join('.', 'tests', 'output', 'plots', 'Correlation_peak_intensity_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf'))#'.\\tests\\output/plots/Correlation_peak_intensity_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf')
     dict["Linear Regression Slope"].append('0.5103481712895563')
     dict["Linear Regression y-intercept"].append('0.5103481712895562')
     dict["Pearson Correlation Coefficient (Linear)"].append(np.nan)
@@ -554,7 +545,7 @@ def fill_time_profile_dict_all(dict, self):
     dict["Threshold"].append(self.obs_thresholds[self.energy_key][0])
     dict["Prediction Energy Channel"].append(self.energy_key)
     dict["Prediction Threshold"].append(self.obs_thresholds[self.energy_key][0])
-    dict["Scatter Plot"].append('.\\tests\\output/plots/Correlation_time_profile_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_20000101T000000.pdf')
+    dict["Scatter Plot"].append(os.path.join('.', 'tests', 'output', 'plots', 'Correlation_time_profile_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_20000101T000000.pdf'))#.\\tests\\output/plots/Correlation_time_profile_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_20000101T000000.pdf')
     dict["Linear Regression Slope"].append(np.nan)
     dict["Linear Regression y-intercept"].append(np.nan)
     dict["Pearson Correlation Coefficient (Linear)"].append('-0.16603070802422484')
@@ -656,45 +647,33 @@ def fill_awt_dict_all(dict, self):
 
     dict["Mean AWT for Predicted SEP All Clear to Observed SEP Threshold Crossing Time"].append('1.0')
     dict["Median AWT for Predicted SEP All Clear to Observed SEP Threshold Crossing Time"].append('1.0')
-    # dict["Mean AWT for Predicted SEP All Clear to Observed SEP Start Time"].append('1.0')
-    # dict["Median AWT for Predicted SEP All Clear to Observed SEP Start Time"].append('1.0')
     dict["Mean AWT Efficiency for Predicted SEP All Clear to Observed SEP Threshold Crossing Time"].append('0.0')
 
             #Threshold Crossing Time Forecasts
     dict["Mean AWT for Predicted SEP Threshold Crossing Time to Observed SEP Threshold Crossing Time"].append('1.0')
     dict["Median AWT for Predicted SEP Threshold Crossing Time to Observed SEP Threshold Crossing Time"].append('1.0')
-    # dict["Mean AWT for Predicted SEP Threshold Crossing Time to Observed SEP Start Time"].append('1.0')
-    # dict["Median AWT for Predicted SEP Threshold Crossing Time to Observed SEP Start Time"].append('1.0')
     dict['Mean AWT Efficiency for Predicted SEP Threshold Crossing Time to Observed SEP Threshold Crossing Time'].append('0.0')
 
             #Start Time Forecasts
     dict["Mean AWT for Predicted SEP Start Time to Observed SEP Threshold Crossing Time"].append('1.0')
     dict["Median AWT for Predicted SEP Start Time to Observed SEP Threshold Crossing Time"].append('1.0')
-    # dict["Mean AWT for Predicted SEP Start Time to Observed SEP Start Time"].append('1.0')
-    # dict["Median AWT for Predicted SEP Start Time to Observed SEP Start Time"].append('1.0')
     dict["Mean AWT Efficiency for Predicted SEP Start Time to Observed SEP Threshold Crossing Time"].append('0.0')
   
             #Peak Intensity Forecasts
     dict["Mean AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Threshold Crossing Time"].append('1.0')
     dict["Median AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Threshold Crossing Time"].append('1.0')
-    # dict["Mean AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Start Time"].append('1.0')
-    # dict["Median AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Start Time"].append('1.0')
     dict["Mean AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Peak Intensity (Onset Peak) Time"].append('1.0')
     dict["Median AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Peak Intensity (Onset Peak) Time"].append('1.0')
 
             #Peak Intensity Max Forecasts
     dict["Mean AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Threshold Crossing Time"].append('1.0')
     dict["Median AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Threshold Crossing Time"].append('1.0')
-    # dict["Mean AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Start Time"].append('1.0')
-    # dict["Median AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Start Time"].append('1.0')
     dict["Mean AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Peak Intensity Max (Max Flux) Time"].append('1.0')
     dict["Median AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Peak Intensity Max (Max Flux) Time"].append('1.0')
 
             #End Time Forecasts
     dict["Mean AWT for Predicted SEP End Time to Observed SEP Threshold Crossing Time"].append('1.0')
     dict["Median AWT for Predicted SEP End Time to Observed SEP Threshold Crossing Time"].append('1.0')
-    # dict["Mean AWT for Predicted SEP End Time to Observed SEP Start Time"].append('1.0')
-    # dict["Median AWT for Predicted SEP End Time to Observed SEP Start Time"].append('1.0')
     dict["Mean AWT for Predicted SEP End Time to Observed SEP End Time"].append('24.0')
     dict["Median AWT for Predicted SEP End Time to Observed SEP End Time"].append('24.0')
             
@@ -1017,6 +996,7 @@ class TestAllClear0(unittest.TestCase):
         
     @patch('sphinxval.utils.config.outpath', './tests/output')
     @patch('sphinxval.utils.config.uncert_boolean', False)
+    @patch('sphinxval.utils.config.uncert_n_resamples', 10)
 
     def test_all_clear_0(self):
         validate.prepare_outdirs()
@@ -1101,6 +1081,7 @@ class TestAllClear1(unittest.TestCase):
 
     @patch('sphinxval.utils.config.outpath', './tests/output')
     @patch('sphinxval.utils.config.uncert_boolean', False)
+    @patch('sphinxval.utils.config.uncert_n_resamples', 10)
 
     def test_all_clear_1(self):
         validate.prepare_outdirs()
@@ -1120,6 +1101,7 @@ class TestAllClearGarbage(unittest.TestCase):
     
     @patch('sphinxval.utils.config.outpath', './tests/output')
     @patch('sphinxval.utils.config.uncert_boolean', False)
+    @patch('sphinxval.utils.config.uncert_n_resamples', 10)
 
     def test_garbage(self): 
         validate.prepare_outdirs()
@@ -1218,6 +1200,7 @@ class TestPeakIntensity0(unittest.TestCase):
         
     @patch('sphinxval.utils.config.outpath', './tests/output')
     @patch('sphinxval.utils.config.uncert_boolean', False)
+    @patch('sphinxval.utils.config.uncert_n_resamples', 10)
 
     def test_peak_intensity_0(self):
         validate.prepare_outdirs()
@@ -1326,6 +1309,7 @@ class TestPeakIntensityMult(unittest.TestCase):
 
     @patch('sphinxval.utils.config.outpath', './tests/output')
     @patch('sphinxval.utils.config.uncert_boolean', False)
+    @patch('sphinxval.utils.config.uncert_n_resamples', 10)
 
     def test_peak_intensity_1(self):
         validate.prepare_outdirs()
@@ -1409,6 +1393,7 @@ class TestPeakIntensityMax0(unittest.TestCase):
    
     @patch('sphinxval.utils.config.outpath', './tests/output')
     @patch('sphinxval.utils.config.uncert_boolean', False)
+    @patch('sphinxval.utils.config.uncert_n_resamples', 10)
 
     def test_peak_intensity_max_0(self):
         validate.prepare_outdirs()
@@ -1526,6 +1511,7 @@ class TestPeakIntensityMaxMult(unittest.TestCase):
 
     @patch('sphinxval.utils.config.outpath', './tests/output')
     @patch('sphinxval.utils.config.uncert_boolean', False)
+    @patch('sphinxval.utils.config.uncert_n_resamples', 10)
 
     def test_peak_intensity_max_1(self):
         validate.prepare_outdirs()
@@ -1623,6 +1609,7 @@ class TestProbability0(unittest.TestCase):
 
     @patch('sphinxval.utils.config.outpath', './tests/output')
     @patch('sphinxval.utils.config.uncert_boolean', False)
+    @patch('sphinxval.utils.config.uncert_n_resamples', 10) 
 
     def test_prob_0(self):
         validate.prepare_outdirs()
@@ -1745,6 +1732,7 @@ class TestProbabilityMult(unittest.TestCase):
    
     @patch('sphinxval.utils.config.outpath', './tests/output')
     @patch('sphinxval.utils.config.uncert_boolean', False)
+    @patch('sphinxval.utils.config.uncert_n_resamples', 10)
     
     def test_prob_1(self):
         validate.prepare_outdirs()
@@ -1813,6 +1801,7 @@ class TestShortNameChanger(unittest.TestCase):
     @patch('sphinxval.utils.config.outpath', './tests/output')
     @patch('sphinxval.utils.config.shortname_grouping', [('Test_model_0.*', 'new_shortname_for_testing')])
     @patch('sphinxval.utils.config.uncert_boolean', False)
+    @patch('sphinxval.utils.config.uncert_n_resamples', 10)
 
     def test_shortname_change(self):
         validate.prepare_outdirs()
@@ -2082,6 +2071,7 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
 
     @patch('sphinxval.utils.config.outpath', './tests/output')
     @patch('sphinxval.utils.config.uncert_boolean', False)
+    @patch('sphinxval.utils.config.uncert_n_resamples', 10)
     @patch('sphinxval.utils.config.model_prof_path', './tests/output/json/model_profiles.json')
     @patch('sphinxval.utils.config.obs_prof_path', './tests/output/json/observed_profiles.json')
     

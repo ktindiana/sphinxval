@@ -517,6 +517,7 @@ class Test_Resume(unittest.TestCase):
     @patch('sphinxval.utils.config.mm_obs_ek', config_tests.mm_obs_ek)
     @patch('sphinxval.utils.config.mm_obs_tk', config_tests.mm_obs_tk)
     @patch('sphinxval.utils.config.uncert_boolean', False)
+    @patch('sphinxval.utils.config.uncert_n_resamples', 1)
     @patch('sphinxval.utils.config.model_prof_path', './tests/output/json/model_profiles.json')
     @patch('sphinxval.utils.config.obs_prof_path', './tests/output/json/observed_profiles.json')
     

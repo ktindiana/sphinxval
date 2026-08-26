@@ -10,6 +10,10 @@ from . import config
 import logging
 
 
+
+import warnings
+warnings.filterwarnings("ignore")
+
 """
 Independent module intended to determine metric uncertainties within
 SPHINX with extensions for VIVID. 
@@ -59,6 +63,7 @@ def feeder_from_vivid():
 
 def uncertainty_workflow(df, dict, label, uncert_boolean):
     if uncert_boolean:
+        
         # Splitting function that will correctly funnel to the correct uncertainty calculation
         flux_filter = ['point_intensity', 'peak_intensity', 'peak_intensity_max', 'max_flux_in_pred_win', 'fluence']
         time_filter = ['start_time', 'end_time', 'peak_intensity_time', 'peak_intensity_max_time', 'threshold_crossing', 'duration', 'last_data_to_issue_time']
@@ -217,7 +222,6 @@ def calc_flux_uncertainties(obs, pred):
     for met in corr_plot_metrics:
         uncertainty = corr_call_bootstrapper(obs, pred, met)
         error = uncertainty.standard_error
-        logger.info(str(flux_metric_mapping(met) + ' Uncertainty'))
         flux_dict[flux_metric_mapping(met) + ' Uncertainty'].append(error)
     return flux_dict
 
@@ -571,40 +575,7 @@ def all_clear_uncert_feeder(df, label, dict):
 
     for label_key, metric_key in std_mapping:
         dict[label_key].append(np.nanstd(scores[metric_key]))
-    # dict[""].append(np.nanstd(scores['TP'])) #Hits
-    # dict["All Clear 'False Positives' (False Alarms) Uncertainty"].append(np.nanstd(scores['FP'])) #False Alarms
-    # dict["All Clear 'True Negatives' (Correct Negatives) Uncertainty"].append(np.nanstd(scores['TN']))  #Correct negatives
-    # dict["All Clear 'False Negatives' (Misses) Uncertainty"].append(np.nanstd(scores['FN'])) #Misses
-    # dict["Percent Correct Uncertainty"].append(np.nanstd(scores['PC']))
-    # dict["Bias Uncertainty"].append(np.nanstd(scores['B']))
-    # dict["Hit Rate Uncertainty"].append(np.nanstd(scores['H']))
-    # dict["False Alarm Rate Uncertainty"].append(np.nanstd(scores['F']))
-    # dict['False Negative Rate Uncertainty'].append(np.nanstd(scores['FNR']))
-    # dict["Frequency of Misses Uncertainty"].append(np.nanstd(scores['FOM']))
-    # dict["Frequency of Hits Uncertainty"].append(np.nanstd(scores['FOH']))
-    # dict["Probability of Correct Negatives Uncertainty"].append(np.nanstd(scores['POCN']))
-    # dict["Frequency of Correct Negatives Uncertainty"].append(np.nanstd(scores['FOCN']))
-    # dict["False Alarm Ratio Uncertainty"].append(np.nanstd(scores['FAR']))
-    # dict["False Alarm Event Ratio Uncertainty"].append(np.nanstd(scores['FAER']))
-    # dict["Tau Uncertainty"].append(np.nanstd(scores['Tau']))
-    # dict["Detection Failure Ratio Uncertainty"].append(np.nanstd(scores['DFR']))
-    # dict["Threat Score Uncertainty"].append(np.nanstd(scores['TS']))
-    # dict["Odds Ratio Uncertainty"].append(np.nanstd(scores['OR']))
-    # dict["Gilbert Skill Score Uncertainty"].append(np.nanstd(scores['GSS']))
-    # dict["True Skill Statistic Uncertainty"].append(np.nanstd(scores['TSS']))
-    # dict["Heidke Skill Score Uncertainty"].append(np.nanstd(scores['HSS']))
-    # dict["Odds Ratio Skill Score Uncertainty"].append(np.nanstd(scores['ORSS']))
-    # dict["Symmetric Extreme Dependency Score Uncertainty"].append(np.nanstd(scores['SEDS']))
-    # dict["F1 Score Uncertainty"].append(np.nanstd(scores['FONE']))
-    # dict["F2 Score Uncertainty"].append(np.nanstd(scores['FTWO']))
-    # dict["Fhalf Score Uncertainty"].append(np.nanstd(scores['FHALF']))
-    # dict['Prevalence Uncertainty'].append(np.nanstd(scores['PREV']))
-    # dict['Matthew Correlation Coefficient Uncertainty'].append(np.nanstd(scores['MCC']))
-    # dict['Informedness Uncertainty'].append(np.nanstd(scores['INFORM']))
-    # dict['Markedness Uncertainty'].append(np.nanstd(scores['MARK']))
-    # dict['Prevalence Threshold Uncertainty'].append(np.nanstd(scores['PT']))
-    # dict['Balanced Accuracy Uncertainty'].append(np.nanstd(scores['BA']))
-    # dict['Fowlkes-Mallows Index Uncertainty'].append(np.nanstd(scores['FM']))
+
     return
 
 
