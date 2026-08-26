@@ -7,6 +7,7 @@ import matplotlib.dates as mdates
 from datetime import datetime
 from datetime import timedelta
 from ..validation_json_handler import zulu_to_time, make_ccmc_zulu_time
+from .. import config as cfg
 import numpy as np
 import math
 import logging
@@ -243,50 +244,34 @@ def feeder_from_sphinx(sphinx_df):
     """
     logger.info("Initiate DUM Models")
     dum_profs = None
-    # dum_model_dictionary = model_to_DUM_dictionary
-    # keywords = dum_model_dictionary.keys()
-    # follow_model = False
-    # if follow_model:
-    #     for model in model_names:
-    #         model_df =  df[df['Model'] == model]
-    #         foo = [x for x in keywords if x in model][0]
-    #         dum_model_type = dum_model_dictionary[foo]    
-    #         dum_dict = initiate_dum(model_df, dum_model_type)
-    #         df = pd.concat([df, dum_df], ignore_index=True)
-    # else:
-    triggered_dums = True
-    if triggered_dums:
+    dum_profs_temp = None
+    if cfg.triggered_dums:
         dum_prof_df, dum_profs = triggered_dum_workflow(sphinx_df)
-        # print(len(dum_prof_df), len(sphinx_df))
+
         
         dum_df = pd.concat([sphinx_df, dum_prof_df], ignore_index=True)
-        dum_df = dum_df.loc[dum_df.astype(str).drop_duplicates().index]
-        # print(len(dum_df))
-        # input()
-    else:
+        dum_df_temp = dum_df.loc[dum_df.astype(str).drop_duplicates().index]
+
+        dum_profs_temp = dum_profs
+    
+    if cfg.proton_dums:
+       
         dum_prof_df, dum_profs = canonical_prof_dum(sphinx_df)
         
         dum_med_df = median_peak_dum(sphinx_df)
-        print(len(dum_prof_df), len(dum_med_df), len(sphinx_df))
+
         
         dum_df = pd.concat([sphinx_df, dum_prof_df, dum_med_df], ignore_index=True)
         dum_df = dum_df.loc[dum_df.astype(str).drop_duplicates().index]
-        print(len(dum_df))
-        input()
+
+    if dum_profs_temp != None:
+        dum_profs = dum_profs | dum_profs_temp
+        dum_df = pd.concat([dum_df, dum_df_temp])
+    
     return dum_df, dum_profs
 
 
-def model_to_DUM_dictionary():
-    dict = {
-        'MAG': 'f10.7',
-        'SEPSTER': 'peaks',
-        'iPATH': 'canonicalprofile',
-        'SEPMOD': 'canonicalprofile',
-        'SPRINTS': 'f10.7',
-        'GSU': 'f10.7',
-        'ASPECS': ['f10.7', 'canonicalprofile']
-    }
-    return dict
+
 
 
 def initiate_dum(df, dum_type):
@@ -303,28 +288,6 @@ def initiate_dum(df, dum_type):
 
 
     return df
-
-
-
-def dum_switch_func(dum_type, df):
-    func ={
-        'f10.7': prob_dum,
-        'peaks': median_peak_dum,
-        'canonicalprofile': canonical_prof_dum
-    }.get(dum_type)
-
-    if not callable(func):
-        logger.error(str(dum_type) + " is an invalid dum model.")
-        raise ValueError(str(dum_type) + " is an invalid dum model.")
-    
-    df = func(df)
-
-    return df
-
-
-def prob_dum(df):
-    print('This doesnt exist yet, try again later')
-    return
 
 
 def robust_timing(time):
@@ -351,7 +314,7 @@ def canonical_prof_dum(df):
         sub_df = df[df["Energy Channel Key"] == available_energies]
         
         trigger_columns = ['Observed SEP CME Start Time', 'Observed SEP CME Longitude', 'Observed SEP CME Latitude', 'Observed SEP CME Liftoff Time', 'Observed SEP CME Speed', 'Observed SEP CME Half Width', 'Observed SEP CME PA',\
-            'CME Catalog', 'Observed SEP Flare Start Time', 'Observed SEP Flare Peak Time', 'Observed SEP Flare End Time', 'Observed SEP Flare Longitude', 'Observed SEP Flare Latitude', 'Observed SEP Flare NOAA AR']
+            'Observed SEP CME Catalog', 'Observed SEP Flare Start Time', 'Observed SEP Flare Peak Time', 'Observed SEP Flare End Time', 'Observed SEP Flare Longitude', 'Observed SEP Flare Latitude', 'Observed SEP Flare NOAA AR']
         observed_events = sub_df['Observed SEP Start Time'].unique()
         bounds_data = pd.read_csv('./sphinxval/utils/DUMS/bounds_data.csv')
         canonical_profile_values = canonical_profile_dictionary()[available_energies]
@@ -505,8 +468,9 @@ def canonical_prof_dum(df):
                         location_string = "west"
                     else:
                         location_string = "central"
-                    dum_dict['Model'] = 'Canonical Profile DUM' + dum_string
-                    dum_dict['Original Model Short Name'] = 'Canonical Profile DUM ' + location_string
+                    dum_dict['Model'] = 'Canonical Profile DUM Protons' + dum_string
+                    
+                    dum_dict['Original Model Short Name'] = 'Canonical Profile DUM Protons ' + location_string
 
                     canonical_profile = canonical_profile_values[location_string]
                     profile = pd.read_csv(canonical_profile['profile_filename'], index_col = 0)
@@ -654,8 +618,8 @@ def triggered_dum_workflow(sphinx_df):
     workflow function for triggered DUMs
 
     """
-    print('in workflow', len(sphinx_df))
-    energy_channels = ['min.10.0.max.-1.0.units.MeV', 'min.100.0.max.-1.0.units.MeV']#, 'min.30.0.max.-1.0.units.MeV', 'min.50.0.max.-1.0.units.MeV']
+    
+    energy_channels = ['min.10.0.max.-1.0.units.MeV', 'min.100.0.max.-1.0.units.MeV', 'min.30.0.max.-1.0.units.MeV', 'min.50.0.max.-1.0.units.MeV']
     dum_profs = {}
     new_df = pd.DataFrame()
 
@@ -686,16 +650,16 @@ def triggered_dum_workflow(sphinx_df):
 
             current_trigger = unique_triggers.iloc[i]
             trigger_dict = current_trigger.to_dict()
-            print(trigger_dict)
+            # print(trigger_dict)
             trigger_df = unique_triggers.iloc[i].to_frame().T
             submodel_names = determine_dum_submodel(current_trigger, available_energies)
-            print(submodel_names)
+            print(available_energies, submodel_names)
             # input()
             if submodel_names == []:
                 pass
             else:
                 if all('cme' in element for element in submodel_names):
-                    specific_trigger = ['Prediction CME Start Time', 'Prediction CME Longitude', 'Prediction CME Speed']
+                    specific_trigger = ['Prediction CME Start Time', 'Prediction CME Longitude', 'Prediction CME Speed'] # The minimum amount of information to identify this trigger
                 else:
                     specific_trigger = ['Prediction Flare Start Time', 'Prediction Flare Intensity', 'Prediction Flare Longitude']
                 
@@ -708,6 +672,8 @@ def triggered_dum_workflow(sphinx_df):
                 trigger_block = pd.merge(event_block.reset_index(drop = True), trigger_df, how = 'inner')
                 # print(len(event_block), len(trigger_block))
                 if len(event_block) == 0:
+                    # No forecast was made with this exact trigger, typically means theres a nan/NaT in one of the specific 
+                    # trigger identifiers. Skip since there's no model that made a prediction for this trigger.
                     pass
                 else:
                     current_event = event_block.iloc[0].copy()
@@ -773,10 +739,11 @@ def triggered_dum_workflow(sphinx_df):
 
                         # Filling in the observed information
                         dum_dict['Observatory'] = current_event['Observatory']
-                        print(current_event['Observatory'], dum_dict['Observed SEP All Clear'])
+                        
 
                         dum_dict['Observed Time Profile'] = current_event['Observed Time Profile']
                         dum_dict['Observed SEP All Clear'] = current_event['Observed SEP All Clear']
+                        # print(current_event['Observatory'], dum_dict['Observed SEP All Clear'], current_event['Observed SEP All Clear'])
                         dum_dict['Observed SEP Probability'] = current_event['Observed SEP Probability']
                         dum_dict['Observed SEP Threshold Crossing Time'] = current_event['Observed SEP Threshold Crossing Time']
                         dum_dict['Observed SEP Start Time'] = robust_timing(current_event['Observed SEP Start Time'])
@@ -900,9 +867,7 @@ def triggered_dum_workflow(sphinx_df):
                                 foo = [current_event['Prediction Flare Start Time']+ timedelta(hours = 1) if 'flare' in names else current_event['Prediction CME Start Time']+ timedelta(hours = 1)][0]
                                 start_time_dt = pd.to_datetime(foo)
                                 start_time_str = str(foo)
-                                # print(names, start_time_dt, type(start_time_str), type(foo))
-                                # input()
-                            
+                               
                             else:
                                 start_time_dt = start
                                 start_time_str = standard_time_def(start)
@@ -910,11 +875,10 @@ def triggered_dum_workflow(sphinx_df):
                             un_normalized_time = []
                             time_profile_time = []
                             flux = profile['Flux']
-                        
-                            # input()
+               
                             time_resolution = 5
                             end_index = 0
-                            # print(current_event['Threshold Key'])
+                    
                             current_threshold = float(current_event['Threshold Key'].rsplit('.')[1])
                             
                             for times in range(len(normalized_times)):
@@ -1084,6 +1048,21 @@ def determine_dum_submodel(trigger_block, energy_channel):
     DONKI FAR50 2000
     CDAW FAR50 2000
 
+    30s
+    Flare Hit50 M7.4
+    Flare FAR50 X2.1
+    DONKI Hit50 1428
+    DONKI FAR50 2800
+    CDAW Hit50 1681
+    CDAW FAR50 2150
+
+    50s
+    Flare Hit50 X1.2
+    Flare FAR50 X3.3
+    DONKI Hit50 1780
+    DONKI FAR50 2600
+    CDAW Hit50 1820
+    CDAW FAR50 2300
 
     100s
     Flare Hit50 X2.6
@@ -1107,12 +1086,14 @@ def determine_dum_submodel(trigger_block, energy_channel):
     flare_submodels = flare_submodels_dictionary()
     cme_submodels = cme_submodels_dictionary()
 
-    # print(pd.isnull(all(flare_trigger_subset)), pd.isnull(all(cme_trigger_subset)), trigger_block["Prediction Number of CMEs"] != 0, trigger_block['Prediction Number of Flares'] != 0)
-    # print(trigger_block)
     if '100.0' in energy_channel:
-        energy = '100_'
-    else:
-        energy = '10_'
+        energy = '100.0_'
+    elif '30.0' in energy_channel:
+        energy = '30.0_'
+    elif '50.0' in energy_channel:
+        energy = '50.0_'
+    elif '10.0' in energy_channel:
+        energy = '10.0_'
     is_flare_null = flare_trigger_subset.isnull().all(axis=None)
     is_cme_null = cme_trigger_subset.isnull().all(axis=None)
     
@@ -1151,42 +1132,66 @@ def determine_dum_submodel(trigger_block, energy_channel):
         elif is_cme_null and trigger_block["Prediction Number of Flares"] != 0 or trigger_block['Prediction Number of CMEs'] == 0 and trigger_block['Prediction Number of Flares']:
             
             submodel_name = [submodel for submodel in flare_submodels if energy in submodel]#
-
+    print(submodel_name)
     return submodel_name
 
 
 def flare_submodels_dictionary():
     flare_submodels = {
-        'flare_hit50_10_': flare_class_to_magnitude('M3.75'),
-        'flare_hit50_10_long': flare_class_to_magnitude('M3.75'),
-        'flare_far50_10_': flare_class_to_magnitude('X1.8'),
-        'flare_far50_10_long': flare_class_to_magnitude('X1.8'),
-        'flare_hit50_100_': flare_class_to_magnitude('X2.6'),
-        'flare_hit50_100_long': flare_class_to_magnitude('X2.6'),
-        'flare_far50_100_': flare_class_to_magnitude('X4.9'),
-        'flare_far50_100_long': flare_class_to_magnitude('X4.9')
+        'flare_hit50_10.0_': flare_class_to_magnitude('M3.75'),
+        'flare_hit50_10.0_long': flare_class_to_magnitude('M3.75'),
+        'flare_far50_10.0_': flare_class_to_magnitude('X1.8'),
+        'flare_far50_10.0_long': flare_class_to_magnitude('X1.8'),
+        'flare_hit50_30.0_': flare_class_to_magnitude('M7.4'),
+        'flare_hit50_30.0_long': flare_class_to_magnitude('M7.4'),
+        'flare_far50_30.0_': flare_class_to_magnitude('X2.1'),
+        'flare_far50_30.0_long': flare_class_to_magnitude('X2.1'),
+        'flare_hit50_50.0_': flare_class_to_magnitude('X1.2'),
+        'flare_hit50_50.0_long': flare_class_to_magnitude('X1.2'),
+        'flare_far50_50.0_': flare_class_to_magnitude('X3.0'),
+        'flare_far50_50.0_long': flare_class_to_magnitude('X3.3'),
+        'flare_hit50_100.0_': flare_class_to_magnitude('X2.6'),
+        'flare_hit50_100.0_long': flare_class_to_magnitude('X2.6'),
+        'flare_far50_100.0_': flare_class_to_magnitude('X4.9'),
+        'flare_far50_100.0_long': flare_class_to_magnitude('X4.9')
     }
 
     return flare_submodels
 
 def cme_submodels_dictionary():
     cme_submodels = {
-        'cme_DONKI_hit50_10_': 1270,
-        'cme_DONKI_hit50_10_long': 1270,
-        'cme_CDAW_hit50_10_': 1437,
-        'cme_CDAW_hit50_10_long': 1437,
-        'cme_DONKI_far50_10_': 2000,
-        'cme_DONKI_far50_10_long': 2000,
-        'cme_CDAW_far50_10_': 2000,
-        'cme_CDAW_far50_10_long': 2000,
-        'cme_DONKI_hit50_100_': 1400,
-        'cme_DONKI_hit50_100_long': 1400,
-        'cme_CDAW_hit50_100_': 1596,
-        'cme_CDAW_hit50_100_long': 1596,
-        'cme_DONKI_far50_100_': 2800,
-        'cme_DONKI_far50_100_long': 2800,
-        'cme_CDAW_far50_100_': 2900,
-        'cme_CDAW_far50_100_long': 2900
+        'cme_DONKI_hit50_10.0_': 1270,
+        'cme_DONKI_hit50_10.0_long': 1270,
+        'cme_CDAW_hit50_10.0_': 1437,
+        'cme_CDAW_hit50_10.0_long': 1437,
+        'cme_DONKI_far50_10.0_': 2000,
+        'cme_DONKI_far50_10.0_long': 2000,
+        'cme_CDAW_far50_10.0_': 2000,
+        'cme_CDAW_far50_10.0_long': 2000,
+        'cme_CDAW_hit50_30.0_': 1681,
+        'cme_CDAW_hit50_30.0_long': 1681,
+        'cme_CDAW_far50_30.0_': 2150,
+        'cme_CDAW_far50_30.0_long': 2150,
+        'cme_DONKI_hit50_30.0_': 1428,
+        'cme_DONKI_hit50_30.0_long': 1428,
+        'cme_DONKI_far50_30.0_': 2800,
+        'cme_DONKI_far50_30.0_long': 2800,
+        'cme_CDAW_hit50_50.0_': 1820,
+        'cme_CDAW_hit50_50.0_long': 1820,
+        'cme_CDAW_far50_50.0_': 2300,
+        'cme_CDAW_far50_50.0_long': 2300,
+        'cme_DONKI_hit50_50.0_': 1780,
+        'cme_DONKI_hit50_50.0_long': 1780,
+        'cme_DONKI_far50_50.0_': 2600,
+        'cme_DONKI_far50_50.0_long': 2600,
+        'cme_DONKI_hit50_100.0_': 1400,
+        'cme_DONKI_hit50_100.0_long': 1400,
+        'cme_CDAW_hit50_100.0_': 1596,
+        'cme_CDAW_hit50_100.0_long': 1596,
+        'cme_DONKI_far50_100.0_': 2800,
+        'cme_DONKI_far50_100.0_long': 2800,
+        'cme_CDAW_far50_100.0_': 2900,
+        'cme_CDAW_far50_100.0_long': 2900
     }
 
     return cme_submodels

@@ -4006,8 +4006,7 @@ def intuitive_validation(evaluated_sphinx, removed_sphinx, model_names,
     
     #Check for duplicated forecasts and remove
     df, duplicate_df = duplicates.remove_sphinx_duplicates(df)
-    print('first pass', len(df))
-    logger.info("Completed filling evaluated_sphinx dataframe. ")
+    logger.info("Completed filling evaluated_sphinx dataframe.")
 
 
     logger.info("Filling removed SPHINX dataframe with information from not evaluated sphinx objects.")
@@ -4028,14 +4027,13 @@ def intuitive_validation(evaluated_sphinx, removed_sphinx, model_names,
         #Add the duplicates discarded from df
         df_not = pd.concat([df_not,duplicate_df])
         logger.debug("RESUME: Completed concatenation and removed any duplicates. Writing SPHINX_evaluated dataframe to file.")
-        print('after resume', len(df))
         model_names = resume.identify_unique(df, 'Model')
         all_energy_channels = resume.identify_unique(df, 'Energy Channel Key')
         all_observed_thresholds = resume.identify_thresholds_per_energy_channel(df)
     ### RESUME COMPLETED
-    dum_toggle = True
+    
     dum_profs = None
-    if dum_toggle:
+    if config.dum_toggle:
         df, dum_profs = dums.feeder_from_sphinx(df)
         # df, duplicate_df = duplicates.remove_sphinx_duplicates(df) #just in case there's some duplication of DUM models
         model_names = resume.identify_unique(df, 'Model')
