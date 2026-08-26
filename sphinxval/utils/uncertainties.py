@@ -10,10 +10,6 @@ from . import config
 import logging
 
 
-
-import warnings
-warnings.filterwarnings("ignore")
-
 """
 Independent module intended to determine metric uncertainties within
 SPHINX with extensions for VIVID. 
