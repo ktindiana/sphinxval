@@ -1,5 +1,4 @@
 # DUMS
-#
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.pyplot as plt
@@ -14,7 +13,43 @@ import logging
 import logging.config
 
 
+"""
+Thresholds
 
+    10s
+    Flare Hit50 M3.75
+    Flare FAR50 X1.8
+    DONKI Hit50 1270
+    DONKI FAR50 2000
+    CDAW Hit50 1437
+    CDAW FAR50 2000
+
+    30s
+    Flare Hit50 M4.0
+    Flare FAR50 X1.8
+    DONKI Hit50 1250
+    DONKI FAR50 2800
+    CDAW Hit50 1350
+    CDAW FAR50 2000
+
+    50s
+    Flare Hit50 M5.9
+    Flare FAR50 X2.0
+    DONKI Hit50 1250
+    DONKI FAR50 2800
+    CDAW Hit50 1450
+    CDAW FAR50 2150
+
+    100s
+    Flare Hit50 X2.6
+    Flare FAR50 X4.9
+    DONKI Hit50 1400 
+    DONKI FAR50 2800 (can't actually reach due to lacking statistics/impossible to get this low which is crazy)
+    CDAW CME Hit50 1600
+    CDAW FAR50 2900
+
+
+"""
 #Create logger
 logger = logging.getLogger(__name__)
 
@@ -1539,12 +1574,13 @@ def canonical_profile_dictionary():
 def extract_profile(profilename, start_time):
     profile = pd.read_csv(profilename, index_col = False)
 
-s
+
     return profile_data
 
 
 def standard_time_def(time):
     # Input: Time as a datetime
     # Output: converted time to standard form of YYYY-MM-DDTHH:MM:SSZ
+
     str_time = str(time).rsplit(" ")[0] + "T" + str(time).rsplit(" ")[1] + "Z"
     return str_time
