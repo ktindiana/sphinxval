@@ -303,11 +303,9 @@ def canonical_prof_dum(df):
     make a 'forecast' for the DUM model
     """
 
-    # energy_channels = df["Energy Channel Key"].unique()
     energy_channels = ['min.10.0.max.-1.0.units.MeV', 'min.100.0.max.-1.0.units.MeV', 'min.30.0.max.-1.0.units.MeV', 'min.50.0.max.-1.0.units.MeV']
     dum_profs = {}
     new_df = pd.DataFrame()
-    # print('len of initial df', len(df))
     for available_energies in energy_channels:
         # Loop over energies
         
@@ -320,11 +318,10 @@ def canonical_prof_dum(df):
         canonical_profile_values = canonical_profile_dictionary()[available_energies]
         low_bound = bounds_data['Longitude Low Bound'].iloc[0]
         high_bound = bounds_data['Longitude High Bound'].iloc[0]
-        # print('number of observed events', len(observed_events))
         for event in observed_events:
             
             event_block = sub_df[sub_df['Observed SEP Start Time'] == event]
-            # print('len of event block', len(event_block))
+            
             
             trigger_subset = event_block[trigger_columns].copy()
             
@@ -334,13 +331,10 @@ def canonical_prof_dum(df):
             if len(unique_triggers) != 0:
                 for i in range(len(unique_triggers)):
                     
-                    # print('i for iterations', i)
                     trigger_df = unique_triggers.iloc[i].to_frame().T
-                    # print(trigger_df)
-                    # print(event_block)
+
                     # For some reason reading in from a resume file and newly matched runs don't have the same type for CME Start Time???????/??
                     for cols in trigger_columns:
-                        # print(cols, event_block[cols].dtype, trigger_df[cols].dtype)
                         if str(trigger_df[cols].dtype) == 'datetime64[ns]':
                             event_block[cols] = pd.to_datetime(event_block[cols])
                     
@@ -440,15 +434,12 @@ def canonical_prof_dum(df):
                     trigger_str = ''
                     dum_string = ''
                     event_source_long = None
-                    # print('longitude')
                     if not pd.isnull(current_event['Observed SEP CME Longitude']):
-                        # print(current_event['CME Longitude'])
                         dum_string += ' CME'
                         event_source_long = current_event['Observed SEP CME Longitude']
                         last_trig = robust_timing(current_event['Observed SEP CME Start Time'])
                         trigger_str += '_CME_' + standard_time_def(current_event['Observed SEP CME Start Time']).replace(':','').replace('/','') + '_long_' + str(event_source_long)
                     if not pd.isnull(current_event['Observed SEP Flare Longitude']) and not pd.isnull(current_event['Observed SEP Flare Start Time']):
-                        # print(current_event['Flare Longitude'])
                         dum_string += ' Flare'
                         event_source_long = current_event['Observed SEP Flare Longitude']
                         last_trig = robust_timing(current_event['Observed SEP Flare Start Time'])
@@ -476,8 +467,7 @@ def canonical_prof_dum(df):
                     profile = pd.read_csv(canonical_profile['profile_filename'], index_col = 0)
                     normalized_times = profile.index.to_list()
                     start = robust_timing(current_event['Observed SEP Start Time'])
-                    # print(type(start), start)
-                    # input()
+                    
                     if type(start) == str:
                         if 'T' not in start or 'Z' not in start:
                             start_time_dt = pd.to_datetime(start)
@@ -521,8 +511,7 @@ def canonical_prof_dum(df):
                     output_df = output_df.set_index('dates')
                     start_time_filename = start_time_str.replace('/', '').replace(':','')
                     output_filename = './model/DUMs/CanonicalProfile/DUM_CanonicalProfile_' + location_string + '_' + available_energies + '_' + start_time_filename + trigger_str + '.txt'
-                    # print(output_filename)
-                    # output_df.to_csv(output_filename, sep='\t', header = False)
+                    
 
                     dum_dict['Forecast Source'] = output_filename
                     dum_dict['Forecast Path'] = './model/DUMs/CanonicalProfile/'
@@ -629,8 +618,6 @@ def triggered_dum_workflow(sphinx_df):
     for available_energies in energy_channels:
 
         sub_df = sphinx_df[sphinx_df["Energy Channel Key"] == available_energies]
-        print('sub_df', len(sub_df))
-        # print(sphinx_df.columns.tolist())
         trigger_columns = ['Prediction Number of CMEs', 'Prediction CME Start Time', 'Prediction CME Longitude', 'Prediction CME Latitude', \
             'Prediction CME Liftoff Time', 'Prediction CME Speed', 'Prediction CME Half Width', 'Prediction CME PA', 'Prediction CME Catalog', \
             'Prediction Number of Flares', 'Prediction Flare Start Time', 'Prediction Flare Peak Time', 'Prediction Flare End Time', \
@@ -638,8 +625,6 @@ def triggered_dum_workflow(sphinx_df):
             'Prediction Flare Integrated Intensity', 'Threshold Key']
 
         unique_triggers = sub_df[trigger_columns].drop_duplicates()
-        print('number of triggers', len(unique_triggers))
-        print(unique_triggers)
         bounds_data = pd.read_csv('./sphinxval/utils/DUMS/bounds_data.csv')
         canonical_profile_values = canonical_profile_dictionary()[available_energies]
         low_bound = bounds_data['Longitude Low Bound'].iloc[0]
@@ -650,11 +635,8 @@ def triggered_dum_workflow(sphinx_df):
 
             current_trigger = unique_triggers.iloc[i]
             trigger_dict = current_trigger.to_dict()
-            # print(trigger_dict)
             trigger_df = unique_triggers.iloc[i].to_frame().T
             submodel_names = determine_dum_submodel(current_trigger, available_energies)
-            print(available_energies, submodel_names)
-            # input()
             if submodel_names == []:
                 pass
             else:
@@ -670,7 +652,6 @@ def triggered_dum_workflow(sphinx_df):
                     if str(trigger_df[cols].dtype) == 'datetime64[ns]':
                         event_block[cols] = pd.to_datetime(event_block[cols])
                 trigger_block = pd.merge(event_block.reset_index(drop = True), trigger_df, how = 'inner')
-                # print(len(event_block), len(trigger_block))
                 if len(event_block) == 0:
                     # No forecast was made with this exact trigger, typically means theres a nan/NaT in one of the specific 
                     # trigger identifiers. Skip since there's no model that made a prediction for this trigger.
@@ -743,7 +724,6 @@ def triggered_dum_workflow(sphinx_df):
 
                         dum_dict['Observed Time Profile'] = current_event['Observed Time Profile']
                         dum_dict['Observed SEP All Clear'] = current_event['Observed SEP All Clear']
-                        # print(current_event['Observatory'], dum_dict['Observed SEP All Clear'], current_event['Observed SEP All Clear'])
                         dum_dict['Observed SEP Probability'] = current_event['Observed SEP Probability']
                         dum_dict['Observed SEP Threshold Crossing Time'] = current_event['Observed SEP Threshold Crossing Time']
                         dum_dict['Observed SEP Start Time'] = robust_timing(current_event['Observed SEP Start Time'])
@@ -817,7 +797,7 @@ def triggered_dum_workflow(sphinx_df):
                             dum_string = ''
                             event_source_long = None
                             if 'cme' in names:
-                                # print(current_event['CME Longitude'])
+                        
                                 if 'long' in names:
                                     event_source_long = current_event['Prediction CME Longitude']
                                     trigger_str += '_CME_' + standard_time_def(current_event['Prediction CME Start Time']).replace(':','').replace('/','') + '_long_' + str(event_source_long)
@@ -827,7 +807,7 @@ def triggered_dum_workflow(sphinx_df):
                                 last_trig = robust_timing(current_event['Prediction CME Start Time'])
                                 
                             elif 'flare' in names:
-                                # print(current_event['Flare Longitude'])
+                                
                                 if 'long' in names:
                                     event_source_long = current_event['Prediction Flare Longitude']
                                     trigger_str += '_Flare_' + standard_time_def(current_event['Prediction Flare Start Time']).replace(':','').replace('/','') + '_long_' + str(event_source_long)
@@ -853,7 +833,7 @@ def triggered_dum_workflow(sphinx_df):
                             canonical_profile = canonical_profile_values[location_string]
                             profile = pd.read_csv(canonical_profile['profile_filename'], index_col = 0)
                             normalized_times = profile.index.to_list()
-                            start = robust_timing(current_event['Observed SEP Start Time'])
+                            start = robust_timing(current_event['Observed SEP Start Time']) #start time of the canonical profile will still be the same as the observed start time
 
                             if type(start) == str:
                                 if 'T' not in start or 'Z' not in start:
@@ -953,7 +933,7 @@ def triggered_dum_workflow(sphinx_df):
                             dum_string = ''
                             event_source_long = None
                             if 'cme' in names:
-                                # print(current_event['CME Longitude'])
+                                
                                 if 'long' in names:
                                     event_source_long = current_event['Prediction CME Longitude']
                                     trigger_str += '_CME_' + standard_time_def(current_event['Prediction CME Start Time']).replace(':','').replace('/','') + '_long_' + str(event_source_long)
@@ -963,7 +943,6 @@ def triggered_dum_workflow(sphinx_df):
                                 last_trig = robust_timing(current_event['Prediction CME Start Time'])
                                 
                             elif 'flare' in names:
-                                # print(current_event['Flare Longitude'])
                                 if 'long' in names:
                                     event_source_long = current_event['Prediction Flare Longitude']
                                     trigger_str += '_Flare_' + standard_time_def(current_event['Prediction Flare Start Time']).replace(':','').replace('/','') + '_long_' + str(event_source_long)
@@ -1024,7 +1003,6 @@ def triggered_dum_workflow(sphinx_df):
 
 
                 
-    print('all done')
     return new_df, dum_profs
 
 
@@ -1044,32 +1022,32 @@ def determine_dum_submodel(trigger_block, energy_channel):
     Median Flare for Hit Rate 50% is M3.75
     Flare FAR50 is X1.8
     DONKI CME Speed for Hit50 1270 km/s
-    CDAW CME Speed for Hit50 1437.5 km/s
     DONKI FAR50 2000
+    CDAW CME Speed for Hit50 1437.5 km/s
     CDAW FAR50 2000
 
     30s
-    Flare Hit50 M7.4
-    Flare FAR50 X2.1
-    DONKI Hit50 1428
+    Flare Hit50 M4.0
+    Flare FAR50 X1.8
+    DONKI Hit50 1250
     DONKI FAR50 2800
-    CDAW Hit50 1681
-    CDAW FAR50 2150
+    CDAW Hit50 1350
+    CDAW FAR50 2000
 
     50s
-    Flare Hit50 X1.2
-    Flare FAR50 X3.3
-    DONKI Hit50 1780
-    DONKI FAR50 2600
-    CDAW Hit50 1820
-    CDAW FAR50 2300
+    Flare Hit50 M5.9
+    Flare FAR50 X2.0
+    DONKI Hit50 1250
+    DONKI FAR50 2800
+    CDAW Hit50 1450
+    CDAW FAR50 2150
 
     100s
     Flare Hit50 X2.6
     Flare FAR50 X4.9
-    DONKI CME Hit50 1400 
-    CDAW CME Hit50 1596
+    DONKI Hit50 1400 
     DONKI FAR50 2800 (can't actually reach due to lacking statistics/impossible to get this low which is crazy)
+    CDAW CME Hit50 1600
     CDAW FAR50 2900
     """
     submodel_name = []
@@ -1125,14 +1103,12 @@ def determine_dum_submodel(trigger_block, energy_channel):
                 cme_catalog = 'CDAW'
             else:
                 cme_catalog = 'DONKI'
-            # print(cme_catalog)
             submodel_name = [submodel for submodel in cme_submodels if (cme_catalog in submodel) & (energy in submodel)]
 
 
         elif is_cme_null and trigger_block["Prediction Number of Flares"] != 0 or trigger_block['Prediction Number of CMEs'] == 0 and trigger_block['Prediction Number of Flares']:
             
             submodel_name = [submodel for submodel in flare_submodels if energy in submodel]#
-    print(submodel_name)
     return submodel_name
 
 
@@ -1142,14 +1118,14 @@ def flare_submodels_dictionary():
         'flare_hit50_10.0_long': flare_class_to_magnitude('M3.75'),
         'flare_far50_10.0_': flare_class_to_magnitude('X1.8'),
         'flare_far50_10.0_long': flare_class_to_magnitude('X1.8'),
-        'flare_hit50_30.0_': flare_class_to_magnitude('M7.4'),
-        'flare_hit50_30.0_long': flare_class_to_magnitude('M7.4'),
-        'flare_far50_30.0_': flare_class_to_magnitude('X2.1'),
-        'flare_far50_30.0_long': flare_class_to_magnitude('X2.1'),
-        'flare_hit50_50.0_': flare_class_to_magnitude('X1.2'),
-        'flare_hit50_50.0_long': flare_class_to_magnitude('X1.2'),
-        'flare_far50_50.0_': flare_class_to_magnitude('X3.0'),
-        'flare_far50_50.0_long': flare_class_to_magnitude('X3.3'),
+        'flare_hit50_30.0_': flare_class_to_magnitude('M4.0'),
+        'flare_hit50_30.0_long': flare_class_to_magnitude('M4.0'),
+        'flare_far50_30.0_': flare_class_to_magnitude('X1.8'),
+        'flare_far50_30.0_long': flare_class_to_magnitude('X1.8'),
+        'flare_hit50_50.0_': flare_class_to_magnitude('M5.9'),
+        'flare_hit50_50.0_long': flare_class_to_magnitude('M5.9'),
+        'flare_far50_50.0_': flare_class_to_magnitude('X2.0'),
+        'flare_far50_50.0_long': flare_class_to_magnitude('X2.0'),
         'flare_hit50_100.0_': flare_class_to_magnitude('X2.6'),
         'flare_hit50_100.0_long': flare_class_to_magnitude('X2.6'),
         'flare_far50_100.0_': flare_class_to_magnitude('X4.9'),
@@ -1168,22 +1144,22 @@ def cme_submodels_dictionary():
         'cme_DONKI_far50_10.0_long': 2000,
         'cme_CDAW_far50_10.0_': 2000,
         'cme_CDAW_far50_10.0_long': 2000,
-        'cme_CDAW_hit50_30.0_': 1681,
-        'cme_CDAW_hit50_30.0_long': 1681,
-        'cme_CDAW_far50_30.0_': 2150,
-        'cme_CDAW_far50_30.0_long': 2150,
-        'cme_DONKI_hit50_30.0_': 1428,
-        'cme_DONKI_hit50_30.0_long': 1428,
-        'cme_DONKI_far50_30.0_': 2800,
-        'cme_DONKI_far50_30.0_long': 2800,
-        'cme_CDAW_hit50_50.0_': 1820,
-        'cme_CDAW_hit50_50.0_long': 1820,
-        'cme_CDAW_far50_50.0_': 2300,
-        'cme_CDAW_far50_50.0_long': 2300,
-        'cme_DONKI_hit50_50.0_': 1780,
-        'cme_DONKI_hit50_50.0_long': 1780,
-        'cme_DONKI_far50_50.0_': 2600,
-        'cme_DONKI_far50_50.0_long': 2600,
+        'cme_CDAW_hit50_30.0_': 1350,
+        'cme_CDAW_hit50_30.0_long': 1350,
+        'cme_CDAW_far50_30.0_': 2000,
+        'cme_CDAW_far50_30.0_long': 2000,
+        'cme_DONKI_hit50_30.0_': 1250,
+        'cme_DONKI_hit50_30.0_long': 1250,
+        'cme_DONKI_far50_30.0_': 2000,
+        'cme_DONKI_far50_30.0_long': 2000,
+        'cme_CDAW_hit50_50.0_': 1450,
+        'cme_CDAW_hit50_50.0_long': 1450,
+        'cme_CDAW_far50_50.0_': 2150,
+        'cme_CDAW_far50_50.0_long': 2150,
+        'cme_DONKI_hit50_50.0_': 1250,
+        'cme_DONKI_hit50_50.0_long': 1250,
+        'cme_DONKI_far50_50.0_': 2150,
+        'cme_DONKI_far50_50.0_long': 2150,
         'cme_DONKI_hit50_100.0_': 1400,
         'cme_DONKI_hit50_100.0_long': 1400,
         'cme_CDAW_hit50_100.0_': 1596,
@@ -1223,16 +1199,13 @@ def median_peak_dum(df):
     
     """
 
-    # energy_channels = df["Energy Channel Key"].unique()
     energy_channels = ['min.10.0.max.-1.0.units.MeV', 'min.100.0.max.-1.0.units.MeV', 'min.30.0.max.-1.0.units.MeV', 'min.50.0.max.-1.0.units.MeV']
     dum_profs = {}
     new_df = pd.DataFrame()
-    # print('len of initial df', len(df))
     for available_energies in energy_channels:
         # Loop over energies
         
         sub_df = df[df["Energy Channel Key"] == available_energies]
-        # print('len of sub_df for energies', len(sub_df))
         trigger_columns = ['Observed SEP CME Start Time', 'Observed SEP CME Longitude', 'Observed SEP CME Latitude', 'Observed SEP CME Liftoff Time', 'Observed SEP CME Speed', 'Observed SEP CME Half Width', 'Observed SEP CME PA',\
              'Observed SEP Flare Start Time', 'Observed SEP Flare Peak Time', 'Observed SEP Flare End Time', 'Observed SEP Flare Longitude', 'Observed SEP Flare Latitude', 'Observed SEP Flare NOAA AR']
         
@@ -1243,7 +1216,6 @@ def median_peak_dum(df):
         for event in observed_events:
             
             event_block = sub_df[sub_df['Observed SEP Start Time'] == event]
-            # print('len of event block', len(event_block))
             
             trigger_subset = event_block[trigger_columns].copy()
             
@@ -1253,13 +1225,12 @@ def median_peak_dum(df):
             if len(unique_triggers) != 0:
                 for i in range(len(unique_triggers)):
                     
-                    # print('i for iterations', i)
+                   
                     trigger_df = unique_triggers.iloc[i].to_frame().T
-                    # print(trigger_df)
-                    # print(event_block)
+                   
                     # For some reason reading in from a resume file and newly matched runs don't have the same type for CME Start Time???????/??
                     for cols in trigger_columns:
-                        # print(cols, event_block[cols].dtype, trigger_df[cols].dtype)
+                   
                         if str(trigger_df[cols].dtype) == 'datetime64[ns]':
                             event_block[cols] = pd.to_datetime(event_block[cols])
                     
@@ -1375,13 +1346,13 @@ def median_peak_dum(df):
                     trigger_str = ''
                     dum_string = ''
                     
-                    # print('longitude')
+                    
                     if not pd.isnull(current_event['Observed SEP CME Longitude']):
-                        # print(current_event['CME Longitude'])
+                    
                         dum_string += ' CME'
                         last_trig = robust_timing(current_event['Observed SEP CME Start Time'])
                     if not pd.isnull(current_event['Observed SEP Flare Longitude']) and not pd.isnull(current_event['Observed SEP Flare Start Time']):
-                        # print(current_event['Flare Longitude'])
+                    
                         dum_string += ' Flare'
                         last_trig = robust_timing(current_event['Observed SEP Flare Start Time'])
                     if trigger_str == '':
@@ -1568,13 +1539,12 @@ def canonical_profile_dictionary():
 def extract_profile(profilename, start_time):
     profile = pd.read_csv(profilename, index_col = False)
 
-
+s
     return profile_data
 
 
 def standard_time_def(time):
     # Input: Time as a datetime
     # Output: converted time to standard form of YYYY-MM-DDTHH:MM:SSZ
-    # print(time, type(time))
     str_time = str(time).rsplit(" ")[0] + "T" + str(time).rsplit(" ")[1] + "Z"
     return str_time
