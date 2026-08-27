@@ -84,3 +84,9 @@ mm_thresh_key = mm_obs_tk + "_" + mm_pred_tk
 #The observed threshold key, mm_obs_tk, will be used in
 #organizing observed and predicted values by threshold.
 
+
+
+###Uncertainty Boolean
+uncert_boolean = False
+uncert_n_resamples = 10
+uncert_fraction = 0.75
