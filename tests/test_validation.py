@@ -30,9 +30,6 @@ import numpy as np
 from unittest.mock import patch
 import shutil # using this to delete the contents of the output folder each run - since the unittest is based on the existence/creation of certain files each loop
 
-import warnings
-warnings.filterwarnings("ignore")
-
 # Updated Aug 26. 2026
 
 logger = logging.getLogger(__name__)
