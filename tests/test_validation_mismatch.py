@@ -119,9 +119,10 @@ class Test_AllFields_Mismatch(unittest.TestCase):
             self.obs_thresholds, self.profname_dict)
         self.not_eval_dataframe = validate.fill_sphinx_df(self.not_eval_sphinx, \
             self.obs_thresholds, self.profname_dict)
+        
         validate.write_df(self.dataframe, "SPHINX_dataframe")
         validate.write_df(self.not_eval_dataframe, "not_eval_SPHINX")
-        
+        validate.profile_output(self.dataframe, None, None) # Moved this step here to make things work - won't test for the profile existence until later
         for keywords in self.dataframe:
            
             logger.debug(len(self.sphinx['Test_model_0'][self.all_energy_channels[1]]))
@@ -233,7 +234,10 @@ class Test_AllFields_Mismatch(unittest.TestCase):
     @patch('sphinxval.utils.config.mm_pred_ek', config_tests.mm_pred_ek)
     @patch('sphinxval.utils.config.mm_pred_tk', config_tests.mm_pred_tk)
     @patch('sphinxval.utils.config.mm_energy_key', config_tests.mm_obs_ek + "_" + config_tests.mm_pred_ek)
-    
+    @patch('sphinxval.utils.config.uncert_boolean', False)
+    @patch('sphinxval.utils.config.model_prof_path', './tests/output/json/model_profiles.json')
+    @patch('sphinxval.utils.config.obs_prof_path', './tests/output/json/observed_profiles.json')
+
     def test_all(self):
         validate.prepare_outdirs()
         utils.utility_delete_output()

@@ -8,6 +8,7 @@ from sphinxval.utils import resume
 from sphinxval.utils import plotting_tools as plt_tools
 from sphinxval.utils import match
 from sphinxval.utils import validation_json_handler as vjson
+from sphinxval.utils import metrics_dicts
 from sphinxval.utils import classes as cl
 from . import utils
 
@@ -29,7 +30,7 @@ import numpy as np
 from unittest.mock import patch
 import shutil # using this to delete the contents of the output folder each run - since the unittest is based on the existence/creation of certain files each loop
 
-
+# Updated Aug 26. 2026
 
 logger = logging.getLogger(__name__)
 
@@ -67,194 +68,6 @@ General outline as I start the validation.py workflow unittest
 
 
 # HELPER FUNCTIONS
-def initialize_flux_dict():
-    """ Metrics used for fluxes.
-    
-    """
-    dict = {"Model": [],
-            "Energy Channel": [],
-            "Threshold": [],
-            "Prediction Energy Channel": [],
-            "Prediction Threshold": [],
-            "Scatter Plot": [],
-            "Linear Regression Slope": [],
-            "Linear Regression y-intercept": [],
-            "Pearson Correlation Coefficient (Linear)": [],
-            "Pearson Correlation Coefficient (Log)": [],
-            "Spearman Correlation Coefficient (Linear)": [],
-            'Mean Ratio': [],
-            'Median Ratio': [],
-            "Mean Error (ME)": [],
-            "Median Error (MedE)": [],
-            "Mean Log Error (MLE)": [],
-            "Median Log Error (MedLE)": [],
-            "Mean Absolute Error (MAE)": [],
-            "Median Absolute Error (MedAE)": [],
-            "Mean Absolute Log Error (MALE)": [],
-            "Median Absolute Log Error (MedALE)": [],
-            "Mean Percent Error (MPE)": [],
-            "Mean Absolute Percent Error (MAPE)": [],
-            "Mean Symmetric Percent Error (MSPE)": [],
-            "Mean Symmetric Absolute Percent Error (SMAPE)": [],
-            "Mean Accuracy Ratio (MAR)": [],
-            "Root Mean Square Error (RMSE)": [],
-            "Root Mean Square Log Error (RMSLE)": [],
-            "Median Symmetric Accuracy (MdSA)": [],
-            "Percentage within an Order of Magnitude (%)":[],
-            "Percentage within a factor of 2 (%)":[]
-            }
-    
-    return dict
-
-
-def initialize_time_dict():
-    """ Metrics for predictions related to time.
-    
-    """
-    dict = {"Model": [],
-            "Energy Channel": [],
-            "Threshold": [],
-            "Prediction Energy Channel": [],
-            "Prediction Threshold": [],
-            "Mean Error (pred - obs)": [],
-            "Median Error (pred - obs)": [],
-            "Mean Absolute Error (|pred - obs|)": [],
-            "Median Absolute Error (|pred - obs|)": [],
-            }
-            
-    return dict
-    
-    
-def initialize_awt_dict():
-    """ Metrics for Adanced Warning Time to SEP start, SEP peak, SEP end.
-        The "Forecasted Value" field indicates which forecasted quantity
-        was used to calculate the AWT.
-    """
-    dict = {"Model": [],
-            "Energy Channel": [],
-            "Threshold": [],
-            "Prediction Energy Channel": [],
-            "Prediction Threshold": [],
-            
-            #All Clear Forecasts
-            "Mean AWT for Predicted SEP All Clear to Observed SEP Threshold Crossing Time": [],
-            "Median AWT for Predicted SEP All Clear to Observed SEP Threshold Crossing Time": [],
-            "Mean AWT for Predicted SEP All Clear to Observed SEP Start Time": [],
-            "Median AWT for Predicted SEP All Clear to Observed SEP Start Time": [],
-            "Mean AWT Efficiency for Predicted SEP All Clear to Observed SEP Threshold Crossing Time": [],
-
-            #Threshold Crossing Time Forecasts
-            "Mean AWT for Predicted SEP Threshold Crossing Time to Observed SEP Threshold Crossing Time": [],
-            "Median AWT for Predicted SEP Threshold Crossing Time to Observed SEP Threshold Crossing Time": [],
-            "Mean AWT for Predicted SEP Threshold Crossing Time to Observed SEP Start Time": [],
-            "Median AWT for Predicted SEP Threshold Crossing Time to Observed SEP Start Time": [],
-            "Mean AWT Efficiency for Predicted SEP Threshold Crossing Time to Observed SEP Threshold Crossing Time": [],
-
-            #Start Time Forecasts
-            "Mean AWT for Predicted SEP Start Time to Observed SEP Threshold Crossing Time": [],
-            "Median AWT for Predicted SEP Start Time to Observed SEP Threshold Crossing Time": [],
-            "Mean AWT for Predicted SEP Start Time to Observed SEP Start Time": [],
-            "Median AWT for Predicted SEP Start Time to Observed SEP Start Time": [],
-            "Mean AWT Efficiency for Predicted SEP Start Time to Observed SEP Threshold Crossing Time": [],
- 
-            #Peak Intensity Forecasts
-            "Mean AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Threshold Crossing Time": [],
-            "Median AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Threshold Crossing Time": [],
-            "Mean AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Start Time": [],
-            "Median AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Start Time": [],
-            "Mean AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Peak Intensity (Onset Peak) Time": [],
-            "Median AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Peak Intensity (Onset Peak) Time": [],
-
-            #Peak Intensity Max Forecasts
-            "Mean AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Threshold Crossing Time": [],
-            "Median AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Threshold Crossing Time": [],
-            "Mean AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Start Time": [],
-            "Median AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Start Time": [],
-            "Mean AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Peak Intensity Max (Max Flux) Time": [],
-            "Median AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Peak Intensity Max (Max Flux) Time": [],
-
-            #End Time Forecasts
-            "Mean AWT for Predicted SEP End Time to Observed SEP Threshold Crossing Time": [],
-            "Median AWT for Predicted SEP End Time to Observed SEP Threshold Crossing Time": [],
-            "Mean AWT for Predicted SEP End Time to Observed SEP Start Time": [],
-            "Median AWT for Predicted SEP End Time to Observed SEP Start Time": [],
-            "Mean AWT for Predicted SEP End Time to Observed SEP End Time": [],
-            "Median AWT for Predicted SEP End Time to Observed SEP End Time": []
-            }
-            
-    return dict
-
-
-def initialize_all_clear_dict():
-    """ Metrics for all clear predictions.
-    
-    """
-    dict = {"Model": [],
-            "Energy Channel": [],
-            "Threshold": [],
-            "Prediction Energy Channel": [],
-            "Prediction Threshold": [],
-            "All Clear 'True Positives' (Hits)": [], #Hits
-            "All Clear 'False Positives' (False Alarms)": [], #False Alarms
-            "All Clear 'True Negatives' (Correct Negatives)": [],  #Correct negatives
-            "All Clear 'False Negatives' (Misses)": [], #Misses
-            "N (Total Number of Forecasts)": [],
-            "Percent Correct": [],
-            "Bias": [],
-            "Hit Rate": [],
-            "False Alarm Rate": [],
-            'False Negative Rate': [],
-            "Frequency of Misses": [],
-            "Frequency of Hits": [],
-            "Probability of Correct Negatives": [],
-            "Frequency of Correct Negatives": [],
-            "False Alarm Ratio": [],
-            "False Alarm Event Ratio": [],
-            'Tau': [],
-            "Detection Failure Ratio": [],
-            "Threat Score": [],
-            "Odds Ratio": [],
-            "Gilbert Skill Score": [],
-            "True Skill Statistic": [],
-            "Heidke Skill Score": [],
-            "Odds Ratio Skill Score": [],
-            "Symmetric Extreme Dependency Score": [],
-            "F1 Score": [],
-            "F2 Score": [],
-            "Fhalf Score": [],
-            'Prevalence': [],
-            'Matthew Correlation Coefficient': [],
-            'Informedness': [],
-            'Markedness': [],
-            'Prevalence Threshold': [],
-            'Balanced Accuracy': [],
-            'Fowlkes-Mallows Index': [],
-            "Number SEP Events Correctly Predicted": [],
-            "Number SEP Events Missed": [],
-            "Predicted SEP Events": [], #date string
-            "Missed SEP Events": [] #date string
-            }
-            
-    return dict
-
-            
-def initialize_probability_dict():
-    """ Metrics for probability predictions.
-    
-    """
-    dict = {"Model": [],
-            "Energy Channel": [],
-            "Threshold": [],
-            "Prediction Energy Channel": [],
-            "Prediction Threshold": [],
-            "ROC Curve Plot": [],
-            "Brier Score": [],
-            "Brier Skill Score": [],
-            "Spearman Correlation Coefficient": [],
-            "Area Under ROC Curve": []
-            }
-            
-    return dict
 
 
 def fill_all_clear_dict_hit(dict, self):
@@ -281,7 +94,7 @@ def fill_all_clear_dict_hit(dict, self):
         dict["Frequency of Correct Negatives"].append(np.nan)
         dict["False Alarm Ratio"].append('0.0')
         dict["False Alarm Event Ratio"].append('0.0')
-        dict["Tau"].append('1.0')
+        dict["Tau"].append(np.nan)
         dict["Detection Failure Ratio"].append(np.nan)
         dict["Threat Score"].append('1.0') #Critical Success Index
         dict["Odds Ratio"].append(np.nan)
@@ -305,6 +118,11 @@ def fill_all_clear_dict_hit(dict, self):
         dict["Number SEP Events Missed"].append('0')
         dict["Predicted SEP Events"].append('2000-01-01 01:00:00')
         dict["Missed SEP Events"].append('None')
+
+        headers = dict.keys()
+        for he in headers:
+            if 'Uncertainty' in he:
+                dict[he].append(np.nan)
         return dict
 
 
@@ -331,8 +149,8 @@ def fill_all_clear_dict_CN(dict, self):
         dict["Probability of Correct Negatives"].append('1.0')
         dict["Frequency of Correct Negatives"].append('1.0')
         dict["False Alarm Ratio"].append(np.nan)
-        dict["False Alarm Event Ratio"].append('0.0')
-        dict["Tau"].append('1.0')
+        dict["False Alarm Event Ratio"].append(np.nan)
+        dict["Tau"].append(np.nan)
         dict["Detection Failure Ratio"].append('0.0')
         dict["Threat Score"].append(np.nan) #Critical Success Index
         dict["Odds Ratio"].append(np.nan)
@@ -356,6 +174,10 @@ def fill_all_clear_dict_CN(dict, self):
         dict["Number SEP Events Missed"].append('0')
         dict["Predicted SEP Events"].append('None')
         dict["Missed SEP Events"].append('None')
+        headers = dict.keys()
+        for he in headers:
+            if 'Uncertainty' in he:
+                dict[he].append(np.nan)
         return dict
 
 
@@ -373,45 +195,33 @@ def fill_awt_dict(dict, self):
 
     dict["Mean AWT for Predicted SEP All Clear to Observed SEP Threshold Crossing Time"].append('1.0')
     dict["Median AWT for Predicted SEP All Clear to Observed SEP Threshold Crossing Time"].append('1.0')
-    dict["Mean AWT for Predicted SEP All Clear to Observed SEP Start Time"].append('1.0')
-    dict["Median AWT for Predicted SEP All Clear to Observed SEP Start Time"].append('1.0')
     dict["Mean AWT Efficiency for Predicted SEP All Clear to Observed SEP Threshold Crossing Time"].append('0.0')
 
             #Threshold Crossing Time Forecasts
     dict["Mean AWT for Predicted SEP Threshold Crossing Time to Observed SEP Threshold Crossing Time"].append(np.nan)
     dict["Median AWT for Predicted SEP Threshold Crossing Time to Observed SEP Threshold Crossing Time"].append(np.nan)
-    dict["Mean AWT for Predicted SEP Threshold Crossing Time to Observed SEP Start Time"].append(np.nan)
-    dict["Median AWT for Predicted SEP Threshold Crossing Time to Observed SEP Start Time"].append(np.nan)
     dict['Mean AWT Efficiency for Predicted SEP Threshold Crossing Time to Observed SEP Threshold Crossing Time'].append(np.nan)
 
             #Start Time Forecasts
     dict["Mean AWT for Predicted SEP Start Time to Observed SEP Threshold Crossing Time"].append(np.nan)
     dict["Median AWT for Predicted SEP Start Time to Observed SEP Threshold Crossing Time"].append(np.nan)
-    dict["Mean AWT for Predicted SEP Start Time to Observed SEP Start Time"].append(np.nan)
-    dict["Median AWT for Predicted SEP Start Time to Observed SEP Start Time"].append(np.nan)
     dict["Mean AWT Efficiency for Predicted SEP Start Time to Observed SEP Threshold Crossing Time"].append(np.nan)
  
             #Peak Intensity Forecasts
     dict["Mean AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Threshold Crossing Time"].append(np.nan)
     dict["Median AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Threshold Crossing Time"].append(np.nan)
-    dict["Mean AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Start Time"].append(np.nan)
-    dict["Median AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Start Time"].append(np.nan)
     dict["Mean AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Peak Intensity (Onset Peak) Time"].append(np.nan)
     dict["Median AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Peak Intensity (Onset Peak) Time"].append(np.nan)
 
             #Peak Intensity Max Forecasts
     dict["Mean AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Threshold Crossing Time"].append(np.nan)
     dict["Median AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Threshold Crossing Time"].append(np.nan)
-    dict["Mean AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Start Time"].append(np.nan)
-    dict["Median AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Start Time"].append(np.nan)
     dict["Mean AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Peak Intensity Max (Max Flux) Time"].append(np.nan)
     dict["Median AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Peak Intensity Max (Max Flux) Time"].append(np.nan)
 
             #End Time Forecasts
     dict["Mean AWT for Predicted SEP End Time to Observed SEP Threshold Crossing Time"].append(np.nan)
     dict["Median AWT for Predicted SEP End Time to Observed SEP Threshold Crossing Time"].append(np.nan)
-    dict["Mean AWT for Predicted SEP End Time to Observed SEP Start Time"].append(np.nan)
-    dict["Median AWT for Predicted SEP End Time to Observed SEP Start Time"].append(np.nan)
     dict["Mean AWT for Predicted SEP End Time to Observed SEP End Time"].append(np.nan)
     dict["Median AWT for Predicted SEP End Time to Observed SEP End Time"].append(np.nan)
             
@@ -424,11 +234,15 @@ def fill_probability_dict_highprob(dict, self):
     dict["Prediction Energy Channel"].append(self.energy_key)
     dict["Prediction Threshold"].append(self.obs_thresholds[self.energy_key][0])
     
-    dict['ROC Curve Plot'].append(".\\tests\\output/plots/ROC_curve_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf")
+    dict['ROC Curve Plot'].append(os.path.join('.', 'tests', 'output', 'plots', 'ROC_curve_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf'))#".\\tests\\output/plots/ROC_curve_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf")
     dict['Brier Score'].append('0.0')
     dict['Brier Skill Score'].append('1.0')
     dict['Spearman Correlation Coefficient'].append(np.nan)
     dict['Area Under ROC Curve'].append(np.nan)
+    headers = dict.keys()
+    for he in headers:
+        if 'Uncertainty' in he:
+            dict[he].append(np.nan)
     return dict
 
 def fill_probability_dict_lowprob(dict, self):
@@ -438,11 +252,15 @@ def fill_probability_dict_lowprob(dict, self):
     dict["Prediction Energy Channel"].append(self.energy_key)
     dict["Prediction Threshold"].append(self.obs_thresholds[self.energy_key][0])
     
-    dict['ROC Curve Plot'].append(".\\tests\\output/plots/ROC_curve_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf")
+    dict['ROC Curve Plot'].append(os.path.join('.', 'tests', 'output', 'plots', 'ROC_curve_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf'))#".\\tests\\output/plots/ROC_curve_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf")
     dict['Brier Score'].append('1.0')
     dict['Brier Skill Score'].append('-0.06941692181172066')
     dict['Spearman Correlation Coefficient'].append(np.nan)
     dict['Area Under ROC Curve'].append(np.nan)
+    headers = dict.keys()
+    for he in headers:
+        if 'Uncertainty' in he:
+            dict[he].append(np.nan)
     return dict
 
 
@@ -453,11 +271,15 @@ def fill_probability_dict_multprob(dict, self):
     dict["Prediction Energy Channel"].append(self.energy_key)
     dict["Prediction Threshold"].append(self.obs_thresholds[self.energy_key][0])
     
-    dict['ROC Curve Plot'].append(".\\tests\\output/plots/ROC_curve_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf")
+    dict['ROC Curve Plot'].append(os.path.join('.', 'tests', 'output', 'plots', 'ROC_curve_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf'))#".\\tests\\output/plots/ROC_curve_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf")
     dict['Brier Score'].append('0.5')
     dict['Brier Skill Score'].append('0.4652915390941397')
     dict['Spearman Correlation Coefficient'].append(np.nan)
     dict['Area Under ROC Curve'].append(np.nan)
+    headers = dict.keys()
+    for he in headers:
+        if 'Uncertainty' in he:
+            dict[he].append(np.nan)
     return dict
 
 
@@ -497,6 +319,10 @@ def fill_peak_intensity_max_dict(dict, self):
     dict["Percentage within an Order of Magnitude (%)"].append('1.0')
     dict["Percentage within a factor of 2 (%)"].append('1.0')
     dict.update({"Time Profile Selection Plot": [np.nan]})
+    headers = dict.keys()
+    for he in headers:
+        if 'Uncertainty' in he:
+            dict[he].append(np.nan)
 
     return dict
 
@@ -510,7 +336,7 @@ def fill_peak_intensity_max_mult_dict(dict, self):
     dict["Threshold"].append(self.obs_thresholds[self.energy_key][0])
     dict["Prediction Energy Channel"].append(self.energy_key)
     dict["Prediction Threshold"].append(self.obs_thresholds[self.energy_key][0])
-    dict["Scatter Plot"].append('.\\tests\\output/plots/Correlation_peak_intensity_max_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf')
+    dict["Scatter Plot"].append(os.path.join('.', 'tests', 'output', 'plots', 'Correlation_peak_intensity_max_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf'))
     dict["Linear Regression Slope"].append('-0.25000000000000006')
     dict["Linear Regression y-intercept"].append('-0.25')
     dict["Pearson Correlation Coefficient (Linear)"].append(np.nan)
@@ -537,6 +363,10 @@ def fill_peak_intensity_max_mult_dict(dict, self):
     dict["Percentage within an Order of Magnitude (%)"].append('0.5')
     dict["Percentage within a factor of 2 (%)"].append('0.5')
     dict.update({"Time Profile Selection Plot": [np.nan]})
+    headers = dict.keys()
+    for he in headers:
+        if 'Uncertainty' in he:
+            dict[he].append(np.nan)
 
     return dict
 
@@ -576,6 +406,10 @@ def fill_peak_intensity_dict(dict, self):
     dict["Percentage within an Order of Magnitude (%)"].append('1.0')
     dict["Percentage within a factor of 2 (%)"].append('1.0')
     dict.update({"Time Profile Selection Plot": [np.nan]})
+    headers = dict.keys()
+    for he in headers:
+        if 'Uncertainty' in he:
+            dict[he].append(np.nan)
 
     return dict
 
@@ -589,7 +423,7 @@ def fill_peak_intensity_mult_dict(dict, self):
     dict["Threshold"].append(self.obs_thresholds[self.energy_key][0])
     dict["Prediction Energy Channel"].append(self.energy_key)
     dict["Prediction Threshold"].append(self.obs_thresholds[self.energy_key][0])
-    dict["Scatter Plot"].append('.\\tests\\output/plots/Correlation_peak_intensity_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf')
+    dict["Scatter Plot"].append(os.path.join('.', 'tests', 'output', 'plots', 'Correlation_peak_intensity_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf')) #.\\tests\\output/plots/Correlation_peak_intensity_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf'
     dict["Linear Regression Slope"].append('-0.25000000000000006')
     dict["Linear Regression y-intercept"].append('-0.25')
     dict["Pearson Correlation Coefficient (Linear)"].append(np.nan)
@@ -616,6 +450,10 @@ def fill_peak_intensity_mult_dict(dict, self):
     dict["Percentage within an Order of Magnitude (%)"].append('0.5')
     dict["Percentage within a factor of 2 (%)"].append('0.5')
     dict.update({"Time Profile Selection Plot": [np.nan]})
+    headers = dict.keys()
+    for he in headers:
+        if 'Uncertainty' in he:
+            dict[he].append(np.nan)
     return dict
 
 
@@ -631,6 +469,10 @@ def fill_peak_intensity_time_dict(dict, self):
     dict["Median Error (pred - obs)"].append('0.0')
     dict["Mean Absolute Error (|pred - obs|)"].append('0.0')
     dict["Median Absolute Error (|pred - obs|)"].append('0.0')
+    headers = dict.keys()
+    for he in headers:
+        if 'Uncertainty' in he:
+            dict[he].append(np.nan)
     return dict
 
 def fill_probability_dict_all(dict, self):
@@ -640,11 +482,15 @@ def fill_probability_dict_all(dict, self):
     dict["Prediction Energy Channel"].append(self.energy_key)
     dict["Prediction Threshold"].append(self.obs_thresholds[self.energy_key][0])
     
-    dict['ROC Curve Plot'].append(".\\tests\\output/plots/ROC_curve_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf")
+    dict['ROC Curve Plot'].append(os.path.join('.', 'tests', 'output', 'plots', 'ROC_curve_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf'))#".\\tests\\output/plots/ROC_curve_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf")
     dict['Brier Score'].append('0.006799999999999997')
     dict['Brier Skill Score'].append('0.9890982954329874')
     dict['Spearman Correlation Coefficient'].append('1.0')
     dict['Area Under ROC Curve'].append('1.0')
+    headers = dict.keys()
+    for he in headers:
+        if 'Uncertainty' in he:
+            dict[he].append(np.nan)
     return dict
 
 def fill_peak_intensity_metrics_dict_all(dict, self):
@@ -653,7 +499,7 @@ def fill_peak_intensity_metrics_dict_all(dict, self):
     dict["Threshold"].append(self.obs_thresholds[self.energy_key][0])
     dict["Prediction Energy Channel"].append(self.energy_key)
     dict["Prediction Threshold"].append(self.obs_thresholds[self.energy_key][0])
-    dict["Scatter Plot"].append('.\\tests\\output/plots/Correlation_peak_intensity_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf')
+    dict["Scatter Plot"].append(os.path.join('.', 'tests', 'output', 'plots', 'Correlation_peak_intensity_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf'))#'.\\tests\\output/plots/Correlation_peak_intensity_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0.pdf')
     dict["Linear Regression Slope"].append('0.5103481712895563')
     dict["Linear Regression y-intercept"].append('0.5103481712895562')
     dict["Pearson Correlation Coefficient (Linear)"].append(np.nan)
@@ -680,6 +526,10 @@ def fill_peak_intensity_metrics_dict_all(dict, self):
     dict["Percentage within an Order of Magnitude (%)"].append('1.0')
     dict["Percentage within a factor of 2 (%)"].append('1.0')
     dict.update({"Time Profile Selection Plot": [np.nan]})
+    headers = dict.keys()
+    for he in headers:
+        if 'Uncertainty' in he:
+            dict[he].append(np.nan)
 
     return dict
 
@@ -692,7 +542,7 @@ def fill_time_profile_dict_all(dict, self):
     dict["Threshold"].append(self.obs_thresholds[self.energy_key][0])
     dict["Prediction Energy Channel"].append(self.energy_key)
     dict["Prediction Threshold"].append(self.obs_thresholds[self.energy_key][0])
-    dict["Scatter Plot"].append('.\\tests\\output/plots/Correlation_time_profile_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_20000101T000000.pdf')
+    dict["Scatter Plot"].append(os.path.join('.', 'tests', 'output', 'plots', 'Correlation_time_profile_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_20000101T000000.pdf'))#.\\tests\\output/plots/Correlation_time_profile_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_20000101T000000.pdf')
     dict["Linear Regression Slope"].append(np.nan)
     dict["Linear Regression y-intercept"].append(np.nan)
     dict["Pearson Correlation Coefficient (Linear)"].append('-0.16603070802422484')
@@ -718,7 +568,11 @@ def fill_time_profile_dict_all(dict, self):
     dict["Median Symmetric Accuracy (MdSA)"].append('2.0078825180431')
     dict["Percentage within an Order of Magnitude (%)"].append('1.0')
     dict["Percentage within a factor of 2 (%)"].append('0.3333333333333333')
-    dict.update({"Time Profile Selection Plot": ['.\\tests\\output/plots/Time_Profile_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_20000101T000000.pdf;.\\tests\\output/plots/Time_Profile_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_20000101T000000.pdf']})
+    dict.update({"Time Profile Selection Plot": ['./tests/output/plots/Time_Profile_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_20000101T000000.pdf;./tests/output/plots/Time_Profile_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_20000101T000000.pdf']})
+    headers = dict.keys()
+    for he in headers:
+        if 'Uncertainty' in he:
+            dict[he].append(np.nan)
 
     return dict
 
@@ -770,6 +624,10 @@ def fill_all_clear_dict_all(dict, self):
     dict["Number SEP Events Missed"].append('0')
     dict["Predicted SEP Events"].append('2000-01-01 01:00:00')
     dict["Missed SEP Events"].append('None')
+    headers = dict.keys()
+    for he in headers:
+        if 'Uncertainty' in he:
+            dict[he].append(np.nan)
     return dict
 
 def fill_awt_dict_all(dict, self):
@@ -786,45 +644,33 @@ def fill_awt_dict_all(dict, self):
 
     dict["Mean AWT for Predicted SEP All Clear to Observed SEP Threshold Crossing Time"].append('1.0')
     dict["Median AWT for Predicted SEP All Clear to Observed SEP Threshold Crossing Time"].append('1.0')
-    dict["Mean AWT for Predicted SEP All Clear to Observed SEP Start Time"].append('1.0')
-    dict["Median AWT for Predicted SEP All Clear to Observed SEP Start Time"].append('1.0')
     dict["Mean AWT Efficiency for Predicted SEP All Clear to Observed SEP Threshold Crossing Time"].append('0.0')
 
             #Threshold Crossing Time Forecasts
     dict["Mean AWT for Predicted SEP Threshold Crossing Time to Observed SEP Threshold Crossing Time"].append('1.0')
     dict["Median AWT for Predicted SEP Threshold Crossing Time to Observed SEP Threshold Crossing Time"].append('1.0')
-    dict["Mean AWT for Predicted SEP Threshold Crossing Time to Observed SEP Start Time"].append('1.0')
-    dict["Median AWT for Predicted SEP Threshold Crossing Time to Observed SEP Start Time"].append('1.0')
     dict['Mean AWT Efficiency for Predicted SEP Threshold Crossing Time to Observed SEP Threshold Crossing Time'].append('0.0')
 
             #Start Time Forecasts
     dict["Mean AWT for Predicted SEP Start Time to Observed SEP Threshold Crossing Time"].append('1.0')
     dict["Median AWT for Predicted SEP Start Time to Observed SEP Threshold Crossing Time"].append('1.0')
-    dict["Mean AWT for Predicted SEP Start Time to Observed SEP Start Time"].append('1.0')
-    dict["Median AWT for Predicted SEP Start Time to Observed SEP Start Time"].append('1.0')
     dict["Mean AWT Efficiency for Predicted SEP Start Time to Observed SEP Threshold Crossing Time"].append('0.0')
   
             #Peak Intensity Forecasts
     dict["Mean AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Threshold Crossing Time"].append('1.0')
     dict["Median AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Threshold Crossing Time"].append('1.0')
-    dict["Mean AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Start Time"].append('1.0')
-    dict["Median AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Start Time"].append('1.0')
     dict["Mean AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Peak Intensity (Onset Peak) Time"].append('1.0')
     dict["Median AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Peak Intensity (Onset Peak) Time"].append('1.0')
 
             #Peak Intensity Max Forecasts
     dict["Mean AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Threshold Crossing Time"].append('1.0')
     dict["Median AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Threshold Crossing Time"].append('1.0')
-    dict["Mean AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Start Time"].append('1.0')
-    dict["Median AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Start Time"].append('1.0')
     dict["Mean AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Peak Intensity Max (Max Flux) Time"].append('1.0')
     dict["Median AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Peak Intensity Max (Max Flux) Time"].append('1.0')
 
             #End Time Forecasts
     dict["Mean AWT for Predicted SEP End Time to Observed SEP Threshold Crossing Time"].append('1.0')
     dict["Median AWT for Predicted SEP End Time to Observed SEP Threshold Crossing Time"].append('1.0')
-    dict["Mean AWT for Predicted SEP End Time to Observed SEP Start Time"].append('1.0')
-    dict["Median AWT for Predicted SEP End Time to Observed SEP Start Time"].append('1.0')
     dict["Mean AWT for Predicted SEP End Time to Observed SEP End Time"].append('24.0')
     dict["Median AWT for Predicted SEP End Time to Observed SEP End Time"].append('24.0')
             
@@ -841,6 +687,10 @@ def fill_duration_metrics_dict_all(dict, self):
     dict["Median Error (pred - obs)"].append('-11.0')
     dict["Mean Absolute Error (|pred - obs|)"].append('11.0')
     dict["Median Absolute Error (|pred - obs|)"].append('11.0')
+    headers = dict.keys()
+    for he in headers:
+        if 'Uncertainty' in he:
+            dict[he].append(np.nan)
     return dict
 
 def fill_end_time_metrics_dict_all(dict, self):
@@ -853,6 +703,10 @@ def fill_end_time_metrics_dict_all(dict, self):
     dict["Median Error (pred - obs)"].append('-6.0')
     dict["Mean Absolute Error (|pred - obs|)"].append('6.0')
     dict["Median Absolute Error (|pred - obs|)"].append('6.0')
+    headers = dict.keys()
+    for he in headers:
+        if 'Uncertainty' in he:
+            dict[he].append(np.nan)
     return dict
 
 def fill_last_data_to_issue_time_metrics_dict_all(dict, self):
@@ -865,6 +719,10 @@ def fill_last_data_to_issue_time_metrics_dict_all(dict, self):
     dict["Median Error (pred - obs)"].append('30.0')
     dict["Mean Absolute Error (|pred - obs|)"].append('30.333333333333332')
     dict["Median Absolute Error (|pred - obs|)"].append('30.0')
+    headers = dict.keys()
+    for he in headers:
+        if 'Uncertainty' in he:
+            dict[he].append(np.nan)
     return dict
 
 def fill_max_flux_in_pred_win_metrics_dict_all(dict, self):
@@ -899,7 +757,11 @@ def fill_max_flux_in_pred_win_metrics_dict_all(dict, self):
     dict["Median Symmetric Accuracy (MdSA)"].append('0.04880884817015163')
     dict["Percentage within an Order of Magnitude (%)"].append('1.0')
     dict["Percentage within a factor of 2 (%)"].append('1.0')
-    dict.update({"Time Profile Selection Plot": ['.\\tests\\output/plots/Time_Profile_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_20000101T000000.pdf']})
+    dict.update({"Time Profile Selection Plot": ['./tests/output/plots/Time_Profile_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_20000101T000000.pdf']})
+    headers = dict.keys()
+    for he in headers:
+        if 'Uncertainty' in he:
+            dict[he].append(np.nan)
 
     return dict
 
@@ -913,6 +775,10 @@ def fill_peak_intensity_max_time_metrics_dict_all(dict, self):
     dict["Median Error (pred - obs)"].append('11.0')
     dict["Mean Absolute Error (|pred - obs|)"].append('11.0')
     dict["Median Absolute Error (|pred - obs|)"].append('11.0')
+    headers = dict.keys()
+    for he in headers:
+        if 'Uncertainty' in he:
+            dict[he].append(np.nan)
     return dict
 
 def fill_peak_intensity_max_metrics_dict_all(dict, self):
@@ -948,6 +814,10 @@ def fill_peak_intensity_max_metrics_dict_all(dict, self):
     dict["Percentage within an Order of Magnitude (%)"].append('1.0')
     dict["Percentage within a factor of 2 (%)"].append('1.0')
     dict.update({"Time Profile Selection Plot": [np.nan]})
+    headers = dict.keys()
+    for he in headers:
+        if 'Uncertainty' in he:
+            dict[he].append(np.nan)
 
     return dict
 
@@ -963,6 +833,11 @@ def fill_peak_intensity_time_dict_all(dict, self):
     dict["Median Error (pred - obs)"].append('11.0')
     dict["Mean Absolute Error (|pred - obs|)"].append('11.0')
     dict["Median Absolute Error (|pred - obs|)"].append('11.0')
+
+    headers = dict.keys()
+    for he in headers:
+        if 'Uncertainty' in he:
+            dict[he].append(np.nan)
     return dict
 
 def fill_start_time_dict_all(dict, self):
@@ -977,6 +852,10 @@ def fill_start_time_dict_all(dict, self):
     dict["Median Error (pred - obs)"].append('5.0')
     dict["Mean Absolute Error (|pred - obs|)"].append('5.0')
     dict["Median Absolute Error (|pred - obs|)"].append('5.0')
+    headers = dict.keys()
+    for he in headers:
+        if 'Uncertainty' in he:
+            dict[he].append(np.nan)
     return dict
 
 def fill_threshold_crossing_time_dict_all(dict, self):
@@ -991,6 +870,10 @@ def fill_threshold_crossing_time_dict_all(dict, self):
     dict["Median Error (pred - obs)"].append('5.0')
     dict["Mean Absolute Error (|pred - obs|)"].append('5.0')
     dict["Median Absolute Error (|pred - obs|)"].append('5.0')
+    headers = dict.keys()
+    for he in headers:
+        if 'Uncertainty' in he:
+            dict[he].append(np.nan)
     return dict
 
 def fill_fluence_dict_all(dict, self):
@@ -1025,7 +908,11 @@ def fill_fluence_dict_all(dict, self):
     dict["Median Symmetric Accuracy (MdSA)"].append('16.605742455879447')
     dict["Percentage within an Order of Magnitude (%)"].append('0.0')
     dict["Percentage within a factor of 2 (%)"].append('0.0')
-    dict.update({"Time Profile Selection Plot": ['.\\tests\\output/plots/Time_Profile_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_20000101T000000.pdf']})
+    dict.update({"Time Profile Selection Plot": ['./tests/output/plots/Time_Profile_Test_model_0_min.10.0.max.-1.0.units.MeV_threshold_1.0_20000101T000000.pdf']})
+    headers = dict.keys()
+    for he in headers:
+        if 'Uncertainty' in he:
+            dict[he].append(np.nan)
 
     return dict
 
@@ -1072,15 +959,12 @@ class TestAllClear0(unittest.TestCase):
                 self.assertEqual(self.dataframe[keywords][0], temp, 'Error is in keyword ' + keywords)
 
     def step_2(self):
-        # print('IN step 2')
         validate.calculate_intuitive_metrics(self.dataframe, self.model_names, self.all_energy_channels, \
                 self.obs_thresholds, 'All')
-        validate.write_df(self.dataframe, "SPHINX_dataframe")
     
 
     def step_3(self):
-
-        test_dict = initialize_all_clear_dict()
+        test_dict = metrics_dicts.initialize_all_clear_dict()
         test_dict = fill_all_clear_dict_hit(test_dict, self)
         csv_filename = os.path.join(config.outpath, 'csv', 'all_clear_metrics.csv')
         utils.assert_equal_table(self, csv_filename, test_dict)
@@ -1088,9 +972,9 @@ class TestAllClear0(unittest.TestCase):
 
 
 
-    def step_4(self):
+    def step_5(self):
         
-        test_dict = initialize_awt_dict()
+        test_dict = metrics_dicts.initialize_awt_dict()
         test_dict = fill_awt_dict(test_dict, self)
         csv_filename = os.path.join(config.outpath, 'csv', 'awt_metrics.csv')
         
@@ -1107,7 +991,9 @@ class TestAllClear0(unittest.TestCase):
             if name.startswith("step"):
                 yield name, getattr(self, name)
         
-    @patch('sphinxval.utils.config.outpath', os.path.join('.','tests','output'))
+    @patch('sphinxval.utils.config.outpath', './tests/output')
+    @patch('sphinxval.utils.config.uncert_boolean', False)
+    @patch('sphinxval.utils.config.uncert_n_resamples', 10)
 
     def test_all_clear_0(self):
         validate.prepare_outdirs()
@@ -1173,7 +1059,7 @@ class TestAllClear1(unittest.TestCase):
             self.obs_thresholds, 'All')
     
     def step_3(self):
-        test_dict = initialize_all_clear_dict()
+        test_dict = metrics_dicts.initialize_all_clear_dict()
         test_dict = fill_all_clear_dict_CN(test_dict, self)
 
         csv_filename = os.path.join(config.outpath, 'csv', 'all_clear_metrics.csv')
@@ -1190,7 +1076,9 @@ class TestAllClear1(unittest.TestCase):
             if name.startswith("step"):
                 yield name, getattr(self, name)
 
-    @patch('sphinxval.utils.config.outpath', os.path.join('.','tests','output'))
+    @patch('sphinxval.utils.config.outpath', './tests/output')
+    @patch('sphinxval.utils.config.uncert_boolean', False)
+    @patch('sphinxval.utils.config.uncert_n_resamples', 10)
 
     def test_all_clear_1(self):
         validate.prepare_outdirs()
@@ -1208,7 +1096,9 @@ class TestAllClearGarbage(unittest.TestCase):
         self.verbosity = utils.utility_get_verbosity()
     
     
-    @patch('sphinxval.utils.config.outpath', os.path.join('.','tests','output'))
+    @patch('sphinxval.utils.config.outpath', './tests/output')
+    @patch('sphinxval.utils.config.uncert_boolean', False)
+    @patch('sphinxval.utils.config.uncert_n_resamples', 10)
 
     def test_garbage(self): 
         validate.prepare_outdirs()
@@ -1282,7 +1172,7 @@ class TestPeakIntensity0(unittest.TestCase):
             self.obs_thresholds, 'All')
     
     def step_3(self):
-        test_dict = initialize_flux_dict()
+        test_dict = metrics_dicts.initialize_flux_dict()
         test_dict = fill_peak_intensity_dict(test_dict, self)
 
         csv_filename = os.path.join(config.outpath, 'csv', 'peak_intensity_metrics.csv')
@@ -1290,7 +1180,7 @@ class TestPeakIntensity0(unittest.TestCase):
 
 
     def step_4(self):
-        test_dict = initialize_time_dict()
+        test_dict = metrics_dicts.initialize_time_dict()
         test_dict = fill_peak_intensity_time_dict(test_dict, self)
         csv_filename = os.path.join(config.outpath, 'csv', 'peak_intensity_time_metrics.csv')
         utils.assert_equal_table(self, csv_filename, test_dict)
@@ -1305,7 +1195,9 @@ class TestPeakIntensity0(unittest.TestCase):
             if name.startswith("step"):
                 yield name, getattr(self, name)
         
-    @patch('sphinxval.utils.config.outpath', os.path.join('.','tests','output'))
+    @patch('sphinxval.utils.config.outpath', './tests/output')
+    @patch('sphinxval.utils.config.uncert_boolean', False)
+    @patch('sphinxval.utils.config.uncert_n_resamples', 10)
 
     def test_peak_intensity_0(self):
         validate.prepare_outdirs()
@@ -1395,7 +1287,7 @@ class TestPeakIntensityMult(unittest.TestCase):
             self.obs_thresholds, 'All')
     
     def step_3(self):    
-        test_dict = initialize_flux_dict()
+        test_dict = metrics_dicts.initialize_flux_dict()
         test_dict = fill_peak_intensity_mult_dict(test_dict, self)
         csv_filename = os.path.join(config.outpath, 'csv', 'peak_intensity_metrics.csv')
         utils.assert_equal_table(self, csv_filename, test_dict)
@@ -1412,7 +1304,9 @@ class TestPeakIntensityMult(unittest.TestCase):
                 yield name, getattr(self, name)
         
 
-    @patch('sphinxval.utils.config.outpath', os.path.join('.','tests','output'))
+    @patch('sphinxval.utils.config.outpath', './tests/output')
+    @patch('sphinxval.utils.config.uncert_boolean', False)
+    @patch('sphinxval.utils.config.uncert_n_resamples', 10)
 
     def test_peak_intensity_1(self):
         validate.prepare_outdirs()
@@ -1477,7 +1371,7 @@ class TestPeakIntensityMax0(unittest.TestCase):
             self.obs_thresholds, 'All')
     
     def step_3(self):
-        test_dict = initialize_flux_dict()
+        test_dict = metrics_dicts.initialize_flux_dict()
         test_dict = fill_peak_intensity_max_dict(test_dict, self)
         csv_filename = os.path.join(config.outpath, 'csv', 'peak_intensity_max_metrics.csv')
         utils.assert_equal_table(self, csv_filename, test_dict)
@@ -1494,7 +1388,9 @@ class TestPeakIntensityMax0(unittest.TestCase):
                 yield name, getattr(self, name)
         
    
-    @patch('sphinxval.utils.config.outpath', os.path.join('.','tests','output'))
+    @patch('sphinxval.utils.config.outpath', './tests/output')
+    @patch('sphinxval.utils.config.uncert_boolean', False)
+    @patch('sphinxval.utils.config.uncert_n_resamples', 10)
 
     def test_peak_intensity_max_0(self):
         validate.prepare_outdirs()
@@ -1592,7 +1488,7 @@ class TestPeakIntensityMaxMult(unittest.TestCase):
         
     
     def step_3(self):
-        test_dict = initialize_flux_dict()
+        test_dict = metrics_dicts.initialize_flux_dict()
         test_dict = fill_peak_intensity_max_mult_dict(test_dict, self)
         csv_filename = os.path.join(config.outpath, 'csv', 'peak_intensity_max_metrics.csv')
         
@@ -1610,7 +1506,9 @@ class TestPeakIntensityMaxMult(unittest.TestCase):
                 yield name, getattr(self, name)
 
 
-    @patch('sphinxval.utils.config.outpath', os.path.join('.','tests','output'))
+    @patch('sphinxval.utils.config.outpath', './tests/output')
+    @patch('sphinxval.utils.config.uncert_boolean', False)
+    @patch('sphinxval.utils.config.uncert_n_resamples', 10)
 
     def test_peak_intensity_max_1(self):
         validate.prepare_outdirs()
@@ -1685,7 +1583,7 @@ class TestProbability0(unittest.TestCase):
        
 
     def step_4(self):
-        test_dict = initialize_probability_dict()
+        test_dict = metrics_dicts.initialize_probability_dict()
         test_dict = fill_probability_dict_highprob(test_dict, self)
         csv_filename = os.path.join(config.outpath, 'csv', 'probability_metrics.csv')
         utils.assert_equal_table(self, csv_filename, test_dict)
@@ -1706,7 +1604,9 @@ class TestProbability0(unittest.TestCase):
         
 
 
-    @patch('sphinxval.utils.config.outpath', os.path.join('.','tests','output'))
+    @patch('sphinxval.utils.config.outpath', './tests/output')
+    @patch('sphinxval.utils.config.uncert_boolean', False)
+    @patch('sphinxval.utils.config.uncert_n_resamples', 10) 
 
     def test_prob_0(self):
         validate.prepare_outdirs()
@@ -1810,7 +1710,7 @@ class TestProbabilityMult(unittest.TestCase):
             self.obs_thresholds, 'All')
     
     def step_3(self):
-        test_dict = initialize_probability_dict()
+        test_dict = metrics_dicts.initialize_probability_dict()
         test_dict = fill_probability_dict_multprob(test_dict, self)
         csv_filename = os.path.join(config.outpath, 'csv', 'probability_metrics.csv')
         utils.assert_equal_table(self, csv_filename, test_dict)
@@ -1827,7 +1727,9 @@ class TestProbabilityMult(unittest.TestCase):
                 yield name, getattr(self, name)
         
    
-    @patch('sphinxval.utils.config.outpath', os.path.join('.','tests','output'))
+    @patch('sphinxval.utils.config.outpath', './tests/output')
+    @patch('sphinxval.utils.config.uncert_boolean', False)
+    @patch('sphinxval.utils.config.uncert_n_resamples', 10)
     
     def test_prob_1(self):
         validate.prepare_outdirs()
@@ -1893,8 +1795,10 @@ class TestShortNameChanger(unittest.TestCase):
                 yield name, getattr(self, name)
         
    
-    @patch('sphinxval.utils.config.outpath', os.path.join('.','tests','output'))
+    @patch('sphinxval.utils.config.outpath', './tests/output')
     @patch('sphinxval.utils.config.shortname_grouping', [('Test_model_0.*', 'new_shortname_for_testing')])
+    @patch('sphinxval.utils.config.uncert_boolean', False)
+    @patch('sphinxval.utils.config.uncert_n_resamples', 10)
 
     def test_shortname_change(self):
         validate.prepare_outdirs()
@@ -1994,7 +1898,7 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
             else:        
                 self.assertEqual(self.dataframe[keywords][1], temp, 'Error is in keyword ' + keywords)
         for type in self.validation_type:
-            
+            validate.profile_output(self.dataframe, None, None) # Moved this step here to make things work - won't test for the profile existence until later
             validate.calculate_intuitive_metrics(self.dataframe, self.model_names, self.all_energy_channels, \
                 self.obs_thresholds, type)
 
@@ -2014,7 +1918,7 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
 
     def step_4_prob(self):
         
-        test_dict = initialize_probability_dict()
+        test_dict = metrics_dicts.initialize_probability_dict()
         test_dict = fill_probability_dict_all(test_dict, self)
         csv_filename = os.path.join(config.outpath, 'csv', 'probability_metrics.csv')
 
@@ -2024,7 +1928,7 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
 
     def step_5_peak_int_max(self):
         
-        test_dict = initialize_flux_dict()
+        test_dict = metrics_dicts.initialize_flux_dict()
         test_dict = fill_peak_intensity_max_metrics_dict_all(test_dict, self)
         csv_filename = os.path.join(config.outpath, 'csv', 'peak_intensity_max_metrics.csv')
    
@@ -2033,7 +1937,7 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
 
     def step_6_time_prof(self):
        
-        test_dict = initialize_flux_dict()
+        test_dict = metrics_dicts.initialize_flux_dict()
         test_dict = fill_time_profile_dict_all(test_dict, self)
         csv_filename = os.path.join(config.outpath, 'csv', 'time_profile_metrics.csv')
   
@@ -2042,7 +1946,7 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
 
     def step_7_all_clear(self):
        
-        test_dict = initialize_all_clear_dict()
+        test_dict = metrics_dicts.initialize_all_clear_dict()
         test_dict = fill_all_clear_dict_all(test_dict, self)
         csv_filename = os.path.join(config.outpath, 'csv', 'all_clear_metrics.csv')
         
@@ -2052,7 +1956,7 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
     
     def step_8_awt(self):
         
-        test_dict = initialize_awt_dict()
+        test_dict = metrics_dicts.initialize_awt_dict()
         test_dict = fill_awt_dict_all(test_dict, self)
         csv_filename = os.path.join(config.outpath, 'csv', 'awt_metrics.csv')
        
@@ -2061,7 +1965,7 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
 
     def step_9_duration(self):
         
-        test_dict = initialize_time_dict()
+        test_dict = metrics_dicts.initialize_time_dict()
         test_dict = fill_duration_metrics_dict_all(test_dict, self)
         csv_filename = os.path.join(config.outpath, 'csv', 'duration_metrics.csv')
    
@@ -2070,7 +1974,7 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
     
     def step_10_end_time(self):
         
-        test_dict = initialize_time_dict()
+        test_dict = metrics_dicts.initialize_time_dict()
         test_dict = fill_end_time_metrics_dict_all(test_dict, self)
         csv_filename = os.path.join(config.outpath, 'csv', 'end_time_metrics.csv')
       
@@ -2079,7 +1983,7 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
 
     def step_11_last_data_to_issue_time(self):
         
-        test_dict = initialize_time_dict()
+        test_dict = metrics_dicts.initialize_time_dict()
         test_dict = fill_last_data_to_issue_time_metrics_dict_all(test_dict, self)
         csv_filename = os.path.join(config.outpath, 'csv', 'last_data_to_issue_time_metrics.csv')
     
@@ -2088,7 +1992,7 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
 
     def step_12_max_flux_pred_win(self):
         
-        test_dict = initialize_flux_dict()
+        test_dict = metrics_dicts.initialize_flux_dict()
         test_dict = fill_max_flux_in_pred_win_metrics_dict_all(test_dict, self)
         csv_filename = os.path.join(config.outpath, 'csv', 'max_flux_in_pred_win_metrics.csv')
         
@@ -2097,7 +2001,7 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
 
     def step_13_peak_int_max_time(self):
         
-        test_dict = initialize_time_dict()
+        test_dict = metrics_dicts.initialize_time_dict()
         test_dict = fill_peak_intensity_max_time_metrics_dict_all(test_dict, self)
         csv_filename = os.path.join(config.outpath, 'csv', 'peak_intensity_max_time_metrics.csv')
         
@@ -2106,7 +2010,7 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
     
     def step_14_peak_int(self):
         
-        test_dict = initialize_flux_dict()
+        test_dict = metrics_dicts.initialize_flux_dict()
         test_dict = fill_peak_intensity_metrics_dict_all(test_dict, self)
         csv_filename = os.path.join(config.outpath, 'csv', 'peak_intensity_metrics.csv')
         
@@ -2114,14 +2018,14 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
         
     def step_15_peak_int_time(self):
         
-        test_dict = initialize_time_dict()
+        test_dict = metrics_dicts.initialize_time_dict()
         test_dict = fill_peak_intensity_time_dict_all(test_dict, self)
         csv_filename = os.path.join(config.outpath, 'csv', 'peak_intensity_time_metrics.csv')
         utils.assert_equal_table(self, csv_filename, test_dict)
 
     def step_16_start_time(self):
         
-        test_dict = initialize_time_dict()
+        test_dict = metrics_dicts.initialize_time_dict()
         test_dict = fill_start_time_dict_all(test_dict, self)
         csv_filename = os.path.join(config.outpath, 'csv', 'start_time_metrics.csv')
         utils.assert_equal_table(self, csv_filename, test_dict)
@@ -2129,7 +2033,7 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
     
     def step_17_thresh_crossing_time(self):
         
-        test_dict = initialize_time_dict()
+        test_dict = metrics_dicts.initialize_time_dict()
         test_dict = fill_threshold_crossing_time_dict_all(test_dict, self)
         csv_filename = os.path.join(config.outpath, 'csv', 'threshold_crossing_metrics.csv')
        
@@ -2138,7 +2042,7 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
     
     def step_18_fluence(self):
         
-        test_dict = initialize_flux_dict()
+        test_dict = metrics_dicts.initialize_flux_dict()
         test_dict = fill_fluence_dict_all(test_dict, self)
         csv_filename = os.path.join(config.outpath, 'csv', 'fluence_metrics.csv')
         utils.assert_equal_table(self, csv_filename, test_dict)
@@ -2146,9 +2050,9 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
 
     def step_19_profiledicts(self):
 
-        validate.profile_output(self.dataframe, None, None)
-        self.assertTrue(os.path.isfile(os.path.join('.', 'tests', 'output', 'json', 'model_profiles.json')), msg = 'model_profiles.json does not exist, check the file is output correctly')
-        self.assertTrue(os.path.isfile(os.path.join('.', 'tests', 'output', 'json', 'observed_profiles.json')), msg = 'observed_profiles.json does not exist, check the file is output correctly')
+        
+        self.assertTrue(os.path.isfile('./tests/output/json/model_profiles.json'), msg = 'model_profiles.json does not exist, check the file is output correctly')
+        self.assertTrue(os.path.isfile('./tests/output/json/observed_profiles.json'), msg = 'observed_profiles.json does not exist, check the file is output correctly')
 
 
     def utility_print_docstring(self, function):
@@ -2162,7 +2066,12 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
                 yield name, getattr(self, name)
         
 
-    @patch('sphinxval.utils.config.outpath', os.path.join('.','tests','output'))
+    @patch('sphinxval.utils.config.outpath', './tests/output')
+    @patch('sphinxval.utils.config.uncert_boolean', False)
+    @patch('sphinxval.utils.config.uncert_n_resamples', 10)
+    @patch('sphinxval.utils.config.model_prof_path', './tests/output/json/model_profiles.json')
+    @patch('sphinxval.utils.config.obs_prof_path', './tests/output/json/observed_profiles.json')
+    
     
     def test_all(self):
         validate.prepare_outdirs()

@@ -24,6 +24,8 @@ parser.add_argument("--ResumeProfiles", nargs = '+', default=None,
             "This is in the form of two strings seperated by a space, each string with a set of quotes around it"))
 parser.add_argument("--RelativePathPlots", type=bool, default=True, \
         help=("Generate reports with relative paths for plots"))
+parser.add_argument("--Uncertainty", action = 'store_true', default=cfg.uncert_boolean, \
+        help=("Calculate Metric Uncertainties, set flag to turn True. Otherwise its default is in the config file"))
 
 
 #Create logger
@@ -52,7 +54,7 @@ try:
     else:
         resume_obs = None
         resume_model = None
-    sphinx_df = sphinxval.sphinx.validate(args.DataList, args.ModelList, top=args.TopDirectory, Resume=args.Resume, resume_obs = resume_obs, resume_model = resume_model)
+    sphinx_df = sphinxval.sphinx.validate(args.DataList, args.ModelList, top=args.TopDirectory, Resume=args.Resume, resume_obs = resume_obs, resume_model = resume_model, uncertainty = args.Uncertainty)
     sphinxval.sphinx.report.report(None, args.RelativePathPlots, sphinx_dataframe=sphinx_df)
 
 except:

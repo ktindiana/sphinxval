@@ -6,6 +6,9 @@ from . import config
 from . import time_profile as profile
 from . import resume
 from . import duplicates
+from . import validation_json_handler as vjson
+from . import metrics_dicts
+from . import uncertainties
 import matplotlib.pylab as plt
 from scipy.stats import pearsonr
 import statistics
@@ -14,6 +17,7 @@ import sys
 import os.path
 import pandas as pd
 import datetime
+
 import scipy
 from pandas.api.types import is_datetime64_any_dtype as is_datetime
 import sklearn.metrics as skl
@@ -718,222 +722,6 @@ def fill_sphinx_df(evaluated_sphinx, all_obs_thresholds, profname_dict):
     return df
 
 
-##################### METRICS #####################
-def initialize_flux_dict():
-    """ Metrics used for fluxes.
-    
-    """
-    dict = {"Model": [],
-            "Energy Channel": [],
-            "Threshold": [],
-            "Prediction Energy Channel": [],
-            "Prediction Threshold": [],
-            "Scatter Plot": [],
-            "Linear Regression Slope": [],
-            "Linear Regression y-intercept": [],
-            "Pearson Correlation Coefficient (Linear)": [],
-            "Pearson Correlation Coefficient (Log)": [],
-            "Spearman Correlation Coefficient (Linear)": [],
-            "Mean Ratio": [],
-            "Median Ratio": [],
-            "Mean Error (ME)": [],
-            "Median Error (MedE)": [],
-            "Mean Log Error (MLE)": [],
-            "Median Log Error (MedLE)": [],
-            "Mean Absolute Error (MAE)": [],
-            "Median Absolute Error (MedAE)": [],
-            "Mean Absolute Log Error (MALE)": [],
-            "Median Absolute Log Error (MedALE)": [],
-            "Mean Percent Error (MPE)": [],
-            "Mean Absolute Percent Error (MAPE)": [],
-            "Mean Symmetric Percent Error (MSPE)": [],
-            "Mean Symmetric Absolute Percent Error (SMAPE)": [],
-            "Mean Accuracy Ratio (MAR)": [],
-            "Root Mean Square Error (RMSE)": [],
-            "Root Mean Square Log Error (RMSLE)": [],
-            "Median Symmetric Accuracy (MdSA)": [],
-            "Percentage within an Order of Magnitude (%)": [],
-            "Percentage within a factor of 2 (%)": []
-            }
-    
-    return dict
-
-
-def initialize_time_dict():
-    """ Metrics for predictions related to time.
-    
-    """
-    dict = {"Model": [],
-            "Energy Channel": [],
-            "Threshold": [],
-            "Prediction Energy Channel": [],
-            "Prediction Threshold": [],
-            "Mean Error (pred - obs)": [],
-            "Median Error (pred - obs)": [],
-            "Mean Absolute Error (|pred - obs|)": [],
-            "Median Absolute Error (|pred - obs|)": [],
-            }
-            
-    return dict
-    
-    
-def initialize_awt_dict():
-    """ Metrics for Adanced Warning Time to SEP start, SEP peak, SEP end.
-        The "Forecasted Value" field indicates which forecasted quantity
-        was used to calculate the AWT.
-    """
-    dict = {"Model": [],
-            "Energy Channel": [],
-            "Threshold": [],
-            "Prediction Energy Channel": [],
-            "Prediction Threshold": [],
-            
-            #All Clear Forecasts
-            #Commenting out redundant comparisons to Observed SEP Threshold Crossing Time and
-            #observed SEP Start Time. If there is ever a case where those fields are different
-            #then should uncomment them.
-            "Mean AWT for Predicted SEP All Clear to Observed SEP Threshold Crossing Time": [],
-            "Median AWT for Predicted SEP All Clear to Observed SEP Threshold Crossing Time": [],
-
-#            "Mean AWT for Predicted SEP All Clear to Observed SEP Start Time": [],
-#            "Median AWT for Predicted SEP All Clear to Observed SEP Start Time": [],
-             "Mean AWT Efficiency for Predicted SEP All Clear to Observed SEP Threshold Crossing Time": [],
-
-#            #Probability Forecasts - cannot without an explicit threshold
-#            "Mean AWT for Probability to Observed Threshold Crossing Time": [],
-#            "Median AWT for Probability to Observed Threshold Crossing Time": [],
-#            "Mean AWT for Probability to Observed Start Time": [],
-#            "Median AWT for Probability to Observed Start Time": [],
-
-            #Threshold Crossing Time Forecasts
-            "Mean AWT for Predicted SEP Threshold Crossing Time to Observed SEP Threshold Crossing Time": [],
-            "Median AWT for Predicted SEP Threshold Crossing Time to Observed SEP Threshold Crossing Time": [],
-            "Mean AWT Efficiency for Predicted SEP Threshold Crossing Time to Observed SEP Threshold Crossing Time": [], 
-            
-#            "Mean AWT for Predicted SEP Threshold Crossing Time to Observed SEP Start Time": [],
-#            "Median AWT for Predicted SEP Threshold Crossing Time to Observed SEP Start Time": [],
-
-
-            #Start Time Forecasts
-            "Mean AWT for Predicted SEP Start Time to Observed SEP Threshold Crossing Time": [],
-            "Median AWT for Predicted SEP Start Time to Observed SEP Threshold Crossing Time": [],
-            "Mean AWT Efficiency for Predicted SEP Start Time to Observed SEP Threshold Crossing Time": [],
-#            "Mean AWT for Predicted SEP Start Time to Observed SEP Start Time": [],
-#            "Median AWT for Predicted SEP Start Time to Observed SEP Start Time": [],
- 
-#             #Point Intensity Forecasts
-#            "Mean AWT for Predicted Point Intensity to Observed SEP Threshold Crossing Time": [],
-#            "Median AWT for Predicted Point Intensity to Observed SEP Threshold Crossing Time": [],
-#            "Mean AWT for Predicted Point Intensity to Observed SEP Start Time": [],
-#            "Median AWT for Predicted Point Intensity to Observed SEP Start Time": [],
- 
- 
-            #Peak Intensity Forecasts
-            "Mean AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Threshold Crossing Time": [],
-            "Median AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Threshold Crossing Time": [],
-#            "Mean AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Start Time": [],
-#            "Median AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Start Time": [],
-            "Mean AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Peak Intensity (Onset Peak) Time": [],
-            "Median AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Peak Intensity (Onset Peak) Time": [],
- #           "Mean AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Peak Intensity Max (Max Flux) Time": [],
- #           "Median AWT for Predicted SEP Peak Intensity (Onset Peak) to Observed SEP Peak Intensity Max (Max Flux) Time": [],
-
-            #Peak Intensity Max Forecasts
-            "Mean AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Threshold Crossing Time": [],
-            "Median AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Threshold Crossing Time": [],
-#            "Mean AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Start Time": [],
-#            "Median AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Start Time": [],
-            "Mean AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Peak Intensity Max (Max Flux) Time": [],
-            "Median AWT for Predicted SEP Peak Intensity Max (Max Flux) to Observed SEP Peak Intensity Max (Max Flux) Time": [],
-
-            #End Time Forecasts
-            "Mean AWT for Predicted SEP End Time to Observed SEP Threshold Crossing Time": [],
-            "Median AWT for Predicted SEP End Time to Observed SEP Threshold Crossing Time": [],
-#            "Mean AWT for Predicted SEP End Time to Observed SEP Start Time": [],
-#            "Median AWT for Predicted SEP End Time to Observed SEP Start Time": [],
-            "Mean AWT for Predicted SEP End Time to Observed SEP End Time": [],
-            "Median AWT for Predicted SEP End Time to Observed SEP End Time": []
-            }
-            
-    return dict
-
-
-def initialize_all_clear_dict():
-    """ Metrics for all clear predictions.
-    
-    """
-    dict = {"Model": [],
-            "Energy Channel": [],
-            "Threshold": [],
-            "Prediction Energy Channel": [],
-            "Prediction Threshold": [],
-            "All Clear 'True Positives' (Hits)": [], #Hits
-            "All Clear 'False Positives' (False Alarms)": [], #False Alarms
-            "All Clear 'True Negatives' (Correct Negatives)": [],  #Correct negatives
-            "All Clear 'False Negatives' (Misses)": [], #Misses
-            "N (Total Number of Forecasts)": [],
-            "Percent Correct": [],
-            "Bias": [],
-            "Hit Rate": [],
-            "False Alarm Rate": [],
-            'False Negative Rate': [],
-            "Frequency of Misses": [],
-            "Frequency of Hits": [],
-            "Probability of Correct Negatives": [],
-            "Frequency of Correct Negatives": [],
-            "False Alarm Ratio": [],
-            "False Alarm Event Ratio": [],
-            'Tau': [],
-            "Detection Failure Ratio": [],
-            "Threat Score": [],
-            "Odds Ratio": [],
-            "Gilbert Skill Score": [],
-            "True Skill Statistic": [],
-            "Heidke Skill Score": [],
-            "Odds Ratio Skill Score": [],
-            "Symmetric Extreme Dependency Score": [],
-            "F1 Score": [],
-            "F2 Score": [],
-            "Fhalf Score": [],
-            'Prevalence': [],
-            'Matthew Correlation Coefficient': [],
-            'Informedness': [],
-            'Markedness': [],
-            'Prevalence Threshold': [],
-            'Balanced Accuracy': [],
-            'Fowlkes-Mallows Index': [],
-            "Number SEP Events Correctly Predicted": [],
-            "Number SEP Events Missed": [],
-            "Predicted SEP Events": [], #date string
-            "Missed SEP Events": [] #date string
-#            "Mean Percentage Error": [],
-#            "Mean Absolute Percentage Error": []
-            }
-            
-    return dict
-
-            
-def initialize_probability_dict():
-    """ Metrics for probability predictions.
-    
-    """
-    dict = {"Model": [],
-            "Energy Channel": [],
-            "Threshold": [],
-            "Prediction Energy Channel": [],
-            "Prediction Threshold": [],
-            "ROC Curve Plot": [],
-            "Brier Score": [],
-            "Brier Skill Score": [],
-            "Spearman Correlation Coefficient": [],
-            "Area Under ROC Curve": []
-            }
-            
-    return dict
-
-
-
-
 def fill_flux_metrics_dict(dict, model, energy_key, thresh_key,
     pred_energy_key, pred_thresh_key, figname,
     slope, yint, r_lin, r_log, s_lin, MRatio, MedRatio, ME, MedE,
@@ -1024,9 +812,9 @@ def fill_all_clear_dict(dict, model, energy_key, thresh_key, pred_energy_key,
     dict["Probability of Correct Negatives"].append(scores['POCN'])
     dict["Frequency of Correct Negatives"].append(scores['FOCN'])
     dict["False Alarm Ratio"].append(scores['FAR'])
-    dict["Detection Failure Ratio"].append(scores['DFR'])
     dict['False Alarm Event Ratio'].append(scores['FAER'])
     dict['Tau'].append(scores['Tau'])
+    dict["Detection Failure Ratio"].append(scores['DFR'])
     dict["Threat Score"].append(scores['TS']) #Critical Success Index
     dict["Odds Ratio"].append(scores['OR'])
     dict["Gilbert Skill Score"].append(scores['GSS']) #Equitable Threat Score
@@ -1049,8 +837,6 @@ def fill_all_clear_dict(dict, model, energy_key, thresh_key, pred_energy_key,
     dict["Number SEP Events Missed"].append(n_miss)
     dict["Predicted SEP Events"].append(sep_caught_str)
     dict["Missed SEP Events"].append(sep_miss_str)
-#    dict["Mean Percentage Error"].append(scores[])
-#    dict["Mean Absolute Percentage Error"].append(scores[])
 
 
 
@@ -1529,7 +1315,7 @@ def extract_time_forecast_type(df, pred_key, validation_type):
 
 
 def all_clear_intuitive_metrics(df, dict, model, energy_key, thresh_key,
-    validation_type):
+    validation_type, uncertainty):
     """ Extract the appropriate predictions and calculate metrics
         All Clear
 
@@ -1613,18 +1399,17 @@ def all_clear_intuitive_metrics(df, dict, model, energy_key, thresh_key,
         sep_miss_str = str(sep_miss[0])
         for jj in range(1,n_miss,1):
             sep_miss_str += ";" + str(sep_miss[jj])
-    
-    
+
     fill_all_clear_dict(dict, model, energy_key, thresh_key, pred_energy_key,
         pred_thresh_key, scores, n_caught, sep_caught_str, n_miss, sep_miss_str)
-
+    uncertainties.feeder_from_sphinx(sub, dict, 'all_clear', uncertainty)
 
     return sub
 
 
 
 def probability_intuitive_metrics(df, dict, model, energy_key, thresh_key,
-    validation_type):
+    validation_type, uncertainty):
     """ Extract the appropriate predictions and calculate metrics
         Probability
 
@@ -1712,6 +1497,9 @@ def probability_intuitive_metrics(df, dict, model, energy_key, thresh_key,
     dict['Area Under ROC Curve'].append(roc_auc)
 
 
+    uncertainties.feeder_from_sphinx(sub, dict, 'probability', uncertainty)
+
+
 def calc_all_flux_metrics(obs, pred):
     """ Calculate the metrics used for assessing fluxes.
     """
@@ -1784,7 +1572,7 @@ def calc_all_flux_metrics(obs, pred):
 
 
 def point_intensity_intuitive_metrics(df, dict, model, energy_key, thresh_key,
-    validation_type, flux_threshold=0):
+    validation_type, uncertainty, flux_threshold=0):
     """ Extract the appropriate predictions and calculate metrics
         Point intensity
 
@@ -1945,11 +1733,12 @@ def point_intensity_intuitive_metrics(df, dict, model, energy_key, thresh_key,
         slope, yint, r_lin, r_log, s_lin, MRatio, MedRatio, ME, MedE, MLE,
         MedLE, MAE, MedAE, MALE, MedALE, MPE, MAPE, MSPE, SMAPE,
         MAR, RMSE, RMSLE, MdSA, fact10, fact2, tp_plotnames)
+    uncertainties.feeder_from_sphinx(sub, dict, 'point_intensity', uncertainty)
 
 
 
 def peak_intensity_intuitive_metrics(df, dict, model, energy_key, thresh_key,
-    validation_type):
+    validation_type, uncertainty):
     """ Extract the appropriate predictions and calculate metrics
         Peak intensity
 
@@ -2063,12 +1852,16 @@ def peak_intensity_intuitive_metrics(df, dict, model, energy_key, thresh_key,
         slope, yint, r_lin, r_log, s_lin, MRatio, MedRatio, ME, MedE, MLE,
         MedLE, MAE, MedAE, MALE, MedALE, MPE, MAPE, MSPE, SMAPE,
         MAR, RMSE, RMSLE, MdSA, fact10, fact2)
+    
+
+    uncertainties.feeder_from_sphinx(sub, dict, 'peak_intensity', uncertainty)
+
 
 
 
 
 def peak_intensity_max_intuitive_metrics(df, dict, model, energy_key,
-    thresh_key, validation_type):
+    thresh_key, validation_type, uncertainty):
     """ Extract the appropriate predictions and calculate metrics
         Peak intensity
 
@@ -2223,11 +2016,13 @@ def peak_intensity_max_intuitive_metrics(df, dict, model, energy_key,
         slope, yint, r_lin, r_log, s_lin, MRatio, MedRatio, ME, MedE, MLE,
         MedLE, MAE, MedAE, MALE, MedALE, MPE, MAPE, MSPE, SMAPE,
         MAR, RMSE, RMSLE, MdSA, fact10, fact2)
+    
+    uncertainties.feeder_from_sphinx(sub, dict, 'peak_intensity_max', uncertainty)
 
 
 
 def max_flux_in_pred_win_metrics(df, dict, model, energy_key,
-    thresh_key, validation_type):
+    thresh_key, validation_type, uncertainty):
     """ Extract the appropriate predictions and calculate metrics
         Compare predicted max or onset peak flux to the max observed
         flux in the model's prediction window.
@@ -2371,11 +2166,11 @@ def max_flux_in_pred_win_metrics(df, dict, model, energy_key,
         slope, yint, r_lin, r_log, s_lin, MRatio, MedRatio, ME, MedE, MLE,
         MedLE, MAE, MedAE, MALE, MedALE, MPE, MAPE, MSPE, SMAPE,
         MAR, RMSE, RMSLE, MdSA, fact10, fact2)
-
+    uncertainties.feeder_from_sphinx(sub, dict, 'max_flux_in_pred_win', uncertainty)
 
 
 def fluence_intuitive_metrics(df, dict, model, energy_key,
-    thresh_key, validation_type):
+    thresh_key, validation_type, uncertainty):
     """ Extract the appropriate predictions and calculate metrics
         Fluence
 
@@ -2489,12 +2284,13 @@ def fluence_intuitive_metrics(df, dict, model, energy_key,
         slope, yint, r_lin, r_log, s_lin, MRatio, MedRatio, ME, MedE, MLE,
         MedLE, MAE, MedAE, MALE, MedALE, MPE, MAPE, MSPE, SMAPE,
         MAR, RMSE, RMSLE, MdSA, fact10, fact2)
+    uncertainties.feeder_from_sphinx(sub, dict, 'fluence', uncertainty)
 
 
 
 
 def threshold_crossing_intuitive_metrics(df, dict, model, energy_key,
-    thresh_key, validation_type):
+    thresh_key, validation_type, uncertainty):
     """ Extract the appropriate predictions and calculate metrics
         Threshold Crossing
 
@@ -2556,10 +2352,12 @@ def threshold_crossing_intuitive_metrics(df, dict, model, energy_key,
     
     fill_time_metrics_dict(dict, model, energy_key, thresh_key,
     pred_energy_key, pred_thresh_key, ME, MedE, MAE, MedAE)
+
+    uncertainties.feeder_from_sphinx(sub, dict, 'threshold_crossing', uncertainty)
     
 
 def start_time_intuitive_metrics(df, dict, model, energy_key, thresh_key,
-    validation_type):
+    validation_type, uncertainty):
     """ Extract the appropriate predictions and calculate metrics
         Start Time
 
@@ -2622,10 +2420,11 @@ def start_time_intuitive_metrics(df, dict, model, energy_key, thresh_key,
     
     fill_time_metrics_dict(dict, model, energy_key, thresh_key,
     pred_energy_key, pred_thresh_key, ME, MedE, MAE, MedAE)
+    uncertainties.feeder_from_sphinx(sub, dict, 'start_time', uncertainty)
 
 
 def end_time_intuitive_metrics(df, dict, model, energy_key,
-    thresh_key, validation_type):
+    thresh_key, validation_type, uncertainty):
     """ Extract the appropriate predictions and calculate metrics
         End Time
 
@@ -2687,11 +2486,12 @@ def end_time_intuitive_metrics(df, dict, model, energy_key,
     
     fill_time_metrics_dict(dict, model, energy_key, thresh_key,
     pred_energy_key, pred_thresh_key, ME, MedE, MAE, MedAE)
+    uncertainties.feeder_from_sphinx(sub, dict, 'end_time', uncertainty)
  
 
 
 def duration_intuitive_metrics(df, dict, model, energy_key, thresh_key,
-    validation_type):
+    validation_type, uncertainty):
     """ Extract the appropriate predictions and calculate metrics
         Duration
 
@@ -2755,12 +2555,13 @@ def duration_intuitive_metrics(df, dict, model, energy_key, thresh_key,
     
     fill_time_metrics_dict(dict, model, energy_key, thresh_key,
     pred_energy_key, pred_thresh_key, ME, MedE, MAE, MedAE)
+    uncertainties.feeder_from_sphinx(sub, dict, 'duration', uncertainty)
 
 
 
 
 def peak_intensity_time_intuitive_metrics(df, dict, model, energy_key,
-    thresh_key, validation_type):
+    thresh_key, validation_type, uncertainty):
     """ Extract the appropriate predictions and calculate metrics
         Peak Intensity Time
 
@@ -2832,6 +2633,8 @@ def peak_intensity_time_intuitive_metrics(df, dict, model, energy_key,
     fill_time_metrics_dict(dict, model, energy_key, thresh_key,
     pred_energy_key, pred_thresh_key, ME, MedE, MAE, MedAE)
 
+    uncertainties.feeder_from_sphinx(sub, dict, 'peak_intensity_time', uncertainty)
+
 
 def date_to_string(date):
     """ Turn datetime into appropriate strings for filenames.
@@ -2851,7 +2654,7 @@ def date_to_string(date):
 
 
 def peak_intensity_max_time_intuitive_metrics(df, dict, model, energy_key,
-    thresh_key, validation_type):
+    thresh_key, validation_type, uncertainty):
     """ Extract the appropriate predictions and calculate metrics
         Peak Intensity Max Time
 
@@ -2922,9 +2725,11 @@ def peak_intensity_max_time_intuitive_metrics(df, dict, model, energy_key,
     fill_time_metrics_dict(dict, model, energy_key, thresh_key,
     pred_energy_key, pred_thresh_key, ME, MedE, MAE, MedAE)
 
+    uncertainties.feeder_from_sphinx(sub, dict, 'peak_intensity_max_time', uncertainty)
+
 
 def time_profile_intuitive_metrics(df, dict, model, energy_key,
-    thresh_key, validation_type):
+    thresh_key, validation_type, uncertainty):
     """ Extract the appropriate predictions and calculate metrics
         Time Profile
 
@@ -3004,7 +2809,12 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
     tp_plotnames = ""
     figname = ""
     tpfigname = ""
+    model_prof_df = pd.read_json(config.model_prof_path)
+    obs_prof_df = pd.read_json(config.obs_prof_path)
+  
+    
     for i in range(len(obs_profs)):
+        
         #Variables to calculate a mean or median metric across an individual time profile
         E1 = np.nan
         medE1 = np.nan
@@ -3035,16 +2845,20 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
         obs_fnames = obs_profs[i].strip().split(",")
         logger.debug("Comparing to OBSERVED TIME PROFILES: " + str(obs_fnames))
         for j in range(len(obs_fnames)):
-            dt, flx = profile.read_single_time_profile(obs_fnames[j])
+            
+            dt = [vjson.zulu_to_time(t) for t in obs_prof_df[obs_fnames[j]]['dates']]
+            flx = obs_prof_df[obs_fnames[j]]['fluxes']
             all_obs_dates.append(dt)
             all_obs_flux.append(flx)
-        
+
         obs_dates, obs_flux = profile.combine_time_profiles(all_obs_dates,
             all_obs_flux)
-        pred_dates, pred_flux = profile.read_single_time_profile(pred_profs[i])
+        pred_dates = [vjson.zulu_to_time(x) for x in model_prof_df[pred_profs[i]]['dates']]
+        pred_flux = model_prof_df[pred_profs[i]]['fluxes']
         if not pred_flux:
             #Remove row for bad time profile from sub
             sub = sub[sub['Predicted Time Profile'] != pred_profs[i]]
+            
             continue
         
         #If all the flux values are zero, then will make the zip lines crash.
@@ -3052,6 +2866,7 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
         if len(test) == len(pred_flux):
             #Remove row for bad time profile from sub
             sub = sub[sub['Predicted Time Profile'] != pred_profs[i]]
+            
             continue
         
         #Remove zeros
@@ -3062,6 +2877,7 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
         if not pred_flux:
             #Remove row for bad time profile from sub
             sub = sub[sub['Predicted Time Profile'] != pred_profs[i]]
+            
             continue
         
         #Interpolate observed time profile onto predicted timestamps
@@ -3071,7 +2887,10 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
         #Trim the time profiles to the observed start and end time or
         #predicted start and end times - modified after SPHINX TP 2025
         trim_st = obs_st[i]
+  
         trim_et = obs_et[i]
+
+        
         if not pd.isnull(pred_st[i]):
             trim_st = max(obs_st[i],pred_st[i])
         if not pd.isnull(pred_et[i]):
@@ -3110,6 +2929,7 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
         if not trim_pred_flux or not trim_obs_flux:
             #Remove row for bad time profile from sub
             sub = sub[sub['Predicted Time Profile'] != pred_profs[i]]
+            
             continue
 
         obs, pred = metrics.remove_none(trim_obs_flux,trim_pred_flux)
@@ -3117,9 +2937,10 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
         if not obs or not pred:
             #Remove row for bad time profile from sub
             sub = sub[sub['Predicted Time Profile'] != pred_profs[i]]
+            
             continue
         
-
+        
         if len(obs) >= 1 and len(pred) >= 1:
             ratio1 = statistics.mean(metrics.switch_error_func('Ratio',obs,pred))
             medratio1 = statistics.median(metrics.switch_error_func('Ratio',obs,pred))
@@ -3139,7 +2960,7 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
             PE1 = statistics.mean(metrics.switch_error_func('PE',obs,pred))
             SPE1 = statistics.mean(metrics.switch_error_func('SPE',obs,pred))
             SAPE1 = statistics.mean(metrics.switch_error_func('SAPE',obs,pred))
-
+            
             #Fluxes within a factor of 10 and 2
             temp = metrics.switch_error_func('LE',obs,pred)
             count = 0
@@ -3212,15 +3033,17 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
         sepfact2.append(fact2)
 
     #Append sub with the metrics for each observed and predicted time profile match
-    errors = {'Mean Ratio': sepratio, 'Median Ratio': sepmedratio, 'Mean Error': sepE, 'Median Error': sepmedE,
-              'Mean Absolute Error': sepAE, 'Median Absolute Error': sepmedAE,
-              'Mean Log Error': sepLE, 'Median Log Error': sepmedLE,
-              'Mean Absolute Log Error': sepALE, 'Median Absolute Log Error': sepmedALE,
-              'Absolute Percent Error': sepAPE, 'Mean Accuracy Ratio': sepMAR, 'Root Mean Square Error': sepRMSE,
-              'Root Mean Square Log Error': sepRMSLE, 'Percent Error': sepPE, 'Symmetric Percent Error': sepSPE, 
-              'Symmetric Absolute Perecent Error': sepSAPE,'Pearson Correlation Coefficient (linear)': sepRlin, 
-              'Pearson Correlation Coefficient (log)': sepRlog, 'Spearman Correlation Coefficient': sepSlin, 
-              'Within a Factor of 10': sepfact10, 'Within a Factor of 2': sepfact2}
+    errors = {'Mean Ratio': sepratio, 'Median Ratio': sepmedratio, 'Mean Error (ME)': sepE, 'Median Error (MedE)': sepmedE,
+              'Mean Absolute Error (MAE)': sepAE, 'Median Absolute Error (MedAE)': sepmedAE,
+              'Mean Log Error (MLE)': sepLE, 'Median Log Error (MedLE)': sepmedLE,
+              'Mean Absolute Log Error (MALE)': sepALE, 'Median Absolute Log Error (MedALE)': sepmedALE,
+              'Mean Absolute Percent Error (MAPE)': sepAPE, 'Mean Accuracy Ratio (MAR)': sepMAR, 
+              'Root Mean Square Error (RMSE)': sepRMSE, 'Root Mean Square Log Error (RMSLE)': sepRMSLE, 
+              'Median Symmetric Accuracy (MdSA)': sepMdSA,  'Mean Percent Error (MPE)': sepPE, 'Mean Symmetric Percent Error (MSPE)': sepSPE, 
+              'Mean Symmetric Absolute Percent Error (SMAPE)': sepSAPE,'Pearson Correlation Coefficient (Linear)': sepRlin, 
+              'Pearson Correlation Coefficient (Log)': sepRlog, 'Spearman Correlation Coefficient (Linear)': sepSlin, 
+              'Percentage within an Order of Magnitude (%)': sepfact10, 'Percentage within a factor of 2 (%)': sepfact2}
+    
     
     if len(errors['Mean Ratio']) != 0:
         sub = sub.assign(**errors)
@@ -3321,6 +3144,50 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
         slope, yint, Rlin, Rlog, Slin, MRatio, MedRatio, ME, MedE, MLE,
         MedLE, MAE, MedAE, MALE, MedALE, MPE, MAPE, MSPE, SMAPE,
         MAR, RMSE, RMSLE, MdSA, fact10_, fact2_, tp_plotnames)
+    
+
+
+    # Uncertainty Calcs
+    slope_uncert = None
+    yint_uncert = None
+    ratio_uncert = None
+    medratio_uncert = None
+    E_uncert = None
+    medE_uncert = None
+    AE_uncert = None
+    medAE_uncert = None
+    LE_uncert = None
+    medLE_uncert = None
+    ALE_uncert = None
+    medALE_uncert = None
+    APE_uncert = None
+    MAR_uncert = None
+    RMSE_uncert = None
+    RMSLE_uncert = None
+    MdSA_uncert = None
+    PE_uncert = None
+    SPE_uncert = None
+    SAPE_uncert = None
+    rlin_uncert = None
+    rlog_uncert = None
+    slin_uncert = None
+    fact10_uncert = None
+    fact2_uncert = None
+
+    if len(sepE) > 2:
+        uncertainties.time_profile_uncertainties(errors, dict)
+    else:
+        for key in errors.keys():
+            dict[key + ' Uncertainty'].append(np.nan)
+    dict['Linear Regression Slope Uncertainty'] = np.nan
+    dict["Linear Regression y-intercept Uncertainty"] = np.nan
+    
+        
+
+
+
+
+    
 
 
 
@@ -3809,6 +3676,11 @@ def last_data_to_issue_intuitive_metrics(df, dict, model, energy_key, thresh_key
     fill_time_metrics_dict(dict, model, energy_key, thresh_key,
     pred_energy_key, pred_thresh_key, ME, MedE, MAE, MedAE)
 
+    dict['Mean Error (pred - obs) Uncertainty'] = None
+    dict['Median Error (pred - obs) Uncertainty'] = None
+    dict['Mean Absolute Error (|pred - obs|) Uncertainty'] = None
+    dict['Median Absolute Error (|pred - obs|) Uncertainty'] = None
+
 
 
 def pretty(d, indent=0):
@@ -3832,18 +3704,18 @@ def profile_output(sphinx_dataframe, resume_obs, resume_model):
     observed_profs = {}
     model_profs = {}
     for u in u_obs_profs:
-        if resume_obs is not None and u in resume_obs:
-            continue
-        else:
-            for u_i in u.rsplit(','):
+        for u_i in u.rsplit(','):
+            if resume_obs is not None and u_i in resume_obs:
+                continue
+            else:
                 obs_dates, obs_profiles = profile.read_single_time_profile(u_i)
                 obs_dates = [x.strftime('%Y-%m-%dT%H:%M:%SZ') for x in obs_dates]
                 observed_profs[u_i] = {'dates': obs_dates, 'fluxes': obs_profiles}
     for um in u_model_profs:
-        if resume_model is not None and um in resume_model:
-            continue
-        else:
-            for um_i in um.rsplit(','):
+        for um_i in um.rsplit(','):
+            if resume_model is not None and um in resume_model:
+                continue
+            else:
                 model_dates, model_profiles = profile.read_single_time_profile(um_i)
                 model_dates = [x.strftime('%Y-%m-%dT%H:%M:%SZ') for x in model_dates]
                 model_profs[um_i] = {'dates': model_dates, 'fluxes': model_profiles}
@@ -3876,7 +3748,7 @@ def profile_output(sphinx_dataframe, resume_obs, resume_model):
 
 
 def calculate_intuitive_metrics(df, model_names, all_energy_channels,
-    all_observed_thresholds, validation_type="All"):
+    all_observed_thresholds, validation_type="All", uncertainty = config.uncert_boolean):
     """ Calculate metrics appropriate to each quantity and
         store in dataframes.
             
@@ -3916,22 +3788,22 @@ def calculate_intuitive_metrics(df, model_names, all_energy_channels,
     if validation_type == "All" or validation_type == "all":
         validation_type = ""
     
-    all_clear_dict = initialize_all_clear_dict() #All only
-    probability_dict = initialize_probability_dict() #All only
-    point_intensity_dict = initialize_flux_dict() #All only
-    peak_intensity_dict = initialize_flux_dict() #All, First, Last, Max, Mean
-    peak_intensity_max_dict = initialize_flux_dict() #All, First, Last, Max, Mean
-    fluence_dict = initialize_flux_dict() #All, First, Last, Max, Mean
-    profile_dict = initialize_flux_dict() #All, First, Last
-    thresh_cross_dict = initialize_time_dict() #All, First, Last
-    start_time_dict = initialize_time_dict() #All, First, Last
-    end_time_dict = initialize_time_dict() #All, First, Last
-    duration_dict = initialize_time_dict() #All, First, Last
-    peak_intensity_time_dict = initialize_time_dict() #All, First, Last
-    peak_intensity_max_time_dict = initialize_time_dict() #All, First, Last
-    max_dict = initialize_flux_dict() #max in prediction window #All only
-    awt_dict = initialize_awt_dict() #Advanced Warning Time #All, First
-    last_data_to_issue_dict = initialize_time_dict() #All
+    all_clear_dict = metrics_dicts.initialize_all_clear_dict() #All only
+    probability_dict = metrics_dicts.initialize_probability_dict() #All only
+    point_intensity_dict = metrics_dicts.initialize_flux_dict() #All only
+    peak_intensity_dict = metrics_dicts.initialize_flux_dict() #All, First, Last, Max, Mean
+    peak_intensity_max_dict = metrics_dicts.initialize_flux_dict() #All, First, Last, Max, Mean
+    fluence_dict = metrics_dicts.initialize_flux_dict() #All, First, Last, Max, Mean
+    profile_dict = metrics_dicts.initialize_flux_dict() #All, First, Last
+    thresh_cross_dict = metrics_dicts.initialize_time_dict() #All, First, Last
+    start_time_dict = metrics_dicts.initialize_time_dict() #All, First, Last
+    end_time_dict = metrics_dicts.initialize_time_dict() #All, First, Last
+    duration_dict = metrics_dicts.initialize_time_dict() #All, First, Last
+    peak_intensity_time_dict = metrics_dicts.initialize_time_dict() #All, First, Last
+    peak_intensity_max_time_dict = metrics_dicts.initialize_time_dict() #All, First, Last
+    max_dict = metrics_dicts.initialize_flux_dict() #max in prediction window #All only
+    awt_dict = metrics_dicts.initialize_awt_dict() #Advanced Warning Time #All, First
+    last_data_to_issue_dict = metrics_dicts.initialize_time_dict() #All
     
     for model in model_names:
         for ek in all_energy_channels:
@@ -3939,39 +3811,37 @@ def calculate_intuitive_metrics(df, model_names, all_energy_channels,
                 logging.info("Calculating metrics for " + model + ", " + ek + ", " + tk)
                 
                 probability_intuitive_metrics(df, probability_dict,model,ek,tk,
-                    validation_type)
+                    validation_type, uncertainty)
                 point_intensity_intuitive_metrics(df, point_intensity_dict,
-                    model, ek, tk, validation_type)
+                    model, ek, tk, validation_type, uncertainty)
                 peak_intensity_intuitive_metrics(df, peak_intensity_dict,
-                    model,ek,tk, validation_type)
+                    model,ek,tk, validation_type, uncertainty)
                 peak_intensity_max_intuitive_metrics(df,
-                    peak_intensity_max_dict,model,ek,tk, validation_type)
+                    peak_intensity_max_dict,model,ek,tk, validation_type, uncertainty)
                 fluence_intuitive_metrics(df,fluence_dict, model,ek,tk,
-                    validation_type)
+                    validation_type, uncertainty)
                 threshold_crossing_intuitive_metrics(df, thresh_cross_dict,
-                    model,ek,tk, validation_type)
+                    model,ek,tk, validation_type, uncertainty)
                 start_time_intuitive_metrics(df, start_time_dict,
-                    model,ek,tk, validation_type)
+                    model,ek,tk, validation_type, uncertainty)
                 end_time_intuitive_metrics(df, end_time_dict,model,ek,tk,
-                    validation_type)
+                    validation_type, uncertainty)
                 duration_intuitive_metrics(df, duration_dict,model,ek,tk,
-                    validation_type)
+                    validation_type, uncertainty)
                 peak_intensity_time_intuitive_metrics(df,
-                    peak_intensity_time_dict,model,ek,tk, validation_type)
+                    peak_intensity_time_dict,model,ek,tk, validation_type, uncertainty)
                 peak_intensity_max_time_intuitive_metrics(df,
-                    peak_intensity_max_time_dict,model,ek,tk, validation_type)
+                    peak_intensity_max_time_dict,model,ek,tk, validation_type, uncertainty)
                 all_clear_intuitive_metrics(df, all_clear_dict,model,ek,tk,
-                    validation_type)
+                    validation_type, uncertainty)
                 time_profile_intuitive_metrics(df, profile_dict,model,ek,tk,
-                    validation_type)
+                    validation_type, uncertainty)
                 max_flux_in_pred_win_metrics(df, max_dict, model,ek,tk,
-                    validation_type)
+                    validation_type, uncertainty)
                 awt_metrics(df, awt_dict, model, ek, tk, validation_type)
                 last_data_to_issue_intuitive_metrics(df, last_data_to_issue_dict,model,ek,tk,
                     validation_type)
-
     logger.info("Completed calculating all metrics.")
-
     prob_metrics_df = pd.DataFrame(probability_dict)
     point_intensity_metrics_df = pd.DataFrame(point_intensity_dict)
     peak_intensity_metrics_df = pd.DataFrame(peak_intensity_dict)
@@ -4069,7 +3939,7 @@ def validation_explanation():
 
 def intuitive_validation(evaluated_sphinx, removed_sphinx, model_names,
     all_energy_channels, all_observed_thresholds, observed_sep_events,
-    profname_dict, r_df=None, r_obs= None, r_mod= None):
+    profname_dict, r_df=None, r_obs= None, r_mod= None, uncertainty = config.uncert_boolean):
     """ In the intuitive_validation subroutine, forecasts are validated in a
         way similar to which people would interpret forecasts.
     
@@ -4161,29 +4031,25 @@ def intuitive_validation(evaluated_sphinx, removed_sphinx, model_names,
         all_energy_channels = resume.identify_unique(df, 'Energy Channel Key')
         all_observed_thresholds = resume.identify_thresholds_per_energy_channel(df)
     ### RESUME COMPLETED
-
-
+    
     #Write SPHINX dataframe to file
     write_df(df, "SPHINX_evaluated")
+    profile_output(df, r_obs, r_mod)
     logger.debug("Completed writing SPHINX_evaluated dataframe to file.")
 
     #Write NOT EVALUATED SPHINX dataframe to file
     write_df(df_not, "SPHINX_removed")
     logger.debug("Completed writing SPHINX_removed dataframe to file.")
 
-    validation_type = ["All", "First", "Last", "Max", "Mean"]
+    validation_type = ["All","First", "Last", "Max", "Mean"]
     for type in validation_type:
         logger.info("-----------Starting validation of " + type +" forecasts-------------")
         calculate_intuitive_metrics(df, model_names, all_energy_channels,
-                all_observed_thresholds, type)
+                all_observed_thresholds, type, uncertainty = uncertainty,)
 
     #Record explanatory information to the log
     validation_explanation()
     
-    
-
-    profile_output(df, r_obs, r_mod)
-
     logger.info("intuitive_validation: Validation process complete.")
 
     return df   
