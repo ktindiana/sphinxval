@@ -4017,6 +4017,15 @@ def intuitive_validation(evaluated_sphinx, removed_sphinx, model_names,
     df_not = pd.concat([df_not,duplicate_df])
     logger.info("Completed filling removed_sphinx dataframe. ")
 
+    # Putting DUMs before Resume so that we limit duplicates and for the automated sphinx we will create DUMs for only
+    # the new triggers 
+    dum_profs = None
+    if config.dum_toggle:
+        df, dum_profs = dums.feeder_from_sphinx(df)
+        
+        model_names = resume.identify_unique(df, 'Model')
+        all_energy_channels = resume.identify_unique(df, 'Energy Channel Key')
+        all_observed_thresholds = resume.identify_thresholds_per_energy_channel(df)
 
     ### RESUME WILL APPEND DF TO PREVIOUS DF
     if r_df is not None:
@@ -4032,13 +4041,7 @@ def intuitive_validation(evaluated_sphinx, removed_sphinx, model_names,
         all_observed_thresholds = resume.identify_thresholds_per_energy_channel(df)
     ### RESUME COMPLETED
     
-    dum_profs = None
-    if config.dum_toggle:
-        df, dum_profs = dums.feeder_from_sphinx(df)
-        # df, duplicate_df = duplicates.remove_sphinx_duplicates(df) #just in case there's some duplication of DUM models
-        model_names = resume.identify_unique(df, 'Model')
-        all_energy_channels = resume.identify_unique(df, 'Energy Channel Key')
-        all_observed_thresholds = resume.identify_thresholds_per_energy_channel(df)
+    
 
 
 
