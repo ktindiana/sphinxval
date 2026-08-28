@@ -69,8 +69,9 @@ try:
         resume_model=resume_model,
         uncertainty=args.Uncertainty,
         partitionpath=args.PartitionPath
-        )
-    sphinxval.sphinx.report.report(None, args.RelativePathPlots, sphinx_dataframe=sphinx_df)
+    )
+
+    sphinxval.sphinx.report.report(None, args.RelativePathPlots)
 
 except:
     logger.exception('SPHINX failed with an exception.')
