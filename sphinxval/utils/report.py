@@ -479,9 +479,7 @@ def _parse_energy_channel(raw: str):
 def build_threshold_string(data: pd.DataFrame, k: int):
     row = data.iloc[k]
     energy_threshold, mismatch_str = _parse_energy_channel(row['Energy Channel'])
-    # print(row)
     obs_threshold = row['Threshold'].split('.units.')[0].split('threshold.')[1] + ' pfu'
-    print(row['Prediction Threshold'])
     pred_threshold = row['Prediction Threshold'].split('.units.')[0].split('threshold.')[1] + ' pfu'
     threshold_string = (
         f'* Energy Channel: {energy_threshold}\n'
@@ -740,7 +738,6 @@ def build_section_content(sdef: SectionDef, filename: str, model: str, sphinx_da
     n_total = 0
 
     for i in range(len(data)):
-        print(f'{sdef.title} Metrics')
         threshold_string, energy_threshold, obs_threshold, pred_threshold, mismatch_str = build_threshold_string(data, i)
         energy_channel = data.iloc[i]['Energy Channel']
         obs_thresh_val = obs_threshold.rstrip(' pfu')
