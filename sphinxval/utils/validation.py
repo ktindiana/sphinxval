@@ -9,6 +9,7 @@ from . import duplicates
 from . import validation_json_handler as vjson
 from . import metrics_dicts
 from . import uncertainties
+from .DUMs import dums
 import matplotlib.pylab as plt
 from scipy.stats import pearsonr
 import statistics
@@ -4005,7 +4006,7 @@ def intuitive_validation(evaluated_sphinx, removed_sphinx, model_names,
     
     #Check for duplicated forecasts and remove
     df, duplicate_df = duplicates.remove_sphinx_duplicates(df)
-    logger.info("Completed filling evaluated_sphinx dataframe. ")
+    logger.info("Completed filling evaluated_sphinx dataframe.")
 
 
     logger.info("Filling removed SPHINX dataframe with information from not evaluated sphinx objects.")
@@ -4016,6 +4017,15 @@ def intuitive_validation(evaluated_sphinx, removed_sphinx, model_names,
     df_not = pd.concat([df_not,duplicate_df])
     logger.info("Completed filling removed_sphinx dataframe. ")
 
+    # Putting DUMs before Resume so that we limit duplicates and for the automated sphinx we will create DUMs for only
+    # the new triggers 
+    dum_profs = None
+    if config.dum_toggle:
+        df, dum_profs = dums.feeder_from_sphinx(df)
+        
+        model_names = resume.identify_unique(df, 'Model')
+        all_energy_channels = resume.identify_unique(df, 'Energy Channel Key')
+        all_observed_thresholds = resume.identify_thresholds_per_energy_channel(df)
 
     ### RESUME WILL APPEND DF TO PREVIOUS DF
     if r_df is not None:
@@ -4026,12 +4036,15 @@ def intuitive_validation(evaluated_sphinx, removed_sphinx, model_names,
         #Add the duplicates discarded from df
         df_not = pd.concat([df_not,duplicate_df])
         logger.debug("RESUME: Completed concatenation and removed any duplicates. Writing SPHINX_evaluated dataframe to file.")
-
         model_names = resume.identify_unique(df, 'Model')
         all_energy_channels = resume.identify_unique(df, 'Energy Channel Key')
         all_observed_thresholds = resume.identify_thresholds_per_energy_channel(df)
     ### RESUME COMPLETED
     
+    
+
+
+
     #Write SPHINX dataframe to file
     write_df(df, "SPHINX_evaluated")
     profile_output(df, r_obs, r_mod)
