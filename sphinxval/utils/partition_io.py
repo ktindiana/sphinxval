@@ -103,47 +103,76 @@ def units_columns_from_string(df):
     return df
 
 
-def write_partition_df(partitionpath, df, name, partition_key, verbose=True):
-    """ Write ONLY new rows (e.g. one run's / one month's worth of data)
-        to a partitioned Parquet dataset, instead of rewriting an entire
-        cumulative pkl/csv file every run.
+def write_partition_df(partitionpath, df, name, verbose=True):
+    """ Write new rows to a partitioned Parquet dataset, splitting by
+        month (based on "Prediction Window Start") and atomically
+        appending each month's rows to that month's existing partition
+        file, if any -- instead of rewriting an entire cumulative
+        pkl/csv file every run, and instead of writing one file per RUN
+        (which fragments a single logical dataset into many small,
+        timestamp-named files with no natural way to append to them).
 
         INPUT:
 
             :partitionpath: (string) root directory for partitioned data
                 (e.g. /data/SPHINX/active/partitions)
-            :df: (dataframe) NEW rows only for this run
+            :df: (dataframe) NEW rows only for this run -- may span
+                multiple months
             :name: (string) dataset name, e.g. "SPHINX_evaluated" or
                 "SPHINX_removed" -- becomes a subdirectory under
                 partitionpath
-            :partition_key: (string) identifies this run's partition
-                file, e.g. "2025-08" -- must be filesystem-safe
 
         OUTPUT:
 
-            :filepath: (string) path to the partition file written, or
-                None if df was empty
+            :filepaths: (list of string) paths to every monthly
+                partition file written or appended to this call. Empty
+                list if df was empty.
     """
     if df.empty:
         if verbose:
-            logger.debug('write_partition_df: df for ' + name
-                + ' partition ' + partition_key + ' is empty, skipping write.')
-        return None
+            logger.debug('write_partition_df: df for ' + name + ' is empty, skipping write.')
+        return []
 
     partition_dir = os.path.join(partitionpath, name)
     if not os.path.isdir(partition_dir):
         os.makedirs(partition_dir)
 
-    filepath = os.path.join(partition_dir, name + '_' + partition_key + '.parquet')
-
     #CONVERT astropy.units.Unit OBJECTS TO STRINGS -- PARQUET CANNOT
     #SERIALIZE ARBITRARY PYTHON OBJECTS THE WAY PICKLE CAN
     parquet_safe_df = units_columns_to_string(df)
-    parquet_safe_df.to_parquet(filepath, index=False)
-    if verbose:
-        logger.debug('Wrote partition ' + filepath)
 
-    return filepath
+    #SPLIT INCOMING ROWS BY MONTH, SO ONE CALL CAN CORRECTLY SPAN A
+    #MONTH BOUNDARY (E.G. A RUN THAT VALIDATES BOTH LATE-DECEMBER AND
+    #EARLY-JANUARY FORECASTS)
+    month_key = pd.to_datetime(parquet_safe_df['Prediction Window Start']).dt.strftime('%Y-%m')
+
+    filepaths = []
+    for key, group_df in parquet_safe_df.groupby(month_key):
+        filepath = os.path.join(partition_dir, name + '_' + key + '.parquet')
+
+        #APPEND TO THE EXISTING MONTHLY FILE IF ONE ALREADY EXISTS,
+        #RATHER THAN OVERWRITING IT
+        if os.path.isfile(filepath):
+            existing_df, _ = _read_table_safe(filepath)
+            combined_df = pd.concat([existing_df, group_df], ignore_index=True)
+        else:
+            combined_df = group_df
+
+        #WRITE TO A TEMP FILE FIRST, THEN ATOMICALLY REPLACE THE REAL
+        #FILE -- os.replace() IS ATOMIC ON THE SAME FILESYSTEM, SO A
+        #CRASH/INTERRUPTION MID-WRITE CANNOT LEAVE THE REAL FILE
+        #TRUNCATED OR CORRUPTED. THE WORST CASE IS AN ORPHANED .tmp
+        #FILE, NOT LOST OR CORRUPTED REAL DATA.
+        tmp_filepath = filepath + '.tmp'
+        combined_df.to_parquet(tmp_filepath, index=False)
+        os.replace(tmp_filepath, filepath)
+
+        if verbose:
+            logger.debug('Wrote partition ' + filepath + ' (' + str(len(group_df))
+                + ' new rows, ' + str(len(combined_df)) + ' total)')
+        filepaths.append(filepath)
+
+    return filepaths
 
 
 def _read_table_safe(filepath, columns=None):

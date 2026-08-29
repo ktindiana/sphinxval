@@ -717,11 +717,11 @@ def _units_columns_from_string(df):
     return partition_io.units_columns_from_string(df)
 
 
-def write_partition_df(df, name, partition_key, verbose=True):
+def write_partition_df(df, name, verbose=True):
     """ See partition_io.write_partition_df -- this wrapper supplies
         config.partitionpath automatically. """
     return partition_io.write_partition_df(config.partitionpath, df, name,
-        partition_key, verbose=verbose)
+        verbose=verbose)
 
 
 def read_all_partitions(name, columns=None):
@@ -4076,7 +4076,6 @@ def intuitive_validation(evaluated_sphinx, removed_sphinx, model_names, all_ener
     ### DATAFRAME.
     ### NO STEP BELOW HOLDS MORE THAN ONE RUN'S NEW DATA
     ### PLUS THE SMALL INDEX/METADATA FILES IN MEMORY AT ONCE.
-    partition_key = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     if resuming:
         logger.info("RESUME: Checking new forecasts against historical index.")
 
@@ -4097,10 +4096,10 @@ def intuitive_validation(evaluated_sphinx, removed_sphinx, model_names, all_ener
     #
     #CRITICAL ORDERING: THIS DATA WRITE MUST HAPPEN *BEFORE* THE INDEX/
     #METADATA UPDATE BELOW.
-    write_partition_df(df, "SPHINX_evaluated", partition_key)
+    write_partition_df(df, "SPHINX_evaluated")
     logger.debug("Wrote new SPHINX_evaluated partition for this run.")
 
-    write_partition_df(df_not, "SPHINX_removed", partition_key)
+    write_partition_df(df_not, "SPHINX_removed")
     logger.debug("Wrote new SPHINX_removed partition for this run.")
 
     if resuming:
@@ -4133,14 +4132,6 @@ def intuitive_validation(evaluated_sphinx, removed_sphinx, model_names, all_ener
         resume.write_metadata(metadata_path, model_names, all_energy_channels, all_observed_thresholds)
 
     ### RESUME COMPLETED
-    #WRITE ONLY THIS RUN'S NEW, DEDUPED ROWS AS A PARTITION -- NEVER A
-    #FULL REWRITE OF ALL HISTORY, AND NEVER write_df (PICKLE) ON A
-    #FULL-HISTORY DATAFRAME.
-    write_partition_df(df, "SPHINX_evaluated", partition_key)
-    logger.debug("Wrote new SPHINX_evaluated partition for this run.")
-
-    write_partition_df(df_not, "SPHINX_removed", partition_key)
-    logger.debug("Wrote new SPHINX_removed partition for this run.")
 
     #RECONSTRUCT FULL-HISTORY df FOR METRICS CALCULATION AND THE RETURN
     #VALUE. calculate_intuitive_metrics STILL NEEDS FULL HISTORY
