@@ -9,11 +9,13 @@ outpath = './output'
 referencepath = './reference'
 reportpath = './reports'
 logpath = './logs'
-baseurlpath = None
 #profile paths
 model_prof_path = './output/json/model_profiles.json'
 obs_prof_path = './output/json/observed_profiles.json'
-#baseurlpath = 'https://web-dev.ccmc.smce.nasa.gov:8001/sphinx'
+#partitionpath = '/data/SPHINX/active/partitions'
+partitionpath = './data/partitions'
+os.makedirs(partitionpath, exist_ok=True)
+baseurlpath = 'https://web-dev.ccmc.smce.nasa.gov:8001/sphinx'
 
 ######SHORTNAME#####
 # Set to a list of items if you want to group a model's submodules to share
@@ -25,6 +27,58 @@ shortname_grouping = [
     ('UMASEP-30 .*', 'UMASEP-30'),
     ('UMASEP-50 .*', 'UMASEP-50'),
     ('UMASEP-500 .*', 'UMASEP-500')
+]
+
+#KEY COLUMNS THAT UNIQUELY IDENTIFY A FORECAST ROW. SHARED BY
+#sphinxval.utils.duplicates.remove_sphinx_duplicates AND
+#sphinxval.utils.duplicates.remove_new_duplicates_against_index SO BOTH
+#FUNCTIONS AGREE ON WHAT COUNTS AS A DUPLICATE. CANNOT USE ALL DF ENTRIES
+#BECAUSE THE HASH COMMAND CANNOT HASH LISTS.
+SPHINX_KEY_COLUMNS = ["Model", "Energy Channel Key", "Threshold Key", "Mismatch Allowed",
+        "Prediction Energy Channel Key", "Prediction Threshold Key", "Prediction Window Start",
+        "Prediction Window End", "Prediction Number of CMEs","Prediction CME Start Time",
+        "Prediction CME Liftoff Time", "Prediction CME Latitude", "Prediction CME Longitude",
+        "Prediction CME Speed", "Prediction CME Half Width", "Prediction CME PA",
+        "Prediction Number of Flares", "Prediction Flare Latitude", "Prediction Flare Longitude",
+        "Prediction Flare Start Time", "Prediction Flare Peak Time", "Prediction Flare End Time",
+        "Prediction Flare Last Data Time", "Prediction Flare Intensity",
+        "Prediction Flare Integrated Intensity", "Prediction Flare NOAA AR",
+        "Observed SEP CME Start Time",
+        "Observed SEP CME Liftoff Time", "Observed SEP CME Latitude", "Observed SEP CME Longitude",
+        "Observed SEP CME Speed", "Observed SEP CME Half Width", "Observed SEP CME PA",
+        "Observed SEP Flare Latitude", "Observed SEP Flare Longitude",
+        "Observed SEP Flare Start Time", "Observed SEP Flare Peak Time",
+        "Observed SEP Flare End Time",
+        "Observed SEP Flare Intensity",
+        "Observed SEP Flare Integrated Intensity", "Observed SEP Flare NOAA AR",
+        "Observatory", "Observed SEP All Clear",
+        "Predicted SEP All Clear", "Predicted SEP All Clear Probability Threshold",
+        "All Clear Match Status", "Predicted SEP Probability",
+        "Probability Match Status", "Predicted SEP Threshold Crossing Time",
+        "Threshold Crossing Time Match Status", "Predicted SEP Start Time",
+        "Start Time Match Status", "Predicted SEP End Time", "End Time Match Status",
+        "Predicted SEP Duration", "Duration Match Status", "Predicted SEP Fluence",
+        "Fluence Match Status", "Predicted SEP Peak Intensity (Onset Peak)",
+        "Peak Intensity Match Status", "Predicted SEP Peak Intensity Max (Max Flux)",
+        "Peak Intensity Max Match Status", "Predicted Point Intensity",
+        "Predicted Time Profile", "Time Profile Match Status"]
+
+#COLUMNS THAT HOLD LIVE astropy.units.Unit OBJECTS RATHER THAN STRINGS.
+#PARQUET CANNOT SERIALIZE ARBITRARY PYTHON OBJECTS (UNLIKE PICKLE), SO
+#THESE MUST BE CONVERTED TO STRINGS BEFORE write_partition_df AND BACK TO
+#Unit OBJECTS AFTER READING PARTITIONS BACK INTO A DATAFRAME.
+UNITS_COLUMNS = [
+    "Observed SEP Peak Intensity (Onset Peak) Units",
+    "Observed SEP Peak Intensity Max (Max Flux) Units",
+    "Observed Point Intensity Units",
+    "Observed Max Flux in Prediction Window Units",
+    "Observed SEP Fluence Units",
+    "Observed SEP Fluence Spectrum Units",
+    "Predicted Point Intensity Units",
+    "Predicted SEP Peak Intensity (Onset Peak) Units",
+    "Predicted SEP Peak Intensity Max (Max Flux) Units",
+    "Predicted SEP Fluence Units",
+    "Predicted SEP Fluence Spectrum Units",
 ]
 
 # SEP Profile Path Appendages
@@ -88,8 +142,16 @@ peak_flux_cut = 8e-1
 #to be compared to each other.
 #e.g. if want to validate with observations that are "close" to the
 #predicted energy channels and thresholds, but not exactly the same.
-#Only one excepted case allowed in current version.
-#Set do_mismatch = True to allow comparison of mismatched energy channels and thresholds
+#
+#Multiple rules are supported. Each rule is fully independent -- any
+#combination of (model, pred_energy_channel, pred_threshold,
+#obs_energy_channel, obs_threshold) is allowed, including:
+#  - the same model with multiple mismatched energy-channel pairs
+#  - the same model + energy pair with multiple mismatched thresholds
+#  - different models each with their own rule(s)
+#Set do_mismatch = True to allow comparison of mismatched energy channels
+#and thresholds. If do_mismatch is True but mismatch_rules is empty, no
+#mismatching will actually occur.
 do_mismatch = True
 
 #mm stands for "mismatch"
@@ -103,40 +165,68 @@ e_units = vunits.convert_string_to_units("MeV")
 t_units = vunits.convert_string_to_units("pfu")
 t2_units = vunits.convert_string_to_units("MeV^-1*s^-1*cm^-2*sr^-1")
 
-######SET MODEL INFO#####
-mm_model = "REleASE" #Model short name contains this string
-mm_pred_energy_channel = {"min": 15.8, "max": 39.8, "units": e_units}
-mm_pred_threshold = {"threshold": 0.1, "threshold_units": t2_units}
-#mm_pred_energy_channel = {"min": 28.2, "max": 50.1, "units": e_units}
-#mm_pred_threshold = {"threshold": 0.1, "threshold_units": t_units}
+#Each entry is one independent mismatch rule. "model" is matched as a
+#substring against a forecast's short_name. Add as many rules as
+#needed, including multiple entries for the same model.
+mismatch_rules = [
+    {
+        "model": "REleASE",
+        "pred_energy_channel": {"min": 15.8, "max": 39.8, "units": e_units},
+        "pred_threshold": {"threshold": 0.1, "threshold_units": t2_units},
+        "obs_energy_channel": {"min": 10, "max": -1, "units": e_units},
+        "obs_threshold": {"threshold": 10, "threshold_units": t_units},
+    },
+    {
+        "model": "REleASE",
+        "pred_energy_channel": {"min": 28.2, "max": 50.1, "units": e_units},
+        "pred_threshold": {"threshold": 0.1, "threshold_units": t2_units},
+        "obs_energy_channel": {"min": 10, "max": -1, "units": e_units},
+        "obs_threshold": {"threshold": 10, "threshold_units": t_units},
+    },
+    {
+        "model": "REleASE",
+        "pred_energy_channel": {"min": 28.2, "max": 50.1, "units": e_units},
+        "pred_threshold": {"threshold": 0.1, "threshold_units": t2_units},
+        "obs_energy_channel": {"min": 100, "max": -1, "units": e_units},
+        "obs_threshold": {"threshold": 1, "threshold_units": t_units},
+    },
+]
 
-#mm_model = "UNSPELL" #Model short name contains this string
-#mm_pred_energy_channel = {"min": 5, "max": -1, "units": e_units}
-#mm_pred_threshold = {"threshold": 5, "threshold_units": t_units}
+###AUTOMATIC -- derive lookup keys for each rule. Do not edit below this line.
+for _mm_rule in mismatch_rules:
+    _mm_rule["pred_ek"] = objh.energy_channel_to_key(_mm_rule["pred_energy_channel"])
+    _mm_rule["pred_tk"] = objh.threshold_to_key(_mm_rule["pred_threshold"])
+    _mm_rule["obs_ek"] = objh.energy_channel_to_key(_mm_rule["obs_energy_channel"])
+    _mm_rule["obs_tk"] = objh.threshold_to_key(_mm_rule["obs_threshold"])
+    #Dictionaries throughout the code use energy_key to organize
+    #observation and model objects.
+    _mm_rule["energy_key"] = _mm_rule["obs_ek"] + "_" + _mm_rule["pred_ek"]
+    #The observed threshold key is used in organizing observed and
+    #predicted values by threshold.
+    _mm_rule["thresh_key"] = _mm_rule["obs_tk"] + "_" + _mm_rule["pred_tk"]
+del _mm_rule
 
-#mm_model = "SEPMOD" #Model short name contains this string
-#mm_pred_energy_channel = {"min": 10, "max": -1, "units": e_units}
-#mm_pred_threshold = {"threshold": 0.001, "threshold_units": t_units}
+#Deduplicated view by energy_key -- safe for extraction-value lookups
+#only (e.g. "which pred_energy_channel to pull from a forecast json for
+#this energy_key"), not for applicability checks ("does a rule apply to
+#this model"). Any rules sharing an energy_key are guaranteed to have
+#identical obs_ek/pred_ek (energy_key is literally built from them), so
+#picking any one representative rule per energy_key is safe for value
+#lookups. It is not safe for checking which model(s) a rule applies to:
+#if two different models happen to share the same energy_key, deduping
+#by energy_key alone would silently drop one model's rule from this
+#view. Applicability checks search the full mismatch_rules list instead.
+mismatch_rules_by_energy_key = {}
+for _mm_rule in mismatch_rules:
+    if _mm_rule["energy_key"] not in mismatch_rules_by_energy_key:
+        mismatch_rules_by_energy_key[_mm_rule["energy_key"]] = _mm_rule
+del _mm_rule
 
-######SET OBSERVATION INFO#######
-#mm_obs_energy_channel = {"min": 25, "max": 40.9, "units": e_units}
-#mm_obs_threshold = {"threshold": 0.1, "threshold_units": t_units}
-
-mm_obs_energy_channel = {"min": 10, "max": -1, "units": e_units}
-mm_obs_threshold = {"threshold": 10, "threshold_units": t_units}
-
-###AUTOMATIC
-mm_pred_ek = objh.energy_channel_to_key(mm_pred_energy_channel)
-mm_pred_tk = objh.threshold_to_key(mm_pred_threshold)
-mm_obs_ek = objh.energy_channel_to_key(mm_obs_energy_channel)
-mm_obs_tk = objh.threshold_to_key(mm_obs_threshold)
-mm_energy_key = mm_obs_ek + "_" + mm_pred_ek
-mm_thresh_key = mm_obs_tk + "_" + mm_pred_tk
-
-#Dictionaries throughout the code will use mm_energy_key to
-#organize observation and model objects.
-#The observed threshold key, mm_obs_tk, will be used in
-#organizing observed and predicted values by threshold.
+#Plain, model-agnostic set of distinct energy_key strings -- used for
+#bucket creation (obs_objs/model_objs dictionary keys, all_energy_channels
+#append), where only the key string itself matters, not which model(s)
+#use it.
+mismatch_energy_keys = sorted(set(_mm_rule["energy_key"] for _mm_rule in mismatch_rules))
 ######## END MISMATCH ############
 
 

@@ -3405,11 +3405,16 @@ def setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_o
  
             #If this is a set of predictions and observations that are
             #allowed to have a set of mismatched energy channels and
-            #thresholds
-            if cfg.do_mismatch and energy_key == cfg.mm_energy_key\
-                and cfg.mm_model in fcast.short_name:
-                sphinx.mismatch = True
-                logger.debug("Mismatched channel allowed.")
+            #thresholds. sphinx.mismatch holds all applicable rules for
+            #this model and energy channel -- there may be more than
+            #one, e.g. the same model with several mismatched thresholds
+            #for this energy channel. An empty list means none apply.
+            if cfg.do_mismatch:
+                applicable_rules = [rule for rule in cfg.mismatch_rules
+                    if rule["energy_key"] == energy_key and rule["model"] in fcast.short_name]
+                if applicable_rules:
+                    sphinx.mismatch = applicable_rules
+                    logger.debug("Mismatched channel allowed.")
 
             #Get Trigger and Input information
             sphinx.last_eruption_time, sphinx.last_trigger_time = fcast.last_trigger_time()
@@ -3539,15 +3544,17 @@ def setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_o
             
             #If the forecast has been identified as one belonging to a model
             #that has mismatch allowed and this is the correct energy channel
-            #to apply the mismatch, then check that the mismatched threshold
-            #is considered. It may be that a specific forecast from the model
+            #to apply the mismatch, then check that the mismatched threshold(s)
+            #are considered. It may be that a specific forecast from the model
             #may not include the excepted threshold, but want to be consistent
             #and check it for every single forecast produced by the model.
-            #If sphinx.mismatch is True, then this is the model and energy channel
-            #where the excepted threshold could be applied.
+            #sphinx.mismatch holds every rule applicable to this model and
+            #energy channel -- ensure each of their predicted thresholds
+            #is considered, not just one.
             if sphinx.mismatch:
-                if cfg.mm_pred_threshold not in all_fcast_thresholds:
-                    all_fcast_thresholds.append(cfg.mm_pred_threshold)
+                for rule in sphinx.mismatch:
+                    if rule["pred_threshold"] not in all_fcast_thresholds:
+                        all_fcast_thresholds.append(rule["pred_threshold"])
 
             #In the case that no thresholds were present in the forecast, add
             #observed thresholds.
@@ -3580,11 +3587,21 @@ def setup_match_all_forecasts(all_energy_channels, obs_objs, obs_values, model_o
                 fcast_thresh = f_thresh
                 
                 #If this is a mismatch energy channel, then only want to
-                #test the mismatched threshold specified in config.py
+                #test threshold(s) specified by one of the applicable
+                #mismatch rules in sphinx.mismatch -- find the rule whose
+                #predicted threshold matches this forecast threshold, and
+                #substitute its observed threshold. If no applicable
+                #rule's predicted threshold matches, this threshold isn't
+                #one of the excepted mismatched thresholds.
                 if sphinx.mismatch:
-                    if f_thresh == cfg.mm_pred_threshold:
+                    matched_rule = None
+                    for rule in sphinx.mismatch:
+                        if f_thresh == rule["pred_threshold"]:
+                            matched_rule = rule
+                            break
+                    if matched_rule is not None:
                         #set threshold as the observed threshold
-                        fcast_thresh = cfg.mm_obs_threshold
+                        fcast_thresh = matched_rule["obs_threshold"]
                         logger.debug("Predicted threshold associated with \'mismatched\' "
                                 "observational threshold " + str(fcast_thresh))
                     else:
@@ -3925,5 +3942,3 @@ def match_all_forecasts(all_energy_channels, model_names, obs_objs,
         "matches have been finalized.")
 
     return evaluated_sphinx, removed_sphinx, all_obs_thresholds, observed_sep_events
-
-

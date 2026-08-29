@@ -287,14 +287,20 @@ def energy_channel_overlap(json, short_name, all_energy_channels):
 
     overlap = False
     for channel in all_energy_channels:
-        compare_channel = channel
+        compare_channels = [channel]
+        #Check every mismatch rule whose model matches this forecast and
+        #whose observed energy channel is this channel. The full rule
+        #list is used (not a deduplicated view) since this is a pure
+        #boolean check with no side effect, and it correctly handles
+        #multiple models sharing the same energy channel pairing.
         if cfg.do_mismatch:
-            if cfg.mm_model in short_name:
-                if channel == cfg.mm_obs_energy_channel:
-                    compare_channel = cfg.mm_pred_energy_channel
+            for rule in cfg.mismatch_rules:
+                if rule["model"] in short_name and channel == rule["obs_energy_channel"]:
+                    compare_channels.append(rule["pred_energy_channel"])
 
-        if compare_channel in fcast_energy_channels:
-            overlap = True
+        for compare_channel in compare_channels:
+            if compare_channel in fcast_energy_channels:
+                overlap = True
   
     return overlap, fcast_energy_channels
 
@@ -349,11 +355,16 @@ def load_objects_from_json(data_list, model_list):
 
     #If mismatch allowed in config.py, save observation and model
     #objects under separate keys specifically for mismatched energy
-    #channels and thresholds
-    mm_key = ""
+    #channels and thresholds. One bucket per distinct energy_key -- if
+    #multiple rules share an energy_key (whether from the same model
+    #with different thresholds, or different models), they share this
+    #same bucket too. Threshold-level and model-level distinctions
+    #happen later, during matching, via each forecast object's own
+    #short_name.
     if cfg.do_mismatch:
-        obs_objs.update({cfg.mm_energy_key: []})
-        model_objs.update({cfg.mm_energy_key: []})
+        for mm_key in cfg.mismatch_energy_keys:
+            obs_objs.update({mm_key: []})
+            model_objs.update({mm_key: []})
 
 
     #Load observation objects
@@ -370,12 +381,19 @@ def load_objects_from_json(data_list, model_list):
                 logger.debug("Adding " + obj.source + " to dictionary under "
                     "key " + key)
         
+            #Add this observation under every mismatch energy_key whose
+            #observed energy channel matches this channel. Observations
+            #are model-independent, so it's correct to add once per
+            #distinct energy_key -- any rules sharing an energy_key are
+            #guaranteed to have the same observed energy channel
+            #regardless of which model(s) they belong to.
             if cfg.do_mismatch:
-                if key == cfg.mm_obs_ek:
-                    obj = observation_object_from_json(json, channel)
-                    if not pd.isnull(obj.observation_window_start):
-                        obs_objs[cfg.mm_energy_key].append(obj)
-                        logger.debug("Adding " + obj.source + " to dictionary under key " + cfg.mm_energy_key)
+                for rule in cfg.mismatch_rules_by_energy_key.values():
+                    if key == rule["obs_ek"]:
+                        mm_obs_obj = observation_object_from_json(json, channel)
+                        if not pd.isnull(mm_obs_obj.observation_window_start):
+                            obs_objs[rule["energy_key"]].append(mm_obs_obj)
+                            logger.debug("Adding " + mm_obs_obj.source + " to dictionary under key " + rule["energy_key"])
             
 
     #Load json objects
@@ -391,7 +409,11 @@ def load_objects_from_json(data_list, model_list):
 
         channel_overlap, fcast_energy_channels = energy_channel_overlap(json, short_name, all_energy_channels)
         if not channel_overlap:
-            if not cfg.do_mismatch or (cfg.mm_model not in short_name):
+            #A model has an applicable mismatch rule if any rule's model
+            #substring matches this forecast's short_name.
+            model_has_mismatch_rule = cfg.do_mismatch and any(
+                rule["model"] in short_name for rule in cfg.mismatch_rules)
+            if not model_has_mismatch_rule:
                 logger.warning("REMOVED FROM ANALYSIS: No overlap between forecasted "
                     "and observed energy channels for "
                     f"{json['filename']}, {fcast_energy_channels}")
@@ -406,11 +428,23 @@ def load_objects_from_json(data_list, model_list):
             #Check if observed energy channel is an energy channel predicted
             #in the forecast json
             if channel not in fcast_energy_channels:
-                if cfg.do_mismatch and cfg.mm_model in short_name:
-                        if channel == cfg.mm_obs_energy_channel:
-                            pred_channel = cfg.mm_pred_energy_channel
-                            if pred_channel not in fcast_energy_channels:
-                                continue
+                #Collect every mismatch rule (full list, not deduplicated,
+                #so a different model sharing this energy_key can't get
+                #silently dropped) whose model matches this forecast and
+                #whose observed energy channel is this channel.
+                applicable_rules_for_channel = []
+                if cfg.do_mismatch:
+                    for rule in cfg.mismatch_rules:
+                        if rule["model"] in short_name and channel == rule["obs_energy_channel"]:
+                            applicable_rules_for_channel.append(rule)
+
+                if applicable_rules_for_channel:
+                    #Skip this channel only if none of the applicable
+                    #rules have their predicted channel present in this
+                    #forecast
+                    if not any(rule["pred_energy_channel"] in fcast_energy_channels
+                               for rule in applicable_rules_for_channel):
+                        continue
                 else:
                     continue
             
@@ -419,38 +453,55 @@ def load_objects_from_json(data_list, model_list):
             #At this point, may not be a good object if the forecast needed to use
             #a mismatched energy channel. Check that first before determine
             #outcome of object.
+            #Does any mismatch rule apply to this (model, channel) pair?
+            #Used below to decide whether to skip/remove this object when
+            #it's invalid under the plain, non-mismatched key.
+            model_has_mismatch_for_channel = cfg.do_mismatch and any(
+                rule["model"] in short_name and channel == rule["obs_energy_channel"]
+                for rule in cfg.mismatch_rules)
             #If the object is good, include here
             if not pd.isnull(obj.prediction_window_start) and not pd.isnull(obj.prediction_window_end):
                 model_objs[key].append(obj)
                 logger.debug("Created FORECAST object from json " + str(obj.source)  + ", " + key)
                 logger.debug("Prediction window start: " + str(obj.prediction_window_start))
             else:
-                if not cfg.do_mismatch or cfg.mm_model not in short_name:
+                if not model_has_mismatch_for_channel:
                     logger.debug(f"{obj.source} is invalid. Will be removed in next step.")
                     model_objs[key].append(obj) #invalid, will be removed in next step
                     continue
 
 
             #If mismatched observation and prediction energy channels
-            #enabled, then find the correct prediction energy channel
-            #to load.
+            #enabled, then find the correct prediction energy channel(s)
+            #to load. For each distinct energy_key, check whether any
+            #rule with that energy_key has a model matching this
+            #forecast -- this extracts and appends exactly once per
+            #distinct energy_key, even when the same model has multiple
+            #threshold-rules sharing that energy_key, or when a
+            #different model's rule happens to share it too.
             if cfg.do_mismatch:
-                if cfg.mm_model in short_name:
-                    if channel == cfg.mm_obs_energy_channel:
-                        pred_channel = cfg.mm_pred_energy_channel
-                        obj, is_good = forecast_object_from_json(json, pred_channel)
- 
-                        if not is_good:
-                            logger.warning("Note issue with creating FORECAST object from json " + str(obj.source)  + ", mismatch channel" + str(pred_channel))
+                for rule in cfg.mismatch_rules_by_energy_key.values():
+                    if channel != rule["obs_energy_channel"]:
+                        continue
+                    any_model_matches = any(
+                        r["model"] in short_name and r["energy_key"] == rule["energy_key"]
+                        for r in cfg.mismatch_rules)
+                    if not any_model_matches:
+                        continue
 
-                        #skip if energy block wasn't present in json
-                        if not pd.isnull(obj.prediction_window_start):
-                            model_objs[cfg.mm_energy_key].append(obj)
-                            logger.debug("Adding " + obj.source + " to dictionary under key " + key)
-                        else:
-                            logger.debug(f"MISMATCHED {obj.source} is invalid. Will be removed in next step.")
-                            model_objs[cfg.mm_energy_key].append(obj) #invalid, will be removed in next step
-                            continue
+                    pred_channel = rule["pred_energy_channel"]
+                    mm_obj, is_good = forecast_object_from_json(json, pred_channel)
+
+                    if not is_good:
+                        logger.warning("Note issue with creating FORECAST object from json " + str(mm_obj.source)  + ", mismatch channel" + str(pred_channel))
+
+                    #skip if energy block wasn't present in json
+                    if not pd.isnull(mm_obj.prediction_window_start):
+                        model_objs[rule["energy_key"]].append(mm_obj)
+                        logger.debug("Adding " + mm_obj.source + " to dictionary under key " + rule["energy_key"])
+                    else:
+                        logger.debug(f"MISMATCHED {mm_obj.source} is invalid. Will be removed in next step.")
+                        model_objs[rule["energy_key"]].append(mm_obj) #invalid, will be removed in next step
 
 
 
@@ -459,7 +510,8 @@ def load_objects_from_json(data_list, model_list):
         all_energy_channels[i] = objh.energy_channel_to_key(all_energy_channels[i])
         
     if cfg.do_mismatch:
-        all_energy_channels.append(cfg.mm_energy_key)
+        for mm_key in cfg.mismatch_energy_keys:
+            all_energy_channels.append(mm_key)
 
     del obs_jsons
     del model_jsons

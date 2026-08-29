@@ -504,23 +504,16 @@ class Test_Resume(unittest.TestCase):
             if name.startswith("step"):
                 yield name, getattr(self, name)
         
-
-    # @patch('sphinxval.utils.config', 'config_tests')
     @patch('sphinxval.utils.config.outpath', './tests/output')
     @patch('sphinxval.utils.config.logpath', './tests/logs')
-    @patch('sphinxval.utils.config.do_mismatch', False)
-    @patch('sphinxval.utils.config.mm_model', 'Test_model_0')
-    @patch('sphinxval.utils.config.mm_pred_energy_channel', config_tests.mm_pred_energy_channel)
-    @patch('sphinxval.utils.config.mm_pred_threshold', config_tests.mm_pred_threshold)
-    @patch('sphinxval.utils.config.mm_obs_energy_channel', config_tests.mm_obs_energy_channel)
-    @patch('sphinxval.utils.config.mm_obs_threshold', config_tests.mm_obs_threshold)
-    @patch('sphinxval.utils.config.mm_obs_ek', config_tests.mm_obs_ek)
-    @patch('sphinxval.utils.config.mm_obs_tk', config_tests.mm_obs_tk)
+    @patch('sphinxval.utils.config.mismatch_rules', config_tests.mismatch_rules)
+    @patch('sphinxval.utils.config.mismatch_rules_by_energy_key', config_tests.mismatch_rules_by_energy_key)
+    @patch('sphinxval.utils.config.mismatch_energy_keys', config_tests.mismatch_energy_keys)
     @patch('sphinxval.utils.config.uncert_boolean', False)
     @patch('sphinxval.utils.config.uncert_n_resamples', 1)
     @patch('sphinxval.utils.config.model_prof_path', './tests/output/json/model_profiles.json')
     @patch('sphinxval.utils.config.obs_prof_path', './tests/output/json/observed_profiles.json')
-    
+ 
     def test_all(self):
         utils.utility_delete_output()
         validate.prepare_outdirs()

@@ -1637,10 +1637,12 @@ class SPHINX:
         
         #MATCHING INFORMATION
         #If user specified in config file to allow the observations
-        #and predictions to have two different energy channels and thresholds,
-        #self.mismatch will be changed to True to indicate this choice in the
-        #matching.
-        self.mismatch = False
+        #and predictions to have two different energy channels and
+        #thresholds, self.mismatch holds the list of applicable
+        #mismatch rules (see config.py's mismatch_rules) for this
+        #forecast's model and energy channel, set during matching. An
+        #empty list means no mismatch rule applies.
+        self.mismatch = []
         #Observations with observations windows that overlap with
         #the prediction windows - first rough cut at matching
         self.prediction_observation_windows_overlap = [] #array of Observation objs
@@ -2434,11 +2436,15 @@ class SPHINX:
     def allowed_thresh_mismatch(self, pred_threshold, obs_threshold):
         """ Check if thresholds allowed via config file.
         """
-        #If allow mismatching energy channels and thresholds
+        #self.mismatch holds the rules applicable to this forecast's
+        #model and energy channel. Search for one whose exact pred/obs
+        #threshold pairing matches -- a pairing that mixes one rule's
+        #predicted threshold with a different rule's observed threshold
+        #is not allowed.
         if cfg.do_mismatch:
-            if cfg.mm_model in self.prediction.short_name:
-                if pred_threshold == cfg.mm_pred_threshold and \
-                    obs_threshold == cfg.mm_obs_threshold:
+            for rule in self.mismatch:
+                if pred_threshold == rule["pred_threshold"] and \
+                    obs_threshold == rule["obs_threshold"]:
                     return True
                     
         return False
@@ -2493,11 +2499,17 @@ class SPHINX:
         """
         tk = objh.threshold_to_key(pred_thresh)
         if pred_thresh not in self.thresholds:
-            if cfg.do_mismatch and cfg.mm_model in self.prediction.short_name:
-                if pred_thresh == cfg.mm_pred_threshold:
-                    obs_thresh = cfg.mm_obs_threshold
-                    if cfg.mm_obs_threshold in self.thresholds:
-                        tk = cfg.mm_obs_tk
+            if cfg.do_mismatch:
+                #self.mismatch holds only the rules applicable to this
+                #forecast's model and energy channel -- find the one
+                #whose predicted threshold matches and whose observed
+                #threshold is actually present, and use its observed
+                #threshold key.
+                for rule in self.mismatch:
+                    if pred_thresh == rule["pred_threshold"]:
+                        if rule["obs_threshold"] in self.thresholds:
+                            tk = rule["obs_tk"]
+                            break
                         
         return tk
 
@@ -2913,5 +2925,3 @@ class SPHINX:
                     pred_units = obs_units
 
         return predicted, pred_units, pred_time, match_status
-
-
