@@ -1280,6 +1280,8 @@ class Observation():
         self.short_name = None
         self.issue_time = pd.NaT
 
+        self.source = None #source from which observations ingested
+                        #JSON filename or perhaps database in future
         
         #General info
         self.species = None
