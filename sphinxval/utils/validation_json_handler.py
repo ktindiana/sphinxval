@@ -372,7 +372,6 @@ def load_objects_from_json(data_list, model_list):
         for channel in all_energy_channels:
             key = objh.energy_channel_to_key(channel)
             obj = observation_object_from_json(json, channel)
-            
             logger.debug("Created OBSERVATION object from json " + str(obj.source)   + ", " + str(channel))
             logger.debug("Observation window start: " + str(obj.observation_window_start))
             #skip if energy block wasn't present in json
@@ -393,7 +392,7 @@ def load_objects_from_json(data_list, model_list):
                         mm_obs_obj = observation_object_from_json(json, channel)
                         if not pd.isnull(mm_obs_obj.observation_window_start):
                             obs_objs[rule["energy_key"]].append(mm_obs_obj)
-                            logger.debug("Adding " + mm_obs_obj.source + " to dictionary under key " + rule["energy_key"])
+                            logger.debug("Adding " + str(mm_obs_obj.source) + " to dictionary under key " + rule["energy_key"])
             
 
     #Load json objects
