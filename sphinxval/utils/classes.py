@@ -1286,6 +1286,7 @@ class Observation():
         self.location = None
         self.observation_window_start = pd.NaT
         self.observation_window_end = pd.NaT
+        self.source = None
 
         #Triggers
         self.cmes = []
