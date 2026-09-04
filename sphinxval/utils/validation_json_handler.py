@@ -362,12 +362,12 @@ def load_objects_from_json(data_list, model_list):
             key = objh.energy_channel_to_key(channel)
             obj = observation_object_from_json(json, channel)
             
-            logger.debug("Created OBSERVATION object from json " + obj.source   + ", " + str(channel))
+            logger.debug("Created OBSERVATION object from json " + str(obj.source)   + ", " + str(channel))
             logger.debug("Observation window start: " + str(obj.observation_window_start))
             #skip if energy block wasn't present in json
             if not pd.isnull(obj.observation_window_start):
                 obs_objs[key].append(obj)
-                logger.debug("Adding " + obj.source + " to dictionary under "
+                logger.debug("Adding " + str(obj.source) + " to dictionary under "
                     "key " + key)
         
             if cfg.do_mismatch:
@@ -375,7 +375,7 @@ def load_objects_from_json(data_list, model_list):
                     obj = observation_object_from_json(json, channel)
                     if not pd.isnull(obj.observation_window_start):
                         obs_objs[cfg.mm_energy_key].append(obj)
-                        logger.debug("Adding " + obj.source + " to dictionary under key " + cfg.mm_energy_key)
+                        logger.debug("Adding " + str(obj.source) + " to dictionary under key " + cfg.mm_energy_key)
             
 
     #Load json objects
@@ -446,7 +446,7 @@ def load_objects_from_json(data_list, model_list):
                         #skip if energy block wasn't present in json
                         if not pd.isnull(obj.prediction_window_start):
                             model_objs[cfg.mm_energy_key].append(obj)
-                            logger.debug("Adding " + obj.source + " to dictionary under key " + key)
+                            logger.debug("Adding " + str(obj.source) + " to dictionary under key " + key)
                         else:
                             logger.debug(f"MISMATCHED {obj.source} is invalid. Will be removed in next step.")
                             model_objs[cfg.mm_energy_key].append(obj) #invalid, will be removed in next step
