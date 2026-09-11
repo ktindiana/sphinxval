@@ -4022,7 +4022,15 @@ def intuitive_validation(evaluated_sphinx, removed_sphinx, model_names,
     
     # Putting DUMs before Resume so that we limit duplicates and for the automated sphinx we will create DUMs for only
     # the new triggers 
-    
+    dum_profs = None
+    if config.dum_toggle:
+        write_df(df, "SPHINX_evaluated")
+        logger.info("Running DUM model Workflow")
+        df, dum_profs = dums.feeder_from_sphinx(df)
+        
+        model_names = resume.identify_unique(df, 'Model')
+        all_energy_channels = resume.identify_unique(df, 'Energy Channel Key')
+        all_observed_thresholds = resume.identify_thresholds_per_energy_channel(df)
     
     ### RESUME WILL APPEND DF TO PREVIOUS DF
     if r_df is not None:
@@ -4037,15 +4045,7 @@ def intuitive_validation(evaluated_sphinx, removed_sphinx, model_names,
         all_energy_channels = resume.identify_unique(df, 'Energy Channel Key')
         all_observed_thresholds = resume.identify_thresholds_per_energy_channel(df)
     ### RESUME COMPLETED
-    dum_profs = None
-    if config.dum_toggle:
-        write_df(df, "SPHINX_evaluated")
-        logger.info("Running DUM model Workflow")
-        df, dum_profs = dums.feeder_from_sphinx(df)
-        
-        model_names = resume.identify_unique(df, 'Model')
-        all_energy_channels = resume.identify_unique(df, 'Energy Channel Key')
-        all_observed_thresholds = resume.identify_thresholds_per_energy_channel(df)
+    
 
     #Write SPHINX dataframe to file
     write_df(df, "SPHINX_evaluated")
