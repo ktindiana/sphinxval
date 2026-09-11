@@ -1,17 +1,15 @@
 # DUMS
 import pandas as pd
 import matplotlib.pyplot as plt
-import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from datetime import datetime
 from datetime import timedelta
-from ..validation_json_handler import zulu_to_time, make_ccmc_zulu_time
-from .. import config as cfg
-from .. import metrics_dicts
+from .validation_json_handler import zulu_to_time, make_ccmc_zulu_time
+from . import config as cfg
 import numpy as np
-import math
 import logging
 import logging.config
+import os
 
 
 """
@@ -66,183 +64,183 @@ def initialize_sphinx_dict():
     #Last CME, N CMEs, Last speed, last location, Timestamps array of all CMEs used
     
 
-    dict = {"Model": [],
-            "Observatory": [],
-            "Energy Channel Key": [],
-            "Threshold Key": [],
-            "Mismatch Allowed": [],
-            "Prediction Energy Channel Key": [],
-            "Prediction Threshold Key": [],
-            "Forecast Source": [],
-            "Forecast Path": [],
-            "Evaluation Status": [],
-            "Forecast Issue Time":[],
-            "Prediction Window Start": [],
-            "Prediction Window End": [],
-            "Observed SEP Event": [], #If an SEP event was matched, list start time for convenience
+    sphinx_dict = {"Model": None,
+            "Observatory": None,
+            "Energy Channel Key": None,
+            "Threshold Key": None,
+            "Mismatch Allowed": None,
+            "Prediction Energy Channel Key": None,
+            "Prediction Threshold Key": None,
+            "Forecast Source": None,
+            "Forecast Path": None,
+            "Evaluation Status": None,
+            "Forecast Issue Time":None,
+            "Prediction Window Start": None,
+            "Prediction Window End": None,
+            "Observed SEP Event": None, #If an SEP event was matched, list start time for convenience
 
             #TRIGGER/INPUT SUMMARY TIMING INFORMATION
-            "Last Trigger Time": [],
-            "Last Input Time": [],
-            "Last Eruption Time": [], #Last time for flare/CME
+            "Last Trigger Time": None,
+            "Last Input Time": None,
+            "Last Eruption Time": None, #Last time for flare/CME
 
             #USEFUL SUPPLEMENTARY INFORMATION
-            "Last Data Time to Issue Time": [],
+            "Last Data Time to Issue Time": None,
 
             #FORECAST TRIGGERS
-            "Prediction Number of CMEs": [],
-            "Prediction CME Start Time": [], #Timestamp of 1st coronagraph image CME is visible in
-            "Prediction CME Liftoff Time": [], #Timestamp of coronagraph
+            "Prediction Number of CMEs": None,
+            "Prediction CME Start Time": None, #Timestamp of 1st coronagraph image CME is visible in
+            "Prediction CME Liftoff Time": None, #Timestamp of coronagraph
                 #image with 1st indication of CME liftoff (used by CACTUS)
-            "Prediction CME Latitude": [],
-            "Prediction CME Longitude": [],
-            "Prediction CME Speed": [],
-            "Prediction CME Half Width": [],
-            "Prediction CME PA": [],
-            "Prediction CME Catalog": [],
-            "Prediction CME Catalog ID": [],
+            "Prediction CME Latitude": None,
+            "Prediction CME Longitude": None,
+            "Prediction CME Speed": None,
+            "Prediction CME Half Width": None,
+            "Prediction CME PA": None,
+            "Prediction CME Catalog": None,
+            "Prediction CME Catalog ID": None,
 
             #KNOWN OBSERVED SEP TRIGGERS
-            "Observed SEP CME Start Time": [], #Timestamp of 1st coronagraph image CME is visible in
-            "Observed SEP CME Liftoff Time": [], #Timestamp of coronagraph
+            "Observed SEP CME Start Time": None, #Timestamp of 1st coronagraph image CME is visible in
+            "Observed SEP CME Liftoff Time": None, #Timestamp of coronagraph
                 #image with 1st indication of CME liftoff (used by CACTUS)
-            "Observed SEP CME Latitude": [],
-            "Observed SEP CME Longitude": [],
-            "Observed SEP CME Speed": [],
-            "Observed SEP CME Half Width": [],
-            "Observed SEP CME PA": [],
-            "Observed SEP CME Catalog": [],
-            "Observed SEP CME Catalog ID": [],
+            "Observed SEP CME Latitude": None,
+            "Observed SEP CME Longitude": None,
+            "Observed SEP CME Speed": None,
+            "Observed SEP CME Half Width": None,
+            "Observed SEP CME PA": None,
+            "Observed SEP CME Catalog": None,
+            "Observed SEP CME Catalog ID": None,
 
             #FORECAST TRIGGERS
-            "Prediction Number of Flares": [],
-            "Prediction Flare Latitude": [],
-            "Prediction Flare Longitude": [],
-            "Prediction Flare Start Time": [],
-            "Prediction Flare Peak Time": [],
-            "Prediction Flare End Time": [],
-            "Prediction Flare Last Data Time": [],
-            "Prediction Flare Intensity": [],
-            "Prediction Flare Integrated Intensity": [],
-            "Prediction Flare NOAA AR": [],
+            "Prediction Number of Flares": None,
+            "Prediction Flare Latitude": None,
+            "Prediction Flare Longitude": None,
+            "Prediction Flare Start Time": None,
+            "Prediction Flare Peak Time": None,
+            "Prediction Flare End Time": None,
+            "Prediction Flare Last Data Time": None,
+            "Prediction Flare Intensity": None,
+            "Prediction Flare Integrated Intensity": None,
+            "Prediction Flare NOAA AR": None,
 
             #KNOWN OBSERVED SEP TRIGGERS
-            "Observed SEP Flare Latitude": [],
-            "Observed SEP Flare Longitude": [],
-            "Observed SEP Flare Start Time": [],
-            "Observed SEP Flare Peak Time": [],
-            "Observed SEP Flare End Time": [],
-            "Observed SEP Flare Intensity": [],
-            "Observed SEP Flare Integrated Intensity": [],
-            "Observed SEP Flare NOAA AR": [],
+            "Observed SEP Flare Latitude": None,
+            "Observed SEP Flare Longitude": None,
+            "Observed SEP Flare Start Time": None,
+            "Observed SEP Flare Peak Time": None,
+            "Observed SEP Flare End Time": None,
+            "Observed SEP Flare Intensity": None,
+            "Observed SEP Flare Integrated Intensity": None,
+            "Observed SEP Flare NOAA AR": None,
 
             #MATCHED PREDICTED AND OBSERVED INFORMATION
-            "All Clear Match Status": [],
-            "Predicted SEP All Clear Probability Threshold": [],
-            "Predicted SEP All Clear": [],
-            "Observed SEP All Clear": [],
+            "All Clear Match Status": None,
+            "Predicted SEP All Clear Probability Threshold": None,
+            "Predicted SEP All Clear": None,
+            "Observed SEP All Clear": None,
 
-            "Probability Match Status": [],
-            "Predicted SEP Probability": [],
-            "Observed SEP Probability": [],
+            "Probability Match Status": None,
+            "Predicted SEP Probability": None,
+            "Observed SEP Probability": None,
 
-            "Threshold Crossing Time Match Status": [],
-            "Predicted SEP Threshold Crossing Time": [],
-            "Observed SEP Threshold Crossing Time": [],
+            "Threshold Crossing Time Match Status": None,
+            "Predicted SEP Threshold Crossing Time": None,
+            "Observed SEP Threshold Crossing Time": None,
             
-            "Start Time Match Status": [],
-            "Predicted SEP Start Time":[],
-            "Observed SEP Start Time":[],
+            "Start Time Match Status": None,
+            "Predicted SEP Start Time":None,
+            "Observed SEP Start Time":None,
  
-            "Peak Intensity Match Status": [],
-            "Predicted SEP Peak Intensity (Onset Peak)": [],
-            "Predicted SEP Peak Intensity (Onset Peak) Units": [],
-            "Predicted SEP Peak Intensity (Onset Peak) Time": [],
-            "Observed SEP Peak Intensity (Onset Peak)": [],
-            "Observed SEP Peak Intensity (Onset Peak) Units": [],
-            "Observed SEP Peak Intensity (Onset Peak) Time": [],
+            "Peak Intensity Match Status": None,
+            "Predicted SEP Peak Intensity (Onset Peak)": None,
+            "Predicted SEP Peak Intensity (Onset Peak) Units": None,
+            "Predicted SEP Peak Intensity (Onset Peak) Time": None,
+            "Observed SEP Peak Intensity (Onset Peak)": None,
+            "Observed SEP Peak Intensity (Onset Peak) Units": None,
+            "Observed SEP Peak Intensity (Onset Peak) Time": None,
 
-            "Peak Intensity Max Match Status": [],
-            "Predicted SEP Peak Intensity Max (Max Flux)": [],
-            "Predicted SEP Peak Intensity Max (Max Flux) Units": [],
-            "Predicted SEP Peak Intensity Max (Max Flux) Time": [],
-            "Observed SEP Peak Intensity Max (Max Flux)": [],
-            "Observed SEP Peak Intensity Max (Max Flux) Units": [],
-            "Observed SEP Peak Intensity Max (Max Flux) Time": [],
+            "Peak Intensity Max Match Status": None,
+            "Predicted SEP Peak Intensity Max (Max Flux)": None,
+            "Predicted SEP Peak Intensity Max (Max Flux) Units": None,
+            "Predicted SEP Peak Intensity Max (Max Flux) Time": None,
+            "Observed SEP Peak Intensity Max (Max Flux)": None,
+            "Observed SEP Peak Intensity Max (Max Flux) Units": None,
+            "Observed SEP Peak Intensity Max (Max Flux) Time": None,
 
-            "Observed Max Flux in Prediction Window": [],
-            "Observed Max Flux in Prediction Window Units": [],
-            "Observed Max Flux in Prediction Window Time": [],
+            "Observed Max Flux in Prediction Window": None,
+            "Observed Max Flux in Prediction Window Units": None,
+            "Observed Max Flux in Prediction Window Time": None,
 
-            "End Time Match Status": [],
-            "Predicted SEP End Time": [],
-            "Observed SEP End Time": [],
+            "End Time Match Status": None,
+            "Predicted SEP End Time": None,
+            "Observed SEP End Time": None,
             
-            "Duration Match Status": [],
-            "Predicted SEP Duration": [],
-            "Observed SEP Duration": [],
+            "Duration Match Status": None,
+            "Predicted SEP Duration": None,
+            "Observed SEP Duration": None,
             
-            "Fluence Match Status": [],
-            "Predicted SEP Fluence": [],
-            "Predicted SEP Fluence Units": [],
-            "Observed SEP Fluence": [],
-            "Observed SEP Fluence Units": [],
+            "Fluence Match Status": None,
+            "Predicted SEP Fluence": None,
+            "Predicted SEP Fluence Units": None,
+            "Observed SEP Fluence": None,
+            "Observed SEP Fluence Units": None,
 
-            "Fluence Spectrum Match Status": [],
-            "Predicted SEP Fluence Spectrum": [],
-            "Predicted SEP Fluence Spectrum Units": [],
-            "Observed SEP Fluence Spectrum": [],
-            "Observed SEP Fluence Spectrum Units": [],
+            "Fluence Spectrum Match Status": None,
+            "Predicted SEP Fluence Spectrum": None,
+            "Predicted SEP Fluence Spectrum Units": None,
+            "Observed SEP Fluence Spectrum": None,
+            "Observed SEP Fluence Spectrum Units": None,
 
-            "Time Profile Match Status": [],
-            "Predicted Time Profile": [],
-            "Observed Time Profile": [], #string of comma separated filenames
+            "Time Profile Match Status": None,
+            "Predicted Time Profile": None,
+            "Observed Time Profile": None, #string of comma separated filenames
 
-            "Predicted Point Intensity": [],
-            "Predicted Point Intensity Units": [],
-            "Predicted Point Intensity Time": [],
-            "Observed Point Intensity": [],
-            "Observed Point Intensity Units": [],
-            "Observed Point Intensity Time": [],
+            "Predicted Point Intensity": None,
+            "Predicted Point Intensity Units": None,
+            "Predicted Point Intensity Time": None,
+            "Observed Point Intensity": None,
+            "Observed Point Intensity Units": None,
+            "Observed Point Intensity Time": None,
 
             
             #MATCHING INFORMATION
-            "Overlapping Observations": [],
-            "All Thresholds in Prediction": [],
-            "Threshold Crossed in Prediction Window": [],
-            "All Threshold Crossing Times": [],
-            "Eruption before Threshold Crossed": [],
-            "Time Difference between Eruption and Threshold Crossing": [],
-            "Farside": [],
-            "Is Source Flare": [],
-            "All Observation Flare Peak Times": [],
-            "All Prediction Flares": [],
-            "Is Source CME": [],
-            "All Observation CME Start Times": [],
-            "All Prediction CMEs": [],
-            "Eruption in Range": [],
-            "Triggers before Threshold Crossing": [],
-            "Inputs before Threshold Crossing": [],
-            "Triggers before Peak Intensity": [],
-            "Time Difference between Triggers and Peak Intensity": [],
-            "Inputs before Peak Intensity": [],
-            "Time Difference between Inputs and Peak Intensity": [],
-            "Triggers before Peak Intensity Max": [],
-            "Time Difference between Triggers and Peak Intensity Max": [],
-            "Inputs before Peak Intensity Max": [],
-            "Time Difference between Inputs and Peak Intensity Max": [],
-            "Triggers before SEP End": [],
-            "Time Difference between Triggers and SEP End": [],
-            "Inputs before SEP End": [],
-            "Time Difference between Inputs and SEP End": [],
-            "Prediction Window Overlap with Observed SEP Event": [],
-            "Ongoing SEP Event": [],
-            "Trigger Advance Time": [],
-            "Original Model Short Name": []
+            "Overlapping Observations": None,
+            "All Thresholds in Prediction": None,
+            "Threshold Crossed in Prediction Window": None,
+            "All Threshold Crossing Times": None,
+            "Eruption before Threshold Crossed": None,
+            "Time Difference between Eruption and Threshold Crossing": None,
+            "Farside": None,
+            "Is Source Flare": None,
+            "All Observation Flare Peak Times": None,
+            "All Prediction Flares": None,
+            "Is Source CME": None,
+            "All Observation CME Start Times": None,
+            "All Prediction CMEs": None,
+            "Eruption in Range": None,
+            "Triggers before Threshold Crossing": None,
+            "Inputs before Threshold Crossing": None,
+            "Triggers before Peak Intensity": None,
+            "Time Difference between Triggers and Peak Intensity": None,
+            "Inputs before Peak Intensity": None,
+            "Time Difference between Inputs and Peak Intensity": None,
+            "Triggers before Peak Intensity Max": None,
+            "Time Difference between Triggers and Peak Intensity Max": None,
+            "Inputs before Peak Intensity Max": None,
+            "Time Difference between Inputs and Peak Intensity Max": None,
+            "Triggers before SEP End": None,
+            "Time Difference between Triggers and SEP End": None,
+            "Inputs before SEP End": None,
+            "Time Difference between Inputs and SEP End": None,
+            "Prediction Window Overlap with Observed SEP Event": None,
+            "Ongoing SEP Event": None,
+            "Trigger Advance Time": None,
+            "Original Model Short Name": None
             
             }
 
-    return dict
+    return sphinx_dict
 
 
 
@@ -285,45 +283,27 @@ def feeder_from_sphinx(sphinx_df):
         dum_prof_df, dum_profs = triggered_dum_workflow(sphinx_df)
 
         
+        sphinx_df['Predicted SEP Start Time'] = sphinx_df['Predicted SEP Start Time'].astype('datetime64[ns]') # this line was needed during testing after PR review, not sure if it will be necessary in the long run
+        # but I think its due to mismatching versions of SPHINX on AWS and git. Since AWS uses parquet and my version does not for resume
         dum_df = pd.concat([sphinx_df, dum_prof_df], ignore_index=True)
         dum_df_temp = dum_df.loc[dum_df.astype(str).drop_duplicates().index]
-
         dum_profs_temp = dum_profs
     
     if cfg.proton_dums:
        
-        dum_prof_df, dum_profs = canonical_prof_dum(sphinx_df)
-        
+        dum_temp_df, dum_profs = canonical_prof_dum(sphinx_df)
         dum_med_df = median_peak_dum(sphinx_df)
 
         
-        dum_df = pd.concat([sphinx_df, dum_prof_df, dum_med_df], ignore_index=True)
+        dum_df = pd.concat([sphinx_df, dum_temp_df, dum_med_df], ignore_index=True)
         dum_df = dum_df.loc[dum_df.astype(str).drop_duplicates().index]
 
     if dum_profs_temp != None:
         dum_profs = dum_profs | dum_profs_temp
         dum_df = pd.concat([dum_df, dum_df_temp])
-    
+
     return dum_df, dum_profs
 
-
-
-
-
-def initiate_dum(df, dum_type):
-    """ 
-    Take model name and observations to generate dum forecast
-
-    This would be for a 'following model DUM' since it can 
-    only generate a forecast when the model gives a forecast
-    for the observed SEP event
-    """
-    
-    for dums in dum_type:
-        df = dum_switch_func(dums, df)
-
-
-    return df
 
 
 def robust_timing(time):
@@ -338,19 +318,21 @@ def canonical_prof_dum(df):
     For each event the original model forecasted for,
     make a 'forecast' for the DUM model
     """
-
+    
     energy_channels = ['min.10.0.max.-1.0.units.MeV', 'min.100.0.max.-1.0.units.MeV', 'min.30.0.max.-1.0.units.MeV', 'min.50.0.max.-1.0.units.MeV']
     dum_profs = {}
     new_df = pd.DataFrame()
+
     for available_energies in energy_channels:
         # Loop over energies
         
         sub_df = df[df["Energy Channel Key"] == available_energies]
-        
+        sub_df.to_csv('testdf.csv')
         trigger_columns = ['Observed SEP CME Start Time', 'Observed SEP CME Longitude', 'Observed SEP CME Latitude', 'Observed SEP CME Liftoff Time', 'Observed SEP CME Speed', 'Observed SEP CME Half Width', 'Observed SEP CME PA',\
             'Observed SEP CME Catalog', 'Observed SEP Flare Start Time', 'Observed SEP Flare Peak Time', 'Observed SEP Flare End Time', 'Observed SEP Flare Longitude', 'Observed SEP Flare Latitude', 'Observed SEP Flare NOAA AR']
         observed_events = sub_df['Observed SEP Start Time'].unique()
-        bounds_data = pd.read_csv('./sphinxval/utils/DUMS/bounds_data.csv')
+        observed_events = [x for x in observed_events if not pd.isnull(x)]
+        bounds_data = pd.read_csv(os.path.join(cfg.dumpath, 'bounds_data.csv'))
         canonical_profile_values = canonical_profile_dictionary()[available_energies]
         low_bound = bounds_data['Longitude Low Bound'].iloc[0]
         high_bound = bounds_data['Longitude High Bound'].iloc[0]
@@ -430,7 +412,7 @@ def canonical_prof_dum(df):
                     dum_dict['Observed SEP Flare End Time'] = robust_timing(current_event['Observed SEP Flare End Time'])
                     dum_dict['Observed SEP Flare Intensity'] = current_event['Observed SEP Flare Intensity']
                     dum_dict['Observed SEP Flare Integrated Intensity'] = current_event['Observed SEP Flare Integrated Intensity']
-                    dum_dict['Observed Flare NOAA AR'] = current_event['Observed SEP Flare NOAA AR']
+                    dum_dict['Observed SEP Flare NOAA AR'] = current_event['Observed SEP Flare NOAA AR']
 
                     # Filling in the observed information
                     dum_dict['Observatory'] = current_event['Observatory']
@@ -556,7 +538,7 @@ def canonical_prof_dum(df):
                     dum_dict['Prediction Window End'] = un_normalized_time[-1]
                     dum_dict['Predicted SEP Threshold Crossing Time'] = un_normalized_time[0]
                     dum_dict['Threshold Crossing Time Match Status'] = 'SEP Event'
-                    dum_dict['Predicted SEP Start Time'] = un_normalized_time[0]
+                    dum_dict['Predicted SEP Start Time'] = robust_timing(un_normalized_time[0])
                     dum_dict['Start Time Match Status'] = 'SEP Event'
                     dum_dict['Predicted SEP End Time'] = un_normalized_time[end_index]
                     dum_dict['End Time Match Status'] = 'SEP Event'
@@ -598,39 +580,7 @@ def canonical_prof_dum(df):
                     dum_profs[output_filename] = output_dict
 
 
-                    # End Matter of the DataFrame
-                    # dum_dict['Overlapping Observations']
-                    # dum_dict['All Thresholds in Prediction']
-                    # dum_dict['Threshold Crossed in Prediction Window']
-                    # dum_dict['All Threshold Crossing Times']
-                    # dum_dict['Eruption before Threshold Crossed']
-                    # dum_dict['Time Difference between Eruption and Threshold Crossing']
-                    # dum_dict['Farside']
-                    # dum_dict['Is Source Flare']
-                    # dum_dict['All Observation Flare Peak Times']
-                    # dum_dict['All Prediction Flares']
-                    # dum_dict['Is Source CME']
-                    # dum_dict['All Observation CME Start Times']
-                    # dum_dict['All Prediction CMEs']
-                    # dum_dict['Eruption in Range']
-                    # dum_dict['Triggers before Threshold Crossing']
-                    # dum_dict['Inputs before Threshold Crossing']
-                    # dum_dict['Triggers before Peak Intensity']
-                    # dum_dict['Time Difference between Triggers and Peak Intensity']
-                    # dum_dict['Inputs before Peak Intensity']
-                    # dum_dict['Time Difference between Inputs and Peak Intensity']
-                    # dum_dict['Triggers before Peak Intensity Max']
-                    # dum_dict['Time Difference between Triggers and Peak Intensity Max']
-                    # dum_dict['Inputs before Peak Intensity Max']
-                    # dum_dict['Time Difference between Inputs and Peak Intensity Max']
-                    # dum_dict['Triggers before SEP End']
-                    # dum_dict['Time Difference between Triggers and SEP End']
-                    # dum_dict['Inputs before SEP End']
-                    # dum_dict['Time Difference between Inputs and SEP End']
-                    # dum_dict['Prediction Window Overlap with Observed SEP Event']
-                    # dum_dict['Ongoing SEP Event']
-                    # dum_dict['Trigger Advance Time']
-                    # dum_dict['Original Model Short Name']
+                    
                     
     
     return new_df, dum_profs
@@ -650,7 +600,6 @@ def triggered_dum_workflow(sphinx_df):
 
     flare_submodels = flare_submodels_dictionary()
     cme_submodels = cme_submodels_dictionary()
-    # input()
     for available_energies in energy_channels:
 
         sub_df = sphinx_df[sphinx_df["Energy Channel Key"] == available_energies]
@@ -661,14 +610,14 @@ def triggered_dum_workflow(sphinx_df):
             'Prediction Flare Integrated Intensity', 'Threshold Key']
 
         unique_triggers = sub_df[trigger_columns].drop_duplicates()
-        bounds_data = pd.read_csv('./sphinxval/utils/DUMS/bounds_data.csv')
+        bounds_data = pd.read_csv(os.path.join(cfg.dumpath, 'bounds_data.csv'))
         canonical_profile_values = canonical_profile_dictionary()[available_energies]
         low_bound = bounds_data['Longitude Low Bound'].iloc[0]
         high_bound = bounds_data['Longitude High Bound'].iloc[0]
         
         
         for i in range(len(unique_triggers)):
-
+            
             current_trigger = unique_triggers.iloc[i]
             trigger_dict = current_trigger.to_dict()
             trigger_df = unique_triggers.iloc[i].to_frame().T
@@ -752,7 +701,7 @@ def triggered_dum_workflow(sphinx_df):
                         dum_dict['Observed SEP Flare End Time'] = robust_timing(current_event['Observed SEP Flare End Time'])
                         dum_dict['Observed SEP Flare Intensity'] = current_event['Observed SEP Flare Intensity']
                         dum_dict['Observed SEP Flare Integrated Intensity'] = current_event['Observed SEP Flare Integrated Intensity']
-                        dum_dict['Observed Flare NOAA AR'] = current_event['Observed SEP Flare NOAA AR']
+                        dum_dict['Observed SEP Flare NOAA AR'] = current_event['Observed SEP Flare NOAA AR']
 
                         # Filling in the observed information
                         dum_dict['Observatory'] = current_event['Observatory']
@@ -928,7 +877,7 @@ def triggered_dum_workflow(sphinx_df):
                             dum_dict['Prediction Window Start'] = un_normalized_time[0]
                             dum_dict['Prediction Window End'] = un_normalized_time[-1]
                             dum_dict['Predicted SEP Threshold Crossing Time'] = un_normalized_time[0]
-                            dum_dict['Predicted SEP Start Time'] = un_normalized_time[0]
+                            dum_dict['Predicted SEP Start Time'] = np.datetime64(un_normalized_time[0])
                             dum_dict['Predicted SEP End Time'] = un_normalized_time[end_index]
                             dum_dict['Predicted SEP Duration'] = dum_duration
                             dum_dict['Predicted SEP Fluence'] = np.nan
@@ -1031,14 +980,9 @@ def triggered_dum_workflow(sphinx_df):
 
                             dum_df = pd.DataFrame([dum_dict])
                             new_df = pd.concat([new_df, dum_df], ignore_index=True)
+    
                             
-                            
-                                
 
-
-
-
-                
     return new_df, dum_profs
 
 
@@ -1099,26 +1043,22 @@ def determine_dum_submodel(trigger_block, energy_channel):
 
     flare_submodels = flare_submodels_dictionary()
     cme_submodels = cme_submodels_dictionary()
-
-    if '100.0' in energy_channel:
-        energy = '100.0_'
-    elif '30.0' in energy_channel:
-        energy = '30.0_'
-    elif '50.0' in energy_channel:
-        energy = '50.0_'
-    elif '10.0' in energy_channel:
-        energy = '10.0_'
+    energy = None 
+    for energy_value in ('100.0', '50.0', '30.0', '10.0'): 
+        if energy_value in energy_channel: 
+            energy = energy_value + '_' 
+            break 
+    if energy is None: 
+        return []
     is_flare_null = flare_trigger_subset.isnull().all(axis=None)
     is_cme_null = cme_trigger_subset.isnull().all(axis=None)
+
     
     if is_cme_null and is_flare_null:
         pass
     else:
-        if trigger_block["Prediction Number of CMEs"] != 0 and trigger_block['Prediction Number of Flares'] != 0:
-            # starting with both cme/flare 
-            
-            submodel_name = [submodel for submodel in flare_submodels if energy in submodel]#flare_submodels.headers().to_list()
-
+        if not is_flare_null and not is_cme_null:
+            submodel_name = [submodel for submodel in flare_submodels if energy in submodel]
             cme_catalog = cme_trigger_subset['Prediction CME Catalog']
             if pd.isnull(cme_catalog):
                 pass
@@ -1128,11 +1068,8 @@ def determine_dum_submodel(trigger_block, energy_channel):
                 else:
                     cme_catalog = 'DONKI'
                 
-                submodel_name = [submodel for submodel in cme_submodels if (cme_catalog in submodel) & (energy in submodel)]
-            # for submodel in cme_submodels:
-            #     if cme_catalog in submodel and energy in submodel:
-            #             submodel_name.append(submodel.headers())
-        elif is_flare_null and trigger_block["Prediction Number of CMEs"] != 0 or trigger_block['Prediction Number of Flares'] == 0 and trigger_block['Prediction Number of CMEs']:
+                submodel_name.append([submodel for submodel in cme_submodels if (cme_catalog in submodel) & (energy in submodel)])
+        elif is_flare_null and not is_cme_null:
             
             cme_catalog = cme_trigger_subset['Prediction CME Catalog']
             if 'cdaw' in cme_catalog or 'CDAW' in cme_catalog:
@@ -1140,11 +1077,9 @@ def determine_dum_submodel(trigger_block, energy_channel):
             else:
                 cme_catalog = 'DONKI'
             submodel_name = [submodel for submodel in cme_submodels if (cme_catalog in submodel) & (energy in submodel)]
-
-
-        elif is_cme_null and trigger_block["Prediction Number of Flares"] != 0 or trigger_block['Prediction Number of CMEs'] == 0 and trigger_block['Prediction Number of Flares']:
-            
+        elif is_cme_null and not is_flare_null:
             submodel_name = [submodel for submodel in flare_submodels if energy in submodel]#
+
     return submodel_name
 
 
@@ -1336,7 +1271,7 @@ def median_peak_dum(df):
                     dum_dict['Observed SEP Flare End Time'] = robust_timing(current_event['Observed SEP Flare End Time'])
                     dum_dict['Observed SEP Flare Intensity'] = current_event['Observed SEP Flare Intensity']
                     dum_dict['Observed SEP Flare Integrated Intensity'] = current_event['Observed SEP Flare Integrated Intensity']
-                    dum_dict['Observed Flare NOAA AR'] = current_event['Observed SEP Flare NOAA AR']
+                    dum_dict['Observed SEP Flare NOAA AR'] = current_event['Observed SEP Flare NOAA AR']
 
                     dum_dict['Model'] = 'Median Peak DUM'
                     dum_dict['Predicted SEP All Clear'] = False
@@ -1412,7 +1347,7 @@ def median_peak_dum(df):
 
                     dum_dict['Predicted SEP Threshold Crossing Time'] = pd.NaT
                     dum_dict['Threshold Crossing Time Match Status'] = 'SEP Event'
-                    dum_dict['Predicted SEP Start Time'] = pd.NaT
+                    dum_dict['Predicted SEP Start Time'] = robust_timing(current_event['Observed SEP Start Time'])
                     dum_dict['Start Time Match Status'] = 'SEP Event'
                     dum_dict['Predicted SEP End Time'] = pd.NaT
                     dum_dict['End Time Match Status'] = 'SEP Event'
@@ -1432,39 +1367,7 @@ def median_peak_dum(df):
                     
 
 
-                    # End Matter of the DataFrame
-                    # dum_dict['Overlapping Observations']
-                    # dum_dict['All Thresholds in Prediction']
-                    # dum_dict['Threshold Crossed in Prediction Window']
-                    # dum_dict['All Threshold Crossing Times']
-                    # dum_dict['Eruption before Threshold Crossed']
-                    # dum_dict['Time Difference between Eruption and Threshold Crossing']
-                    # dum_dict['Farside']
-                    # dum_dict['Is Source Flare']
-                    # dum_dict['All Observation Flare Peak Times']
-                    # dum_dict['All Prediction Flares']
-                    # dum_dict['Is Source CME']
-                    # dum_dict['All Observation CME Start Times']
-                    # dum_dict['All Prediction CMEs']
-                    # dum_dict['Eruption in Range']
-                    # dum_dict['Triggers before Threshold Crossing']
-                    # dum_dict['Inputs before Threshold Crossing']
-                    # dum_dict['Triggers before Peak Intensity']
-                    # dum_dict['Time Difference between Triggers and Peak Intensity']
-                    # dum_dict['Inputs before Peak Intensity']
-                    # dum_dict['Time Difference between Inputs and Peak Intensity']
-                    # dum_dict['Triggers before Peak Intensity Max']
-                    # dum_dict['Time Difference between Triggers and Peak Intensity Max']
-                    # dum_dict['Inputs before Peak Intensity Max']
-                    # dum_dict['Time Difference between Inputs and Peak Intensity Max']
-                    # dum_dict['Triggers before SEP End']
-                    # dum_dict['Time Difference between Triggers and SEP End']
-                    # dum_dict['Inputs before SEP End']
-                    # dum_dict['Time Difference between Inputs and SEP End']
-                    # dum_dict['Prediction Window Overlap with Observed SEP Event']
-                    # dum_dict['Ongoing SEP Event']
-                    # dum_dict['Trigger Advance Time']
-                    # dum_dict['Original Model Short Name']
+                    
             
     return new_df
 
@@ -1496,73 +1399,73 @@ def canonical_profile_dictionary():
     dict = {
         "min.10.0.max.-1.0.units.MeV": {
             'east' : {
-                'profile_filename': "./sphinxval/utils/DUMs/east_canonical_profile_10.0 MeV 10.0 pfu_SEP Start Time_N-deg Poly.csv",
+                'profile_filename': os.path.join(cfg.dumpath, 'east_canonical_profile_10.0 MeV 10.0 pfu_SEP Start Time_N-deg Poly.csv'),
                 'onset_peak_index': 61
             },
             'central': {
-                'profile_filename': "./sphinxval/utils/DUMs/central_canonical_profile_10.0 MeV 10.0 pfu_SEP Start Time_N-deg Poly.csv",
+                'profile_filename': os.path.join(cfg.dumpath, 'central_canonical_profile_10.0 MeV 10.0 pfu_SEP Start Time_N-deg Poly.csv'),
                 'onset_peak_index': 53
             },
             'west':{
-                'profile_filename': "./sphinxval/utils/DUMs/west_canonical_profile_10.0 MeV 10.0 pfu_SEP Start Time_N-deg Poly.csv",
+                'profile_filename': os.path.join(cfg.dumpath, "west_canonical_profile_10.0 MeV 10.0 pfu_SEP Start Time_N-deg Poly.csv"),
                 'onset_peak_index': None
             },
             'none': {
-                'profile_filename': "./sphinxval/utils/DUMs/canonical_profile_10.0 MeV 10.0 pfu_SEP Start Time_N-deg Poly_nolongitudedep.csv",
+                'profile_filename': os.path.join(cfg.dumpath, "canonical_profile_10.0 MeV 10.0 pfu_SEP Start Time_N-deg Poly_nolongitudedep.csv"),
                 'onset_peak_index': 77
             }
         },
         "min.100.0.max.-1.0.units.MeV": {
             'east' : {
-                'profile_filename': "./sphinxval/utils/DUMs/east_canonical_profile_100.0 MeV 1.0 pfu_SEP Start Time_N-deg Poly.csv",
+                'profile_filename': os.path.join(cfg.dumpath, "east_canonical_profile_100.0 MeV 1.0 pfu_SEP Start Time_N-deg Poly.csv"),
                 'onset_peak_index': None
             },
             'central': {
-                'profile_filename': "./sphinxval/utils/DUMs/central_canonical_profile_100.0 MeV 1.0 pfu_SEP Start Time_N-deg Poly.csv",
+                'profile_filename': os.path.join(cfg.dumpath, "central_canonical_profile_100.0 MeV 1.0 pfu_SEP Start Time_N-deg Poly.csv"),
                 'onset_peak_index': 6
             },
             'west':{
-                'profile_filename': "./sphinxval/utils/DUMs/west_canonical_profile_100.0 MeV 1.0 pfu_SEP Start Time_N-deg Poly.csv",
+                'profile_filename': os.path.join(cfg.dumpath, "west_canonical_profile_100.0 MeV 1.0 pfu_SEP Start Time_N-deg Poly.csv"),
                 'onset_peak_index': None
             },
             'none': {
-                'profile_filename': "./sphinxval/utils/DUMs/canonical_profile_100.0 MeV 1.0 pfu_SEP Start Time_N-deg Poly_nolongitudedep.csv",
+                'profile_filename': os.path.join(cfg.dumpath, "canonical_profile_100.0 MeV 1.0 pfu_SEP Start Time_N-deg Poly_nolongitudedep.csv"),
                 'onset_peak_index': None
             }
         },
         "min.30.0.max.-1.0.units.MeV": {
             'east' : {
-                'profile_filename': "./sphinxval/utils/DUMs/east_canonical_profile_30.0 MeV 1.0 pfu_SEP Start Time_N-deg Poly.csv",
+                'profile_filename': os.path.join(cfg.dumpath, "east_canonical_profile_30.0 MeV 1.0 pfu_SEP Start Time_N-deg Poly.csv"),
                 'onset_peak_index': None
             },
             'central': {
-                'profile_filename': "./sphinxval/utils/DUMs/central_canonical_profile_30.0 MeV 1.0 pfu_SEP Start Time_N-deg Poly.csv",
+                'profile_filename': os.path.join(cfg.dumpath, "central_canonical_profile_30.0 MeV 1.0 pfu_SEP Start Time_N-deg Poly.csv"),
                 'onset_peak_index': None
             },
             'west':{
-                'profile_filename': "./sphinxval/utils/DUMs/west_canonical_profile_30.0 MeV 1.0 pfu_SEP Start Time_N-deg Poly.csv",
+                'profile_filename': os.path.join(cfg.dumpath, "west_canonical_profile_30.0 MeV 1.0 pfu_SEP Start Time_N-deg Poly.csv"),
                 'onset_peak_index': None
             },
             'none': {
-                'profile_filename': "./sphinxval/utils/DUMs/canonical_profile_30.0 MeV 1.0 pfu_SEP Start Time_N-deg Poly_nolongitudedep.csv",
+                'profile_filename': os.path.join(cfg.dumpath, "canonical_profile_30.0 MeV 1.0 pfu_SEP Start Time_N-deg Poly_nolongitudedep.csv"),
                 'onset_peak_index': None
             }
         },
         "min.50.0.max.-1.0.units.MeV": {
             'east' : {
-                'profile_filename': "./sphinxval/utils/DUMs/east_canonical_profile_50.0 MeV 1.0 pfu_SEP Start Time_N-deg Poly.csv",
+                'profile_filename': os.path.join(cfg.dumpath, "east_canonical_profile_50.0 MeV 1.0 pfu_SEP Start Time_N-deg Poly.csv"),
                 'onset_peak_index': 40
             },
             'central': {
-                'profile_filename': "./sphinxval/utils/DUMs/central_canonical_profile_50.0 MeV 1.0 pfu_SEP Start Time_N-deg Poly.csv",
+                'profile_filename': os.path.join(cfg.dumpath, "central_canonical_profile_50.0 MeV 1.0 pfu_SEP Start Time_N-deg Poly.csv"),
                 'onset_peak_index': None
             },
             'west':{
-                'profile_filename': "./sphinxval/utils/DUMs/west_canonical_profile_50.0 MeV 1.0 pfu_SEP Start Time_N-deg Poly.csv",
+                'profile_filename': os.path.join(cfg.dumpath, "west_canonical_profile_50.0 MeV 1.0 pfu_SEP Start Time_N-deg Poly.csv"),
                 'onset_peak_index': 40
             },
             'none': {
-                'profile_filename': "./sphinxval/utils/DUMs/canonical_profile_50.0 MeV 1.0 pfu_SEP Start Time_N-deg Poly_nolongitudedep.csv",
+                'profile_filename': os.path.join(cfg.dumpath, "canonical_profile_50.0 MeV 1.0 pfu_SEP Start Time_N-deg Poly_nolongitudedep.csv"),
                 'onset_peak_index': 32
             }
         }
@@ -1570,13 +1473,6 @@ def canonical_profile_dictionary():
     }
 
     return dict
-
-
-def extract_profile(profilename, start_time):
-    profile = pd.read_csv(profilename, index_col = False)
-
-
-    return profile_data
 
 
 def standard_time_def(time):

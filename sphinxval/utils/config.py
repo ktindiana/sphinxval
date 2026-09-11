@@ -170,3 +170,4 @@ git_untracked_files = git_repo.untracked_files
 dum_toggle =  True
 triggered_dums = True
 proton_dums = True
+dumpath = os.path.join('static_data', 'DUMs')

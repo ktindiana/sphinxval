@@ -362,13 +362,13 @@ def load_objects_from_json(data_list, model_list):
             key = objh.energy_channel_to_key(channel)
             obj = observation_object_from_json(json, channel)
             
-            logger.debug("Created OBSERVATION object from json " + obj.source   + ", " + str(channel))
+            # logger.debug("Created OBSERVATION object from json " + obj.source   + ", " + str(channel))
             logger.debug("Observation window start: " + str(obj.observation_window_start))
             #skip if energy block wasn't present in json
             if not pd.isnull(obj.observation_window_start):
                 obs_objs[key].append(obj)
-                logger.debug("Adding " + obj.source + " to dictionary under "
-                    "key " + key)
+                # logger.debug("Adding " + obj.source + " to dictionary under "
+                #     "key " + key)
         
             if cfg.do_mismatch:
                 if key == cfg.mm_obs_ek:
