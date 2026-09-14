@@ -163,3 +163,11 @@ git_commit_sha = git_repo.head.object.hexsha
 git_is_dirty = git_repo.is_dirty()
 git_changed_files = [item.a_path for item in git_repo.index.diff(None)]
 git_untracked_files = git_repo.untracked_files
+
+
+
+# DUM Model configs
+dum_toggle =  True
+triggered_dums = True
+proton_dums = True
+dumpath = os.path.join('static_data', 'DUMs')
