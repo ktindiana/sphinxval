@@ -4071,11 +4071,6 @@ def intuitive_validation(evaluated_sphinx, removed_sphinx, model_names, all_ener
     df_not = pd.concat([df_not,duplicate_df])
     logger.info("Completed filling removed_sphinx dataframe. ")
 
-    
-    # COMPUTED HERE (RATHER THAN JUST BEFORE THE RESUME BLOCK) SO IT'S
-    # READY FOR THE FINAL write_partition_df CALLS LATER IN THIS FUNCTION.
-    partition_key = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
- 
     # Putting DUMs before Resume so that we limit duplicates and for the automated sphinx we will create DUMs for only
     # the new triggers
     dum_profs = None
