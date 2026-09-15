@@ -3,6 +3,7 @@ from . import object_handler as objh
 import os
 import git
 
+# PATHS
 datapath = './data/observations'
 modelpath = './data/forecasts'
 outpath = './output'
@@ -12,10 +13,12 @@ logpath = './logs'
 #profile paths
 model_prof_path = './output/json/model_profiles.json'
 obs_prof_path = './output/json/observed_profiles.json'
-#partitionpath = '/data/SPHINX/active/partitions'
-partitionpath = './data/partitions'
+partitionpath = '/data/SPHINX/active/partitions'
+#partitionpath = './data/partitions'
 os.makedirs(partitionpath, exist_ok=True)
 baseurlpath = 'https://web-dev.ccmc.smce.nasa.gov:8001/sphinx'
+dumpath = os.path.join('.', 'static_data', 'DUMs')
+dum_canonical_profile_outpath = os.path.join(dumpath, 'CanonicalProfile')
 
 ######SHORTNAME#####
 # Set to a list of items if you want to group a model's submodules to share
@@ -63,10 +66,10 @@ SPHINX_KEY_COLUMNS = ["Model", "Energy Channel Key", "Threshold Key", "Mismatch 
         "Peak Intensity Max Match Status", "Predicted Point Intensity",
         "Predicted Time Profile", "Time Profile Match Status"]
 
-#COLUMNS THAT HOLD LIVE astropy.units.Unit OBJECTS RATHER THAN STRINGS.
-#PARQUET CANNOT SERIALIZE ARBITRARY PYTHON OBJECTS (UNLIKE PICKLE), SO
-#THESE MUST BE CONVERTED TO STRINGS BEFORE write_partition_df AND BACK TO
-#Unit OBJECTS AFTER READING PARTITIONS BACK INTO A DATAFRAME.
+# COLUMNS THAT HOLD LIVE astropy.units.Unit OBJECTS RATHER THAN STRINGS.
+# PARQUET CANNOT SERIALIZE ARBITRARY PYTHON OBJECTS (UNLIKE PICKLE), SO
+# THESE MUST BE CONVERTED TO STRINGS BEFORE write_partition_df AND BACK TO
+# Unit OBJECTS AFTER READING PARTITIONS BACK INTO A DATAFRAME.
 UNITS_COLUMNS = [
     "Observed SEP Peak Intensity (Onset Peak) Units",
     "Observed SEP Peak Intensity Max (Max Flux) Units",
@@ -79,6 +82,41 @@ UNITS_COLUMNS = [
     "Predicted SEP Peak Intensity Max (Max Flux) Units",
     "Predicted SEP Fluence Units",
     "Predicted SEP Fluence Spectrum Units",
+]
+
+# DATETIME COLUMNS
+DATETIME_COLUMNS = [
+    "Forecast Issue Time",
+    "Prediction Window Start",
+    "Prediction Window End",
+    "Observed SEP Event",
+    "Last Trigger Time",
+    "Last Input Time",
+    "Last Eruption Time",
+    "Prediction CME Start Time",
+    "Prediction CME Liftoff Time",
+    "Observed SEP CME Start Time",
+    "Observed SEP CME Liftoff Time",
+    "Prediction Flare Start Time",
+    "Prediction Flare Peak Time",
+    "Prediction Flare End Time",
+    "Prediction Flare Last Data Time",
+    "Observed SEP Flare Start Time",
+    "Observed SEP Flare Peak Time",
+    "Observed SEP Flare End Time",
+    "Predicted SEP Threshold Crossing Time",
+    "Observed SEP Threshold Crossing Time",
+    "Predicted SEP Start Time",
+    "Observed SEP Start Time",
+    "Predicted SEP End Time",
+    "Observed SEP End Time",
+    "Predicted SEP Peak Intensity (Onset Peak) Time",
+    "Observed SEP Peak Intensity (Onset Peak) Time",
+    "Predicted SEP Peak Intensity Max (Max Flux) Time",
+    "Observed SEP Peak Intensity Max (Max Flux) Time",
+    "Observed Max Flux in Prediction Window Time",
+    "Predicted Point Intensity Time",
+    "Observed Point Intensity Time",
 ]
 
 # SEP Profile Path Appendages
@@ -260,4 +298,4 @@ git_untracked_files = git_repo.untracked_files
 dum_toggle =  True
 triggered_dums = True
 proton_dums = True
-dumpath = os.path.join('static_data', 'DUMs')
+

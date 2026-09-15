@@ -4109,6 +4109,11 @@ def intuitive_validation(evaluated_sphinx, removed_sphinx, model_names, all_ener
     #
     #CRITICAL ORDERING: THIS DATA WRITE MUST HAPPEN *BEFORE* THE INDEX/
     #METADATA UPDATE BELOW.
+    logger.info("DEBUG: Last Trigger Time dtype = %s" % df['Last Trigger Time'].dtype)
+    logger.info("DEBUG: Last Trigger Time value types = %s" % df['Last Trigger Time'].apply(lambda x: x.__class__.__name__).value_counts().to_dict())
+    logger.info("DEBUG: Last Trigger Time literal 'NaT' string count = %d" % (df['Last Trigger Time'] == 'NaT').sum())
+
+
     write_partition_df(df, "SPHINX_evaluated")
     logger.debug("Wrote new SPHINX_evaluated partition for this run.")
 
@@ -4171,7 +4176,7 @@ def intuitive_validation(evaluated_sphinx, removed_sphinx, model_names, all_ener
     validation_type = ["All","First", "Last", "Max", "Mean"]
     for type in validation_type:
         logger.info("-----------Starting validation of " + type +" forecasts-------------")
-        calculate_intuitive_metrics(df, model_names, all_energy_channels,
+        calculate_intuitive_metrics(full_df, model_names, all_energy_channels,
                 all_observed_thresholds, type, uncertainty=uncertainty)
 
     #Record explanatory information to the log

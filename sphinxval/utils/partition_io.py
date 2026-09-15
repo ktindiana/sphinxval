@@ -76,6 +76,56 @@ UNITS_COLUMNS = [
     "Predicted SEP Fluence Spectrum Units",
 ]
 
+DATETIME_COLUMNS = [
+    "Forecast Issue Time",
+    "Prediction Window Start",
+    "Prediction Window End",
+    "Observed SEP Event",
+    "Last Trigger Time",
+    "Last Input Time",
+    "Last Eruption Time",
+    "Prediction CME Start Time",
+    "Prediction CME Liftoff Time",
+    "Observed SEP CME Start Time",
+    "Observed SEP CME Liftoff Time",
+    "Prediction Flare Start Time",
+    "Prediction Flare Peak Time",
+    "Prediction Flare End Time",
+    "Prediction Flare Last Data Time",
+    "Observed SEP Flare Start Time",
+    "Observed SEP Flare Peak Time",
+    "Observed SEP Flare End Time",
+    "Predicted SEP Threshold Crossing Time",
+    "Observed SEP Threshold Crossing Time",
+    "Predicted SEP Start Time",
+    "Observed SEP Start Time",
+    "Predicted SEP End Time",
+    "Observed SEP End Time",
+    "Predicted SEP Peak Intensity (Onset Peak) Time",
+    "Observed SEP Peak Intensity (Onset Peak) Time",
+    "Predicted SEP Peak Intensity Max (Max Flux) Time",
+    "Observed SEP Peak Intensity Max (Max Flux) Time",
+    "Observed Max Flux in Prediction Window Time",
+    "Predicted Point Intensity Time",
+    "Observed Point Intensity Time",
+]
+
+def datetime_columns_to_consistent_type(df):
+    """ Coerce known datetime columns (DATETIME_COLUMNS above) to a
+        single consistent datetime64 dtype per column. Needed because
+        pickle never enforced per-column type consistency, so a mix of
+        raw strings and real Timestamp/datetime objects could silently
+        coexist in one column under the old pickle-based writes --
+        Parquet requires one type per column and fails outright on
+        exactly this mix.
+    """
+    df = df.copy()
+    for col in DATETIME_COLUMNS:
+        if col in df.columns:
+            df[col] = pd.to_datetime(df[col], errors='coerce')
+    return df
+
+
 
 def units_columns_to_string(df):
     """ Return a copy of df with UNITS_COLUMNS converted from live
@@ -140,6 +190,7 @@ def write_partition_df(partitionpath, df, name, verbose=True):
     #CONVERT astropy.units.Unit OBJECTS TO STRINGS -- PARQUET CANNOT
     #SERIALIZE ARBITRARY PYTHON OBJECTS THE WAY PICKLE CAN
     parquet_safe_df = units_columns_to_string(df)
+    parquet_safe_df = datetime_columns_to_consistent_type(parquet_safe_df)
 
     #SPLIT INCOMING ROWS BY MONTH, SO ONE CALL CAN CORRECTLY SPAN A
     #MONTH BOUNDARY (E.G. A RUN THAT VALIDATES BOTH LATE-DECEMBER AND
@@ -152,11 +203,14 @@ def write_partition_df(partitionpath, df, name, verbose=True):
 
         #APPEND TO THE EXISTING MONTHLY FILE IF ONE ALREADY EXISTS,
         #RATHER THAN OVERWRITING IT
+        #ALSO, HEAL FILES THAT DO NOT HAVE THE CORRECT TIMESTAMP TYPING
         if os.path.isfile(filepath):
             existing_df, _ = _read_table_safe(filepath)
+            existing_df = datetime_columns_to_consistent_type(existing_df)
             combined_df = pd.concat([existing_df, group_df], ignore_index=True)
         else:
             combined_df = group_df
+
 
         #WRITE TO A TEMP FILE FIRST, THEN ATOMICALLY REPLACE THE REAL
         #FILE -- os.replace() IS ATOMIC ON THE SAME FILESYSTEM, SO A

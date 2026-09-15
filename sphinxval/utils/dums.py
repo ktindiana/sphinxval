@@ -318,7 +318,10 @@ def canonical_prof_dum(df):
     For each event the original model forecasted for,
     make a 'forecast' for the DUM model
     """
-    
+   
+    # ENSURE DIRECTORY EXISTS
+    os.makedirs(cfg.dumpath, exist_ok=True)
+ 
     energy_channels = ['min.10.0.max.-1.0.units.MeV', 'min.100.0.max.-1.0.units.MeV', 'min.30.0.max.-1.0.units.MeV', 'min.50.0.max.-1.0.units.MeV']
     dum_profs = {}
     new_df = pd.DataFrame()
@@ -592,7 +595,10 @@ def triggered_dum_workflow(sphinx_df):
     workflow function for triggered DUMs
 
     """
-    
+   
+    # ENSURE DIRECTORIES EXIST
+    os.makedirs(cfg.dumpath, exist_ok=True)
+ 
     energy_channels = ['min.10.0.max.-1.0.units.MeV', 'min.100.0.max.-1.0.units.MeV', 'min.30.0.max.-1.0.units.MeV', 'min.50.0.max.-1.0.units.MeV']
     dum_profs = {}
     new_df = pd.DataFrame()
