@@ -22,7 +22,7 @@ parser.add_argument("--Resume", type=str, default=None,
             "via a lightweight index/metadata, not a single pkl file -- this "
             "is no longer interpreted as a filename."))
 parser.add_argument("--ResumeProfiles", nargs = '+', default=None,
-        help=("Specify the path and filename of existing profile dictionaries (as pkl) containing the observed and model profiles. "
+        help=("Specify the path and filename of existing profile dictionaries (as JSON) containing the observed and model profiles. "
             "This is in the form of two strings seperated by a space, each string with a set of quotes around it"))
 parser.add_argument("--PartitionPath", type=str, default=None,
         help=("Directory for partitioned SPHINX_evaluated/SPHINX_removed data, the "
