@@ -2894,18 +2894,40 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
         #Read in and combine time profiles of observations inside
         #prediction window
         obs_fnames = obs_profs[i].strip().split(",")
-        logger.debug("Comparing to OBSERVED TIME PROFILES: " + str(obs_fnames))
-        for j in range(len(obs_fnames)):
+        
 
-            dt = [vjson.zulu_to_time(t) for t in obs_prof_df[obs_fnames[j]]['dates']]
-            flx = obs_prof_df[obs_fnames[j]]['fluxes']
-            all_obs_dates.append(dt)
-            all_obs_flux.append(flx)
+
+        logger.debug("Comparing to OBSERVED TIME PROFILES: " + str(obs_fnames))
+        try:
+            for j in range(len(obs_fnames)):
+
+                dt = [vjson.zulu_to_time(t) for t in obs_prof_df[obs_fnames[j]]['dates']]
+                flx = obs_prof_df[obs_fnames[j]]['fluxes']
+                all_obs_dates.append(dt)
+                all_obs_flux.append(flx)
+        except KeyError as e:
+            #PROFILE NOT PERSISTED IN obs_prof_path -- KNOWN GAP FOR
+            #FORECASTS PROCESSED BEFORE profile_output WAS MOVED AHEAD
+            #OF THE METRICS LOOP. SKIP THIS COMPARISON RATHER THAN FAIL
+            #THE WHOLE RUN.
+            logger.warning(f"Observed time profile {e} not found in "
+                f"{config.obs_prof_path}; skipping this comparison for "
+                f"{pred_profs[i]}.")
+            sub = sub[sub['Predicted Time Profile'] != pred_profs[i]]
+            continue
 
         obs_dates, obs_flux = profile.combine_time_profiles(all_obs_dates,
             all_obs_flux)
-        pred_dates = [vjson.zulu_to_time(x) for x in model_prof_df[pred_profs[i]]['dates']]
-        pred_flux = model_prof_df[pred_profs[i]]['fluxes']
+        try:
+            pred_dates = [vjson.zulu_to_time(x) for x in model_prof_df[pred_profs[i]]['dates']]
+            pred_flux = model_prof_df[pred_profs[i]]['fluxes']
+        except KeyError as e:
+            logger.warning(f"Predicted time profile {e} not found in "
+                f"{config.model_prof_path}; skipping this comparison for "
+                f"{pred_profs[i]}.")
+            sub = sub[sub['Predicted Time Profile'] != pred_profs[i]]
+            continue
+
         if not pred_flux:
             #Remove row for bad time profile from sub
             sub = sub[sub['Predicted Time Profile'] != pred_profs[i]]
@@ -4173,6 +4195,9 @@ def intuitive_validation(evaluated_sphinx, removed_sphinx, model_names, all_ener
     else:
         full_df = df
 
+    #NOTE: profile_output ONLY NEEDS THIS RUN'S NEW ROWS, NOT FULL HISTORY
+    profile_output(df, r_obs, r_mod, dum_profs)
+
     validation_type = ["All","First", "Last", "Max", "Mean"]
     for type in validation_type:
         logger.info("-----------Starting validation of " + type +" forecasts-------------")
@@ -4182,9 +4207,10 @@ def intuitive_validation(evaluated_sphinx, removed_sphinx, model_names, all_ener
     #Record explanatory information to the log
     validation_explanation()
 
-    #NOTE: profile_output ONLY NEEDS THIS RUN'S NEW ROWS, NOT FULL HISTORY
-    profile_output(df, r_obs, r_mod, dum_profs)
+    #Record explanatory information to the log
+    validation_explanation()
 
     logger.info("intuitive_validation: Validation process complete.")
 
     return full_df
+
