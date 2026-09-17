@@ -334,7 +334,8 @@ def make_markdown_table(column_1: str, column_2: str, dataframe: pd.DataFrame, w
     # CONVERT RATIOS TO PERCENTAGES WHERE APPROPRIATE
     for i, label in enumerate(rows):
         if label in config.in_percent:
-            raw_values[i] = raw_values[i] * 100.0
+            if raw_values[i] is not None and not (isinstance(raw_values[i], float) and np.isnan(raw_values[i])):
+                raw_values[i] = raw_values[i] * 100.0
             rows[i] = label + ' [%]'
 
     buf = io.StringIO()
