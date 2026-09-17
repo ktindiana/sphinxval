@@ -1,5 +1,6 @@
 # DUMS
 import pandas as pd
+import re
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from datetime import datetime
@@ -243,64 +244,61 @@ def initialize_sphinx_dict():
     return sphinx_dict
 
 
-
 def feeder_from_sphinx(sphinx_df):
     """
     Input Function
-    
-    
 
     Inputs:
         df : dataframe
             SPHINX evaluated dataframe
-        resume_models: 
-            dictionary of older model profiles - to feed 
-
+        resume_models:
+            dictionary of older model profiles - to feed
 
     What we need from SPHINX:
         Observation List
         Model Type?
 
-    
-    From Observation list - DUM associated with observation 
+    From Observation list - DUM associated with observation
 
     DUM Models:
         Canonical Profile  (Duration, Max/Onset/Timings, Profile)
         Median Peaks (Max/Onset)
         F10.7 Prob (Prob, Contingency)
 
-        
-
     Outputs:
         New Lines to sphinx_evaluated containing DUM model 'forecasts'
-
-
     """
     logger.info("Initiate DUM Models")
-    dum_profs = None
-    dum_profs_temp = None
+
+    # FIXES A PANDAS/PARQUET TYPE MISMATCH BETWEEN AWS AND LOCAL RESUME.
+    # RUNS UNCONDITIONALLY NOW, NOT JUST WHEN triggered_dums IS ON.
+    sphinx_df['Predicted SEP Start Time'] = sphinx_df['Predicted SEP Start Time'].astype('datetime64[ns]')
+
+    # sphinx_df IS COMBINED WITH EACH ENABLED DUM OUTPUT EXACTLY ONCE
+    # BELOW. THE OLD VERSION CONCATENATED IT SEPARATELY PER TOGGLE,
+    # DUPLICATING IT WHEN BOTH WERE ON (144 DUP ROWS FOUND IN THE
+    # 2026-08 PARTITION).
+    dum_dfs = []
+    dum_profs = {}
+
     if cfg.triggered_dums:
-        dum_prof_df, dum_profs = triggered_dum_workflow(sphinx_df)
+        triggered_df, triggered_profs = triggered_dum_workflow(sphinx_df)
+        dum_dfs.append(triggered_df)
+        dum_profs.update(triggered_profs)
 
-        
-        sphinx_df['Predicted SEP Start Time'] = sphinx_df['Predicted SEP Start Time'].astype('datetime64[ns]') # this line was needed during testing after PR review, not sure if it will be necessary in the long run
-        # but I think its due to mismatching versions of SPHINX on AWS and git. Since AWS uses parquet and my version does not for resume
-        dum_df = pd.concat([sphinx_df, dum_prof_df], ignore_index=True)
-        dum_df_temp = dum_df.loc[dum_df.astype(str).drop_duplicates().index]
-        dum_profs_temp = dum_profs
-    
     if cfg.proton_dums:
-       
-        dum_temp_df, dum_profs = canonical_prof_dum(sphinx_df)
-        dum_med_df = median_peak_dum(sphinx_df)
+        canonical_df, canonical_profs = canonical_prof_dum(sphinx_df)
+        median_df = median_peak_dum(sphinx_df)
+        dum_dfs.append(canonical_df)
+        dum_dfs.append(median_df)
+        dum_profs.update(canonical_profs)
 
-        
-        dum_df = pd.concat([sphinx_df, dum_temp_df, dum_med_df], ignore_index=True)
-        dum_df = dum_df.loc[dum_df.astype(str).drop_duplicates().index]
-
-    if dum_profs_temp != None:
-        dum_profs = dum_profs | dum_profs_temp
-        dum_df = pd.concat([dum_df, dum_df_temp])
+    # sphinx_df IS INCLUDED EXACTLY ONCE HERE, REGARDLESS OF HOW MANY
+    # DUM WORKFLOWS RAN -- INCLUDING ZERO: IF NEITHER TOGGLE IS ON,
+    # dum_dfs IS EMPTY AND dum_df IS JUST sphinx_df (DEDUPED, REINDEXED),
+    # RATHER THAN THE PREVIOUS VERSION'S UnboundLocalError.
+    dum_df = pd.concat([sphinx_df] + dum_dfs, ignore_index=True)
+    dum_df = dum_df.loc[dum_df.astype(str).drop_duplicates().index]
 
     return dum_df, dum_profs
 
@@ -359,7 +357,13 @@ def canonical_prof_dum(df):
                             event_block[cols] = pd.to_datetime(event_block[cols])
                     
                     trigger_block = pd.merge(event_block.reset_index(drop = True), trigger_df, how = 'inner')
-                    if 'Canonical Profile DUM' in trigger_block['Model'].to_list():
+                    # RECOGNIZE BOTH THE OLD ("Canonical Profile DUM...") AND NEW
+                    # ("Baseline CME/Flare/Protons...") NAMING SCHEMES HERE, SO
+                    # EVENTS PROCESSED BEFORE THE RENAME ARE STILL CORRECTLY
+                    # SKIPPED RATHER THAN RE-PROCESSED INTO A DUPLICATE ROW
+                    # UNDER THE NEW NAMES.
+                    if any(m.startswith('Canonical Profile DUM') or m.startswith('Baseline ')
+                            for m in trigger_block['Model'].to_list()):
                         # This event and trigger has already been analyzed for DUM Profile - continue on 
                         continue
                     else:
@@ -479,9 +483,9 @@ def canonical_prof_dum(df):
                         location_string = "west"
                     else:
                         location_string = "central"
-                    dum_dict['Model'] = 'Canonical Profile DUM Protons' + dum_string
+                    dum_dict['Model'] = 'Baseline Protons' + dum_string
                     
-                    dum_dict['Original Model Short Name'] = 'Canonical Profile DUM Protons ' + location_string
+                    dum_dict['Original Model Short Name'] = 'Baseline Protons ' + location_string
 
                     canonical_profile = canonical_profile_values[location_string]
                     profile = pd.read_csv(canonical_profile['profile_filename'], index_col = 0)
@@ -529,10 +533,8 @@ def canonical_prof_dum(df):
                     output_dict = {'dates': time_profile_time, 'fluxes': flux.to_list()}
                     output_df = pd.DataFrame(output_dict)
                     output_df = output_df.set_index('dates')
-                    start_time_filename = start_time_str.replace('/', '').replace(':','')
-                    output_filename = os.path.join(cfg.dumpath,'DUM_CanonicalProfile_' + location_string + '_' + available_energies + '_' + start_time_filename + trigger_str + '.txt')
-                    
-
+                    start_time_filename = start_time_str.replace('/', '').replace(':','').replace(' ','')
+                    output_filename = os.path.join(cfg.dumpath, 'DUM_CanonicalProfile_' + location_string + '_' + available_energies + '_' + start_time_filename + trigger_str + '.txt')
                     dum_dict['Forecast Source'] = output_filename
                     dum_dict['Forecast Path'] = cfg.dumpath
                     dum_dict['Forecast Issue Time'] = pd.NaT
@@ -817,8 +819,8 @@ def triggered_dum_workflow(sphinx_df):
                                 location_string = "west"
                             else:
                                 location_string = "central"
-                            dum_dict['Model'] = 'Canonical Profile DUM ' + names
-                            dum_dict['Original Model Short Name'] = 'Canonical Profile DUM ' + names + ' ' + location_string
+                            dum_dict['Model'] = format_dum_model_name(names)
+                            dum_dict['Original Model Short Name'] = format_dum_model_name(names) + ' ' + location_string
 
                             canonical_profile = canonical_profile_values[location_string]
                             profile = pd.read_csv(canonical_profile['profile_filename'], index_col = 0)
@@ -872,7 +874,7 @@ def triggered_dum_workflow(sphinx_df):
                             output_dict = {'dates': time_profile_time, 'fluxes': flux.to_list()}
                             output_df = pd.DataFrame(output_dict)
                             output_df = output_df.set_index('dates')
-                            start_time_filename = start_time_str.replace('/', '').replace(':','')
+                            start_time_filename = start_time_str.replace('/', '').replace(':','').replace(' ','')
                             output_filename = os.path.join(cfg.dumpath, 'DUM_CanonicalProfile_' + location_string + '_' + available_energies + '_' + start_time_filename + trigger_str + '.txt')
                             dum_dict['Forecast Source'] = output_filename
                             dum_dict['Forecast Path'] = cfg.dumpath
@@ -938,13 +940,13 @@ def triggered_dum_workflow(sphinx_df):
                                     event_source_long = np.nan
                                     trigger_str += '_Flare_' + standard_time_def(current_event['Prediction Flare Start Time']).replace(':','').replace('/','') + '__' + str(event_source_long)
                                 last_trig = robust_timing(current_event['Prediction Flare Start Time'])
-                            dum_dict['Model'] = 'Canonical Profile DUM ' + names
-                            dum_dict['Original Model Short Name'] = 'Canonical Profile DUM ' + names
+                            dum_dict['Model'] = format_dum_model_name(names)
+                            dum_dict['Original Model Short Name'] = format_dum_model_name(names)
                             start = last_trig
                             dum_dict['Last Trigger Time'] = last_trig
                             dum_dict['Last Input Time'] = pd.NaT
                             dum_dict['Last Eruption Time'] = last_trig
-                            start_time_filename = str(last_trig).replace('/', '').replace(':','')
+                            start_time_filename = str(last_trig).replace('/', '').replace(':','').replace(' ','')
                             output_filename = os.path.join(cfg.dumpath, 'DUM_CanonicalProfile_' + available_energies + '_' + start_time_filename + '.txt')
                             dum_dict['Forecast Source'] = output_filename
                             dum_dict['Forecast Path'] = cfg.dumpath
@@ -991,6 +993,26 @@ def triggered_dum_workflow(sphinx_df):
 
 
 
+
+
+def format_dum_model_name(key):
+    """ Convert a cme/flare submodel dictionary key (e.g.
+        'cme_DONKI_far50_10.0_' or 'flare_hit50_30.0_long') into the
+        full Model string used for reporting: a category ("Baseline
+        CME"/"Baseline Flare") plus a variant describing hit/far type
+        and whether it's longitude-binned (e.g. "Baseline CME FAR50
+        Single Profile"). Energy is deliberately dropped -- reports
+        already group by energy channel separately, so repeating it
+        here would be redundant. Catalog (DONKI/CDAW) is also dropped
+        -- DONKI is the only catalog used going forward (see
+        determine_dum_submodel and cme_submodels_dictionary, where
+        CDAW is commented out).
+    """
+    trigger = key.split('_')[0]
+    category = 'Baseline CME' if trigger == 'cme' else 'Baseline Flare'
+    hit_or_far = 'FAR50' if 'far50' in key else 'Hit50'
+    binning = 'Lon-Binned' if key.endswith('long') else 'Single Profile'
+    return category + ' ' + hit_or_far + ' ' + binning
 
 
 def determine_dum_submodel(trigger_block, energy_channel):
@@ -1066,19 +1088,27 @@ def determine_dum_submodel(trigger_block, energy_channel):
             if pd.isnull(cme_catalog):
                 pass
             else:
-                if 'cdaw' in cme_catalog or 'CDAW' in cme_catalog:
-                    cme_catalog = 'CDAW'
-                else:
-                    cme_catalog = 'DONKI'
-                
-                submodel_name.append([submodel for submodel in cme_submodels if (cme_catalog in submodel) & (energy in submodel)])
-        elif is_flare_null and not is_cme_null:
-            
-            cme_catalog = cme_trigger_subset['Prediction CME Catalog']
-            if 'cdaw' in cme_catalog or 'CDAW' in cme_catalog:
-                cme_catalog = 'CDAW'
-            else:
+                # DONKI IS THE ONLY CME CATALOG USED GOING FORWARD. CDAW
+                # DETECTION COMMENTED OUT RATHER THAN REMOVED, IN CASE IT
+                # NEEDS TO BE RE-ENABLED LATER.
+                # if 'cdaw' in cme_catalog or 'CDAW' in cme_catalog:
+                #     cme_catalog = 'CDAW'
+                # else:
+                #     cme_catalog = 'DONKI'
                 cme_catalog = 'DONKI'
+
+                submodel_name.extend([submodel for submodel in cme_submodels if (cme_catalog in submodel) & (energy in submodel)])
+        elif is_flare_null and not is_cme_null:
+
+            cme_catalog = cme_trigger_subset['Prediction CME Catalog']
+            # DONKI IS THE ONLY CME CATALOG USED GOING FORWARD. CDAW
+            # DETECTION COMMENTED OUT RATHER THAN REMOVED, IN CASE IT
+            # NEEDS TO BE RE-ENABLED LATER.
+            # if 'cdaw' in cme_catalog or 'CDAW' in cme_catalog:
+            #     cme_catalog = 'CDAW'
+            # else:
+            #     cme_catalog = 'DONKI'
+            cme_catalog = 'DONKI'
             submodel_name = [submodel for submodel in cme_submodels if (cme_catalog in submodel) & (energy in submodel)]
         elif is_cme_null and not is_flare_null:
             submodel_name = [submodel for submodel in flare_submodels if energy in submodel]#
@@ -1109,39 +1139,42 @@ def flare_submodels_dictionary():
     return flare_submodels
 
 def cme_submodels_dictionary():
+    # DONKI IS THE ONLY CME CATALOG USED GOING FORWARD. CDAW ENTRIES
+    # ARE COMMENTED OUT RATHER THAN REMOVED, IN CASE CDAW NEEDS TO BE
+    # RE-ENABLED LATER.
     cme_submodels = {
         'cme_DONKI_hit50_10.0_': 1270,
         'cme_DONKI_hit50_10.0_long': 1270,
-        'cme_CDAW_hit50_10.0_': 1437,
-        'cme_CDAW_hit50_10.0_long': 1437,
+        # 'cme_CDAW_hit50_10.0_': 1437,
+        # 'cme_CDAW_hit50_10.0_long': 1437,
         'cme_DONKI_far50_10.0_': 2000,
         'cme_DONKI_far50_10.0_long': 2000,
-        'cme_CDAW_far50_10.0_': 2000,
-        'cme_CDAW_far50_10.0_long': 2000,
-        'cme_CDAW_hit50_30.0_': 1350,
-        'cme_CDAW_hit50_30.0_long': 1350,
-        'cme_CDAW_far50_30.0_': 2000,
-        'cme_CDAW_far50_30.0_long': 2000,
+        # 'cme_CDAW_far50_10.0_': 2000,
+        # 'cme_CDAW_far50_10.0_long': 2000,
+        # 'cme_CDAW_hit50_30.0_': 1350,
+        # 'cme_CDAW_hit50_30.0_long': 1350,
+        # 'cme_CDAW_far50_30.0_': 2000,
+        # 'cme_CDAW_far50_30.0_long': 2000,
         'cme_DONKI_hit50_30.0_': 1250,
         'cme_DONKI_hit50_30.0_long': 1250,
         'cme_DONKI_far50_30.0_': 2000,
         'cme_DONKI_far50_30.0_long': 2000,
-        'cme_CDAW_hit50_50.0_': 1450,
-        'cme_CDAW_hit50_50.0_long': 1450,
-        'cme_CDAW_far50_50.0_': 2150,
-        'cme_CDAW_far50_50.0_long': 2150,
+        # 'cme_CDAW_hit50_50.0_': 1450,
+        # 'cme_CDAW_hit50_50.0_long': 1450,
+        # 'cme_CDAW_far50_50.0_': 2150,
+        # 'cme_CDAW_far50_50.0_long': 2150,
         'cme_DONKI_hit50_50.0_': 1250,
         'cme_DONKI_hit50_50.0_long': 1250,
         'cme_DONKI_far50_50.0_': 2150,
         'cme_DONKI_far50_50.0_long': 2150,
         'cme_DONKI_hit50_100.0_': 1400,
         'cme_DONKI_hit50_100.0_long': 1400,
-        'cme_CDAW_hit50_100.0_': 1596,
-        'cme_CDAW_hit50_100.0_long': 1596,
+        # 'cme_CDAW_hit50_100.0_': 1596,
+        # 'cme_CDAW_hit50_100.0_long': 1596,
         'cme_DONKI_far50_100.0_': 2800,
         'cme_DONKI_far50_100.0_long': 2800,
-        'cme_CDAW_far50_100.0_': 2900,
-        'cme_CDAW_far50_100.0_long': 2900
+        # 'cme_CDAW_far50_100.0_': 2900,
+        # 'cme_CDAW_far50_100.0_long': 2900
     }
 
     return cme_submodels
@@ -1402,73 +1435,73 @@ def canonical_profile_dictionary():
     dict = {
         "min.10.0.max.-1.0.units.MeV": {
             'east' : {
-                'profile_filename': os.path.join(cfg.dumpath, 'east_canonical_profile_10.0 MeV 10.0 pfu_SEP Start Time_N-deg Poly.csv'),
+                'profile_filename': os.path.join(cfg.dumpath, 'canonical_profile_east_10.0MeV_10.0pfu.csv'),
                 'onset_peak_index': 61
             },
             'central': {
-                'profile_filename': os.path.join(cfg.dumpath, 'central_canonical_profile_10.0 MeV 10.0 pfu_SEP Start Time_N-deg Poly.csv'),
+                'profile_filename': os.path.join(cfg.dumpath, 'canonical_profile_central_10.0MeV_10.0pfu.csv'),
                 'onset_peak_index': 53
             },
             'west':{
-                'profile_filename': os.path.join(cfg.dumpath, "west_canonical_profile_10.0 MeV 10.0 pfu_SEP Start Time_N-deg Poly.csv"),
+                'profile_filename': os.path.join(cfg.dumpath, "canonical_profile_west_10.0MeV_10.0pfu.csv"),
                 'onset_peak_index': None
             },
             'none': {
-                'profile_filename': os.path.join(cfg.dumpath, "canonical_profile_10.0 MeV 10.0 pfu_SEP Start Time_N-deg Poly_nolongitudedep.csv"),
+                'profile_filename': os.path.join(cfg.dumpath, "canonical_profile_none_10.0MeV_10.0pfu.csv"),
                 'onset_peak_index': 77
             }
         },
         "min.100.0.max.-1.0.units.MeV": {
             'east' : {
-                'profile_filename': os.path.join(cfg.dumpath, "east_canonical_profile_100.0 MeV 1.0 pfu_SEP Start Time_N-deg Poly.csv"),
+                'profile_filename': os.path.join(cfg.dumpath, "canonical_profile_east_100.0MeV_1.0pfu.csv"),
                 'onset_peak_index': None
             },
             'central': {
-                'profile_filename': os.path.join(cfg.dumpath, "central_canonical_profile_100.0 MeV 1.0 pfu_SEP Start Time_N-deg Poly.csv"),
+                'profile_filename': os.path.join(cfg.dumpath, "canonical_profile_central_100.0MeV_1.0pfu.csv"),
                 'onset_peak_index': 6
             },
             'west':{
-                'profile_filename': os.path.join(cfg.dumpath, "west_canonical_profile_100.0 MeV 1.0 pfu_SEP Start Time_N-deg Poly.csv"),
+                'profile_filename': os.path.join(cfg.dumpath, "canonical_profile_west_100.0MeV_1.0pfu.csv"),
                 'onset_peak_index': None
             },
             'none': {
-                'profile_filename': os.path.join(cfg.dumpath, "canonical_profile_100.0 MeV 1.0 pfu_SEP Start Time_N-deg Poly_nolongitudedep.csv"),
+                'profile_filename': os.path.join(cfg.dumpath, "canonical_profile_none_100.0MeV_1.0pfu.csv"),
                 'onset_peak_index': None
             }
         },
         "min.30.0.max.-1.0.units.MeV": {
             'east' : {
-                'profile_filename': os.path.join(cfg.dumpath, "east_canonical_profile_30.0 MeV 1.0 pfu_SEP Start Time_N-deg Poly.csv"),
+                'profile_filename': os.path.join(cfg.dumpath, "canonical_profile_east_30.0MeV_1.0pfu.csv"),
                 'onset_peak_index': None
             },
             'central': {
-                'profile_filename': os.path.join(cfg.dumpath, "central_canonical_profile_30.0 MeV 1.0 pfu_SEP Start Time_N-deg Poly.csv"),
+                'profile_filename': os.path.join(cfg.dumpath, "canonical_profile_central_30.0MeV_1.0pfu.csv"),
                 'onset_peak_index': None
             },
             'west':{
-                'profile_filename': os.path.join(cfg.dumpath, "west_canonical_profile_30.0 MeV 1.0 pfu_SEP Start Time_N-deg Poly.csv"),
+                'profile_filename': os.path.join(cfg.dumpath, "canonical_profile_west_30.0MeV_1.0pfu.csv"),
                 'onset_peak_index': None
             },
             'none': {
-                'profile_filename': os.path.join(cfg.dumpath, "canonical_profile_30.0 MeV 1.0 pfu_SEP Start Time_N-deg Poly_nolongitudedep.csv"),
+                'profile_filename': os.path.join(cfg.dumpath, "canonical_profile_none_30.0MeV_1.0pfu.csv"),
                 'onset_peak_index': None
             }
         },
         "min.50.0.max.-1.0.units.MeV": {
             'east' : {
-                'profile_filename': os.path.join(cfg.dumpath, "east_canonical_profile_50.0 MeV 1.0 pfu_SEP Start Time_N-deg Poly.csv"),
+                'profile_filename': os.path.join(cfg.dumpath, "canonical_profile_east_50.0MeV_1.0pfu.csv"),
                 'onset_peak_index': 40
             },
             'central': {
-                'profile_filename': os.path.join(cfg.dumpath, "central_canonical_profile_50.0 MeV 1.0 pfu_SEP Start Time_N-deg Poly.csv"),
+                'profile_filename': os.path.join(cfg.dumpath, "canonical_profile_central_50.0MeV_1.0pfu.csv"),
                 'onset_peak_index': None
             },
             'west':{
-                'profile_filename': os.path.join(cfg.dumpath, "west_canonical_profile_50.0 MeV 1.0 pfu_SEP Start Time_N-deg Poly.csv"),
+                'profile_filename': os.path.join(cfg.dumpath, "canonical_profile_west_50.0MeV_1.0pfu.csv"),
                 'onset_peak_index': 40
             },
             'none': {
-                'profile_filename': os.path.join(cfg.dumpath, "canonical_profile_50.0 MeV 1.0 pfu_SEP Start Time_N-deg Poly_nolongitudedep.csv"),
+                'profile_filename': os.path.join(cfg.dumpath, "canonical_profile_none_50.0MeV_1.0pfu.csv"),
                 'onset_peak_index': 32
             }
         }
