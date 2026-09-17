@@ -3693,7 +3693,7 @@ def pretty(d, indent=0):
          print('\t' * (indent+1) + str(value))
 
 
-def profile_output(sphinx_dataframe, resume_obs, resume_model):
+def profile_output(sphinx_dataframe, resume_obs, resume_model, dum_model_profiles):
     
     # Is there a point to 'resume' for the profiles? 
     u_obs_profs = resume.identify_unique(sphinx_dataframe, 'Observed Time Profile')
@@ -3717,16 +3717,20 @@ def profile_output(sphinx_dataframe, resume_obs, resume_model):
             if resume_model is not None and um in resume_model:
                 continue
             else:
-                model_dates, model_profiles = profile.read_single_time_profile(um_i)
-                model_dates = [x.strftime('%Y-%m-%dT%H:%M:%SZ') for x in model_dates]
-                model_profs[um_i] = {'dates': model_dates, 'fluxes': model_profiles}
+                if dum_model_profiles is not None and um in dum_model_profiles:
+                    continue
+                else:
+                    model_dates, model_profiles = profile.read_single_time_profile(um_i)
+                    model_dates = [x.strftime('%Y-%m-%dT%H:%M:%SZ') for x in model_dates]
+                    model_profs[um_i] = {'dates': model_dates, 'fluxes': model_profiles}
 
 
     if resume_obs is not None:
         observed_profs = resume_obs | observed_profs
     if resume_model is not None:
         model_profs = resume_model | model_profs
-
+    if dum_model_profiles is not None:
+        model_profs = model_profs | dum_model_profiles
  
     obs_file_path = os.path.join(config.outpath,os.path.join('json', 'observed_profiles.json'))
     with open(obs_file_path, 'w+') as json_file:
@@ -4049,7 +4053,7 @@ def intuitive_validation(evaluated_sphinx, removed_sphinx, model_names,
 
     #Write SPHINX dataframe to file
     write_df(df, "SPHINX_evaluated")
-    profile_output(df, r_obs, r_mod)
+    profile_output(df, r_obs, r_mod, dum_profs)
     logger.debug("Completed writing SPHINX_evaluated dataframe to file.")
 
     #Write NOT EVALUATED SPHINX dataframe to file

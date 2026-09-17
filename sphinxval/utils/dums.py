@@ -327,7 +327,6 @@ def canonical_prof_dum(df):
         # Loop over energies
         
         sub_df = df[df["Energy Channel Key"] == available_energies]
-        sub_df.to_csv('testdf.csv')
         trigger_columns = ['Observed SEP CME Start Time', 'Observed SEP CME Longitude', 'Observed SEP CME Latitude', 'Observed SEP CME Liftoff Time', 'Observed SEP CME Speed', 'Observed SEP CME Half Width', 'Observed SEP CME PA',\
             'Observed SEP CME Catalog', 'Observed SEP Flare Start Time', 'Observed SEP Flare Peak Time', 'Observed SEP Flare End Time', 'Observed SEP Flare Longitude', 'Observed SEP Flare Latitude', 'Observed SEP Flare NOAA AR']
         observed_events = sub_df['Observed SEP Start Time'].unique()
@@ -829,7 +828,7 @@ def triggered_dum_workflow(sphinx_df):
                                     start_time_str = start
                                     start_time_dt = zulu_to_time(start_time_str)
                             elif pd.isnull(start):
-                                foo = [current_event['Prediction Flare Start Time']+ timedelta(hours = 1) if 'flare' in names else current_event['Prediction CME Start Time']+ timedelta(hours = 1)][0]
+                                foo = [robust_timing(current_event['Prediction Flare Start Time'])+ timedelta(hours = 1) if 'flare' in names else robust_timing(current_event['Prediction CME Start Time'])+ timedelta(hours = 1)][0]
                                 start_time_dt = pd.to_datetime(foo)
                                 start_time_str = str(foo)
                                
@@ -869,8 +868,6 @@ def triggered_dum_workflow(sphinx_df):
                             output_df = output_df.set_index('dates')
                             start_time_filename = start_time_str.replace('/', '').replace(':','')
                             output_filename = './model/DUMs/CanonicalProfile/DUM_CanonicalProfile_' + location_string + '_' + available_energies + '_' + start_time_filename + trigger_str + '.txt'
-                            output_df.to_csv(output_filename, sep='\t', header = False)
-
                             dum_dict['Forecast Source'] = output_filename
                             dum_dict['Forecast Path'] = './model/DUMs/CanonicalProfile/'
                             dum_dict['Forecast Issue Time'] = pd.NaT
