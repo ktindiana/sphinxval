@@ -527,11 +527,11 @@ def canonical_prof_dum(df):
                     output_df = pd.DataFrame(output_dict)
                     output_df = output_df.set_index('dates')
                     start_time_filename = start_time_str.replace('/', '').replace(':','')
-                    output_filename = './model/DUMs/CanonicalProfile/DUM_CanonicalProfile_' + location_string + '_' + available_energies + '_' + start_time_filename + trigger_str + '.txt'
+                    output_filename = os.path.join(cfg.dumpath,'DUM_CanonicalProfile_' + location_string + '_' + available_energies + '_' + start_time_filename + trigger_str + '.txt')
                     
 
                     dum_dict['Forecast Source'] = output_filename
-                    dum_dict['Forecast Path'] = './model/DUMs/CanonicalProfile/'
+                    dum_dict['Forecast Path'] = cfg.dumpath
                     dum_dict['Forecast Issue Time'] = pd.NaT
                     dum_dict['Prediction Window Start'] = un_normalized_time[0]
                     dum_dict['Prediction Window End'] = un_normalized_time[-1]
@@ -867,9 +867,9 @@ def triggered_dum_workflow(sphinx_df):
                             output_df = pd.DataFrame(output_dict)
                             output_df = output_df.set_index('dates')
                             start_time_filename = start_time_str.replace('/', '').replace(':','')
-                            output_filename = './model/DUMs/CanonicalProfile/DUM_CanonicalProfile_' + location_string + '_' + available_energies + '_' + start_time_filename + trigger_str + '.txt'
+                            output_filename = os.path.join(cfg.dumpath, 'DUM_CanonicalProfile_' + location_string + '_' + available_energies + '_' + start_time_filename + trigger_str + '.txt')
                             dum_dict['Forecast Source'] = output_filename
-                            dum_dict['Forecast Path'] = './model/DUMs/CanonicalProfile/'
+                            dum_dict['Forecast Path'] = cfg.dumpath
                             dum_dict['Forecast Issue Time'] = pd.NaT
                             dum_dict['Prediction Window Start'] = un_normalized_time[0]
                             dum_dict['Prediction Window End'] = un_normalized_time[-1]
@@ -939,9 +939,9 @@ def triggered_dum_workflow(sphinx_df):
                             dum_dict['Last Input Time'] = pd.NaT
                             dum_dict['Last Eruption Time'] = last_trig
                             start_time_filename = str(last_trig).replace('/', '').replace(':','')
-                            output_filename = './model/DUMs/CanonicalProfile/DUM_CanonicalProfile_' + available_energies + '_' + start_time_filename + '.txt'
+                            output_filename = os.path.join(cfg.dumpath, 'DUM_CanonicalProfile_' + available_energies + '_' + start_time_filename + '.txt')
                             dum_dict['Forecast Source'] = output_filename
-                            dum_dict['Forecast Path'] = './model/DUMs/CanonicalProfile/'
+                            dum_dict['Forecast Path'] = cfg.dumpath
                             dum_dict['Forecast Issue Time'] = pd.NaT
                             dum_dict['Prediction Window Start'] = last_trig
                             dum_dict['Prediction Window End'] = last_trig + timedelta(hours = 6)
