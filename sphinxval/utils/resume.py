@@ -1,5 +1,6 @@
 import sys
 import datetime
+import json
 import pandas as pd
 import pickle
 import logging
@@ -196,26 +197,24 @@ def last_prediction_windows(df):
                     
     return df_pred_win
 
-
 def read_in_profile_dicts(resume_obs, resume_model):
-    """ Read in pickle files containing the observed profile dictionary
+    """ Read in JSON files containing the observed profile dictionary
     and the model profile dictionary.
-    
+
     """
     try:
-        pklfile = open(resume_obs,"rb")
-        obs_prof_df = pickle.load(pklfile)
-        
-    except:
-        logger.error("Cannot open pickle file containing "
+        with open(resume_obs, "r") as f:
+            obs_prof_df = json.load(f)
+    except Exception:
+        logger.error("Cannot open JSON file containing "
             f"input observed profile dictionary. Please check the filename: {resume_obs}")
         sys.exit()
-    
+
     try:
-        pklfile = open(resume_model,"rb")
-        model_prof_df = pickle.load(pklfile)
-    except:
-        logger.error("Cannot open pickle file containing "
+        with open(resume_model, "r") as f:
+            model_prof_df = json.load(f)
+    except Exception:
+        logger.error("Cannot open JSON file containing "
             f"input model profile dictionary. Please check the filename: {resume_model}")
         sys.exit()
     return obs_prof_df, model_prof_df
