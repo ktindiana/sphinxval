@@ -122,7 +122,7 @@ class Test_AllFields_Mismatch(unittest.TestCase):
         
         validate.write_df(self.dataframe, "SPHINX_dataframe")
         validate.write_df(self.not_eval_dataframe, "not_eval_SPHINX")
-        validate.profile_output(self.dataframe, None, None) # Moved this step here to make things work - won't test for the profile existence until later
+        validate.profile_output(self.dataframe, None, None, None) # Moved this step here to make things work - won't test for the profile existence until later
         for keywords in self.dataframe:
            
             logger.debug(len(self.sphinx['Test_model_0'][self.all_energy_channels[1]]))

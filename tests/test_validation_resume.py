@@ -450,7 +450,7 @@ class Test_Resume(unittest.TestCase):
         for the various quantities as well as the selections for those quantities for each model
 
         """
-        validate.profile_output(self.df, None, None) # Moved this step here to make things work - won't test for the profile existence until later
+        validate.profile_output(self.df, None, None, None) # Moved this step here to make things work - won't test for the profile existence until later
         validate.calculate_intuitive_metrics(self.df, self.model_names, self.all_energy_channels, \
                 self.all_observed_thresholds, 'All')
         # taking the 'easy way' of doing this test- just going to check that there are outputs for each
@@ -485,7 +485,7 @@ class Test_Resume(unittest.TestCase):
 
         # self.r_obs
         # self.r_mod
-        validate.profile_output(self.df, self.r_obs_prof, self.r_model_prof)
+        validate.profile_output(self.df, self.r_obs_prof, self.r_model_prof, None)
         obs_prof_filename = os.path.join('.', 'tests', 'output', 'json', 'observed_profiles.json') 
         model_prof_filename =  os.path.join('.', 'tests', 'output', 'json', 'model_profiles.json') 
         

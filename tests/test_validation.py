@@ -1898,7 +1898,7 @@ class Test_AllFields_MultipleForecasts(unittest.TestCase):
             else:        
                 self.assertEqual(self.dataframe[keywords][1], temp, 'Error is in keyword ' + keywords)
         for type in self.validation_type:
-            validate.profile_output(self.dataframe, None, None) # Moved this step here to make things work - won't test for the profile existence until later
+            validate.profile_output(self.dataframe, None, None, None) # Moved this step here to make things work - won't test for the profile existence until later
             validate.calculate_intuitive_metrics(self.dataframe, self.model_names, self.all_energy_channels, \
                 self.obs_thresholds, type)
 
