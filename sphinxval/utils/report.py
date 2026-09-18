@@ -1028,12 +1028,11 @@ def report(output_dir: Optional[str], relative_path_plots: bool, sphinx_datafram
 
     # WHEN NO IN-MEMORY sphinx_dataframe IS SUPPLIED (THE bin/report.py
     # STANDALONE PATH), READ ONLY THE COLUMNS report() ACTUALLY USES
-    # DIRECTLY FROM PARTITIONS, INSTEAD OF DEPENDING ON A FULL FLAT
+    # DIRECTLY FROM PARTITIONS, INSTEAD OF DEPENDING ON A FULL
     # SPHINX_evaluated.pkl. report() ONLY EVER NEEDS 'Model' (FOR THE
     # MODEL LIST BELOW) AND 'Forecast Source'/'Observatory'/
     # 'Observed SEP Start Time'/'Observed SEP End Time' (FOR
-    # build_info_events_table's LOOKUP) -- NEVER THE FULL 70+ COLUMN,
-    # FULL-HISTORY DATAFRAME
+    # build_info_events_table's LOOKUP)
     if sphinx_dataframe is None:
         logger.info('No SPHINX dataframe supplied; reading needed columns '
             'directly from partitions.')
@@ -1048,22 +1047,7 @@ def report(output_dir: Optional[str], relative_path_plots: bool, sphinx_datafram
                 config.partitionpath)
             return
 
-    # DEDUPLICATE AND BUILD A HASH INDEX EXACTLY ONCE HERE, REGARDLESS OF
-    # WHETHER sphinx_dataframe WAS SUPPLIED IN-MEMORY (bin/sphinx.py) OR
-    # JUST READ ABOVE (bin/report.py STANDALONE). build_info_events_table
-    # USED TO CALL sphinx_dataframe.loc[list(data.index), ...]
-    # (POSITIONAL, FRAGILE -- SEE THAT FUNCTION'S DOCSTRING) AND, IN AN
-    # EARLIER VERSION OF THIS FIX, .merge() AGAINST THE FULL DATAFRAME --
-    # ON EVERY SINGLE CALL, ONCE PER (model, energy channel, threshold,
-    # section type) COMBINATION. FOR A MODEL WITH ~187 SUCH FILES (SEEN IN
-    # PRODUCTION: ZEUS+iPATH_CME), EVEN A REPEATED .merge() AGAINST AN
-    # ALREADY-DEDUPLICATED ~6.35M-ROW TABLE PROJECTED TO ~9 MINUTES OF
-    # REDUNDANT WORK. BUILDING THE HASH INDEX ONCE (set_index) AND REUSING
-    # IT VIA .reindex() PER CALL INSTEAD MEASURED MUCH FASTER.
-    #
-    # models MUST BE DERIVED BEFORE sphinx_dataframe IS CONVERTED TO THE
-    # INDEXED LOOKUP BELOW, SINCE THE INDEXED VERSION NO LONGER CARRIES
-    # 'Model' AS A REGULAR COLUMN.
+    # DEDUPLICATE
     key_cols = ['Forecast Source', 'Model', 'Energy Channel Key', 'Threshold Key']
     sphinx_dataframe_deduped = sphinx_dataframe.drop_duplicates(subset=key_cols)
 
@@ -1076,8 +1060,7 @@ def report(output_dir: Optional[str], relative_path_plots: bool, sphinx_datafram
     models = sorted(set(sphinx_dataframe_deduped['Model']))
     git_info_text = _build_git_info_text()
 
-    # NOW SAFE TO BUILD THE INDEXED LOOKUP -- models HAS ALREADY BEEN
-    # DERIVED ABOVE.
+    # NOW SAFE TO BUILD THE INDEXED LOOKUP
     sphinx_dataframe = sphinx_dataframe_deduped.set_index(key_cols)[
         ['Observatory', 'Observed SEP Start Time', 'Observed SEP End Time']]
     del sphinx_dataframe_deduped
@@ -1085,15 +1068,6 @@ def report(output_dir: Optional[str], relative_path_plots: bool, sphinx_datafram
     # PRE-INDEX FILES FOR O(1) SECTION-PRESENCE LOOKUPS.
     # BUILD A SET OF (tag, model, appendage) TUPLES FROM THE PKL FILENAMES
     # IN output_dir SO THE INNER LOOPS DON'T NEED TO SCAN THE FULL LIST.
-    #
-    # NOTE: THE MODEL-MATCHING SCAN (after_prefix.startswith(model)) IS
-    # DONE ONCE PER (fname, sdef) HERE, THEN REUSED ACROSS ALL APPENDAGES
-    # -- NOT RE-SCANNED FOR EVERY APPENDAGE AS BEFORE. THIS PRESERVES THE
-    # EXACT ORIGINAL MATCHING SEMANTICS (INCLUDING THAT IT DOES NOT BREAK
-    # ON THE FIRST MATCH: IF ONE MODEL NAME IS A STRING-PREFIX OF ANOTHER,
-    # E.G. "Model1" OF "Model10", BOTH STILL GET ADDED AS THEY DID
-    # ORIGINALLY -- THAT PRE-EXISTING AMBIGUITY IS UNCHANGED AND NOT
-    # SOMETHING THIS PATCH DECIDES TO RESOLVE).
     present_index: set = set()
     for fname in files:
         stem = fname.rstrip('.pkl')
@@ -1194,16 +1168,7 @@ def report(output_dir: Optional[str], relative_path_plots: bool, sphinx_datafram
             f.write(html_text)
         logger.info('    Complete')
 
-        # EVICT CACHES AFTER EACH MODEL'S REPORT IS FULLY WRITTEN, NOT JUST
-        # ONCE AT THE START OF report(). _load_pkl's CACHE IS GLOBAL AND
-        # NEVER EVICTS ON ITS OWN -- WITHOUT THIS, EVERY MODEL'S METRICS
-        # AND SELECTIONS PKLS STAY IN MEMORY FOR THE REST OF THE ENTIRE
-        # report() CALL, SO BY THE LAST MODEL, MEMORY STILL HOLDS
-        # EVERY PRIOR MODEL'S DATA TOO. CLEARING HERE CAPS MEMORY TO
-        # ROUGHLY ONE MODEL'S WORTH OF CACHED DATA AT A TIME, WHILE STILL
-        # PRESERVING THE CACHE'S BENEFIT *WITHIN* A SINGLE MODEL'S REPORT
-        # (REPEATED LOADS OF THE SAME FILE ACROSS THAT MODEL'S OWN
-        # APPENDAGES/SECTIONS STILL HIT THE CACHE).
+        # EVICT CACHES AFTER EACH MODEL'S REPORT IS FULLY WRITTEN.
         _pkl_cache.clear()
         _ref_csv_cache.clear()
 

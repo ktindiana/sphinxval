@@ -2912,7 +2912,8 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
             #THE WHOLE RUN.
             logger.warning(f"Observed time profile {e} not found in "
                 f"{config.obs_prof_path}; skipping this comparison for "
-                f"{pred_profs[i]}.")
+                f"{pred_profs[i]}."
+                f"!!!!!!!!! REMOVE !!!!!!!")
             sub = sub[sub['Predicted Time Profile'] != pred_profs[i]]
             continue
 
@@ -3608,7 +3609,7 @@ def awt_metrics(df, dict, model, energy_key, thresh_key, validation_type):
                 #ORIGINAL GUARD NEVER CHECKED pd.isnull(tc_tat) -- ONLY
                 #pd.isnull(tc_awt) (THE WRONG VARIABLE) AND A STRING
                 #COMPARISON tc_tat == 'NaT' THAT NEVER MATCHES A REAL
-                #NaN/None VALUE. A GENUINELY MISSING Trigger Advance Time
+                #NaN/None VALUE. A MISSING Trigger Advance Time
                 #COULD REACH THE DIVISION BELOW AND RAISE:
                 #TypeError: unsupported operand type(s) for /: 'float' and 'NoneType'
                 #if pd.isnull(tc_awt) or tc_tat == 'NaT':
