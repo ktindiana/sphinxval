@@ -79,6 +79,28 @@ mm_obs_tk = "threshold." +str(float(mm_obs_threshold['threshold'])) \
 mm_energy_key = mm_obs_ek + "_" + mm_pred_ek
 mm_thresh_key = mm_obs_tk + "_" + mm_pred_tk
 
+###AUTOMATIC -- mirrors config.py's mismatch_rules derivation, using
+#the scalar values already defined above, so patching config.mismatch_rules
+#with this produces an equivalent single-rule scenario to what the old,
+#now-removed individual config.mm_* scalar patches used to represent.
+mismatch_rules = [
+    {
+        "model": mm_model,
+        "pred_energy_channel": mm_pred_energy_channel,
+        "pred_threshold": mm_pred_threshold,
+        "obs_energy_channel": mm_obs_energy_channel,
+        "obs_threshold": mm_obs_threshold,
+        "pred_ek": mm_pred_ek,
+        "pred_tk": mm_pred_tk,
+        "obs_ek": mm_obs_ek,
+        "obs_tk": mm_obs_tk,
+        "energy_key": mm_energy_key,
+        "thresh_key": mm_thresh_key,
+    }
+]
+mismatch_rules_by_energy_key = {mm_energy_key: mismatch_rules[0]}
+mismatch_energy_keys = [mm_energy_key]
+
 #Dictionaries throughout the code will use mm_energy_key to
 #organize observation and model objects.
 #The observed threshold key, mm_obs_tk, will be used in

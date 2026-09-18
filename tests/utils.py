@@ -284,12 +284,19 @@ def attributes_of_sphinx_obj(keyword, sphinx_obj, energy_channel_key, threshold_
         return str(getattr(sphinx_obj.prediction, depth_prediction_string[keyword], None))
 
     depth_top = {
-        'Mismatch Allowed': 'mismatch',
         'Evaluation Status': 'not_evaluated',
         'Farside': 'observed_sep_farside'
     }
     if keyword in depth_top:
         return getattr(sphinx_obj, depth_top[keyword], None)
+
+    #sphinx_obj.mismatch IS A LIST OF APPLICABLE MISMATCH RULES (SEE
+    #match.py), NOT A BOOLEAN -- validation.py's fill_sphinx_dict_row
+    #STORES bool(mismatch) INTO THE "Mismatch Allowed" DATAFRAME COLUMN,
+    #SO THE EXPECTED VALUE HERE MUST MATCH THAT CONVERSION RATHER THAN
+    #COMPARING AGAINST THE RAW LIST.
+    if keyword == 'Mismatch Allowed':
+        return bool(getattr(sphinx_obj, 'mismatch', None))
 
     depth_cmes = {
         'Prediction Number of CMEs': 'cmes',
@@ -440,12 +447,15 @@ def attributes_of_sphinx_obj(keyword, sphinx_obj, energy_channel_key, threshold_
     elif keyword == 'Threshold Key':
         return threshold_key[energy_channel_key][0]
     elif keyword == 'Prediction Energy Channel Key':
-        if getattr(sphinx_obj, 'mismatch', None) == True:
+        #sphinx_obj.mismatch IS A LIST OF APPLICABLE MISMATCH RULES (SEE
+        #match.py), NOT A BOOLEAN -- "== True" IS ALWAYS FALSE FOR ANY
+        #LIST, SO THIS NEVER CORRECTLY DETECTED A GENUINE MISMATCH.
+        if bool(getattr(sphinx_obj, 'mismatch', None)):
             return config_tests.mm_pred_ek
         else:
             return energy_channel_key
     elif keyword == 'Prediction Threshold Key':
-        if getattr(sphinx_obj, 'mismatch', None) == True:
+        if bool(getattr(sphinx_obj, 'mismatch', None)):
             return config_tests.mm_pred_tk
         else:
             return threshold_key[energy_channel_key][0]
