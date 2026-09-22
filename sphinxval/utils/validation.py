@@ -731,16 +731,6 @@ def read_all_partitions(name, columns=None):
     return partition_io.read_all_partitions(config.partitionpath, name,
         columns=columns)
 
-
-def read_partitions_for_date_range(name, date_column, start_date=None,
-    end_date=None, columns=None):
-    """ See partition_io.read_partitions_for_date_range -- this wrapper
-        supplies config.partitionpath automatically. """
-    return partition_io.read_partitions_for_date_range(config.partitionpath,
-        name, date_column, start_date=start_date, end_date=end_date,
-        columns=columns)
-
-
 def fill_sphinx_df(evaluated_sphinx, all_obs_thresholds, profname_dict):
     """ Fill in a dictionary with the all clear predictions and observations
         organized by model and energy channel.
