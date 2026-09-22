@@ -34,5 +34,6 @@ sphinxval/utils/sepval_post_analysis.py
 .DS_Store
 **/.DS_Store
 
+out
 *tmp.txt
 **/*tmp.txt

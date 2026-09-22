@@ -122,7 +122,7 @@ class Test_AllFields_Mismatch(unittest.TestCase):
         
         validate.write_df(self.dataframe, "SPHINX_dataframe")
         validate.write_df(self.not_eval_dataframe, "not_eval_SPHINX")
-        validate.profile_output(self.dataframe, None, None) # Moved this step here to make things work - won't test for the profile existence until later
+        validate.profile_output(self.dataframe, None, None, None) # Moved this step here to make things work - won't test for the profile existence until later
         for keywords in self.dataframe:
            
             logger.debug(len(self.sphinx['Test_model_0'][self.all_energy_channels[1]]))
@@ -223,17 +223,9 @@ class Test_AllFields_Mismatch(unittest.TestCase):
                 yield name, getattr(self, name)
         
     @patch('sphinxval.utils.config.outpath', './tests/output')
-    @patch('sphinxval.utils.config.do_mismatch', True)
-    @patch('sphinxval.utils.config.mm_model', 'Test_model_0')
-    @patch('sphinxval.utils.config.mm_pred_energy_channel', config_tests.mm_pred_energy_channel)
-    @patch('sphinxval.utils.config.mm_pred_threshold', config_tests.mm_pred_threshold)
-    @patch('sphinxval.utils.config.mm_obs_energy_channel', config_tests.mm_obs_energy_channel)
-    @patch('sphinxval.utils.config.mm_obs_threshold', config_tests.mm_obs_threshold)
-    @patch('sphinxval.utils.config.mm_obs_ek', config_tests.mm_obs_ek)
-    @patch('sphinxval.utils.config.mm_obs_tk', config_tests.mm_obs_tk)
-    @patch('sphinxval.utils.config.mm_pred_ek', config_tests.mm_pred_ek)
-    @patch('sphinxval.utils.config.mm_pred_tk', config_tests.mm_pred_tk)
-    @patch('sphinxval.utils.config.mm_energy_key', config_tests.mm_obs_ek + "_" + config_tests.mm_pred_ek)
+    @patch('sphinxval.utils.config.mismatch_rules', config_tests.mismatch_rules)
+    @patch('sphinxval.utils.config.mismatch_rules_by_energy_key', config_tests.mismatch_rules_by_energy_key)
+    @patch('sphinxval.utils.config.mismatch_energy_keys', config_tests.mismatch_energy_keys)
     @patch('sphinxval.utils.config.uncert_boolean', False)
     @patch('sphinxval.utils.config.model_prof_path', './tests/output/json/model_profiles.json')
     @patch('sphinxval.utils.config.obs_prof_path', './tests/output/json/observed_profiles.json')

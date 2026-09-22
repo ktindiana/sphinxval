@@ -1,5 +1,6 @@
 import sys
 import datetime
+import json
 import pandas as pd
 import pickle
 import logging
@@ -30,6 +31,73 @@ def read_in_df(filename):
         sys.exit()
 
 
+
+
+def read_in_index(filename, columns=None):
+    """ Read in the lightweight duplicate-tracking index (Parquet), instead
+        of a full historical SPHINX dataframe. Returns None if the file
+        doesn't exist yet (first run).
+
+    INPUT:
+
+        :filename: (string) path to the index Parquet file
+        :columns: (list of string or None) if given, only these columns
+            are read from disk (e.g. ["Forecast Source"] when the caller
+            doesn't need RowHash)
+
+    OUTPUT:
+
+        :index_df: (pandas DataFrame or None)
+
+    """
+    import os
+    if not os.path.isfile(filename):
+        return None
+    return pd.read_parquet(filename, columns=columns)
+
+
+def read_in_metadata(filename):
+    """ Read in the small persisted metadata dict (models, energy channels,
+        thresholds) built up incrementally across resumed runs. Returns
+        None if the file doesn't exist yet (first run).
+
+    OUTPUT:
+
+        :metadata: (dict or None) with keys 'models', 'energy_channels',
+            'thresholds' (dict of energy_channel -> list of threshold keys)
+
+    """
+    import os
+    if not os.path.isfile(filename):
+        return None
+    try:
+        pklfile = open(filename, "rb")
+        metadata = pickle.load(pklfile)
+        return metadata
+    except:
+        logger.error("Cannot open pickle file containing "
+            f"resume metadata. Please check the filename: {filename}")
+        sys.exit()
+
+
+def write_metadata(filename, models, energy_channels, thresholds):
+    """ Persist the small metadata dict so future resumed runs don't need
+        to re-derive unique models/energy channels/thresholds from a full
+        historical dataframe.
+
+    INPUT:
+
+        :filename: (string) path to write the metadata pickle
+        :models: (list of string)
+        :energy_channels: (list of string)
+        :thresholds: (dict) energy_channel -> list of threshold keys
+
+    """
+    metadata = {'models': list(models), 'energy_channels': list(energy_channels),
+        'thresholds': thresholds}
+    pklfile = open(filename, "wb")
+    pickle.dump(metadata, pklfile)
+    pklfile.close()
 
 
 def identify_unique(df, value):
@@ -129,26 +197,24 @@ def last_prediction_windows(df):
                     
     return df_pred_win
 
-
 def read_in_profile_dicts(resume_obs, resume_model):
-    """ Read in pickle files containing the observed profile dictionary
+    """ Read in JSON files containing the observed profile dictionary
     and the model profile dictionary.
-    
+
     """
     try:
-        pklfile = open(resume_obs,"rb")
-        obs_prof_df = pickle.load(pklfile)
-        
-    except:
-        logger.error("Cannot open pickle file containing "
+        with open(resume_obs, "r") as f:
+            obs_prof_df = json.load(f)
+    except Exception:
+        logger.error("Cannot open JSON file containing "
             f"input observed profile dictionary. Please check the filename: {resume_obs}")
         sys.exit()
-    
+
     try:
-        pklfile = open(resume_model,"rb")
-        model_prof_df = pickle.load(pklfile)
-    except:
-        logger.error("Cannot open pickle file containing "
+        with open(resume_model, "r") as f:
+            model_prof_df = json.load(f)
+    except Exception:
+        logger.error("Cannot open JSON file containing "
             f"input model profile dictionary. Please check the filename: {resume_model}")
         sys.exit()
     return obs_prof_df, model_prof_df
