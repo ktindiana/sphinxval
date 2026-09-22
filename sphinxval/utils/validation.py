@@ -3773,10 +3773,7 @@ def pretty(d, indent=0):
          print('\t' * (indent+1) + str(value))
 
 def profile_output(sphinx_dataframe, resume_obs, resume_model, dum_model_profiles):
-
-    # Is there a point to 'resume' for the profiles?
     u_obs_profs = resume.identify_unique(sphinx_dataframe, 'Observed Time Profile')
-
     u_model_profs = resume.identify_unique(sphinx_dataframe, 'Predicted Time Profile')
     observed_profs = {}
     model_profs = {}
