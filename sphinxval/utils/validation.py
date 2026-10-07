@@ -2955,7 +2955,7 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
         if not pd.isnull(pred_st[i]):
             trim_st = max(obs_st[i],pred_st[i])
         if not pd.isnull(pred_et[i]):
-            time_et = min(obs_et[i], pred_et[i])
+            trim_et = min(obs_et[i], pred_et[i])
         logger.debug("Trimming between " + str(trim_st) + " and " + str(trim_et))
         trim_pred_dates, trim_pred_flux = profile.trim_profile(trim_st,
                 trim_et, pred_dates, pred_flux)
