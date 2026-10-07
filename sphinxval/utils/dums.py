@@ -309,7 +309,29 @@ def robust_timing(time):
         format_code = "%Y-%m-%d %H:%M:%S"
         time = datetime.strptime(time, format_code)
     return time
-    
+
+def latest_of(*times):
+    """ Return the latest (max) of the given datetime-like values,
+        ignoring any that are null. Returns pd.NaT if every given
+        value is null.
+
+        A value counts as null if pd.isnull() says so (None, pd.NaT,
+        np.nan), OR if it is the literal string 'NaT' -- robust_timing()
+        leaves that exact string un-converted (it only parses strings
+        that are NOT 'NaT'), and pd.isnull('NaT') is False, so without
+        this explicit check a stray 'NaT' string mixed with a real
+        Timestamp would raise TypeError in max() rather than being
+        correctly treated as missing.
+
+        Used to set Forecast Issue Time as the latest of Last Trigger
+        Time, Last Input Time, and Last Eruption Time -- whichever
+        reached the model last is what determines when it could have
+        issued a forecast.
+    """
+    valid = [t for t in times if not pd.isnull(t) and t != 'NaT']
+    if not valid:
+        return pd.NaT
+    return max(valid)
 
 def canonical_prof_dum(df):
     """
@@ -399,8 +421,8 @@ def canonical_prof_dum(df):
                     dum_dict['Observed SEP CME Catalog'] = current_event['Observed SEP CME Catalog']
                     dum_dict['Observed SEP CME Catalog ID'] = current_event['Observed SEP CME Catalog ID']
 
-                    dum_dict['Prediction Number of CMEs'] = '1.0'
-                    dum_dict['Prediction Number of Flares'] = '1.0'
+                    dum_dict['Prediction Number of CMEs'] = 1
+                    dum_dict['Prediction Number of Flares'] = 1
                     dum_dict['Prediction Flare Latitude'] = current_event['Observed SEP Flare Latitude']
                     dum_dict['Prediction Flare Longitude'] = current_event['Observed SEP Flare Longitude']
                     dum_dict['Prediction Flare Start Time'] = robust_timing(current_event['Observed SEP Flare Start Time'])
@@ -537,7 +559,7 @@ def canonical_prof_dum(df):
                     output_filename = os.path.join(cfg.dumpath, 'DUM_CanonicalProfile_' + location_string + '_' + available_energies + '_' + start_time_filename + trigger_str + '.txt')
                     dum_dict['Forecast Source'] = output_filename
                     dum_dict['Forecast Path'] = cfg.dumpath
-                    dum_dict['Forecast Issue Time'] = pd.NaT
+                    dum_dict['Forecast Issue Time'] = latest_of(dum_dict['Last Trigger Time'], dum_dict['Last Input Time'], dum_dict['Last Eruption Time'])
                     dum_dict['Prediction Window Start'] = un_normalized_time[0]
                     dum_dict['Prediction Window End'] = un_normalized_time[-1]
                     dum_dict['Predicted SEP Threshold Crossing Time'] = un_normalized_time[0]
@@ -878,7 +900,7 @@ def triggered_dum_workflow(sphinx_df):
                             output_filename = os.path.join(cfg.dumpath, 'DUM_CanonicalProfile_' + location_string + '_' + available_energies + '_' + start_time_filename + trigger_str + '.txt')
                             dum_dict['Forecast Source'] = output_filename
                             dum_dict['Forecast Path'] = cfg.dumpath
-                            dum_dict['Forecast Issue Time'] = pd.NaT
+                            dum_dict['Forecast Issue Time'] = latest_of(dum_dict['Last Trigger Time'], dum_dict['Last Input Time'], dum_dict['Last Eruption Time'])
                             dum_dict['Prediction Window Start'] = un_normalized_time[0]
                             dum_dict['Prediction Window End'] = un_normalized_time[-1]
                             dum_dict['Predicted SEP Threshold Crossing Time'] = un_normalized_time[0]
@@ -950,7 +972,7 @@ def triggered_dum_workflow(sphinx_df):
                             output_filename = os.path.join(cfg.dumpath, 'DUM_CanonicalProfile_' + available_energies + '_' + start_time_filename + '.txt')
                             dum_dict['Forecast Source'] = output_filename
                             dum_dict['Forecast Path'] = cfg.dumpath
-                            dum_dict['Forecast Issue Time'] = pd.NaT
+                            dum_dict['Forecast Issue Time'] = latest_of(dum_dict['Last Trigger Time'], dum_dict['Last Input Time'], dum_dict['Last Eruption Time'])
                             dum_dict['Prediction Window Start'] = last_trig
                             dum_dict['Prediction Window End'] = last_trig + timedelta(hours = 6)
 
@@ -1288,8 +1310,8 @@ def median_peak_dum(df):
 
 
 
-                    dum_dict['Prediction Number of CMEs'] = '1.0'
-                    dum_dict['Prediction Number of Flares'] = '1.0'
+                    dum_dict['Prediction Number of CMEs'] = 1
+                    dum_dict['Prediction Number of Flares'] = 1
                     dum_dict['Prediction Flare Latitude'] = current_event['Observed SEP Flare Latitude']
                     dum_dict['Prediction Flare Longitude'] = current_event['Observed SEP Flare Longitude']
                     dum_dict['Prediction Flare Start Time'] = robust_timing(current_event['Observed SEP Flare Start Time'])
@@ -1318,7 +1340,6 @@ def median_peak_dum(df):
                     dum_dict['Forecast Source'] = 'DUM Model'
                     dum_dict['Forecast Path'] = 'DUM Model'
                     dum_dict['Evaluation Status'] = 'DUM Model Inserted'
-                    dum_dict['Forecast Issue Time'] = pd.NaT
                     dum_dict['Prediction Window Start'] = current_event['Observed SEP Start Time']
                     dum_dict['Prediction Window End'] = current_event['Observed SEP End Time']
                     dum_dict['Predicted Time Profile'] = None
@@ -1369,6 +1390,7 @@ def median_peak_dum(df):
                     dum_dict['Last Trigger Time'] = last_trig
                     dum_dict['Last Input Time'] = pd.NaT
                     dum_dict['Last Eruption Time'] = last_trig
+                    dum_dict['Forecast Issue Time'] = latest_of(dum_dict['Last Trigger Time'], dum_dict['Last Input Time'], dum_dict['Last Eruption Time'])
 
                     dum_dict['Predicted SEP All Clear'] = False
                     dum_dict['Predicted SEP All Clear Probability Threshold'] = np.nan
