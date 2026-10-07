@@ -13,8 +13,11 @@ logpath = './logs'
 #profile paths
 model_prof_path = './output/json/model_profiles.json'
 obs_prof_path = './output/json/observed_profiles.json'
-partitionpath = '/data/SPHINX/active/partitions'
-#partitionpath = './data/partitions'
+
+if os.path.isdir('/data/SPHINX'):
+    partitionpath = '/data/SPHINX/active/partitions'
+else:
+    partitionpath = './data/partitions/'
 os.makedirs(partitionpath, exist_ok=True)
 baseurlpath = 'https://web-dev.ccmc.smce.nasa.gov:8001/sphinx'
 dumpath = os.path.join('.', 'static_data', 'DUMs')
