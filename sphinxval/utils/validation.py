@@ -1690,7 +1690,9 @@ def point_intensity_intuitive_metrics(df, dict, model, energy_key, thresh_key,
             tpfigname = config.outpath + "/plots/Point_Intensity_Time_Profile_" + model \
                 + "_" + energy_key + "_" + thresh_fnm  + "_" + str_date
             if mismatch:
-                tpfigame = tpfigname + "_mm"
+                # WAS ASSIGNED TO A MISSPELLED tpfigame, SO THE _mm SUFFIX WAS
+                # NEVER APPLIED (SAME TYPO AS IN time_profile_intuitive_metrics).
+                tpfigname = tpfigname + "_mm"
             if validation_type != "" and validation_type != "All":
                 tpfigname = tpfigname + "_" + validation_type
             tpfigname += ".pdf"
@@ -2913,15 +2915,31 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
             continue
 
         #Remove zeros
-        obs_flux, obs_dates = zip(*filter(lambda x:x[0]>0.0, zip(obs_flux, obs_dates)))
-        pred_flux, pred_dates = zip(*filter(lambda x:x[0]>0.0, zip(pred_flux, pred_dates)))
+        # KEEP ONLY POSITIVE FLUX VALUES. ALSO DROPS None (MISSING VALUES,
+        # WHICH CRASHED THE ORIGINAL x[0]>0.0 COMPARISON WITH A TypeError)
+        # AND NaN (NaN > 0.0 IS False). BUILT AS LISTS FIRST SO AN EMPTY
+        # RESULT CAN BE CHECKED BEFORE UNPACKING -- zip(*[]) CANNOT BE
+        # UNPACKED INTO TWO NAMES AND RAISED ValueError FOR ANY OBSERVED
+        # PROFILE WITH NO POSITIVE VALUES.
+        obs_pairs = [(f, d) for f, d in zip(obs_flux, obs_dates)
+                     if f is not None and f > 0.0]
+        pred_pairs = [(f, d) for f, d in zip(pred_flux, pred_dates)
+                      if f is not None and f > 0.0]
 
-        #If predicted time profile is all zeros
-        if not pred_flux:
+        # NO USABLE OBSERVED OR PREDICTED VALUES: DROP THIS ROW, SAME AS THE
+        # EXISTING HANDLING FOR BAD PREDICTED PROFILES ABOVE.
+        if not obs_pairs or not pred_pairs:
+            logger.warning("Skipping time profile metrics for "
+                + str(pred_profs[i]) + ": no positive "
+                + ("observed" if not obs_pairs else "predicted")
+                + " flux values after removing zeros/missing values.")
             #Remove row for bad time profile from sub
             sub = sub[sub['Predicted Time Profile'] != pred_profs[i]]
 
             continue
+
+        obs_flux, obs_dates = zip(*obs_pairs)
+        pred_flux, pred_dates = zip(*pred_pairs)
 
         #Interpolate observed time profile onto predicted timestamps
         obs_flux_interp = profile.interp_timeseries(obs_dates, obs_flux, "log",
@@ -2937,7 +2955,7 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
         if not pd.isnull(pred_st[i]):
             trim_st = max(obs_st[i],pred_st[i])
         if not pd.isnull(pred_et[i]):
-            time_et = min(obs_et[i], pred_et[i])
+            trim_et = min(obs_et[i], pred_et[i])
         logger.debug("Trimming between " + str(trim_st) + " and " + str(trim_et))
         trim_pred_dates, trim_pred_flux = profile.trim_profile(trim_st,
                 trim_et, pred_dates, pred_flux)
@@ -2954,7 +2972,10 @@ def time_profile_intuitive_metrics(df, dict, model, energy_key,
         tpfigname = config.outpath + "/plots/Time_Profile_" + model_names[i] \
             + "_" + energy_chan[i] + "_" + thresh_fnm  + "_" + str_date
         if mismatch:
-            tpfigame = tpfigname + "_mm"
+            # WAS ASSIGNED TO A MISSPELLED tpfigame, SO THE _mm SUFFIX WAS
+            # NEVER APPLIED AND MISMATCH PLOTS SHARED (AND COULD OVERWRITE)
+            # THE NON-MISMATCH PLOT'S FILENAME.
+            tpfigname = tpfigname + "_mm"
         tpfigname += ".pdf"
         if tp_plotnames == "":
             tp_plotnames = tpfigname
@@ -3944,7 +3965,6 @@ def calculate_intuitive_metrics(df, model_names, all_energy_channels,
 
     logger.info("Wrote out all metrics.")
 
-
 def validation_explanation():
     """ State the selections applied to calculate metrics for each
         quantity.
@@ -3958,16 +3978,19 @@ def validation_explanation():
     logger.info("============================")
     logger.info("--SEP Event: Forecast is associated with an observed SEP event")
     logger.info("--No SEP Event: Forecast is associated with an observed clear period.")
-    logger.info("--Unmatched: The forecast was initially associated to an observed SEP event but a different prediction was found to be a better match. This forecast has been unmatched and is now associated with an observed clear period. Only relevant for forecasts that use flare or CME triggers.")
+    logger.info("--No SEP Event (SubEvent): Forecast is associated with a small SEP enhancement that did not cross threshold.")
     logger.info("--Ongoing SEP Event: The observed environment was already enhanced for the forecasted period. The forecast cannot be evaluated.")
-    logger.info("--Trigger/Input after Observed Phenomenon: The forecast used input information later than the observed phenomenon, i.e. threshold crossing, peak flux, etc. This cannot be considered a forecast for the particular phenomenon.")
-    logger.info("--Eruption Out of Range: The forecast overlaps with an observed SEP event, but used a flare or CME trigger with timing indicating that it is not likely physically connected to that SEP event. This forecast is associated with an observed clear period.")
+    logger.info("--Trigger not associated with observed SEP: A forecast contained an SEP event in the prediction window but was not triggered by the flare or CME known to be associated with the observed SEP event. Considered to be clear.")
+    logger.info("--Trigger associated with observed SEP but SEP not in prediction window: A forecast was triggered by the flare or CME known to be associated with an observed SEP event but the SEP event occurred outside the forecast prediction window.")
+    logger.info("--Trigger/Input after Observed Phenomenon: The forecast used input information later than the observed phenomenon, i.e. threshold crossing, peak flux, etc. This cannot be considered a forecast for the particular phenomenon. This will only apply if observations used in SPHINX do not contain trigger information and SPHINX must use timing logic to determine whether a forecast triggered by a flare or CME is likely associated with an observed SEP event.")
+    logger.info("--Eruption Out of Range: The forecast overlaps with an observed SEP event, but used a flare or CME trigger with timing indicating that it is not likely physically connected to that SEP event. This forecast is associated with an observed clear period. This will only apply if observations used in SPHINX do not contain trigger information and SPHINX must use timing logic to determine whether a forecast triggered by a flare or CME is likely associated with an observed SEP event.")
+    logger.info("--Unmatched: This will only apply if observations used in SPHINX do not contain trigger information and SPHINX must use timing logic to determine whether a forecast triggered by a flare or CME is likely associated with an observed SEP event. It indicates that the forecast was initially associated to an observed SEP event but a different prediction was found to be a better match. This forecast has been unmatched and is now associated with an observed clear period. Only relevant for forecasts that use flare or CME triggers.")
     logger.info("--No Matching Threshold: The energy channel and threshold combination used in the forecast was not present in the prepared observations. These forecasts are not evaluated.")
     logger.info("")
     logger.info("Selections applied to calculate metrics:")
     logger.info("========================================")
-    logger.info("--All Clear: Forecasts with \"Ongoing SEP Event\" match status are not included in All Clear metrics.")
-    logger.info("--Probability: Forecasts with \"Ongoing SEP Event\" match status are not included in Probability metrics.")
+    logger.info("--All Clear: Forecasts with \"Ongoing SEP Event\" and \"Trigger/Input after Observed Phenomenon\" and \"Trigger associated with observed SEP but SEP not in prediction window\" match status are not included in All Clear metrics.")
+    logger.info("--Probability: Forecasts with \"Ongoing SEP Event\" and \"Trigger/Input after Observed Phenomenon\" and \"Trigger associated with observed SEP but SEP not in prediction window\" match status are not included in Probability metrics.")
     logger.info("--Peak Intensity (Onset Peak): Only forecasts with \"SEP Event\" match status are included in Peak Intensity metrics. For models that use the peak_intensity field to indicate SEP onset peak, this results in metrics that are derived from the subset of SEP events that were both predicted and observed.")
     logger.info("--Peak Intensity Max (Max Flux): Only forecasts with \"SEP Event\" match status are included in Peak Intensity Max (Max Flux) metrics. Metrics are derived from all predictions associated with observed SEP events.")
     logger.info("--Fluence: Only forecasts with \"SEP Event\" match status are included in Fluence metrics.")
