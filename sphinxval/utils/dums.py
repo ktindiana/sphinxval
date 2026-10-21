@@ -421,8 +421,8 @@ def canonical_prof_dum(df):
                     dum_dict['Observed SEP CME Catalog'] = current_event['Observed SEP CME Catalog']
                     dum_dict['Observed SEP CME Catalog ID'] = current_event['Observed SEP CME Catalog ID']
 
-                    dum_dict['Prediction Number of CMEs'] = 1
-                    dum_dict['Prediction Number of Flares'] = 1
+                    dum_dict['Prediction Number of CMEs'] = current_event['Prediction Number of CMEs']
+                    dum_dict['Prediction Number of Flares'] = current_event['Prediction Number of Flares']
                     dum_dict['Prediction Flare Latitude'] = current_event['Observed SEP Flare Latitude']
                     dum_dict['Prediction Flare Longitude'] = current_event['Observed SEP Flare Longitude']
                     dum_dict['Prediction Flare Start Time'] = robust_timing(current_event['Observed SEP Flare Start Time'])
@@ -491,8 +491,10 @@ def canonical_prof_dum(df):
                         last_trig = robust_timing(current_event['Observed SEP Flare Start Time'])
                         trigger_str += '_Flare_' + standard_time_def(current_event['Observed SEP Flare Start Time']).replace(':','').replace('/','') + '_long_' + str(event_source_long)
                     if trigger_str == '':
-                        trigger_str += '_' + str(i)
-                        last_trig = robust_timing(current_event['Observed SEP Start Time'])
+                        logger.info('No Observation Trigger Information, skipping insertion of this DUM Forecast ' + str(robust_timing(current_event['Observed SEP Start Time'])))
+
+                        continue
+                       
                     dum_dict['Last Trigger Time'] = last_trig
                     dum_dict['Last Input Time'] = pd.NaT
                     dum_dict['Last Eruption Time'] = last_trig
@@ -505,9 +507,9 @@ def canonical_prof_dum(df):
                         location_string = "west"
                     else:
                         location_string = "central"
-                    dum_dict['Model'] = 'Baseline Protons' + dum_string
+                    dum_dict['Model'] = 'Baseline Event' + dum_string
                     
-                    dum_dict['Original Model Short Name'] = 'Baseline Protons ' + location_string
+                    dum_dict['Original Model Short Name'] = 'Baseline Event ' + location_string
 
                     canonical_profile = canonical_profile_values[location_string]
                     profile = pd.read_csv(canonical_profile['profile_filename'], index_col = 0)
@@ -1331,7 +1333,7 @@ def median_peak_dum(df):
                     dum_dict['Observed SEP Flare Integrated Intensity'] = current_event['Observed SEP Flare Integrated Intensity']
                     dum_dict['Observed SEP Flare NOAA AR'] = current_event['Observed SEP Flare NOAA AR']
 
-                    dum_dict['Model'] = 'Median Peak DUM'
+                    dum_dict['Model'] = 'Baseline Event Median Peak'
                     dum_dict['Predicted SEP All Clear'] = False
                     dum_dict['All Clear Match Status'] = 'SEP Event' 
                     dum_dict['Peak Intensity Match Status'] = 'SEP Event'
@@ -1384,8 +1386,10 @@ def median_peak_dum(df):
                         dum_string += ' Flare'
                         last_trig = robust_timing(current_event['Observed SEP Flare Start Time'])
                     if trigger_str == '':
-                        trigger_str += '_' + str(i)
-                        last_trig = robust_timing(current_event['Observed SEP Start Time'])
+                        logger.info('No Observation Trigger Information, skipping insertion of this DUM Forecast ' + str(robust_timing(current_event['Observed SEP Start Time'])))
+                        continue
+                        # trigger_str += '_' + str(i)
+                        # last_trig = robust_timing(current_event['Observed SEP Start Time'])
                         
                     dum_dict['Last Trigger Time'] = last_trig
                     dum_dict['Last Input Time'] = pd.NaT
