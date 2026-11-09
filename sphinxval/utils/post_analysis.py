@@ -10,6 +10,7 @@ from . import time_profile as profile
 from . import resume
 from . import validation
 from . import metrics
+from . import metrics_dicts
 import pickle
 import pandas as pd
 import matplotlib as plt
@@ -562,7 +563,7 @@ def add_to_all_clear(df):
     if add_contingency == {}:
         return df
         
-    dict = validation.initialize_all_clear_dict()
+    dict = metrics_dicts.initialize_all_clear_dict()
         
     n = len(add_contingency['Model'])
     for i in range(n):
@@ -678,7 +679,7 @@ def get_max_probabilities(df, path):
     """
     columns = df.columns.to_list()
     all_max_metrics_df = pd.DataFrame(columns=columns)
-    dict = validation.initialize_probability_dict()
+    dict = metrics_dicts.initialize_probability_dict()
     
     all_models = df['Model'].to_list()
     
@@ -1163,6 +1164,8 @@ def create_date_range_df(dates_file, seps, nonevent_st, nonevent_end):
     if dates_file != '':
         df_dates = pd.read_csv(dates_file, parse_dates=['SEP Events','Non-Event Start','Non-Event End'])
         print(f"all_clear_grid: Read in dates from file {dates_file}.")
+        if 'Non-Event Trigger Time' in df_dates.columns:
+            df_dates = df_dates.drop(columns='Non-Event Trigger Time')
     else:
         print(f"all_clear_grid: Using input date range for seps and nonevents.")
         #seps and nonevent arrays have to be same length to create a dataframe
@@ -1385,7 +1388,12 @@ def all_clear_deoverlap(csv_path, models, energy_min, energy_max, threshold,
         "Non-Event End": df_dates["Non-Event End"].to_list()}
 
     #All Clear metrics
-    all_clear_dict = validation.initialize_all_clear_dict()
+    all_clear_dict = metrics_dicts.initialize_all_clear_dict()
+    
+    #Remove the Uncertainty columns as they will not be used for deoverlapping
+    for key in list(all_clear_dict.keys()):
+        if 'Uncertainty' in key:
+            del all_clear_dict[key]
 
     #Find first and last date out of all the dates
     max_date = df_dates.max().max()
@@ -1708,7 +1716,7 @@ def probability_deoverlap(csv_path, models, energy_min, energy_max, threshold,
 
 
     #Probability metrics
-    probability_dict = validation.initialize_probability_dict()
+    probability_dict = metrics_dicts.initialize_probability_dict()
 
     #Find first and last date out of all the dates
     max_date = df_dates.max().max()
