@@ -1718,6 +1718,12 @@ def probability_deoverlap(csv_path, models, energy_min, energy_max, threshold,
     #Probability metrics
     probability_dict = metrics_dicts.initialize_probability_dict()
 
+    #Remove the Uncertainty columns as they will not be used for deoverlapping
+    for key in list(probability_dict.keys()):
+        if 'Uncertainty' in key:
+            del probability_dict[key]
+
+
     #Find first and last date out of all the dates
     max_date = df_dates.max().max()
     min_date = df_dates.min().min()
@@ -1903,8 +1909,7 @@ def probability_deoverlap(csv_path, models, energy_min, energy_max, threshold,
             roc_curve_plt.plot()
             skill_line = np.linspace(0.0, 1.0, num=10) # Constructing a diagonal line that represents no skill/random guess
             plt.plot(skill_line, skill_line, '--', label = 'Random Guess')
-            figname = csv_path + '/../output/plots/ROC_curve_' \
-                    + model + "_" + energy_key.strip() + "_" + thresh_key
+            figname = os.path.join(csv_path, '../plots/', 'ROC_curve_' + model + "_" + energy_key.strip() + "_" + thresh_key)
 
             figname += "_deoverlap_" + type + ".pdf"
             plt.legend(loc="lower right")
