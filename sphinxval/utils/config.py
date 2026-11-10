@@ -17,7 +17,7 @@ obs_prof_path = './output/json/observed_profiles.json'
 if os.path.isdir('/data/SPHINX'):
     partitionpath = '/data/SPHINX/active/partitions'
 else:
-    partitionpath = './data/partitions/'
+    partitionpath = './output/partitions/'
 os.makedirs(partitionpath, exist_ok=True)
 baseurlpath = 'https://web-dev.ccmc.smce.nasa.gov:8001/sphinx'
 dumpath = os.path.join('.', 'static_data', 'DUMs')

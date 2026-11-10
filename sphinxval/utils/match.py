@@ -2315,6 +2315,9 @@ def match_sep_quantities(sphinx, observation_obj, thresh, is_win_overlap,
         #Model doesn't use flare/CME triggers; default to old logic
         elif trigger_input_start and is_source is None and is_eruption_in_range is None:
             sphinx.sep_match_status[thresh_key] = "SEP Event"
+            prob.probability_value = 1.0
+            sphinx.observed_probability[thresh_key] = prob
+            sphinx.observed_probability_source[thresh_key] = observation_obj.source
             sep_status = True #match with SEP due to overlap
 
         #If known that this forecast and observation are a match because they are
