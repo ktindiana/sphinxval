@@ -178,12 +178,6 @@ def initialize_fluence_spectrum_selections_dict():
     selection_file_keys.append('Band Function Fit Plot')
     selection_file_keys.append('Ellison Ramaty Fit Plot')
     selection_file_dict = {key: [] for key in selection_file_keys}
-    
-    # plot_keys = ['Band Function Fit Plot', 'Ellison Ramaty Fit Plot', 'Band Function Low Energy Spectral Slope Correlation Plot',
-    # 'Band Function High Energy Spectral Slope Correlation Plot', 'Band Function Rollover Energy Correlation Plot', ]
-
-    # metric_keys = ['Mean Band Function Low Energy Spectral Slope Error', 'Median Band Function Low Energy Spectral Slope Error',
-    # 'Mean Band Function High Energy Spectral Slope Error', 'Median Band Function High Energy Spectral Slope Error']
 
 
     return selection_file_dict

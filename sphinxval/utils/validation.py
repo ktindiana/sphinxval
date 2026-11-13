@@ -3765,6 +3765,8 @@ def fluence_spectrum_intuitive_metrics(df, dict, model, energy_key, threshold_ke
         return
 
     #Select rows to calculate metrics
+    print(df['Threshold Key'].unique(), df['Energy Channel Key'].unique(), validation_type)
+    # input()
     sub = df.loc[(df['Model'] == model) & (df['Energy Channel Key'] ==
         energy_key) & (df['Threshold Key'] == threshold_key)]
     sub = sub[['Model','Energy Channel Key', 'Threshold Key',
@@ -3793,9 +3795,10 @@ def fluence_spectrum_intuitive_metrics(df, dict, model, energy_key, threshold_ke
     
     selections_df = pd.DataFrame(selections_dict)
     write_df(selections_df, 'fluence_spectrum_selections_' + model + '_' + energy_key + '_' + validation_type)
-    fluence_spect_metrics = metrics_dicts.initialize_fluence_spectrum_metrics_dict()
-    fluence_spectrum_validation.fluence_spectrum_validation_metrics_workflow(fluence_spect_metrics, selections_df, model, energy_key, threshold_key, validation_type)
-
+    # fluence_spect_metrics = metrics_dicts.initialize_fluence_spectrum_metrics_dict()
+    fluence_spectrum_validation.fluence_spectrum_validation_metrics_workflow(dict, selections_df, model, energy_key, threshold_key, validation_type)
+    # fluence_metrics_df = pd.DataFrame(fluence_spect_metrics)
+    # write_df(fluence_metrics_df, 'fluence-spectrum_metrics')
 
 
 def pretty(d, indent=0):
@@ -3897,8 +3900,8 @@ def calculate_intuitive_metrics(df, model_names, all_energy_channels,
     """
     #Check accepted validation types
     #Remove reference to ""
-    if validation_type == "All" or validation_type == "all":
-        validation_type = ""
+    # if validation_type == "All" or validation_type == "all":
+    #     validation_type = ""
 
     all_clear_dict = metrics_dicts.initialize_all_clear_dict() #All only
     probability_dict = metrics_dicts.initialize_probability_dict() #All only
@@ -3922,37 +3925,37 @@ def calculate_intuitive_metrics(df, model_names, all_energy_channels,
             for tk in all_observed_thresholds[ek]:
                 logging.info("Calculating metrics for " + model + ", " + ek + ", " + tk)
 
-                # probability_intuitive_metrics(df, probability_dict,model,ek,tk,
-                #     validation_type, uncertainty)
-                # point_intensity_intuitive_metrics(df, point_intensity_dict,
-                #     model, ek, tk, validation_type, uncertainty)
-                # peak_intensity_intuitive_metrics(df, peak_intensity_dict,
-                #     model,ek,tk, validation_type, uncertainty)
-                # peak_intensity_max_intuitive_metrics(df,
-                #     peak_intensity_max_dict,model,ek,tk, validation_type, uncertainty)
-                # fluence_intuitive_metrics(df,fluence_dict, model,ek,tk,
-                #     validation_type, uncertainty)
-                # threshold_crossing_intuitive_metrics(df, thresh_cross_dict,
-                #     model,ek,tk, validation_type, uncertainty)
-                # start_time_intuitive_metrics(df, start_time_dict,
-                #     model,ek,tk, validation_type, uncertainty)
-                # end_time_intuitive_metrics(df, end_time_dict,model,ek,tk,
-                #     validation_type, uncertainty)
-                # duration_intuitive_metrics(df, duration_dict,model,ek,tk,
-                #     validation_type, uncertainty)
-                # peak_intensity_time_intuitive_metrics(df,
-                #     peak_intensity_time_dict,model,ek,tk, validation_type, uncertainty)
-                # peak_intensity_max_time_intuitive_metrics(df,
-                #     peak_intensity_max_time_dict,model,ek,tk, validation_type, uncertainty)
-                # all_clear_intuitive_metrics(df, all_clear_dict,model,ek,tk,
-                #     validation_type, uncertainty)
-                # time_profile_intuitive_metrics(df, profile_dict,model,ek,tk,
-                #     validation_type, uncertainty)
-                # max_flux_in_pred_win_metrics(df, max_dict, model,ek,tk,
-                #     validation_type, uncertainty)
-                # awt_metrics(df, awt_dict, model, ek, tk, validation_type)
-                # last_data_to_issue_intuitive_metrics(df, last_data_to_issue_dict,model,ek,tk,
-                #     validation_type)
+                probability_intuitive_metrics(df, probability_dict,model,ek,tk,
+                    validation_type, uncertainty)
+                point_intensity_intuitive_metrics(df, point_intensity_dict,
+                    model, ek, tk, validation_type, uncertainty)
+                peak_intensity_intuitive_metrics(df, peak_intensity_dict,
+                    model,ek,tk, validation_type, uncertainty)
+                peak_intensity_max_intuitive_metrics(df,
+                    peak_intensity_max_dict,model,ek,tk, validation_type, uncertainty)
+                fluence_intuitive_metrics(df,fluence_dict, model,ek,tk,
+                    validation_type, uncertainty)
+                threshold_crossing_intuitive_metrics(df, thresh_cross_dict,
+                    model,ek,tk, validation_type, uncertainty)
+                start_time_intuitive_metrics(df, start_time_dict,
+                    model,ek,tk, validation_type, uncertainty)
+                end_time_intuitive_metrics(df, end_time_dict,model,ek,tk,
+                    validation_type, uncertainty)
+                duration_intuitive_metrics(df, duration_dict,model,ek,tk,
+                    validation_type, uncertainty)
+                peak_intensity_time_intuitive_metrics(df,
+                    peak_intensity_time_dict,model,ek,tk, validation_type, uncertainty)
+                peak_intensity_max_time_intuitive_metrics(df,
+                    peak_intensity_max_time_dict,model,ek,tk, validation_type, uncertainty)
+                all_clear_intuitive_metrics(df, all_clear_dict,model,ek,tk,
+                    validation_type, uncertainty)
+                time_profile_intuitive_metrics(df, profile_dict,model,ek,tk,
+                    validation_type, uncertainty)
+                max_flux_in_pred_win_metrics(df, max_dict, model,ek,tk,
+                    validation_type, uncertainty)
+                awt_metrics(df, awt_dict, model, ek, tk, validation_type)
+                last_data_to_issue_intuitive_metrics(df, last_data_to_issue_dict,model,ek,tk,
+                    validation_type)
                 fluence_spectrum_intuitive_metrics(df, fluence_spectrum_metrics_dict, model, ek, tk, validation_type)
     logger.info("Completed calculating all metrics.")
     prob_metrics_df = pd.DataFrame(probability_dict)
@@ -4240,10 +4243,7 @@ def intuitive_validation(evaluated_sphinx, removed_sphinx, model_names, all_ener
     for type in validation_type:
         logger.info("-----------Starting validation of " + type +" forecasts-------------")
         calculate_intuitive_metrics(full_df, model_names, all_energy_channels,
-                all_observed_thresholds, type, uncertainty=uncertainty)
-
-    #Record explanatory information to the log
-    validation_explanation()
+                all_observed_thresholds, validation_type = type, uncertainty=uncertainty)
 
     #Record explanatory information to the log
     validation_explanation()

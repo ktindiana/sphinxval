@@ -493,7 +493,7 @@ def fluence_histograms(obs_specs, pred_specs, model, energy_key, thresh_fnm, val
 
 
 
-    return figname
+    return figname, error_dictionary
 
 
 
@@ -568,6 +568,8 @@ def error_fluence_calc(obs_energy_bin, obs_fluence, model_energy_bin, model_flue
 
 
 def fitting_procedure(fit_dict, current_event_df, energy_key, date, thresh_key, validation_type):
+    print(current_event_df)
+    # input()
     obs_spectrum = current_event_df._11 # Observed SEP Fluence Spectrum
     pred_spectrum = current_event_df._13 # Predicted SEP Fluence Spectrum
     obs_units = current_event_df._12 # Observed SEP Fluence Spectrum Units
@@ -745,6 +747,9 @@ def er_selections_mapping():
 
 
 
+
+
+
 def switch_fit_func(fitting_function, energy_bins, fluence_spectrum, date, fig_obj):
     func = {
         'Band Function': fit_band_function,
@@ -781,7 +786,7 @@ def fluence_spectrum_validation_selections(sub_sphinx_df, model, energy_key, thr
     fit_dict = metrics_dicts.initialize_fluence_spectrum_selections_dict()
     for event in event_list:
         current_event_df = sub_sphinx_df.loc[(sub_sphinx_df['Observed SEP Threshold Crossing Time'] == event)]     
-        
+        print(current_event_df)
         for valid_events in current_event_df.itertuples(index = False):
             fitting_procedure(fit_dict, valid_events, energy_key, event, thresh_key, validation_type)
     return fit_dict
@@ -808,13 +813,40 @@ def fluence_spectrum_validation_metrics_workflow(fluence_spec_metrics, selection
     fit_types = ['Band Function', 'Ellison Ramaty']
     thresh_fnm = make_thresh_fname(thresh_key)
     for forms in fit_types:
+        
+        
         fit_params = fit_parameter_dictionary[forms]
         #Correlation Plot
         for params in fit_params:
             selection_string = forms + ' ' + params
+
             obs = selections_df['Observed ' + selection_string].to_list()
             pred = selections_df['Model ' + selection_string].to_list()
+            model_goodness_of_fit = selections_df['Model ' + forms + ' Reduced ChiSquared'].to_list()
+            obs_goodness_of_fit = selections_df['Observed ' + forms + ' Reduced ChiSquared'].to_list()
 
+            # overfit
+            print(len(obs), len(pred), len(model_goodness_of_fit), len(obs_goodness_of_fit))
+            for i in range(len(model_goodness_of_fit)):
+            
+                # overfit
+                if model_goodness_of_fit[i] < 0.50 or obs_goodness_of_fit[i] < 0.50:
+                    obs[i] = None
+                    pred[i] = None
+            # bad fit
+                elif model_goodness_of_fit[i] > 20.0 or obs_goodness_of_fit[i] > 20.0:
+                    obs[i] = None
+                    pred[i] = None
+            obs = [x for x in obs if x != None]
+            pred = [x for x in pred if x != None]
+            if len(obs) <= 2 and len(pred) <= 2:
+                # not enough good fits to properly plot - move on without plotting
+                fluence_spec_metrics[selection_string + ' Correlation Plot'].append('Not enough good fits for a plot')
+
+                error = selections_df['Observed ' + selection_string] - selections_df['Model ' + selection_string]
+                fluence_spec_metrics['Mean ' + selection_string + ' Error'].append(np.mean(error))
+                fluence_spec_metrics['Median ' + selection_string + ' Error'].append(np.nanmedian(error))
+                continue 
             if 'Rollover' in params:
                 use_log = True
             else:
@@ -824,7 +856,7 @@ def fluence_spectrum_validation_metrics_workflow(fluence_spec_metrics, selection
             "Fluence Spectrum Correlation of " + selection_string, xlabel="Observations",
             ylabel="Model", use_log = use_log)
 
-            figname = cfg.outpath + '/plots/Correlation_fluence_spectrum' + selection_string.replace(' ', '_') + model + "_" \
+            figname = cfg.outpath + '/plots/Correlation_fluence_spectrum_' + selection_string.replace(' ', '_') + model + "_" \
                     + energy_key.strip() + "_" + thresh_fnm
             if cfg.do_mismatch:
                 figname = figname + "_mm"
@@ -843,9 +875,70 @@ def fluence_spectrum_validation_metrics_workflow(fluence_spec_metrics, selection
     #histograms
     obs_specs = selections_df['Observed SEP Fluence Spectrum'].to_list()
     pred_specs = selections_df['Predicted SEP Fluence Spectrum'].to_list()
-    histo_name = fluence_histograms(obs_specs, pred_specs, model, energy_key, thresh_fnm, validation_type)
-    
+    histo_name, histo_dict = fluence_histograms(obs_specs, pred_specs, model, energy_key, thresh_fnm, validation_type)
+    fluence_spec_metrics['Log Errors Dictionary'].append(histo_dict)
     fluence_spec_metrics['Histogram of Log Errors Plot'].append(histo_name)
 
     return
+
+
+
+# Making this function for my own testing - will be deleted before merging to main
+# Needed a way to test the fitting without solely requiring SPHINX - I want to test
+# other datasets/instruments that we may not have models for to ensure robustness of
+# the methodology
+def temp_entry_function():
+    import json
+    fit_dict = metrics_dicts.initialize_fluence_spectrum_selections_dict()
+    keys = ['Model','Energy Channel Key', 'Threshold Key',
+            'Mismatch Allowed',
+            'Prediction Energy Channel Key', 'Prediction Threshold Key',
+            'Forecast Source',
+            'Prediction Window Start', 'Prediction Window End',
+            'Observed SEP Threshold Crossing Time',
+            'Observed SEP End Time',
+            'Observed SEP Fluence Spectrum',
+            'Observed SEP Fluence Spectrum Units',
+            'Predicted SEP Fluence Spectrum',
+            'Predicted SEP Fluence Spectrum Units',
+            'Fluence Spectrum Match Status']
+     
+    json_file = os.path.join('./junk', 'GOES-08_integral_enhance_idsep.1999-05-26T104000Z.json')
+    with open(json_file, 'r', encoding='utf-8') as file:
+        data = json.load(file)
+    
+    energy= data["sep_observation_submission"]['observations'][0]['energy_channel']
+    energy_key = 'min.10.0.max.-1.0.units.MeV'
+    thresh_key = 'threshold.10.0.units.1 / (cm2 s sr)'
+    # print(data["sep_observation_submission"]['observations'][0]['fluence_spectra'])
+    test_event = {key: [] for key in keys}
+    test_event['Model'].append('Test')
+    test_event['Energy Channel Key'].append(energy_key)
+    test_event['Threshold Key'].append(thresh_key)
+    test_event['Mismatch Allowed'].append(False)
+    test_event['Prediction Energy Channel Key'].append(energy_key)
+    test_event['Prediction Threshold Key'].append(thresh_key)
+    test_event['Forecast Source'].append('Bleh')
+    test_event['Prediction Window Start'].append(data["sep_observation_submission"]['observations'][0]['observation_window']['start_time'])
+    test_event['Prediction Window End'].append(data["sep_observation_submission"]['observations'][0]['observation_window']['end_time'])
+    test_event['Observed SEP Threshold Crossing Time'].append(data["sep_observation_submission"]['observations'][0]['event_lengths'][0]['start_time'])
+    test_event['Observed SEP End Time'].append(data["sep_observation_submission"]['observations'][0]['event_lengths'][0]['end_time'])
+    test_event['Observed SEP Fluence Spectrum'].append(data["sep_observation_submission"]['observations'][0]['fluence_spectra'][0]['fluence_spectrum'])
+    test_event['Observed SEP Fluence Spectrum Units'].append(data["sep_observation_submission"]['observations'][0]['fluence_spectra'][0]['fluence_units'])
+    test_event['Predicted SEP Fluence Spectrum'].append(data["sep_observation_submission"]['observations'][0]['fluence_spectra'][0]['fluence_spectrum'])
+    test_event['Predicted SEP Fluence Spectrum Units'].append(data["sep_observation_submission"]['observations'][0]['fluence_spectra'][0]['fluence_units'])
+    test_event['Fluence Spectrum Match Status'].append('SEP Event')
+
+    current_event = pd.DataFrame(test_event)
+    event = data["sep_observation_submission"]['observations'][0]['event_lengths'][0]['start_time']
+    print(current_event)
+    for valid_events in current_event.itertuples(index = False):
+        fitting_procedure(fit_dict, valid_events, energy_key, event, thresh_key, 'TESTING')
+    return
+
+
+
+
+if __name__ == '__main__':
+    temp_entry_function()
 
