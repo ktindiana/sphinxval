@@ -969,6 +969,7 @@ def identify_flux_forecast(df, thresh_key, pred_key, validation_type):
 
     if validation_type == "First":
         for i in range(len(df)):
+            print(pred_key, df.iloc[i][pred_key])
             if pd.isnull(df.iloc[i][pred_key]):
                 continue
             if df.iloc[i][pred_key] < thresh:
@@ -1257,7 +1258,7 @@ def extract_flux_forecast_type(df, thresh_key, pred_key, time_key, validation_ty
 
     if validation_type == "All" or validation_type == "":
         return df, True
-
+    logger.info('extract_flux_forecast_type ' + validation_type)
     #Create an empty dataframe with the same columns plus AWT info
     sel_df = pd.DataFrame(columns=df.columns) #Selected forecasts
     sel_df = sel_df.astype(dtype=df.dtypes)
@@ -3761,7 +3762,9 @@ def fluence_spectrum_intuitive_metrics(df, dict, model, energy_key, threshold_ke
 
     """
     val_type = ["", "All", "First", "Last", "Max", "Mean"]
+    logger.info('In Fluence Spectrum ' + str(validation_type) + ' end matter')
     if validation_type not in val_type:
+        
         return
 
     #Select rows to calculate metrics
@@ -3780,16 +3783,21 @@ def fluence_spectrum_intuitive_metrics(df, dict, model, energy_key, threshold_ke
             'Observed SEP Fluence Spectrum Units',
             'Predicted SEP Fluence Spectrum',
             'Predicted SEP Fluence Spectrum Units',
-            'Fluence Spectrum Match Status']]
+            'Fluence Spectrum Match Status', 'Predicted SEP Fluence']]
     sub = sub.loc[(sub['Fluence Spectrum Match Status'] == 'SEP Event')]
     sub = sub.dropna(subset=['Predicted SEP Fluence Spectrum','Observed SEP Fluence Spectrum'])
     #Drop zero and negative values in predicted or observed fluence spectra
     if sub.empty:
         return
 
-    sub, doType = extract_flux_forecast_type(sub, threshold_key, 'Predicted SEP Fluence Spectrum', 'Observed SEP End Time', validation_type)
+
+    # Note using Predicted SEP Fluence field to determine first/last/mean/max since its a singular value, this differs from other metrics
+    # where that metric itself is used, but since SEP Fluence Spectrum is a dictionary, there's issues with the extracting 
+    # so I'd need to build a custom function to handle the spectra but I don't think thats worth it
+    sub, doType = extract_flux_forecast_type(sub, threshold_key, 'Predicted SEP Fluence', 'Observed SEP End Time', validation_type) 
     if sub.empty or not doType:
         return
+    
     print('validation_type' , validation_type)
     selections_dict = fluence_spectrum_validation.fluence_spectrum_validation_selections(sub, model, energy_key, threshold_key, validation_type)
     
@@ -3902,7 +3910,7 @@ def calculate_intuitive_metrics(df, model_names, all_energy_channels,
     #Remove reference to ""
     # if validation_type == "All" or validation_type == "all":
     #     validation_type = ""
-
+    
     all_clear_dict = metrics_dicts.initialize_all_clear_dict() #All only
     probability_dict = metrics_dicts.initialize_probability_dict() #All only
     point_intensity_dict = metrics_dicts.initialize_flux_dict() #All only
@@ -3924,7 +3932,7 @@ def calculate_intuitive_metrics(df, model_names, all_energy_channels,
         for ek in all_energy_channels:
             for tk in all_observed_thresholds[ek]:
                 logging.info("Calculating metrics for " + model + ", " + ek + ", " + tk)
-
+                logger.info('Validation Type is ' + str(validation_type))
                 probability_intuitive_metrics(df, probability_dict,model,ek,tk,
                     validation_type, uncertainty)
                 point_intensity_intuitive_metrics(df, point_intensity_dict,

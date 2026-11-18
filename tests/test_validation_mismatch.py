@@ -124,14 +124,14 @@ class Test_AllFields_Mismatch(unittest.TestCase):
         validate.write_df(self.not_eval_dataframe, "not_eval_SPHINX")
         validate.profile_output(self.dataframe, None, None, None) # Moved this step here to make things work - won't test for the profile existence until later
         for keywords in self.dataframe:
-           
+            logger.debug(keywords)
             logger.debug(len(self.sphinx['Test_model_0'][self.all_energy_channels[1]]))
             temp = utils.attributes_of_sphinx_obj(keywords, self.sphinx['Test_model_0'][self.all_energy_channels[1]][0],\
                  config_tests.mm_energy_key, self.obs_thresholds)#, self.pred_energy_key)
             # logger.debug('this is what should be equal - dataframe, temp, keywords')
             # logger.debug(self.dataframe[keywords][2])
             # logger.debug(temp)
-            # logger.debug(keywords)
+            
             logger.debug(str(len(self.dataframe[keywords])))
             if 'SEP Fluence Spectrum' in keywords and "Units" not in keywords:
                 try:
@@ -223,6 +223,7 @@ class Test_AllFields_Mismatch(unittest.TestCase):
                 yield name, getattr(self, name)
         
     @patch('sphinxval.utils.config.outpath', './tests/output')
+    @patch('sphinxval.utils.config.do_mismatch', True)
     @patch('sphinxval.utils.config.mismatch_rules', config_tests.mismatch_rules)
     @patch('sphinxval.utils.config.mismatch_rules_by_energy_key', config_tests.mismatch_rules_by_energy_key)
     @patch('sphinxval.utils.config.mismatch_energy_keys', config_tests.mismatch_energy_keys)

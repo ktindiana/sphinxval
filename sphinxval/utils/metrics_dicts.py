@@ -162,7 +162,8 @@ def initialize_fluence_spectrum_selections_dict():
     selection_file_keys = []
     selection_keys = ['Band Function Low Energy Spectral Slope', 'Band Function High Energy Spectral Slope', 'Band Function Rollover Energy',
     'Band Function Normalization Factor', 'Band Function ChiSquared', 'Band Function Reduced ChiSquared', 'Ellison Ramaty Spectral Slope', 'Ellison Ramaty Rollover Energy', 
-    'Ellison Ramaty Normalization Factor', 'Ellison Ramaty ChiSquared', 'Ellison Ramaty Reduced ChiSquared']
+    'Ellison Ramaty Normalization Factor', 'Ellison Ramaty ChiSquared', 'Ellison Ramaty Reduced ChiSquared', 'Powerlaw Spectral Slope', 'Powerlaw Normalization Factor', 
+    'Powerlaw ChiSquared', 'Powerlaw Reduced ChiSquared']
     type_keys = ['Observed ', 'Model ']
     other_selection_keys = ['Model', 'Energy Channel', 'Threshold', 'Prediction Energy Channel', 'Prediction Threshold', 'Predicted SEP Fluence Spectrum',
     'Predicted SEP Fluence Spectrum Units', 'Observed SEP Fluence Spectrum', 'Observed SEP Fluence Spectrum Units']
@@ -177,6 +178,7 @@ def initialize_fluence_spectrum_selections_dict():
                 selection_file_keys.append(pair + keys)
     selection_file_keys.append('Band Function Fit Plot')
     selection_file_keys.append('Ellison Ramaty Fit Plot')
+    selection_file_keys.append('Powerlaw Fit Plot')
     selection_file_dict = {key: [] for key in selection_file_keys}
 
 
@@ -197,14 +199,14 @@ def initialize_fluence_spectrum_metrics_dict():
     
     plot_keys = ['Band Function Low Energy Spectral Slope Correlation Plot', 'Band Function High Energy Spectral Slope Correlation Plot',
     'Band Function Rollover Energy Correlation Plot', 'Ellison Ramaty Spectral Slope Correlation Plot',
-    'Ellison Ramaty Rollover Energy Correlation Plot', 'Histogram of Log Errors Plot']
+    'Ellison Ramaty Rollover Energy Correlation Plot', 'Powerlaw Spectral Slope Correlation Plot', 'Histogram of Log Errors Plot']
 
     metric_median_keys = ['Mean Band Function Low Energy Spectral Slope Error', 'Median Band Function Low Energy Spectral Slope Error',
     'Mean Band Function High Energy Spectral Slope Error', 'Median Band Function High Energy Spectral Slope Error',
-    'Mean ']
+    'Mean ', 'Mean Powerlaw Spectral Slope Error', 'Median Powerlaw Spectral Slope Error']
 
     fit_parameter_keys = ['Band Function Low Energy Spectral Slope', 'Band Function High Energy Spectral Slope', 'Band Function Rollover Energy',
-    'Ellison Ramaty Spectral Slope', 'Ellison Ramaty Rollover Energy']
+    'Ellison Ramaty Spectral Slope', 'Ellison Ramaty Rollover Energy', 'Powerlaw Spectral Slope']
     for keys in fit_parameter_keys:
         metrics_keys.append('Median ' + keys + ' Error')
         metrics_keys.append('Mean ' + keys + ' Error')

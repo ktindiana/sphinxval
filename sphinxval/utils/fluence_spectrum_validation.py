@@ -228,7 +228,7 @@ def make_diff_from_int(integral_fluxes, energy_bins):
                 (integral_fluxes[i][j] - integral_fluxes[i+1][j])/bin_width
             
     
-    print("make_diff_from_int converted to energy bins " + str(diff_bins))
+    logger.info("make_diff_from_int converted to energy bins " + str(diff_bins))
     
     return diff_bins, diff_fluxes
 
@@ -384,6 +384,55 @@ def plot_band_func(first_guess, date, figure_obj):#, energy):
     return band
 
 
+###################### Powerlaw Function Subroutines ##############################################
+def fit_single_powerlaw(energy_bins, fluence_array, date, fig_obj):
+    """ Fitting the a powerlaw to spectral data - see
+    description of fit_ellisonramaty_function for full details of 
+    inputs/outputs
+    """
+    import lmfit
+    import numpy as np
+    params_powerlaw = Parameters()
+    params_powerlaw.add('norm', value = 10**5, min = 10**4, max = 10**12)
+    params_powerlaw.add('gamma', value = 0.70, min = 0.1, max =10)
+    
+    
+
+    
+    def fitting_routine(p, x, y):
+        model_val = powerlaw_function(x, p['norm'], p['gamma'])
+        model_val_safe = np.clip(model_val, 1, None)
+        y_safe = np.clip(y, 1, None)
+        r = 0.20 # r is an error estimator that I'm using as a constant 20% across the spectra
+        sigma_log10 = r / (np.log(10))
+        return (np.log10(y_safe) - np.log10(model_val_safe)) / sigma_log10
+
+    fitter = lmfit.Minimizer(fitting_routine, params_powerlaw, fcn_args=(energy_bins, fluence_array))
+    result_b = fitter.minimize(max_nfev= cfg.fit_iter)
+    plot_powerlaw_func(result_b.params, date, fig_obj)
+    print('fit report', energy_bins, lmfit.fit_report(result_b))
+
+    return result_b
+
+def powerlaw_function(x, norm, gamma):
+    return norm*x**(-gamma)
+
+
+def plot_powerlaw_func(first_guess, date, figure_obj):#, energy):
+    """
+    Defining the Powerlaw function for plotting the fit
+    """
+    energy = np.arange(0,2000,0.1) # Creating an array of energies across all bins (0 - 2000 MeV) to use for plotting the end fit
+
+    parvals = first_guess.valuesdict()
+    norm =  parvals['norm']
+    gamma = parvals['gamma']
+
+    powerlaw = powerlaw_function(energy, norm, gamma)
+
+    figure_obj.plot(energy, powerlaw)
+    figure_obj.set_title('Single Powerlaw Fit ' + str(date))
+    return powerlaw
 
 def fluence_histograms(obs_specs, pred_specs, model, energy_key, thresh_fnm, validation_type):
     error_dictionary = {}
@@ -615,7 +664,7 @@ def fitting_procedure(fit_dict, current_event_df, energy_key, date, thresh_key, 
     fit_dict['Predicted SEP Fluence Spectrum Units'].append(pred_units)
     fit_dict['Observed SEP Fluence Spectrum'].append(obs_spectrum)
     fit_dict['Observed SEP Fluence Spectrum Units'].append(obs_units)
-    functions = ['Band Function', 'Ellison Ramaty'] #  
+    functions = ['Band Function', 'Ellison Ramaty', 'Powerlaw'] #  
     for f in functions:
         fig, ax = plt.subplots(figsize=(12, 8))
 
@@ -682,7 +731,7 @@ def fitting_procedure(fit_dict, current_event_df, energy_key, date, thresh_key, 
                     fit_dict['Model ' + f + ' ' + label + ' Uncertainty'].append(pred_uncertainty)
             fit_dict[f + ' Fit Plot'].append(name)
             
-        else:
+        elif f == 'Ellison Ramaty':
             mapping = er_selections_mapping()
 
             for label, param in mapping:
@@ -718,7 +767,43 @@ def fitting_procedure(fit_dict, current_event_df, energy_key, date, thresh_key, 
                     fit_dict['Model ' + f + ' ' + label].append(pred_param)
                     fit_dict['Model ' + f + ' ' + label + ' Uncertainty'].append(pred_uncertainty)
             fit_dict[f + ' Fit Plot'].append(name)
-            
+
+        elif f == 'Powerlaw':   
+            mapping = powerlaw_selections_mapping()
+
+            for label, param in mapping:
+                if 'Reduced' in label:
+                    fit_dict['Observed ' + f + ' ' + label].append(float(obs_fit_output.redchi))
+                    fit_dict['Model ' + f + ' ' + label].append(float(pred_fit_output.redchi))
+                elif 'ChiSquare' in label:
+                    fit_dict['Observed ' + f + ' ' + label].append(float(obs_fit_output.chisqr))
+                    fit_dict['Model ' + f + ' ' + label].append(float(pred_fit_output.chisqr))
+                else:
+                    current_obs_param = str(obs_fit_output.params.create_uvars()[param]).rsplit('+/-')
+                    print(current_obs_param)
+                    if '(' in current_obs_param[0]:
+                        current_obs_param = str(obs_fit_output.params.create_uvars()[param]).rsplit(')')
+                        exponential = current_obs_param[1]
+                        obs_param = float(current_obs_param[0].rsplit('+/-')[0].replace('(', '') + exponential) 
+                        obs_uncertainty = float(current_obs_param[0].rsplit('+/-')[1].replace(')', '') + exponential)
+                    else:
+                        obs_param = float(current_obs_param[0])
+                        obs_uncertainty = float(current_obs_param[1])
+                    current_pred_param = str(pred_fit_output.params.create_uvars()[param]).rsplit('+/-')
+                    if '(' in current_pred_param[0]:
+                        current_pred_param = str(pred_fit_output.params.create_uvars()[param]).rsplit(')')
+                        exponential = current_pred_param[1]
+                        pred_param = float(current_pred_param[0].rsplit('+/-')[0].replace('(', '') + exponential) 
+                        pred_uncertainty = float(current_pred_param[0].rsplit('+/-')[1].replace(')', '') + exponential)
+                    else:
+                        pred_param = float(current_pred_param[0])
+                        pred_uncertainty = float(current_pred_param[1])    
+          
+                    fit_dict['Observed ' + f + ' ' + label].append(obs_param)
+                    fit_dict['Observed ' + f + ' ' + label + ' Uncertainty'].append(obs_uncertainty)
+                    fit_dict['Model ' + f + ' ' + label].append(pred_param)
+                    fit_dict['Model ' + f + ' ' + label + ' Uncertainty'].append(pred_uncertainty)
+            fit_dict[f + ' Fit Plot'].append(name)
 
     return 
 
@@ -746,6 +831,15 @@ def er_selections_mapping():
     return mapping
 
 
+def powerlaw_selections_mapping():
+    mapping = [
+        ('Spectral Slope', 'gamma'),
+        ('Normalization Factor', 'norm'),
+        ('ChiSquared', 'chisqr'),
+        ('Reduced ChiSquared', 'redchi')
+    ]
+    return mapping
+
 
 
 
@@ -753,7 +847,8 @@ def er_selections_mapping():
 def switch_fit_func(fitting_function, energy_bins, fluence_spectrum, date, fig_obj):
     func = {
         'Band Function': fit_band_function,
-        'Ellison Ramaty': fit_ellisonramaty_function
+        'Ellison Ramaty': fit_ellisonramaty_function,
+        'Powerlaw': fit_single_powerlaw
     }.get(fitting_function)
 
     fit_output = func(energy_bins, fluence_spectrum, date, fig_obj)
@@ -808,9 +903,10 @@ def fluence_spectrum_validation_metrics_workflow(fluence_spec_metrics, selection
     fluence_spec_metrics['Threshold'].append(thresh_key)
     fit_parameter_dictionary = {
         'Band Function': ['Low Energy Spectral Slope', 'High Energy Spectral Slope', 'Rollover Energy'],
-        'Ellison Ramaty': ['Spectral Slope', 'Rollover Energy']
+        'Ellison Ramaty': ['Spectral Slope', 'Rollover Energy'],
+        'Powerlaw': ['Spectral Slope']
     }
-    fit_types = ['Band Function', 'Ellison Ramaty']
+    fit_types = ['Band Function', 'Ellison Ramaty', 'Powerlaw']
     thresh_fnm = make_thresh_fname(thresh_key)
     for forms in fit_types:
         
@@ -841,7 +937,7 @@ def fluence_spectrum_validation_metrics_workflow(fluence_spec_metrics, selection
             pred = [x for x in pred if x != None]
             if len(obs) <= 2 and len(pred) <= 2:
                 # not enough good fits to properly plot - move on without plotting
-                fluence_spec_metrics[selection_string + ' Correlation Plot'].append('Not enough good fits for a plot')
+                fluence_spec_metrics[selection_string + ' Correlation Plot'].append(None)
 
                 error = selections_df['Observed ' + selection_string] - selections_df['Model ' + selection_string]
                 fluence_spec_metrics['Mean ' + selection_string + ' Error'].append(np.mean(error))
@@ -852,22 +948,24 @@ def fluence_spectrum_validation_metrics_workflow(fluence_spec_metrics, selection
             else:
                 use_log = False
             print(selection_string, len(obs), len(pred), obs, pred)
-            corr_plot = plt_tools.correlation_plot(obs,pred,
-            "Fluence Spectrum Correlation of " + selection_string, xlabel="Observations",
-            ylabel="Model", use_log = use_log)
+            try:
+                corr_plot = plt_tools.correlation_plot(obs,pred,
+                "Fluence Spectrum Correlation of " + selection_string, xlabel="Observations",
+                ylabel="Model", use_log = use_log)
 
-            figname = cfg.outpath + '/plots/Correlation_fluence_spectrum_' + selection_string.replace(' ', '_') + model + "_" \
-                    + energy_key.strip() + "_" + thresh_fnm
-            if cfg.do_mismatch:
-                figname = figname + "_mm"
-            if validation_type != "" and validation_type != "All":
-                figname = figname + "_" + validation_type
-            figname += ".pdf"
-            corr_plot.savefig(figname, dpi=300, bbox_inches='tight')
-            corr_plot.close()
+                figname = cfg.outpath + '/plots/Correlation_fluence_spectrum_' + selection_string.replace(' ', '_') + model + "_" \
+                        + energy_key.strip() + "_" + thresh_fnm
+                if cfg.do_mismatch:
+                    figname = figname + "_mm"
+                if validation_type != "" and validation_type != "All":
+                    figname = figname + "_" + validation_type
+                figname += ".pdf"
+                corr_plot.savefig(figname, dpi=300, bbox_inches='tight')
+                corr_plot.close()
 
-            fluence_spec_metrics[selection_string + ' Correlation Plot'].append(figname)
-
+                fluence_spec_metrics[selection_string + ' Correlation Plot'].append(figname)
+            except:
+                fluence_spec_metrics[selection_string + ' Correlation Plot'].append(None)
             error = selections_df['Observed ' + selection_string] - selections_df['Model ' + selection_string]
             fluence_spec_metrics['Mean ' + selection_string + ' Error'].append(np.mean(error))
             fluence_spec_metrics['Median ' + selection_string + ' Error'].append(np.nanmedian(error))
@@ -880,6 +978,11 @@ def fluence_spectrum_validation_metrics_workflow(fluence_spec_metrics, selection
     fluence_spec_metrics['Histogram of Log Errors Plot'].append(histo_name)
 
     return
+
+
+# Specialized function to extract first/last/mean/max 
+
+
 
 
 
