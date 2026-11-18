@@ -11,6 +11,7 @@ htmlcov/
 lists/*
 data/*
 junk/*
+dump/*
 model/*
 output*/*
 plots/*

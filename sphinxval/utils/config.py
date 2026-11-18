@@ -193,7 +193,7 @@ peak_flux_cut = 8e-1
 #Set do_mismatch = True to allow comparison of mismatched energy channels
 #and thresholds. If do_mismatch is True but mismatch_rules is empty, no
 #mismatching will actually occur.
-do_mismatch = True
+do_mismatch = False
 
 #mm stands for "mismatch"
 #WRITE UNITS IN SAME FORMAT AS REQUESTED FOR SEP SCOREBOARDS
@@ -302,3 +302,6 @@ dum_toggle =  True
 triggered_dums = True
 proton_dums = True
 
+# Fluence Spectrum Fitting
+fit_iter = 10**8 #10**8 for better convergence
+model_diff_to_int_boolean = False # Temporary Workaround since iPATH has incorrect units in its jsons up to ~mid 2025 and need to convert its bins from diff to int

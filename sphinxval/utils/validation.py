@@ -12,6 +12,7 @@ from . import validation_json_handler as vjson
 from . import metrics_dicts
 from . import uncertainties
 from . import dums
+from . import fluence_spectrum_validation
 import matplotlib.pylab as plt
 from scipy.stats import pearsonr
 import statistics
@@ -968,6 +969,7 @@ def identify_flux_forecast(df, thresh_key, pred_key, validation_type):
 
     if validation_type == "First":
         for i in range(len(df)):
+            print(pred_key, df.iloc[i][pred_key])
             if pd.isnull(df.iloc[i][pred_key]):
                 continue
             if df.iloc[i][pred_key] < thresh:
@@ -1256,7 +1258,7 @@ def extract_flux_forecast_type(df, thresh_key, pred_key, time_key, validation_ty
 
     if validation_type == "All" or validation_type == "":
         return df, True
-
+    logger.info('extract_flux_forecast_type ' + validation_type)
     #Create an empty dataframe with the same columns plus AWT info
     sel_df = pd.DataFrame(columns=df.columns) #Selected forecasts
     sel_df = sel_df.astype(dtype=df.dtypes)
@@ -3753,6 +3755,59 @@ def last_data_to_issue_intuitive_metrics(df, dict, model, energy_key, thresh_key
     dict['Median Absolute Error (|pred - obs|) Uncertainty'] = None
 
 
+# ******************************************************************************************* Delete this before pushing but I needed to find the new rubroutine quickly and this is the best way
+def fluence_spectrum_intuitive_metrics(df, dict, model, energy_key, threshold_key, validation_type):
+    """
+   
+
+    """
+    val_type = ["", "All", "First", "Last", "Max", "Mean"]
+    logger.info('In Fluence Spectrum ' + str(validation_type) + ' end matter')
+    if validation_type not in val_type:
+        
+        return
+
+    #Select rows to calculate metrics
+    print(df['Threshold Key'].unique(), df['Energy Channel Key'].unique(), validation_type)
+    # input()
+    sub = df.loc[(df['Model'] == model) & (df['Energy Channel Key'] ==
+        energy_key) & (df['Threshold Key'] == threshold_key)]
+    sub = sub[['Model','Energy Channel Key', 'Threshold Key',
+            'Mismatch Allowed',
+            'Prediction Energy Channel Key', 'Prediction Threshold Key',
+            'Forecast Source',
+            'Prediction Window Start', 'Prediction Window End',
+            'Observed SEP Threshold Crossing Time',
+            'Observed SEP End Time',
+            'Observed SEP Fluence Spectrum',
+            'Observed SEP Fluence Spectrum Units',
+            'Predicted SEP Fluence Spectrum',
+            'Predicted SEP Fluence Spectrum Units',
+            'Fluence Spectrum Match Status', 'Predicted SEP Fluence']]
+    sub = sub.loc[(sub['Fluence Spectrum Match Status'] == 'SEP Event')]
+    sub = sub.dropna(subset=['Predicted SEP Fluence Spectrum','Observed SEP Fluence Spectrum'])
+    #Drop zero and negative values in predicted or observed fluence spectra
+    if sub.empty:
+        return
+
+
+    # Note using Predicted SEP Fluence field to determine first/last/mean/max since its a singular value, this differs from other metrics
+    # where that metric itself is used, but since SEP Fluence Spectrum is a dictionary, there's issues with the extracting 
+    # so I'd need to build a custom function to handle the spectra but I don't think thats worth it
+    sub, doType = extract_flux_forecast_type(sub, threshold_key, 'Predicted SEP Fluence', 'Observed SEP End Time', validation_type) 
+    if sub.empty or not doType:
+        return
+    
+    print('validation_type' , validation_type)
+    selections_dict = fluence_spectrum_validation.fluence_spectrum_validation_selections(sub, model, energy_key, threshold_key, validation_type)
+    
+    selections_df = pd.DataFrame(selections_dict)
+    write_df(selections_df, 'fluence_spectrum_selections_' + model + '_' + energy_key + '_' + validation_type)
+    # fluence_spect_metrics = metrics_dicts.initialize_fluence_spectrum_metrics_dict()
+    fluence_spectrum_validation.fluence_spectrum_validation_metrics_workflow(dict, selections_df, model, energy_key, threshold_key, validation_type)
+    # fluence_metrics_df = pd.DataFrame(fluence_spect_metrics)
+    # write_df(fluence_metrics_df, 'fluence-spectrum_metrics')
+
 
 def pretty(d, indent=0):
    for key, value in d.items():
@@ -3853,9 +3908,9 @@ def calculate_intuitive_metrics(df, model_names, all_energy_channels,
     """
     #Check accepted validation types
     #Remove reference to ""
-    if validation_type == "All" or validation_type == "all":
-        validation_type = ""
-
+    # if validation_type == "All" or validation_type == "all":
+    #     validation_type = ""
+    
     all_clear_dict = metrics_dicts.initialize_all_clear_dict() #All only
     probability_dict = metrics_dicts.initialize_probability_dict() #All only
     point_intensity_dict = metrics_dicts.initialize_flux_dict() #All only
@@ -3872,12 +3927,12 @@ def calculate_intuitive_metrics(df, model_names, all_energy_channels,
     max_dict = metrics_dicts.initialize_flux_dict() #max in prediction window #All only
     awt_dict = metrics_dicts.initialize_awt_dict() #Advanced Warning Time #All, First
     last_data_to_issue_dict = metrics_dicts.initialize_time_dict() #All
-
+    fluence_spectrum_metrics_dict = metrics_dicts.initialize_fluence_spectrum_metrics_dict() # All, First, Last, Max, Mean
     for model in model_names:
         for ek in all_energy_channels:
             for tk in all_observed_thresholds[ek]:
                 logging.info("Calculating metrics for " + model + ", " + ek + ", " + tk)
-
+                logger.info('Validation Type is ' + str(validation_type))
                 probability_intuitive_metrics(df, probability_dict,model,ek,tk,
                     validation_type, uncertainty)
                 point_intensity_intuitive_metrics(df, point_intensity_dict,
@@ -3909,6 +3964,7 @@ def calculate_intuitive_metrics(df, model_names, all_energy_channels,
                 awt_metrics(df, awt_dict, model, ek, tk, validation_type)
                 last_data_to_issue_intuitive_metrics(df, last_data_to_issue_dict,model,ek,tk,
                     validation_type)
+                fluence_spectrum_intuitive_metrics(df, fluence_spectrum_metrics_dict, model, ek, tk, validation_type)
     logger.info("Completed calculating all metrics.")
     prob_metrics_df = pd.DataFrame(probability_dict)
     point_intensity_metrics_df = pd.DataFrame(point_intensity_dict)
@@ -3926,6 +3982,7 @@ def calculate_intuitive_metrics(df, model_names, all_energy_channels,
     max_metrics_df = pd.DataFrame(max_dict)
     awt_metrics_df = pd.DataFrame(awt_dict)
     last_data_to_issue_metrics_df = pd.DataFrame(last_data_to_issue_dict)
+    fluence_spectrum_metrics_df = pd.DataFrame(fluence_spectrum_metrics_dict)
 
     valtype = ""
     if validation_type != "" and validation_type != "All":
@@ -3962,6 +4019,8 @@ def calculate_intuitive_metrics(df, model_names, all_energy_channels,
         write_df(awt_metrics_df, "awt_metrics" + valtype)
     if not last_data_to_issue_metrics_df.empty:
         write_df(last_data_to_issue_metrics_df, "last_data_to_issue_time_metrics" + valtype)
+    if not fluence_spectrum_metrics_df.empty:
+        write_df(fluence_spectrum_metrics_df, 'fluence_spectrum_metrics' + valtype)
 
     logger.info("Wrote out all metrics.")
 
@@ -4192,10 +4251,7 @@ def intuitive_validation(evaluated_sphinx, removed_sphinx, model_names, all_ener
     for type in validation_type:
         logger.info("-----------Starting validation of " + type +" forecasts-------------")
         calculate_intuitive_metrics(full_df, model_names, all_energy_channels,
-                all_observed_thresholds, type, uncertainty=uncertainty)
-
-    #Record explanatory information to the log
-    validation_explanation()
+                all_observed_thresholds, validation_type = type, uncertainty=uncertainty)
 
     #Record explanatory information to the log
     validation_explanation()

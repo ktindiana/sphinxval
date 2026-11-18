@@ -423,6 +423,8 @@ def canonical_prof_dum(df):
 
                     dum_dict['Prediction Number of CMEs'] = current_event['Prediction Number of CMEs']
                     dum_dict['Prediction Number of Flares'] = current_event['Prediction Number of Flares']
+                    dum_dict['Prediction Number of CMEs'] = current_event['Prediction Number of CMEs']
+                    dum_dict['Prediction Number of Flares'] = current_event['Prediction Number of Flares']
                     dum_dict['Prediction Flare Latitude'] = current_event['Observed SEP Flare Latitude']
                     dum_dict['Prediction Flare Longitude'] = current_event['Observed SEP Flare Longitude']
                     dum_dict['Prediction Flare Start Time'] = robust_timing(current_event['Observed SEP Flare Start Time'])
@@ -508,7 +510,9 @@ def canonical_prof_dum(df):
                     else:
                         location_string = "central"
                     dum_dict['Model'] = 'Baseline Event' + dum_string
+                    dum_dict['Model'] = 'Baseline Event' + dum_string
                     
+                    dum_dict['Original Model Short Name'] = 'Baseline Event ' + location_string
                     dum_dict['Original Model Short Name'] = 'Baseline Event ' + location_string
 
                     canonical_profile = canonical_profile_values[location_string]
